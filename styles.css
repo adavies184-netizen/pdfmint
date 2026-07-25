@@ -6,7 +6,7 @@
 
 /* Legal and policy pages */
 .legal-hero{padding:72px 0 60px;background:linear-gradient(180deg,#fff 0%,#f7fafc 100%);border-bottom:1px solid var(--line)}
-.legal-hero-inner{max-width:860px}
+.legal-hero-inner{max-width:none}
 .legal-hero h1{font-size:54px;line-height:1.05;letter-spacing:-2px;margin:0 0 18px}
 .legal-hero p{font-size:18px;color:var(--muted);margin:0;max-width:760px}
 .legal-meta{display:flex;flex-wrap:wrap;gap:12px 24px;margin-top:22px;color:#8993a5;font-size:13px}

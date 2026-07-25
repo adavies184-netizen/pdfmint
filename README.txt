@@ -1,13 +1,15 @@
-PDFMINT — COMPLETE UPDATED WEBSITE V3
+PDFMINT — COMPLETE UPDATED WEBSITE V4
 ======================================
 
-This version corrects the alignment of the legal-page title area.
+This version correctly fixes the legal-page title alignment.
 
-The page title, introduction and update details now begin on the same left-hand
-container line as the PDFMint logo and main website navigation.
+The previous V3 package contained the updated rule in memory but did not save
+the modified stylesheet to disk. V4 fixes that error.
 
-It also uses styles.css?v=3 in every page to force browsers and the Sevalla CDN
-to retrieve the corrected stylesheet.
+The title section now uses the same full container width as the website header,
+so its left edge aligns with the PDFMint logo.
+
+Every HTML page references styles.css?v=4 to force a fresh stylesheet request.
 
 UPLOAD
 1. Upload every file in this folder to the root of the existing GitHub repository.
@@ -16,4 +18,4 @@ UPLOAD
 4. Wait for Sevalla to redeploy.
 5. Refresh the live page.
 
-No manual code editing is required.
+No manual editing is required.
