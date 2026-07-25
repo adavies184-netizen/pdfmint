@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=11" />
 </head>
 <body>
   <header class="site-header">
@@ -90,8 +90,8 @@
           <a class="tool-card" href="#"><span class="tool-icon">⇲</span><span>Compress PDF</span><small>Reduce file size in seconds</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">◫</span><span>Add watermark</span><small>Protect and brand documents</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">↻</span><span>Rotate PDF</span><small>Turn individual pages instantly</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">⧉</span><span>Merge PDF</span><small>Combine several files into one</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">✂</span><span>Split PDF</span><small>Separate selected pages</small></a>
+          <button class="tool-card tool-card-button" type="button" data-open-tool="merge"><span class="tool-icon">⧉</span><span>Merge PDF</span><small>Combine several files into one</small></button>
+          <button class="tool-card tool-card-button" type="button" data-open-tool="split"><span class="tool-icon">✂</span><span>Split PDF</span><small>Separate selected pages</small></button>
           <a class="tool-card" href="#"><span class="tool-icon">⌫</span><span>Delete pages</span><small>Remove pages you no longer need</small></a>
         </div>
 
@@ -193,10 +193,95 @@
     </div>
     <div class="container footer-bottom">
       <span>© 2026 PDFMint. All rights reserved.</span>
-      <span>Northridge Star Limited · Formby Lane, Aughton, Lancashire, L39 7HG · <a href="mailto:support@pdfmint.com">support@pdfmint.com</a></span>
+      <span>Northstar Ridge Limited · Formby Lane, Aughton, Lancashire, L39 7HG · <a href="mailto:support@pdfmint.com">support@pdfmint.com</a></span>
     </div>
   </footer>
 
   <script src="script.js"></script>
+
+  <div class="pdf-workspace" id="pdf-workspace" hidden>
+    <div class="workspace-backdrop" data-close-workspace></div>
+    <section class="workspace-panel" role="dialog" aria-modal="true" aria-labelledby="workspace-title">
+      <header class="workspace-header">
+        <div>
+          <span class="eyebrow" id="workspace-eyebrow">BROWSER PDF TOOL</span>
+          <h2 id="workspace-title">PDF preview</h2>
+          <p id="workspace-subtitle">Your document is processed locally in this browser.</p>
+        </div>
+        <button class="workspace-close" type="button" data-close-workspace aria-label="Close">×</button>
+      </header>
+
+      <div class="workspace-body">
+        <div class="workspace-alert" id="workspace-alert" hidden></div>
+
+        <section class="workspace-view" id="preview-view">
+          <div class="preview-layout">
+            <div class="preview-stage">
+              <canvas id="pdf-preview-canvas"></canvas>
+              <div class="preview-placeholder" id="preview-placeholder">
+                <span class="preview-placeholder-icon">PDF</span>
+                <strong>Select a PDF to preview</strong>
+                <small>The first page will appear here.</small>
+              </div>
+            </div>
+            <aside class="file-details">
+              <h3>Document details</h3>
+              <dl>
+                <div><dt>Filename</dt><dd id="preview-name">—</dd></div>
+                <div><dt>File size</dt><dd id="preview-size">—</dd></div>
+                <div><dt>Pages</dt><dd id="preview-pages">—</dd></div>
+              </dl>
+              <label class="button button-primary">
+                Choose another PDF
+                <input type="file" id="preview-file-input" accept="application/pdf,.pdf" hidden>
+              </label>
+              <button class="button button-outline" id="open-split-from-preview" type="button">Split this PDF</button>
+            </aside>
+          </div>
+        </section>
+
+        <section class="workspace-view" id="merge-view" hidden>
+          <div class="tool-intro">
+            <div><h3>Combine PDF files</h3><p>Add two or more PDFs, arrange their order, then download one merged document.</p></div>
+            <label class="button button-primary">Add PDF files<input type="file" id="merge-file-input" accept="application/pdf,.pdf" multiple hidden></label>
+          </div>
+          <div class="drop-zone compact-drop-zone" id="merge-drop-zone">
+            Drop multiple PDF files here, or use “Add PDF files”.
+          </div>
+          <div class="merge-list" id="merge-list"></div>
+          <div class="workspace-actions">
+            <span id="merge-summary">No files selected</span>
+            <button class="button button-primary" id="merge-button" type="button" disabled>Merge and download</button>
+          </div>
+        </section>
+
+        <section class="workspace-view" id="split-view" hidden>
+          <div class="tool-intro">
+            <div><h3>Extract selected pages</h3><p>Enter individual pages or ranges, for example: <strong>1-3, 6, 9-11</strong>.</p></div>
+            <label class="button button-primary">Choose PDF<input type="file" id="split-file-input" accept="application/pdf,.pdf" hidden></label>
+          </div>
+          <div class="split-card">
+            <div class="split-file-summary" id="split-file-summary">No PDF selected</div>
+            <label for="split-ranges">Pages to include</label>
+            <input class="text-input" id="split-ranges" type="text" placeholder="1-3, 6, 9-11" autocomplete="off">
+            <small id="split-help">Select a PDF first. PDFMint will show the available page count.</small>
+          </div>
+          <div class="workspace-actions">
+            <span>Pages remain in the order entered.</span>
+            <button class="button button-primary" id="split-button" type="button" disabled>Split and download</button>
+          </div>
+        </section>
+      </div>
+
+      <footer class="workspace-footer">
+        <span class="privacy-dot"></span>
+        Files are processed on your device and are not uploaded to PDFMint.
+      </footer>
+    </section>
+  </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="script.js?v=11"></script>
 </body>
 </html>

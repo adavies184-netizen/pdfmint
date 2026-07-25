@@ -1,21 +1,32 @@
-PDFMINT — COMPLETE UPDATED WEBSITE V4
-======================================
+PDFMINT v1.1 — WORKING BROWSER TOOLS
+====================================
 
-This version correctly fixes the legal-page title alignment.
+This complete website package includes:
 
-The previous V3 package contained the updated rule in memory but did not save
-the modified stylesheet to disk. V4 fixes that error.
+• Working PDF upload and first-page preview
+• Filename, file size and page-count detection
+• Working Merge PDF tool
+• Drag-and-drop multiple PDF selection
+• Reordering and removal before merging
+• Working Split PDF tool
+• Page and page-range selection
+• Browser-generated PDF downloads
+• Correct company name: Northstar Ridge Limited
+• Existing homepage and legal pages retained
 
-The title section now uses the same full container width as the website header,
-so its left edge aligns with the PDFMint logo.
+PRIVACY
+Files used by Preview, Merge and Split are processed locally in the visitor's
+browser. They are not uploaded to a PDFMint server.
 
-Every HTML page references styles.css?v=4 to force a fresh stylesheet request.
-
-UPLOAD
-1. Upload every file in this folder to the root of the existing GitHub repository.
-2. Replace the existing files.
-3. Commit the changes.
+DEPLOYMENT
+1. Extract this ZIP.
+2. Upload every file to the root of the existing GitHub repository.
+3. Replace the existing files and commit the changes.
 4. Wait for Sevalla to redeploy.
-5. Refresh the live page.
+5. Open the live website and hard-refresh once.
 
-No manual editing is required.
+NOTES
+The working tools load the open-source PDF.js and pdf-lib libraries from public
+CDNs. The visitor therefore needs an internet connection when loading the page.
+
+Password-protected or damaged PDF files may not work.
