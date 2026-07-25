@@ -1,32 +1,24 @@
-PDFMINT v1.1 — WORKING BROWSER TOOLS
-====================================
+PDFMINT v1.1.1 — PDF PREVIEW FIX
+================================
 
-This complete website package includes:
+This version fixes the PDF upload/preview problem.
 
-• Working PDF upload and first-page preview
-• Filename, file size and page-count detection
-• Working Merge PDF tool
-• Drag-and-drop multiple PDF selection
-• Reordering and removal before merging
-• Working Split PDF tool
-• Page and page-range selection
-• Browser-generated PDF downloads
-• Correct company name: Northstar Ridge Limited
-• Existing homepage and legal pages retained
+CAUSE
+The homepage accidentally loaded script.js twice:
+1. Once before the PDF workspace HTML existed.
+2. Again after the workspace and PDF libraries loaded.
 
-PRIVACY
-Files used by Preview, Merge and Split are processed locally in the visitor's
-browser. They are not uploaded to a PDFMint server.
+The first copy attached an incomplete upload handler, and the second copy then
+failed because the same JavaScript constants had already been declared.
+
+FIX
+• Removed the early script.js include.
+• Kept one script include at the very end of the page.
+• Updated it to script.js?v=111 to prevent browser caching.
+• All v1.1 browser tools remain included.
+• Company name remains Northstar Ridge Limited.
 
 DEPLOYMENT
-1. Extract this ZIP.
-2. Upload every file to the root of the existing GitHub repository.
-3. Replace the existing files and commit the changes.
-4. Wait for Sevalla to redeploy.
-5. Open the live website and hard-refresh once.
-
-NOTES
-The working tools load the open-source PDF.js and pdf-lib libraries from public
-CDNs. The visitor therefore needs an internet connection when loading the page.
-
-Password-protected or damaged PDF files may not work.
+Replace the existing files in the GitHub repository with all files from this
+folder, commit the change, wait for Sevalla to redeploy, then hard-refresh the
+homepage once.
