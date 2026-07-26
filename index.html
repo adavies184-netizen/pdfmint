@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=11" />
+  <link rel="stylesheet" href="styles.css?v=140" />
 </head>
 <body>
   <header class="site-header">
@@ -197,89 +197,90 @@
     </div>
   </footer>
 
-<div class="pdf-workspace" id="pdf-workspace" hidden>
-    <div class="workspace-backdrop" data-close-workspace></div>
-    <section class="workspace-panel" role="dialog" aria-modal="true" aria-labelledby="workspace-title">
-      <header class="workspace-header">
-        <div>
-          <span class="eyebrow" id="workspace-eyebrow">BROWSER PDF TOOL</span>
-          <h2 id="workspace-title">PDF preview</h2>
-          <p id="workspace-subtitle">Your document is processed locally in this browser.</p>
-        </div>
-        <button class="workspace-close" type="button" data-close-workspace aria-label="Close">×</button>
-      </header>
-
-      <div class="workspace-body">
-        <div class="workspace-alert" id="workspace-alert" hidden></div>
-
-        <section class="workspace-view" id="preview-view">
-          <div class="preview-layout">
-            <div class="preview-stage">
-              <canvas id="pdf-preview-canvas"></canvas>
-              <div class="preview-placeholder" id="preview-placeholder">
-                <span class="preview-placeholder-icon">PDF</span>
-                <strong>Select a PDF to preview</strong>
-                <small>The first page will appear here.</small>
-              </div>
-            </div>
-            <aside class="file-details">
-              <h3>Document details</h3>
-              <dl>
-                <div><dt>Filename</dt><dd id="preview-name">—</dd></div>
-                <div><dt>File size</dt><dd id="preview-size">—</dd></div>
-                <div><dt>Pages</dt><dd id="preview-pages">—</dd></div>
-              </dl>
-              <label class="button button-primary">
-                Choose another PDF
-                <input type="file" id="preview-file-input" accept="application/pdf,.pdf" hidden>
-              </label>
-              <button class="button button-outline" id="open-split-from-preview" type="button">Split this PDF</button>
-            </aside>
-          </div>
-        </section>
-
-        <section class="workspace-view" id="merge-view" hidden>
-          <div class="tool-intro">
-            <div><h3>Combine PDF files</h3><p>Add two or more PDFs, arrange their order, then download one merged document.</p></div>
-            <label class="button button-primary">Add PDF files<input type="file" id="merge-file-input" accept="application/pdf,.pdf" multiple hidden></label>
-          </div>
-          <div class="drop-zone compact-drop-zone" id="merge-drop-zone">
-            Drop multiple PDF files here, or use “Add PDF files”.
-          </div>
-          <div class="merge-list" id="merge-list"></div>
-          <div class="workspace-actions">
-            <span id="merge-summary">No files selected</span>
-            <button class="button button-primary" id="merge-button" type="button" disabled>Merge and download</button>
-          </div>
-        </section>
-
-        <section class="workspace-view" id="split-view" hidden>
-          <div class="tool-intro">
-            <div><h3>Extract selected pages</h3><p>Enter individual pages or ranges, for example: <strong>1-3, 6, 9-11</strong>.</p></div>
-            <label class="button button-primary">Choose PDF<input type="file" id="split-file-input" accept="application/pdf,.pdf" hidden></label>
-          </div>
-          <div class="split-card">
-            <div class="split-file-summary" id="split-file-summary">No PDF selected</div>
-            <label for="split-ranges">Pages to include</label>
-            <input class="text-input" id="split-ranges" type="text" placeholder="1-3, 6, 9-11" autocomplete="off">
-            <small id="split-help">Select a PDF first. PDFMint will show the available page count.</small>
-          </div>
-          <div class="workspace-actions">
-            <span>Pages remain in the order entered.</span>
-            <button class="button button-primary" id="split-button" type="button" disabled>Split and download</button>
-          </div>
-        </section>
+<div class="pdf-workspace app-editor" id="pdf-workspace" hidden>
+  <div class="workspace-backdrop"></div>
+  <section class="desktop-editor" id="preview-view" role="dialog" aria-modal="true">
+    <header class="desktop-editor-header">
+      <div class="desktop-brand"><span class="desktop-brand-mark">+</span><strong>PDF<span>Mint</span></strong></div>
+      <div class="desktop-file"><strong id="preview-name">No PDF selected</strong><small><span id="preview-pages">—</span> pages · <span id="preview-size">—</span></small></div>
+      <div class="desktop-actions">
+        <label class="top-action secondary">Replace PDF<input type="file" id="preview-file-input" accept="application/pdf,.pdf" hidden></label>
+        <button class="top-action primary" id="download-edited-pdf" type="button">Done ✓</button>
       </div>
+    </header>
 
-      <footer class="workspace-footer">
-        <span class="privacy-dot"></span>
-        Files are processed on your device and are not uploaded to PDFMint.
-      </footer>
-    </section>
-  </div>
+    <nav class="desktop-ribbon">
+      <button class="ribbon-tool active" id="select-tool" type="button"><b>↖</b><span>Select</span></button>
+      <button class="ribbon-tool" id="add-text-tool" type="button"><b>T</b><span>Add text</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Edit text</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>⌁</b><span>Sign</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Draw</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>／</b><span>Line</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>T̲</b><span>Highlight</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>▧</b><span>Image</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>♙</b><span>Stamp</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>🔗</b><span>Link</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>◇</b><span>Note</span></button>
+      <span class="ribbon-spacer"></span>
+      <button class="ribbon-tool" id="rotate-page" type="button"><b>↻</b><span>Rotate</span></button>
+      <button class="ribbon-tool danger-ribbon" id="delete-page" type="button"><b>⌫</b><span>Delete</span></button>
+    </nav>
+
+    <div class="desktop-editor-body">
+      <aside class="desktop-thumbnails">
+        <div class="thumbnail-tab-header"><span>⠿</span><strong>Thumbnails</strong></div>
+        <div class="thumbnail-list" id="thumbnail-list"></div>
+      </aside>
+
+      <main class="desktop-document-area" id="document-stage">
+        <div class="document-canvas-wrap" id="document-canvas-wrap">
+          <div class="pdf-page-surface" id="pdf-page-surface">
+            <canvas id="pdf-preview-canvas"></canvas>
+            <div class="annotation-layer" id="annotation-layer"></div>
+          </div>
+          <div class="preview-placeholder" id="preview-placeholder">
+            <span class="preview-placeholder-icon">PDF</span>
+            <strong>Select a PDF to begin</strong>
+            <small>Upload a document from the homepage.</small>
+          </div>
+        </div>
+
+        <div class="floating-page-controls">
+          <span>Page:</span>
+          <button id="page-prev" type="button">‹</button>
+          <label><input id="current-page-input" type="number" min="1" value="1"><span>/ <span id="page-total-label">—</span></span></label>
+          <button id="page-next" type="button">›</button>
+          <i></i>
+          <button id="zoom-out" type="button">−</button>
+          <button id="zoom-reset" type="button">100%</button>
+          <button id="zoom-in" type="button">+</button>
+        </div>
+      </main>
+
+      <aside class="desktop-properties">
+        <div id="properties-empty"><strong>Properties</strong><p>Select a text box to edit its appearance.</p></div>
+        <div class="text-properties-card" id="text-properties-card" hidden>
+          <span class="eyebrow">TEXT</span><h3>Edit text</h3>
+          <label class="inspector-field"><span>Font</span><select id="text-font"><option value="Helvetica">Helvetica</option><option value="TimesRoman">Times</option><option value="Courier">Courier</option></select></label>
+          <label class="inspector-field"><span>Size</span><input id="text-size" type="number" min="8" max="96" value="18"></label>
+          <label class="inspector-field"><span>Colour</span><input id="text-color" type="color" value="#111827"></label>
+          <label class="inspector-field"><span>Opacity</span><input id="text-opacity" type="range" min="20" max="100" value="100"></label>
+          <div class="text-style-row">
+            <button class="style-toggle" id="text-bold" type="button">B</button>
+            <button class="style-toggle" id="text-italic" type="button"><em>I</em></button>
+            <button class="style-toggle" id="text-align-left" type="button">Left</button>
+            <button class="style-toggle" id="text-align-center" type="button">Centre</button>
+          </div>
+          <button class="button button-outline inspector-button danger-outline" id="delete-text" type="button">Delete text box</button>
+        </div>
+      </aside>
+    </div>
+    <div class="workspace-alert" id="workspace-alert" hidden></div>
+  </section>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="script.js?v=111"></script>
+<script src="script.js?v=142"></script>
 </body>
 </html>

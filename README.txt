@@ -1,24 +1,19 @@
-PDFMINT v1.1.1 — PDF PREVIEW FIX
-================================
+PDFMINT v1.4.2 — EDITOR RUNTIME FIX
 
-This version fixes the PDF upload/preview problem.
+This fixes the remaining reason the desktop editor did not open.
 
 CAUSE
-The homepage accidentally loaded script.js twice:
-1. Once before the PDF workspace HTML existed.
-2. Again after the workspace and PDF libraries loaded.
+The redesigned HTML removed several old inspector controls, but script.js still
+accessed those missing elements during page load. JavaScript stopped before the
+homepage upload handler could run.
 
-The first copy attached an incomplete upload handler, and the second copy then
-failed because the same JavaScript constants had already been declared.
-
-FIX
-• Removed the early script.js include.
-• Kept one script include at the very end of the page.
-• Updated it to script.js?v=111 to prevent browser caching.
-• All v1.1 browser tools remain included.
-• Company name remains Northstar Ridge Limited.
+FIXED
+- Removed all required references to deleted inspector controls.
+- Rebuilt updateEditorUi so every layout element is checked safely.
+- Corrected the Add Text helper message container.
+- Preserved the Done button wording after download.
+- Updated script cache version to v142.
 
 DEPLOYMENT
-Replace the existing files in the GitHub repository with all files from this
-folder, commit the change, wait for Sevalla to redeploy, then hard-refresh the
-homepage once.
+Replace all repository files with this package, commit, wait for Sevalla to
+redeploy, and hard-refresh the page.
