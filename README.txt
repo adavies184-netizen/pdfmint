@@ -1,19 +1,40 @@
-PDFMINT v1.4.2 — EDITOR RUNTIME FIX
+PDFMINT v1.8 — ACCESS AND PAYMENT FLOW
 
-This fixes the remaining reason the desktop editor did not open.
+NEW CHECKOUT FLOW
+1. User finishes editing and clicks Done.
+2. User selects PDF format and confirms the filename.
+3. User enters a valid email address, or uses the Google/Apple demonstration
+   buttons.
+4. A full-screen access-plan page opens.
+5. User selects an access type and clicks Continue.
+6. A full payment page opens with:
+   - Card and PayPal tabs
+   - Cardholder, card number, expiry, CVC and postcode fields
+   - Order summary
+   - Selected-plan pricing and renewal disclosure
+   - Document preview
+   - Checkout progress indicator
 
-CAUSE
-The redesigned HTML removed several old inspector controls, but script.js still
-accessed those missing elements during page load. JavaScript stopped before the
-homepage upload handler could run.
+ACCESS OPTIONS INCLUDED
+- 7-day limited access: £0.50, no automatic renewal
+- 7-day full access: £1 today, then £24.90 every four weeks
+- Annual plan: £24.90 per month
 
-FIXED
-- Removed all required references to deleted inspector controls.
-- Rebuilt updateEditorUi so every layout element is checked safely.
-- Corrected the Add Text helper message container.
-- Preserved the Done button wording after download.
-- Updated script cache version to v142.
+PAYMENT STATUS
+This release builds the complete front-end layout only. Card and PayPal buttons
+open a clear demonstration notice. They do not process a payment and do not
+download the PDF.
+
+IMPORTANT
+Before accepting real payments, the following must be added:
+- A secure backend
+- A payment provider
+- Server-created payment sessions
+- Webhook confirmation
+- Subscription and cancellation management
+- Clear consumer disclosures and consent records
+- Download release only after verified payment
 
 DEPLOYMENT
-Replace all repository files with this package, commit, wait for Sevalla to
-redeploy, and hard-refresh the page.
+Replace all files in the GitHub repository with this package, commit, wait for
+Sevalla to redeploy, then hard-refresh the application.

@@ -53,6 +53,52 @@ let splitFile = null;
 let splitPageCount = 0;
 let mergeFiles = [];
 
+const editorHistory = { undo: [], redo: [], restoring: false };
+function cloneEditorState() {
+  return JSON.parse(JSON.stringify({
+    pages: editor.pages,
+    annotations: editor.annotations,
+    selectedIndex: editor.selectedIndex,
+    selectedAnnotationId: editor.selectedAnnotationId
+  }));
+}
+function restoreEditorState(snapshot) {
+  editorHistory.restoring = true;
+  editor.pages = snapshot.pages;
+  editor.annotations = snapshot.annotations;
+  editor.selectedIndex = Math.min(snapshot.selectedIndex, Math.max(0, editor.pages.length - 1));
+  editor.selectedAnnotationId = snapshot.selectedAnnotationId;
+  editorHistory.restoring = false;
+  renderThumbnails().then(() => renderSelectedPage());
+  updateEditorUi();
+updateHistoryButtons();
+  updateHistoryButtons();
+}
+function recordHistory() {
+  if (editorHistory.restoring || !editor.pages.length) return;
+  editorHistory.undo.push(cloneEditorState());
+  if (editorHistory.undo.length > 60) editorHistory.undo.shift();
+  editorHistory.redo = [];
+  updateHistoryButtons();
+}
+function undoEditor() {
+  if (!editorHistory.undo.length) return;
+  editorHistory.redo.push(cloneEditorState());
+  restoreEditorState(editorHistory.undo.pop());
+}
+function redoEditor() {
+  if (!editorHistory.redo.length) return;
+  editorHistory.undo.push(cloneEditorState());
+  restoreEditorState(editorHistory.redo.pop());
+}
+function updateHistoryButtons() {
+  const undo = document.getElementById('undo-tool');
+  const redo = document.getElementById('redo-tool');
+  if (undo) undo.disabled = editorHistory.undo.length === 0;
+  if (redo) redo.disabled = editorHistory.redo.length === 0;
+}
+
+
 function formatBytes(bytes) {
   if (!Number.isFinite(bytes)) return '—';
   const units = ['bytes', 'KB', 'MB', 'GB'];
@@ -123,6 +169,7 @@ async function loadEditorPdf(file) {
       selectedAnnotationId: null,
       canvasMetrics: null
     };
+    editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
     document.getElementById('preview-name').textContent = file.name;
     document.getElementById('preview-size').textContent = formatBytes(file.size);
@@ -147,8 +194,10 @@ function getSelectedAnnotation() {
 }
 function setEditorMode(mode) {
   editor.mode = mode;
-  document.getElementById('select-tool').classList.toggle('active', mode === 'select');
-  document.getElementById('add-text-tool').classList.toggle('active', mode === 'text');
+  const addTextTool = document.getElementById('add-text-tool');
+  if (addTextTool) addTextTool.classList.toggle('active', mode === 'text');
+  const optionsBar = document.getElementById('text-options-bar');
+  if (optionsBar) optionsBar.hidden = mode !== 'text';
   const layer = document.getElementById('annotation-layer');
   layer.classList.toggle('text-mode', mode === 'text');
   layer.classList.toggle('select-mode', mode === 'select');
@@ -193,7 +242,22 @@ function renderAnnotations() {
     el.style.top = `${item.y * metrics.height}px`;
     el.style.width = `${item.w * metrics.width}px`;
     el.style.minHeight = `${item.h * metrics.height}px`;
-    el.style.fontFamily = item.font === 'TimesRoman' ? 'Georgia, serif' : item.font === 'Courier' ? 'Courier New, monospace' : 'Arial, sans-serif';
+    const fontFamilies = {
+      Helvetica: 'Helvetica, Arial, sans-serif',
+      Arial: 'Arial, sans-serif',
+      Verdana: 'Verdana, sans-serif',
+      Tahoma: 'Tahoma, sans-serif',
+      Trebuchet: '"Trebuchet MS", sans-serif',
+      TimesRoman: '"Times New Roman", Times, serif',
+      Georgia: 'Georgia, serif',
+      Garamond: 'Garamond, Georgia, serif',
+      Courier: '"Courier New", monospace',
+      LucidaConsole: '"Lucida Console", monospace',
+      Impact: 'Impact, sans-serif',
+      ComicSans: '"Comic Sans MS", cursive'
+    };
+    el.style.fontFamily = fontFamilies[item.font] || 'Helvetica, Arial, sans-serif';
+    el.style.backgroundColor = item.fillColor || 'transparent';
     el.style.fontSize = `${item.size * metrics.scale}px`;
     el.style.fontWeight = item.bold ? '700' : '400';
     el.style.fontStyle = item.italic ? 'italic' : 'normal';
@@ -220,10 +284,12 @@ function renderAnnotations() {
       if (el.isContentEditable && document.activeElement === el) return;
       startDragAnnotation(event, item, el);
     });
+    el.addEventListener('focus', () => { if (!el.dataset.historyRecorded) { recordHistory(); el.dataset.historyRecorded = '1'; } });
     el.addEventListener('input', () => {
       item.text = Array.from(el.childNodes).filter(node => node !== handle).map(node => node.textContent).join('');
     });
     el.addEventListener('blur', () => {
+      delete el.dataset.historyRecorded;
       item.text = el.innerText.replace(/\n+$/,'');
     });
     handle.addEventListener('mousedown', event => {
@@ -245,6 +311,7 @@ function deselectAnnotation() {
 }
 function startDragAnnotation(event, item) {
   event.preventDefault();
+  recordHistory();
   const metrics = editor.canvasMetrics;
   const startX = event.clientX, startY = event.clientY;
   const startLeft = item.x, startTop = item.y;
@@ -262,6 +329,7 @@ function startDragAnnotation(event, item) {
 }
 function startResizeAnnotation(event, item) {
   event.preventDefault();
+  recordHistory();
   const metrics = editor.canvasMetrics;
   const startX = event.clientX, startY = event.clientY;
   const startW = item.w, startH = item.h;
@@ -278,6 +346,7 @@ function startResizeAnnotation(event, item) {
   window.addEventListener('mouseup', up);
 }
 function addTextAt(clientX, clientY) {
+  recordHistory();
   const layer = document.getElementById('annotation-layer');
   const rect = layer.getBoundingClientRect();
   if (!rect.width || !rect.height) return;
@@ -291,6 +360,7 @@ function addTextAt(clientX, clientY) {
     size: 18,
     font: 'Helvetica',
     color: '#111827',
+    fillColor: 'transparent',
     opacity: 1,
     bold: false,
     italic: false,
@@ -298,7 +368,7 @@ function addTextAt(clientX, clientY) {
   };
   getPageAnnotations(editor.pages[editor.selectedIndex].sourceIndex).push(item);
   editor.selectedAnnotationId = item.id;
-  setEditorMode('select');
+  setEditorMode('text');
   renderAnnotations();
   setTimeout(() => {
     const el = document.querySelector(`.text-annotation[data-id="${item.id}"]`);
@@ -314,21 +384,35 @@ function addTextAt(clientX, clientY) {
   }, 0);
 }
 function syncTextInspector() {
-  const card = document.getElementById('text-properties-card');
   const item = getSelectedAnnotation();
-  card.hidden = !item;
-  const empty = document.getElementById('properties-empty');
-  if (empty) empty.hidden = !!item;
   if (!item) return;
-  document.getElementById('text-font').value = item.font;
-  document.getElementById('text-size').value = item.size;
-  document.getElementById('text-color').value = item.color;
-  document.getElementById('text-opacity').value = Math.round(item.opacity*100);
-  document.getElementById('text-bold').classList.toggle('active', item.bold);
-  document.getElementById('text-italic').classList.toggle('active', item.italic);
-  document.getElementById('text-align-left').classList.toggle('active', item.align === 'left');
-  document.getElementById('text-align-center').classList.toggle('active', item.align === 'center');
+
+  const font = document.getElementById('text-font');
+  const size = document.getElementById('text-size');
+  const colour = document.getElementById('text-color');
+  const fill = document.getElementById('text-fill-color');
+  const opacity = document.getElementById('text-opacity');
+  const opacityValue = document.getElementById('text-opacity-value');
+  const fillSwatch = document.getElementById('fill-swatch');
+
+  if (font) font.value = item.font || 'Helvetica';
+  if (size) size.value = item.size || 18;
+  if (colour) colour.value = item.color || '#111827';
+
+  const fillValue = item.fillColor && item.fillColor !== 'transparent' ? item.fillColor : '#ffffff';
+  if (fill) fill.value = fillValue;
+  if (fillSwatch) fillSwatch.style.background = item.fillColor || 'transparent';
+
+  const opacityPercent = Math.round((item.opacity ?? 1) * 100);
+  if (opacity) opacity.value = opacityPercent;
+  if (opacityValue) opacityValue.textContent = `${opacityPercent}%`;
+
+  ['left', 'center', 'right'].forEach(alignment => {
+    const button = document.getElementById(`text-align-${alignment}`);
+    if (button) button.classList.toggle('active', item.align === alignment);
+  });
 }
+
 function updateSelectedText(mutator) {
   const item = getSelectedAnnotation();
   if (!item) return;
@@ -453,6 +537,7 @@ async function renderThumbnails() {
       const to = Number(item.dataset.index);
       item.classList.remove('drag-target');
       if (Number.isInteger(from) && from !== to) {
+        recordHistory();
         const [moved] = editor.pages.splice(from, 1);
         editor.pages.splice(to, 0, moved);
         editor.selectedIndex = to;
@@ -490,6 +575,7 @@ async function selectRelative(delta) {
 }
 async function rotateSelected() {
   if (!editor.pages.length) return;
+  recordHistory();
   editor.pages[editor.selectedIndex].rotation =
     (editor.pages[editor.selectedIndex].rotation + 90) % 360;
   await renderThumbnails();
@@ -498,6 +584,7 @@ async function rotateSelected() {
 }
 async function deleteSelected() {
   if (editor.pages.length <= 1) return showAlert('A PDF must contain at least one page.');
+  recordHistory();
   editor.pages.splice(editor.selectedIndex, 1);
   editor.selectedIndex = Math.min(editor.selectedIndex, editor.pages.length - 1);
   await renderThumbnails();
@@ -508,6 +595,7 @@ async function moveSelected(delta) {
   const from = editor.selectedIndex;
   const to = from + delta;
   if (to < 0 || to >= editor.pages.length) return;
+  recordHistory();
   [editor.pages[from], editor.pages[to]] = [editor.pages[to], editor.pages[from]];
   editor.selectedIndex = to;
   await renderThumbnails();
@@ -539,111 +627,374 @@ if (rotateButton) rotateButton.addEventListener('click', rotateSelected);
 if (deletePageButton) deletePageButton.addEventListener('click', deleteSelected);
 
 
-document.getElementById('select-tool').addEventListener('click', () => setEditorMode('select'));
+const undoTool = document.getElementById('undo-tool');
+const redoTool = document.getElementById('redo-tool');
+if (undoTool) undoTool.addEventListener('click', undoEditor);
+if (redoTool) redoTool.addEventListener('click', redoEditor);
+document.addEventListener('keydown', event => {
+  if (workspace.hidden) return;
+  const modifier = event.ctrlKey || event.metaKey;
+  if (modifier && event.key.toLowerCase() === 'z') {
+    event.preventDefault();
+    if (event.shiftKey) redoEditor(); else undoEditor();
+  } else if (modifier && event.key.toLowerCase() === 'y') {
+    event.preventDefault(); redoEditor();
+  }
+});
 document.getElementById('add-text-tool').addEventListener('click', () => setEditorMode('text'));
 document.getElementById('annotation-layer').addEventListener('mousedown', event => {
   if (event.target !== event.currentTarget) return;
   if (editor.mode === 'text') addTextAt(event.clientX, event.clientY);
   else deselectAnnotation();
 });
-document.getElementById('text-font').addEventListener('change', e => updateSelectedText(item => item.font = e.target.value));
-document.getElementById('text-size').addEventListener('input', e => updateSelectedText(item => item.size = Math.max(8, Math.min(96, Number(e.target.value)||18))));
-document.getElementById('text-color').addEventListener('input', e => updateSelectedText(item => item.color = e.target.value));
-document.getElementById('text-opacity').addEventListener('input', e => updateSelectedText(item => item.opacity = Number(e.target.value)/100));
-document.getElementById('text-bold').addEventListener('click', () => updateSelectedText(item => item.bold = !item.bold));
-document.getElementById('text-italic').addEventListener('click', () => updateSelectedText(item => item.italic = !item.italic));
-document.getElementById('text-align-left').addEventListener('click', () => updateSelectedText(item => item.align = 'left'));
-document.getElementById('text-align-center').addEventListener('click', () => updateSelectedText(item => item.align = 'center'));
-document.getElementById('delete-text').addEventListener('click', () => {
-  const item = getSelectedAnnotation();
-  if (!item) return;
-  const page = editor.pages[editor.selectedIndex];
-  editor.annotations[String(page.sourceIndex)] = getPageAnnotations(page.sourceIndex).filter(x => x.id !== item.id);
-  editor.selectedAnnotationId = null;
-  renderAnnotations();
+document.getElementById('text-font').addEventListener('change', e => {
+  recordHistory();
+  updateSelectedText(item => item.font = e.target.value);
+});
+document.getElementById('text-size').addEventListener('change', e => {
+  recordHistory();
+  updateSelectedText(item => item.size = Math.max(8, Math.min(96, Number(e.target.value) || 18)));
+});
+document.getElementById('text-color').addEventListener('input', e => {
+  updateSelectedText(item => item.color = e.target.value);
+});
+document.getElementById('text-color').addEventListener('change', recordHistory);
+document.getElementById('text-fill-color').addEventListener('input', e => {
+  const swatch = document.getElementById('fill-swatch');
+  if (swatch) swatch.style.background = e.target.value;
+  updateSelectedText(item => item.fillColor = e.target.value);
+});
+document.getElementById('text-fill-color').addEventListener('change', recordHistory);
+document.getElementById('text-opacity').addEventListener('input', e => {
+  const value = Number(e.target.value);
+  document.getElementById('text-opacity-value').textContent = `${value}%`;
+  updateSelectedText(item => item.opacity = value / 100);
+});
+document.getElementById('text-opacity').addEventListener('change', recordHistory);
+document.getElementById('text-align-left').addEventListener('click', () => {
+  recordHistory();
+  updateSelectedText(item => item.align = 'left');
+});
+document.getElementById('text-align-center').addEventListener('click', () => {
+  recordHistory();
+  updateSelectedText(item => item.align = 'center');
+});
+document.getElementById('text-align-right').addEventListener('click', () => {
+  recordHistory();
+  updateSelectedText(item => item.align = 'right');
 });
 
-document.getElementById('download-edited-pdf').addEventListener('click', async event => {
+
+let preparedExportBytes = null;
+let preparedExportFilename = '';
+
+function openFormatModal() {
   if (!editor.pages.length) return;
-  const button = event.currentTarget;
-  button.disabled = true; button.textContent = 'Preparing…';
-  try {
-    const source = await PDFLib.PDFDocument.load(editor.originalBytes.slice());
-    const output = await PDFLib.PDFDocument.create();
-    const fontCache = {};
-    async function getFont(item) {
-      let key = item.font;
-      if (item.font === 'Helvetica' && item.bold && item.italic) key = 'HelveticaBoldOblique';
-      else if (item.font === 'Helvetica' && item.bold) key = 'HelveticaBold';
-      else if (item.font === 'Helvetica' && item.italic) key = 'HelveticaOblique';
-      else if (item.font === 'TimesRoman' && item.bold && item.italic) key = 'TimesRomanBoldItalic';
-      else if (item.font === 'TimesRoman' && item.bold) key = 'TimesRomanBold';
-      else if (item.font === 'TimesRoman' && item.italic) key = 'TimesRomanItalic';
-      else if (item.font === 'Courier' && item.bold && item.italic) key = 'CourierBoldOblique';
-      else if (item.font === 'Courier' && item.bold) key = 'CourierBold';
-      else if (item.font === 'Courier' && item.italic) key = 'CourierOblique';
-      if (!fontCache[key]) fontCache[key] = await output.embedFont(PDFLib.StandardFonts[key]);
-      return fontCache[key];
-    }
+  preparedExportBytes = null;
+  const originalBase = editor.file.name.replace(/\.pdf$/i, '');
+  document.getElementById('export-filename').value = originalBase;
+  document.getElementById('format-modal').hidden = false;
+}
 
-    for (const state of editor.pages) {
-      const [page] = await output.copyPages(source, [state.sourceIndex]);
-      const originalRotation = page.getRotation().angle || 0;
-      page.setRotation(PDFLib.degrees((originalRotation + state.rotation) % 360));
-      output.addPage(page);
+function closeFormatModal() {
+  document.getElementById('format-modal').hidden = true;
+}
 
-      const annotations = getPageAnnotations(state.sourceIndex);
-      const {width, height} = page.getSize();
+function openEmailModal() {
+  closeFormatModal();
+  document.getElementById('email-error').hidden = true;
+  document.getElementById('download-email').classList.remove('invalid');
+  document.getElementById('email-modal').hidden = false;
+  setTimeout(() => document.getElementById('download-email').focus(), 50);
+}
 
-      for (const item of annotations) {
-        const font = await getFont(item);
-        const rgb = hexToRgb01(item.color);
-        const fontSize = item.size;
-        const lineHeight = fontSize * 1.15;
-        const maxWidth = Math.max(10, item.w * width);
-        const startX = item.x * width;
-        const topY = height - item.y * height;
-        const rawLines = String(item.text || '').split(/\r?\n/);
-        const lines = [];
-        for (const raw of rawLines) {
-          const words = raw.split(/\s+/);
-          let line = '';
-          for (const word of words) {
-            const test = line ? `${line} ${word}` : word;
-            if (font.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
-              lines.push(line);
-              line = word;
-            } else {
-              line = test;
-            }
-          }
-          lines.push(line || '');
-        }
-        lines.forEach((line, idx) => {
-          let x = startX;
-          if (item.align === 'center') {
-            x += Math.max(0, (maxWidth - font.widthOfTextAtSize(line, fontSize))/2);
-          }
-          page.drawText(line, {
-            x,
-            y: topY - fontSize - idx * lineHeight,
-            size: fontSize,
-            font,
-            color: PDFLib.rgb(rgb.r, rgb.g, rgb.b),
-            opacity: item.opacity
-          });
+function closeEmailModal() {
+  document.getElementById('email-modal').hidden = true;
+}
+
+async function createEditedPdfBytes() {
+  const source = await PDFLib.PDFDocument.load(editor.originalBytes.slice());
+  const output = await PDFLib.PDFDocument.create();
+  const fontCache = {};
+
+  async function getFont(item) {
+    const sansFonts = ['Helvetica','Arial','Verdana','Tahoma','Trebuchet','Impact','ComicSans'];
+    const serifFonts = ['TimesRoman','Georgia','Garamond'];
+    const monoFonts = ['Courier','LucidaConsole'];
+    let key = sansFonts.includes(item.font) ? 'Helvetica'
+      : serifFonts.includes(item.font) ? 'TimesRoman'
+      : monoFonts.includes(item.font) ? 'Courier'
+      : 'Helvetica';
+
+    if (key === 'Helvetica' && item.bold && item.italic) key = 'HelveticaBoldOblique';
+    else if (key === 'Helvetica' && item.bold) key = 'HelveticaBold';
+    else if (key === 'Helvetica' && item.italic) key = 'HelveticaOblique';
+    else if (key === 'TimesRoman' && item.bold && item.italic) key = 'TimesRomanBoldItalic';
+    else if (key === 'TimesRoman' && item.bold) key = 'TimesRomanBold';
+    else if (key === 'TimesRoman' && item.italic) key = 'TimesRomanItalic';
+    else if (key === 'Courier' && item.bold && item.italic) key = 'CourierBoldOblique';
+    else if (key === 'Courier' && item.bold) key = 'CourierBold';
+    else if (key === 'Courier' && item.italic) key = 'CourierOblique';
+
+    if (!fontCache[key]) fontCache[key] = await output.embedFont(PDFLib.StandardFonts[key]);
+    return fontCache[key];
+  }
+
+  for (const state of editor.pages) {
+    const [page] = await output.copyPages(source, [state.sourceIndex]);
+    const originalRotation = page.getRotation().angle || 0;
+    page.setRotation(PDFLib.degrees((originalRotation + state.rotation) % 360));
+    output.addPage(page);
+
+    const annotations = getPageAnnotations(state.sourceIndex);
+    const {width, height} = page.getSize();
+
+    for (const item of annotations) {
+      const font = await getFont(item);
+      const rgb = hexToRgb01(item.color);
+      const fontSize = item.size;
+      const lineHeight = fontSize * 1.15;
+      const maxWidth = Math.max(10, item.w * width);
+      const startX = item.x * width;
+      const topY = height - item.y * height;
+
+      if (item.fillColor && item.fillColor !== 'transparent') {
+        const fillRgb = hexToRgb01(item.fillColor);
+        page.drawRectangle({
+          x: startX,
+          y: height - (item.y + item.h) * height,
+          width: item.w * width,
+          height: item.h * height,
+          color: PDFLib.rgb(fillRgb.r, fillRgb.g, fillRgb.b),
+          opacity: item.opacity
         });
       }
+
+      const rawLines = String(item.text || '').split(/\r?\n/);
+      const lines = [];
+      for (const raw of rawLines) {
+        const words = raw.split(/\s+/);
+        let line = '';
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (font.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = test;
+          }
+        }
+        lines.push(line || '');
+      }
+
+      lines.forEach((line, idx) => {
+        let x = startX;
+        if (item.align === 'center') {
+          x += Math.max(0, (maxWidth - font.widthOfTextAtSize(line, fontSize)) / 2);
+        } else if (item.align === 'right') {
+          x += Math.max(0, maxWidth - font.widthOfTextAtSize(line, fontSize));
+        }
+
+        page.drawText(line, {
+          x,
+          y: topY - fontSize - idx * lineHeight,
+          size: fontSize,
+          font,
+          color: PDFLib.rgb(rgb.r, rgb.g, rgb.b),
+          opacity: item.opacity
+        });
+      });
     }
-    const bytes = await output.save();
-    const base = editor.file.name.replace(/\.pdf$/i, '');
-    downloadPdf(bytes, `${base}-edited.pdf`);
+  }
+
+  return output.save();
+}
+
+document.getElementById('download-edited-pdf').addEventListener('click', openFormatModal);
+
+document.querySelectorAll('[data-close-export]').forEach(button => {
+  button.addEventListener('click', closeFormatModal);
+});
+document.querySelectorAll('[data-close-email]').forEach(button => {
+  button.addEventListener('click', closeEmailModal);
+});
+
+document.getElementById('continue-to-email').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  const rawName = document.getElementById('export-filename').value.trim();
+  const safeName = (rawName || editor.file.name.replace(/\.pdf$/i, ''))
+    .replace(/[\\/:*?"<>|]+/g, '-')
+    .replace(/\.+$/g, '')
+    .trim();
+
+  preparedExportFilename = `${safeName || 'pdfmint-document'}.pdf`;
+  button.disabled = true;
+  button.textContent = 'Preparing…';
+
+  try {
+    preparedExportBytes = await createEditedPdfBytes();
+    openEmailModal();
   } catch (error) {
-    showAlert('PDFMint could not create the edited PDF.');
+    showAlert('PDFMint could not prepare this PDF.');
   } finally {
-    button.disabled = false; button.textContent = 'Done ✓';
+    button.disabled = false;
+    button.textContent = 'Download';
   }
 });
+
+
+let selectedAccessPlan = {
+  value: 'full',
+  name: '7-day full access',
+  price: 1.00,
+  disclosure: 'Renews at £24.90 every four weeks after seven days unless cancelled beforehand.'
+};
+
+function formatPounds(value) {
+  return new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP'}).format(value);
+}
+
+async function renderCheckoutPreview(canvasId) {
+  const canvas = document.getElementById(canvasId);
+  if (!canvas || !editor.pdfjs || !editor.pages.length) return;
+
+  const state = editor.pages[0];
+  const page = await editor.pdfjs.getPage(state.sourceIndex + 1);
+  const base = page.getViewport({scale: 1, rotation: state.rotation});
+  const targetWidth = canvasId === 'plan-preview-canvas' ? 430 : 70;
+  const viewport = page.getViewport({scale: targetWidth / base.width, rotation: state.rotation});
+  canvas.width = Math.floor(viewport.width);
+  canvas.height = Math.floor(viewport.height);
+  await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+}
+
+function closeEditorCheckoutOverlays() {
+  closeEmailModal();
+  closeFormatModal();
+}
+
+async function openAccessPage() {
+  closeEditorCheckoutOverlays();
+  document.getElementById('access-page').hidden = false;
+  await renderCheckoutPreview('plan-preview-canvas');
+}
+
+function closeAccessPage() {
+  document.getElementById('access-page').hidden = true;
+}
+
+async function openPaymentPage() {
+  closeAccessPage();
+
+  const checked = document.querySelector('input[name="access-plan"]:checked');
+  const option = checked.closest('.plan-option');
+  const planName = option.querySelector('.plan-copy strong').textContent;
+  const price = Number(checked.dataset.price);
+
+  let disclosure = 'One-time access with no automatic renewal.';
+  if (checked.value === 'full') disclosure = 'Renews at £24.90 every four weeks after seven days unless cancelled beforehand.';
+  if (checked.value === 'annual') disclosure = 'Billed £24.90 monthly until cancelled.';
+
+  selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
+
+  document.getElementById('summary-plan-name').textContent = planName;
+  document.getElementById('summary-plan-price').textContent = formatPounds(price);
+  document.getElementById('summary-due-today').textContent = formatPounds(price);
+  document.getElementById('summary-total').textContent = formatPounds(price);
+  document.getElementById('summary-renewal').textContent = disclosure;
+  document.getElementById('summary-filename').textContent = preparedExportFilename || editor.file.name;
+
+  document.getElementById('payment-page').hidden = false;
+  await renderCheckoutPreview('payment-preview-canvas');
+}
+
+function closePaymentPage() {
+  document.getElementById('payment-page').hidden = true;
+}
+
+document.querySelectorAll('input[name="access-plan"]').forEach(input => {
+  input.addEventListener('change', event => {
+    document.querySelectorAll('.plan-option').forEach(option => option.classList.remove('selected'));
+    const option = event.currentTarget.closest('.plan-option');
+    option.classList.add('selected');
+
+    const disclosure = document.getElementById('plan-disclosure');
+    if (event.currentTarget.value === 'limited') {
+      disclosure.textContent = 'Seven-day limited access costs £0.50 today and applies to this document only. No automatic renewal.';
+    } else if (event.currentTarget.value === 'annual') {
+      disclosure.textContent = 'Annual access is billed at £24.90 per month until cancelled.';
+    } else {
+      disclosure.textContent = 'Seven-day full access costs £1 today. Unless cancelled, it renews at £24.90 every four weeks after the trial. Cancel at any time before renewal.';
+    }
+  });
+});
+
+document.getElementById('plan-continue').addEventListener('click', openPaymentPage);
+document.getElementById('back-to-plans').addEventListener('click', () => {
+  closePaymentPage();
+  document.getElementById('access-page').hidden = false;
+});
+
+document.querySelectorAll('.payment-method').forEach(button => {
+  button.addEventListener('click', () => {
+    document.querySelectorAll('.payment-method').forEach(item => item.classList.remove('active'));
+    button.classList.add('active');
+    const isCard = button.dataset.paymentMethod === 'card';
+    document.getElementById('card-payment-panel').hidden = !isCard;
+    document.getElementById('paypal-payment-panel').hidden = isCard;
+  });
+});
+
+function openDemoPaymentNotice() {
+  document.getElementById('demo-payment-modal').hidden = false;
+}
+document.getElementById('mock-pay-button').addEventListener('click', openDemoPaymentNotice);
+document.getElementById('mock-paypal-button').addEventListener('click', openDemoPaymentNotice);
+document.getElementById('close-demo-payment').addEventListener('click', () => {
+  document.getElementById('demo-payment-modal').hidden = true;
+});
+document.getElementById('return-to-payment').addEventListener('click', () => {
+  document.getElementById('demo-payment-modal').hidden = true;
+});
+
+document.getElementById('final-download').addEventListener('click', () => {
+  const emailInput = document.getElementById('download-email');
+  const error = document.getElementById('email-error');
+  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim());
+
+  if (!valid) {
+    emailInput.classList.add('invalid');
+    error.hidden = false;
+    emailInput.focus();
+    return;
+  }
+
+  emailInput.classList.remove('invalid');
+  error.hidden = true;
+
+  if (!preparedExportBytes) {
+    showAlert('The document is no longer prepared. Please click Done again.');
+    closeEmailModal();
+    return;
+  }
+
+  openAccessPage();
+});
+
+document.getElementById('download-email').addEventListener('input', event => {
+  event.currentTarget.classList.remove('invalid');
+  document.getElementById('email-error').hidden = true;
+});
+
+function showOAuthSetupMessage(provider) {
+  const error = document.getElementById('email-error');
+  error.textContent = `${provider} sign-in requires the ${provider} OAuth connection. Email download is available now.`;
+  error.hidden = false;
+}
+
+document.getElementById('continue-google').addEventListener('click', openAccessPage);
+document.getElementById('continue-apple').addEventListener('click', openAccessPage);
+
 
 const heroInput = document.getElementById('file-input');
 const heroCard = document.getElementById('upload-card');

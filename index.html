@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=140" />
+  <link rel="stylesheet" href="styles.css?v=180" />
 </head>
 <body>
   <header class="site-header">
@@ -209,22 +209,64 @@
       </div>
     </header>
 
-    <nav class="desktop-ribbon">
-      <button class="ribbon-tool active" id="select-tool" type="button"><b>↖</b><span>Select</span></button>
+    <nav class="desktop-ribbon" aria-label="PDF editing tools">
+      <button class="ribbon-tool history-tool" id="undo-tool" type="button" disabled><b>↶</b><span>Undo</span></button>
+      <button class="ribbon-tool history-tool" id="redo-tool" type="button" disabled><b>↷</b><span>Redo</span></button>
       <button class="ribbon-tool" id="add-text-tool" type="button"><b>T</b><span>Add text</span></button>
       <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Edit text</span></button>
       <button class="ribbon-tool" type="button" disabled><b>⌁</b><span>Sign</span></button>
       <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Draw</span></button>
       <button class="ribbon-tool" type="button" disabled><b>／</b><span>Line</span></button>
-      <button class="ribbon-tool" type="button" disabled><b>T̲</b><span>Highlight</span></button>
+      <button class="ribbon-tool" type="button" disabled><b>T̲</b><span>Text highlight</span></button>
       <button class="ribbon-tool" type="button" disabled><b>▧</b><span>Image</span></button>
       <button class="ribbon-tool" type="button" disabled><b>♙</b><span>Stamp</span></button>
       <button class="ribbon-tool" type="button" disabled><b>🔗</b><span>Link</span></button>
       <button class="ribbon-tool" type="button" disabled><b>◇</b><span>Note</span></button>
-      <span class="ribbon-spacer"></span>
-      <button class="ribbon-tool" id="rotate-page" type="button"><b>↻</b><span>Rotate</span></button>
-      <button class="ribbon-tool danger-ribbon" id="delete-page" type="button"><b>⌫</b><span>Delete</span></button>
     </nav>
+
+    <div class="text-options-bar" id="text-options-bar" hidden aria-label="Add text options">
+      <label class="text-option colour-option" title="Font colour">
+        <span class="option-icon">T</span>
+        <input id="text-color" type="color" value="#111827" aria-label="Font colour">
+        <small>Font colour</small>
+      </label>
+      <label class="text-option colour-option" title="Fill colour">
+        <span class="fill-swatch" id="fill-swatch"></span>
+        <input id="text-fill-color" type="color" value="#ffffff" aria-label="Fill colour">
+        <small>Fill colour</small>
+      </label>
+      <label class="text-option opacity-option">
+        <span class="option-label">Opacity</span>
+        <input id="text-opacity" type="range" min="20" max="100" value="100">
+        <output id="text-opacity-value">100%</output>
+      </label>
+      <label class="text-option select-option">
+        <span class="option-label">Font</span>
+        <select id="text-font">
+          <option value="Helvetica">Helvetica</option>
+          <option value="Arial">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="Trebuchet">Trebuchet MS</option>
+          <option value="TimesRoman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Garamond">Garamond</option>
+          <option value="Courier">Courier New</option>
+          <option value="LucidaConsole">Lucida Console</option>
+          <option value="Impact">Impact</option>
+          <option value="ComicSans">Comic Sans MS</option>
+        </select>
+      </label>
+      <label class="text-option size-option">
+        <span class="option-label">Size</span>
+        <input id="text-size" type="number" min="8" max="96" value="18">
+      </label>
+      <div class="text-option alignment-option" role="group" aria-label="Text alignment">
+        <button class="alignment-button align-left active" id="text-align-left" type="button" title="Align left"><span></span><span></span><span></span></button>
+        <button class="alignment-button align-centre" id="text-align-center" type="button" title="Align centre"><span></span><span></span><span></span></button>
+        <button class="alignment-button align-right" id="text-align-right" type="button" title="Align right"><span></span><span></span><span></span></button>
+      </div>
+    </div>
 
     <div class="desktop-editor-body">
       <aside class="desktop-thumbnails">
@@ -257,30 +299,333 @@
         </div>
       </main>
 
-      <aside class="desktop-properties">
-        <div id="properties-empty"><strong>Properties</strong><p>Select a text box to edit its appearance.</p></div>
-        <div class="text-properties-card" id="text-properties-card" hidden>
-          <span class="eyebrow">TEXT</span><h3>Edit text</h3>
-          <label class="inspector-field"><span>Font</span><select id="text-font"><option value="Helvetica">Helvetica</option><option value="TimesRoman">Times</option><option value="Courier">Courier</option></select></label>
-          <label class="inspector-field"><span>Size</span><input id="text-size" type="number" min="8" max="96" value="18"></label>
-          <label class="inspector-field"><span>Colour</span><input id="text-color" type="color" value="#111827"></label>
-          <label class="inspector-field"><span>Opacity</span><input id="text-opacity" type="range" min="20" max="100" value="100"></label>
-          <div class="text-style-row">
-            <button class="style-toggle" id="text-bold" type="button">B</button>
-            <button class="style-toggle" id="text-italic" type="button"><em>I</em></button>
-            <button class="style-toggle" id="text-align-left" type="button">Left</button>
-            <button class="style-toggle" id="text-align-center" type="button">Centre</button>
-          </div>
-          <button class="button button-outline inspector-button danger-outline" id="delete-text" type="button">Delete text box</button>
-        </div>
-      </aside>
     </div>
     <div class="workspace-alert" id="workspace-alert" hidden></div>
   </section>
 </div>
 
+  <div class="export-modal-layer" id="format-modal" hidden>
+    <div class="export-modal-backdrop"></div>
+    <section class="export-modal format-modal" role="dialog" aria-modal="true" aria-labelledby="format-modal-title">
+      <button class="export-modal-close" type="button" data-close-export aria-label="Close">×</button>
+      <div class="export-modal-hero">
+        <div>
+          <span class="export-kicker">READY TO EXPORT</span>
+          <h2>Awesome<br>job!</h2>
+        </div>
+        <div class="export-illustration" aria-hidden="true">
+          <span class="rocket">▲</span>
+          <span class="gear gear-one">⚙</span>
+          <span class="gear gear-two">⚙</span>
+          <span class="spark">✦</span>
+        </div>
+      </div>
+      <div class="export-modal-content">
+        <h3 id="format-modal-title">Your document is being prepared</h3>
+        <p class="export-intro">Download as:</p>
+
+        <div class="format-grid" id="format-grid">
+          <label class="format-choice active">
+            <input type="radio" name="export-format" value="pdf" checked>
+            <span class="format-radio"></span>
+            <span class="format-icon pdf-icon">PDF</span>
+            <span class="format-name">PDF</span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="docx" disabled>
+            <span class="format-radio"></span><span class="format-icon doc-icon">DOCX</span><span class="format-name">DOCX<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="doc" disabled>
+            <span class="format-radio"></span><span class="format-icon doc-icon">DOC</span><span class="format-name">DOC<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="ppt" disabled>
+            <span class="format-radio"></span><span class="format-icon ppt-icon">PPT</span><span class="format-name">PPT<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="pptx" disabled>
+            <span class="format-radio"></span><span class="format-icon ppt-icon">PPTX</span><span class="format-name">PPTX<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="jpg" disabled>
+            <span class="format-radio"></span><span class="format-icon image-icon">JPG</span><span class="format-name">JPG<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="png" disabled>
+            <span class="format-radio"></span><span class="format-icon image-icon">PNG</span><span class="format-name">PNG<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="txt" disabled>
+            <span class="format-radio"></span><span class="format-icon txt-icon">TXT</span><span class="format-name">TXT<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="xlsx" disabled>
+            <span class="format-radio"></span><span class="format-icon sheet-icon">XLSX</span><span class="format-name">XLSX<small>Soon</small></span>
+          </label>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="xls" disabled>
+            <span class="format-radio"></span><span class="format-icon sheet-icon">XLS</span><span class="format-name">XLS<small>Soon</small></span>
+          </label>
+        </div>
+
+        <label class="export-filename-label">
+          <span>File name:</span>
+          <div class="filename-field">
+            <input id="export-filename" type="text" autocomplete="off">
+            <span id="export-extension">.pdf</span>
+          </div>
+        </label>
+
+        <div class="export-actions">
+          <button class="export-button secondary" type="button" data-close-export>Cancel</button>
+          <button class="export-button primary" id="continue-to-email" type="button">Download</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="export-modal-layer" id="email-modal" hidden>
+    <div class="export-modal-backdrop"></div>
+    <section class="export-modal email-modal" role="dialog" aria-modal="true" aria-labelledby="email-modal-title">
+      <button class="export-modal-close" type="button" data-close-email aria-label="Close">×</button>
+      <div class="email-modal-content">
+        <h2 id="email-modal-title">Use your email to continue</h2>
+
+        <button class="social-login-button" id="continue-google" type="button">
+          <span class="google-mark">G</span> Continue with Google
+        </button>
+        <button class="social-login-button" id="continue-apple" type="button">
+          <span class="apple-mark">●</span> Continue with Apple
+        </button>
+
+        <div class="email-divider"><span>OR</span></div>
+
+        <label class="email-field">
+          <span>Email</span>
+          <input id="download-email" type="email" placeholder="email@example.com" autocomplete="email">
+        </label>
+        <p class="email-error" id="email-error" hidden>Please enter a valid email address.</p>
+
+        <button class="final-download-button" id="final-download" type="button">Download</button>
+
+        <p class="login-copy">Already have an account? <button type="button" class="text-link-button">Log in</button></p>
+        <p class="terms-copy">
+          By clicking <strong>Download</strong>, you agree to the
+          <a href="terms-of-use.html" target="_blank">Terms of Service</a>,
+          <a href="subscription-policy.html" target="_blank">Subscription Terms</a>,
+          <a href="privacy-policy.html" target="_blank">Privacy Policy</a>, and
+          <a href="cookie-policy.html" target="_blank">Cookie Policy</a>.
+        </p>
+      </div>
+    </section>
+  </div>
+
+  <div class="checkout-layer" id="access-page" hidden>
+    <section class="checkout-page" aria-labelledby="access-title">
+      <header class="checkout-header">
+        <div class="checkout-brand">
+          <span class="checkout-brand-mark">+</span>
+          <strong>PDF<span>Mint</span></strong>
+        </div>
+        <div class="checkout-progress" aria-label="Checkout progress">
+          <div class="progress-step complete"><span>✓</span><small>Document filled in</small></div>
+          <i></i>
+          <div class="progress-step current"><span>2</span><small>Plan selected</small></div>
+          <i></i>
+          <div class="progress-step"><span>3</span><small>Payment</small></div>
+          <i></i>
+          <div class="progress-step"><span>4</span><small>Completed</small></div>
+        </div>
+      </header>
+
+      <main class="checkout-main">
+        <h1 id="access-title">Select access to download your document</h1>
+
+        <div class="access-layout">
+          <section class="document-ready-card">
+            <div class="document-preview-frame">
+              <canvas id="plan-preview-canvas"></canvas>
+              <span class="preview-pdf-badge">PDF</span>
+            </div>
+            <div class="ready-status"><strong>Done!</strong><span>Ready for download</span></div>
+          </section>
+
+          <section class="plans-panel">
+            <button class="checkout-continue-button" id="plan-continue" type="button">Continue</button>
+
+            <div class="plan-options" role="radiogroup" aria-label="Access plans">
+              <label class="plan-option">
+                <input type="radio" name="access-plan" value="limited" data-price="0.50">
+                <span class="plan-check"></span>
+                <span class="plan-copy"><strong>7-day limited access</strong><small>Edit and download this document</small></span>
+                <span class="plan-price">£0.50</span>
+              </label>
+
+              <label class="plan-option selected recommended">
+                <input type="radio" name="access-plan" value="full" data-price="1.00" checked>
+                <span class="plan-check"></span>
+                <span class="plan-copy"><strong>7-day full access</strong><small>Use every PDFMint tool for seven days</small></span>
+                <span class="plan-price">£1</span>
+                <span class="recommended-ribbon">Recommended</span>
+              </label>
+
+              <label class="plan-option">
+                <input type="radio" name="access-plan" value="annual" data-price="24.90">
+                <span class="plan-check"></span>
+                <span class="plan-copy"><strong>Annual plan</strong><small>Unlimited access, billed monthly</small></span>
+                <span class="plan-price">£24.90<span>/month</span></span>
+              </label>
+            </div>
+
+            <div class="plan-benefits">
+              <div><span>✓</span> Fill, edit and save all your PDFs</div>
+              <div><span>✓</span> Split or merge documents in seconds</div>
+              <div><span>✓</span> Access your files on any device</div>
+              <div><span>✓</span> Convert PDFs to and from common formats</div>
+              <div><span>✓</span> Sign documents quickly and securely</div>
+              <div><span>✓</span> Add text, images and fillable fields</div>
+            </div>
+
+            <div class="plan-disclosure" id="plan-disclosure">
+              Seven-day full access costs £1 today. Unless cancelled, it renews at £24.90 every four weeks after the trial. Cancel at any time before renewal.
+            </div>
+          </section>
+        </div>
+
+        <section class="checkout-reviews">
+          <h2>What PDFMint users are saying</h2>
+          <div class="checkout-review-grid">
+            <article><div class="review-stars">★★★★★</div><strong>Simple and quick to use</strong><p>The editor made updating my document straightforward and the layout was easy to understand.</p><small>Laura M.</small></article>
+            <article><div class="review-stars">★★★★★</div><strong>Exactly what I needed</strong><p>I added text, rearranged a page and prepared the final PDF without installing any software.</p><small>Daniel R.</small></article>
+            <article><div class="review-stars">★★★★★</div><strong>A polished PDF editor</strong><p>Everything worked in my browser and the finished document looked professional.</p><small>Helen C.</small></article>
+          </div>
+        </section>
+      </main>
+
+      <footer class="checkout-footer">
+        <p>© 2026 Northstar Ridge Limited. All rights reserved.</p>
+        <nav><a href="privacy-policy.html">Privacy Policy</a><a href="terms-of-use.html">Terms of Use</a><a href="cookie-policy.html">Cookie Policy</a><a href="subscription-policy.html">Subscription Policy</a></nav>
+        <p>PDFMint is an independent document service and is not affiliated with any government authority.</p>
+        <div class="payment-brand-row"><strong>Mastercard</strong><strong>VISA</strong><strong>PayPal</strong><strong>AMEX</strong><strong>Secure payments</strong></div>
+      </footer>
+    </section>
+  </div>
+
+  <div class="checkout-layer" id="payment-page" hidden>
+    <section class="checkout-page" aria-labelledby="payment-title">
+      <header class="checkout-header">
+        <div class="checkout-brand">
+          <span class="checkout-brand-mark">+</span>
+          <strong>PDF<span>Mint</span></strong>
+        </div>
+        <div class="checkout-progress" aria-label="Checkout progress">
+          <div class="progress-step complete"><span>✓</span><small>Document filled in</small></div>
+          <i></i>
+          <div class="progress-step complete"><span>✓</span><small>Plan selected</small></div>
+          <i></i>
+          <div class="progress-step current"><span>3</span><small>Payment</small></div>
+          <i></i>
+          <div class="progress-step"><span>4</span><small>Completed</small></div>
+        </div>
+      </header>
+
+      <main class="payment-main">
+        <button class="back-to-plans" id="back-to-plans" type="button">← Back to plans</button>
+        <h1 id="payment-title">Complete your payment</h1>
+
+        <div class="payment-layout">
+          <section class="payment-form-card">
+            <div class="payment-method-tabs">
+              <button class="payment-method active" type="button" data-payment-method="card">Card</button>
+              <button class="payment-method" type="button" data-payment-method="paypal">PayPal</button>
+            </div>
+
+            <div class="card-payment-panel" id="card-payment-panel">
+              <label class="payment-field full">
+                <span>Name on card</span>
+                <input type="text" placeholder="Andrew Davies">
+              </label>
+              <label class="payment-field full">
+                <span>Card number</span>
+                <div class="card-number-wrap">
+                  <input type="text" inputmode="numeric" placeholder="1234 1234 1234 1234" maxlength="19">
+                  <span>VISA&nbsp;&nbsp;MC</span>
+                </div>
+              </label>
+              <div class="payment-field-row">
+                <label class="payment-field">
+                  <span>Expiry date</span>
+                  <input type="text" inputmode="numeric" placeholder="MM / YY" maxlength="7">
+                </label>
+                <label class="payment-field">
+                  <span>Security code</span>
+                  <input type="text" inputmode="numeric" placeholder="CVC" maxlength="4">
+                </label>
+              </div>
+              <label class="payment-field full">
+                <span>Billing postcode</span>
+                <input type="text" placeholder="L39 7HG">
+              </label>
+              <label class="payment-consent">
+                <input type="checkbox" checked>
+                <span>I agree to the selected access terms and recurring billing terms shown in the order summary.</span>
+              </label>
+              <button class="pay-now-button" id="mock-pay-button" type="button">Pay securely</button>
+              <p class="secure-payment-note">🔒 Your payment details will be encrypted and securely processed once a payment provider is connected.</p>
+            </div>
+
+            <div class="paypal-payment-panel" id="paypal-payment-panel" hidden>
+              <div class="paypal-placeholder">
+                <strong>PayPal</strong>
+                <p>You will be redirected to PayPal to approve the payment.</p>
+                <button id="mock-paypal-button" type="button">Continue with PayPal</button>
+              </div>
+            </div>
+          </section>
+
+          <aside class="order-summary-card">
+            <h2>Order summary</h2>
+            <div class="summary-document">
+              <canvas id="payment-preview-canvas"></canvas>
+              <div><strong id="summary-filename">Document.pdf</strong><small>Edited PDF document</small></div>
+            </div>
+            <div class="summary-line"><span id="summary-plan-name">7-day full access</span><strong id="summary-plan-price">£1.00</strong></div>
+            <div class="summary-line muted"><span>Due today</span><strong id="summary-due-today">£1.00</strong></div>
+            <div class="summary-total"><span>Total today</span><strong id="summary-total">£1.00</strong></div>
+            <div class="renewal-box" id="summary-renewal">
+              Renews at £24.90 every four weeks after seven days unless cancelled beforehand.
+            </div>
+            <div class="summary-guarantees">
+              <div><span>✓</span><p><strong>Secure checkout</strong><br>Your payment is protected.</p></div>
+              <div><span>✓</span><p><strong>Cancel online</strong><br>Manage access at any time.</p></div>
+              <div><span>✓</span><p><strong>Immediate access</strong><br>Download after successful payment.</p></div>
+            </div>
+          </aside>
+        </div>
+      </main>
+
+      <footer class="checkout-footer compact-footer">
+        <p>© 2026 Northstar Ridge Limited.</p>
+        <nav><a href="privacy-policy.html">Privacy</a><a href="terms-of-use.html">Terms</a><a href="subscription-policy.html">Subscription terms</a></nav>
+      </footer>
+    </section>
+  </div>
+
+  <div class="demo-payment-modal" id="demo-payment-modal" hidden>
+    <div class="demo-payment-backdrop"></div>
+    <section>
+      <button type="button" id="close-demo-payment">×</button>
+      <span class="demo-payment-icon">✓</span>
+      <h2>Payment layout complete</h2>
+      <p>This is currently a front-end demonstration. No card or PayPal payment has been processed, and the document has not been downloaded.</p>
+      <p>Stripe, Checkout.com, PayPal or another payment provider can be connected in the backend phase.</p>
+      <button type="button" id="return-to-payment">Return to payment page</button>
+    </section>
+  </div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="script.js?v=142"></script>
+<script src="script.js?v=180"></script>
 </body>
 </html>
