@@ -1,17 +1,38 @@
-PDFMINT v3.0.1 — CHARACTER-PRECISION TEXT HIGHLIGHT
+PDFMint v3.4.1 — Note Tool
 
-Built from the working v3.0 text-engine version.
+- Click Note, then click anywhere on the PDF to place a sticky note.
+- The yellow note opens immediately for typing.
+- Click elsewhere on the PDF to collapse it into a red-headed pushpin.
+- Hover over the pushpin to reveal the note.
+- Click the pushpin to reopen and edit it.
+- The first click away from an open note collapses it without placing another.
+- Note creation and text changes are included in undo/redo.
+- Exported PDFs contain standard PDF text annotations with a PushPin icon where supported.
 
-IMPROVEMENTS
-- Selection geometry is now generated per character instead of per word.
-- A single letter can be selected consistently.
-- Character widths use Canvas text measurement and are normalised to the exact
-  width reported by the PDF, improving proportional-font accuracy.
-- Spaces remain in reading order so dragging through a sentence behaves
-  naturally, but spaces are not treated as visible character targets.
-- Highlight height is calculated from font ascent, descent and the PDF baseline.
-- Equal padding is applied above and below the glyph area.
-- The previous additional vertical shrinking has been removed.
-- Existing tools and export behaviour remain intact.
+PDFMint v3.4.2 fix:
+- Enabled pointer events on the annotation layer while Note mode is active.
+- Clicking the PDF preview now reaches the note-placement handler.
 
-JavaScript syntax and character-engine integration checks passed.
+PDFMint v3.4.3:
+- Collapsed note pins can now be repositioned by clicking, holding and dragging.
+- A movement threshold prevents normal clicks from accidentally becoming drags.
+- Clicking without dragging still opens the note.
+- Pin movement is included in undo/redo.
+
+
+PDFMint v3.5.0 — PDF Editor landing pages
+
+- Edit PDF: edit-pdf.html
+- Sign PDF: sign-pdf.html
+- Rotate PDF: rotate-pdf.html
+- Merge PDF: merge-pdf.html
+- Split PDF: split-pdf.html
+- Crop PDF: crop-pdf.html
+- Add watermark: add-watermark.html
+- Add image to PDF: add-image-to-pdf.html
+- Compress image: compress-image.html
+- Compress PDF: compress-pdf.html
+- Delete pages: delete-pdf-pages.html
+- OCR PDF: ocr-pdf.html
+
+All desktop dropdown, mobile dropdown and footer links have been connected.

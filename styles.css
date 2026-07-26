@@ -387,13 +387,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
 }
 .existing-text-box:hover{background:rgba(82,104,255,.07)}
 .existing-text-box.selected{
-  border:1.5px solid #4057ff;
+  border:1.5px solid #22a06b;
   background:rgba(82,104,255,.045)
 }
 .existing-text-box.editing{
   color:#111827;
   background:#fff;
-  border:1.5px solid #4057ff;
+  border:1.5px solid #22a06b;
   outline:none;
   cursor:text;
   white-space:pre-wrap;
@@ -525,7 +525,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
   pointer-events:none;
 }
 .existing-text-box.modified.selected{
-  border:1.5px solid #4057ff;
+  border:1.5px solid #22a06b;
 }
 .existing-text-box.modified.selected:not(.editing) .existing-handle{
   display:block;
@@ -639,9 +639,9 @@ button:disabled{opacity:.45;cursor:not-allowed}
   z-index:3;
   pointer-events:auto
 }
-.edit-created-text.selected{border:1.5px solid #4057ff}
+.edit-created-text.selected{border:1.5px solid #22a06b}
 .edit-created-text.editing{
-  border:1.5px solid #4057ff;
+  border:1.5px solid #22a06b;
   outline:none;
   caret-color:#111827;
   cursor:text
@@ -833,11 +833,11 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .signature-annotation img{
   width:100%;height:100%;object-fit:contain;display:block;pointer-events:none
 }
-.signature-annotation.selected{border:1.5px solid #4057ff}
+.signature-annotation.selected{border:1.5px solid #22a06b}
 .signature-annotation .signature-resize-handle{
   position:absolute;
   width:13px;height:13px;border-radius:50%;
-  background:#4057ff;border:2px solid #fff;
+  background:#22a06b;border:2px solid #fff;
   right:-8px;bottom:-8px;display:none;cursor:nwse-resize
 }
 .signature-annotation.selected .signature-resize-handle{display:block}
@@ -1126,4 +1126,329 @@ button:disabled{opacity:.45;cursor:not-allowed}
 }
 .saved-text-highlight{
   border-radius:1px;
+}
+
+
+/* PDFMint v3.2 — Stamp tool */
+.stamp-modal-shell[hidden]{display:none}
+.stamp-modal-shell{position:fixed;inset:0;z-index:1200;display:grid;place-items:center;padding:18px}
+.stamp-modal-backdrop{position:absolute;inset:0;background:rgba(17,24,39,.58)}
+.stamp-modal{
+  position:relative;width:min(560px,calc(100vw - 28px));max-height:min(82vh,760px);
+  display:flex;flex-direction:column;overflow:hidden;background:#fff;border-radius:5px;
+  box-shadow:0 24px 70px rgba(15,23,42,.28);color:#111827
+}
+.stamp-modal-header{
+  display:flex;align-items:center;justify-content:space-between;gap:18px;
+  padding:18px 24px;background:#f2f6fc;border-bottom:1px solid #e4eaf2
+}
+.stamp-modal-header h2{font:600 16px Inter,Arial,sans-serif;margin:0}
+.stamp-mode-button{
+  border:1px solid #ff3c3c;background:#fff;color:#ef2020;padding:11px 15px;
+  font:500 13px Inter,Arial,sans-serif;cursor:pointer
+}
+.stamp-library-view,.stamp-custom-view{overflow:auto;padding:24px;min-height:420px}
+.stamp-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.stamp-choice{
+  min-height:132px;display:grid;place-items:center;padding:16px;background:#f7f9fd;
+  border:1px solid #d7deea;cursor:pointer;transition:.15s ease
+}
+.stamp-choice:hover{border-color:#6574c4;background:#f2f4ff;transform:translateY(-1px)}
+.stamp-choice canvas{max-width:100%;height:auto;pointer-events:none}
+.stamp-preview-panel{
+  min-height:210px;display:grid;place-items:center;border:1px solid #d7deea;
+  background:#fff;margin-bottom:18px;padding:18px
+}
+.stamp-preview-panel canvas{max-width:100%;height:auto}
+.stamp-field{display:grid;gap:8px;margin:0 0 20px}
+.stamp-field span,.stamp-check-row span,.stamp-colour-row>span{
+  color:#4b5563;font:500 12px Inter,Arial,sans-serif
+}
+.stamp-field input{
+  width:100%;box-sizing:border-box;border:1px solid #e0e5ec;padding:11px 12px;
+  font:14px Inter,Arial,sans-serif;outline:none
+}
+.stamp-field input:focus{border-color:#7586e9;box-shadow:0 0 0 3px rgba(82,104,230,.12)}
+.stamp-check-row{
+  display:flex;align-items:center;justify-content:space-between;padding:9px 0;
+  cursor:pointer
+}
+.stamp-check-row input{width:17px;height:17px;accent-color:#30343c}
+.stamp-colour-row{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px}
+.stamp-colours{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.stamp-colour{
+  width:18px;height:18px;padding:0;border:0;border-radius:50%;
+  background:var(--stamp-colour);cursor:pointer;box-shadow:0 0 0 1px rgba(0,0,0,.12)
+}
+.stamp-colour.active{outline:2px solid #fff;box-shadow:0 0 0 2px var(--stamp-colour)}
+.stamp-modal-footer{
+  display:flex;justify-content:flex-end;gap:12px;padding:16px 24px;
+  background:#f2f6fc;border-top:1px solid #e4eaf2
+}
+.stamp-cancel,.stamp-create{
+  border:1px solid #d7deea;background:#fff;padding:11px 16px;
+  font:500 13px Inter,Arial,sans-serif;cursor:pointer
+}
+.stamp-create{border-color:#ff3f43;background:#ff3f43;color:#fff}
+@media(max-width:600px){
+  .stamp-modal-shell{padding:8px}
+  .stamp-modal{max-height:94vh}
+  .stamp-modal-header{padding:14px 16px}
+  .stamp-library-view,.stamp-custom-view{padding:14px;min-height:360px}
+  .stamp-grid{gap:10px}
+  .stamp-choice{min-height:110px;padding:10px}
+  .stamp-modal-footer{padding:12px 16px}
+}
+
+#annotation-layer.link-mode{pointer-events:auto;cursor:crosshair;touch-action:none}
+.pdf-link-region{position:absolute;z-index:25;box-sizing:border-box;border:1px solid transparent;cursor:pointer}
+.pdf-link-region.draft,.pdf-link-region.selected{border:2px solid #22a06b;background:rgba(34,160,107,.08)}
+.pdf-link-region:not(.selected):not(.draft):hover{background:rgba(34,160,107,.05)}
+.pdf-link-handle{position:absolute;width:10px;height:10px;border-radius:50%;background:#22a06b;border:1px solid #fff;box-shadow:0 0 0 1px #22a06b}
+.pdf-link-handle.nw{left:-6px;top:-6px;cursor:nwse-resize}.pdf-link-handle.n{left:50%;top:-6px;transform:translateX(-50%);cursor:ns-resize}.pdf-link-handle.ne{right:-6px;top:-6px;cursor:nesw-resize}
+.pdf-link-handle.w{left:-6px;top:50%;transform:translateY(-50%);cursor:ew-resize}.pdf-link-handle.e{right:-6px;top:50%;transform:translateY(-50%);cursor:ew-resize}
+.pdf-link-handle.sw{left:-6px;bottom:-6px;cursor:nesw-resize}.pdf-link-handle.s{left:50%;bottom:-6px;transform:translateX(-50%);cursor:ns-resize}.pdf-link-handle.se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.pdf-link-tooltip{display:none;position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);min-width:max-content;max-width:320px;padding:9px 16px;border:1px solid #d7deea;border-radius:7px;background:#fff;color:#111827;box-shadow:0 5px 18px rgba(15,23,42,.18);font:500 13px Inter,Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.pdf-link-tooltip:before{content:"";position:absolute;left:50%;top:-6px;width:10px;height:10px;background:#fff;border-left:1px solid #d7deea;border-top:1px solid #d7deea;transform:translateX(-50%) rotate(45deg)}
+.pdf-link-region:hover .pdf-link-tooltip{display:block}
+.link-settings-popover[hidden]{display:none}
+.link-settings-popover{position:fixed;z-index:1300;width:330px;background:#fff;border:1px solid #d6dce6;border-radius:9px;box-shadow:0 8px 28px rgba(15,23,42,.2);overflow:visible}
+.link-settings-arrow{position:absolute;left:50%;top:-7px;width:12px;height:12px;background:#fff;border-left:1px solid #d6dce6;border-top:1px solid #d6dce6;transform:translateX(-50%) rotate(45deg)}
+.link-settings-popover.above .link-settings-arrow{top:auto;bottom:-7px;transform:translateX(-50%) rotate(225deg)}
+.link-settings-popover header{padding:17px 14px;border-bottom:1px solid #e5e9f0;font:600 15px Inter,Arial,sans-serif}
+.link-settings-body{padding:12px 14px 15px}
+.link-kind-row{display:flex;align-items:center;gap:9px;padding:9px 0;cursor:pointer;font:14px Inter,Arial,sans-serif}.link-kind-row input{width:17px;height:17px;accent-color:#22a06b}
+.link-value-row{padding:0 0 5px 26px}.link-value-row input{width:100%;box-sizing:border-box;border:1px solid #dfe4ec;padding:9px 10px;font:14px Inter,Arial,sans-serif;outline:none}.link-value-row input:focus{border-color:#22a06b;box-shadow:0 0 0 3px rgba(34,160,107,.14)}
+.link-settings-popover footer{display:flex;justify-content:flex-end;gap:8px;padding:11px 14px;border-top:1px solid #e5e9f0;background:#f7f9fc}.link-settings-popover footer button{border:1px solid #d7deea;background:#fff;padding:8px 12px;cursor:pointer}.link-settings-popover footer button.primary{background:#22a06b;border-color:#22a06b;color:#fff}
+
+#annotation-layer.link-mode{
+  z-index:40;
+}
+#annotation-layer.link-mode .existing-text-hit,
+#annotation-layer.link-mode .text-highlight-hit,
+#annotation-layer.link-mode .drawing-canvas,
+#annotation-layer.link-mode .shape-svg-layer{
+  pointer-events:none !important;
+}
+
+.pdf-link-region:not(.draft):not(.selected){cursor:pointer}
+.pdf-link-region:not(.draft):not(.selected):hover{
+  background:rgba(34,160,107,.08);
+  outline:1px solid rgba(34,160,107,.45);
+}
+.link-settings-popover footer button.primary:hover{
+  background:#198a5a;
+  border-color:#198a5a;
+}
+
+
+/* PDFMint v3.3.9 — precise ribbon and header corrections */
+.ribbon-tool .tool-icon{
+  width:24px;
+  height:24px;
+  min-width:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:0;
+}
+.ribbon-tool .tool-icon svg{
+  width:21px;
+  height:21px;
+  display:block;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:1.8;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+.ribbon-tool .tool-label{
+  display:block;
+  font:600 10px Inter,Arial,sans-serif;
+  line-height:12px;
+  white-space:nowrap;
+  text-align:center;
+}
+.ribbon-tool > b{
+  width:24px;
+  height:24px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  line-height:24px;
+}
+.desktop-actions .top-action{
+  width:148px;
+  min-width:148px;
+  height:42px;
+  padding:0 16px;
+  justify-content:center;
+  box-sizing:border-box;
+  border-radius:8px;
+  font:700 12px Inter,Arial,sans-serif;
+}
+.desktop-actions .editor-finish-secondary{
+  background:#fff;
+  color:#176b4d;
+  border:1px solid #22a06b;
+}
+.desktop-actions .editor-finish-secondary:hover{
+  background:#effaf5;
+  border-color:#198a5a;
+}
+.desktop-actions .editor-finish-primary{
+  background:#22a06b;
+  color:#fff;
+  border-color:#22a06b;
+  gap:8px;
+  box-shadow:0 3px 10px rgba(34,160,107,.24);
+}
+.desktop-actions .editor-finish-primary:hover{
+  background:#198a5a;
+  border-color:#198a5a;
+}
+.editor-finish-primary .done-check{
+  width:17px;
+  height:17px;
+  fill:none;
+  stroke:currentColor;
+  stroke-width:2.5;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+/* PDFMint v3.4.0 — precise alignment fix for Sign, Draw and Note only */
+.menu-fix-sign,
+.menu-fix-draw,
+.menu-fix-note{
+  min-width:68px !important;
+  min-height:70px !important;
+  padding:9px 8px 7px !important;
+  display:flex !important;
+  flex-direction:column !important;
+  align-items:center !important;
+  justify-content:flex-start !important;
+  gap:0 !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+}
+
+.menu-fix-sign .tool-icon,
+.menu-fix-draw .tool-icon,
+.menu-fix-note .tool-icon{
+  width:24px !important;
+  height:24px !important;
+  min-width:24px !important;
+  min-height:24px !important;
+  margin:0 auto 7px !important;
+  padding:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  color:inherit !important;
+  line-height:0 !important;
+}
+
+.menu-fix-sign .tool-icon svg,
+.menu-fix-draw .tool-icon svg,
+.menu-fix-note .tool-icon svg{
+  width:22px !important;
+  height:22px !important;
+  display:block !important;
+  margin:0 !important;
+  padding:0 !important;
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+  fill:none !important;
+  stroke:currentColor !important;
+  stroke-width:1.8 !important;
+  stroke-linecap:round !important;
+  stroke-linejoin:round !important;
+}
+
+.menu-fix-sign .tool-label,
+.menu-fix-draw .tool-label,
+.menu-fix-note .tool-label{
+  display:block !important;
+  min-height:16px !important;
+  height:16px !important;
+  margin:0 !important;
+  padding:0 !important;
+  font-size:12px !important;
+  line-height:16px !important;
+  font-weight:400 !important;
+  text-align:center !important;
+  white-space:nowrap !important;
+  transform:none !important;
+}
+
+/* Do not show the green icon tile on hover/active; match the standard ribbon tools */
+.menu-fix-sign:hover .tool-icon,
+.menu-fix-draw:hover .tool-icon,
+.menu-fix-note:hover .tool-icon,
+.menu-fix-sign.active .tool-icon,
+.menu-fix-draw.active .tool-icon,
+.menu-fix-note.active .tool-icon,
+.menu-fix-sign[aria-pressed="true"] .tool-icon,
+.menu-fix-draw[aria-pressed="true"] .tool-icon,
+.menu-fix-note[aria-pressed="true"] .tool-icon{
+  background:transparent !important;
+  border:none !important;
+  border-radius:0 !important;
+  box-shadow:none !important;
+}
+
+/* Preserve only the standard text/icon colour change for active state */
+.menu-fix-sign.active,
+.menu-fix-draw.active,
+.menu-fix-note.active,
+.menu-fix-sign[aria-pressed="true"],
+.menu-fix-draw[aria-pressed="true"],
+.menu-fix-note[aria-pressed="true"]{
+  background:transparent !important;
+}
+
+.annotation-layer.note-mode{pointer-events:auto;cursor:crosshair}
+.pdf-note{position:absolute;width:22px;height:22px;transform:translate(-50%,-50%);z-index:90;pointer-events:auto}
+.pdf-note-pin{width:22px;height:22px;padding:0;border:0;background:transparent;display:flex;align-items:center;justify-content:center;cursor:pointer;filter:drop-shadow(0 1px 1px rgba(0,0,0,.28))}
+.pdf-note-pin svg{width:22px;height:22px;overflow:visible}
+.pdf-note-pin .pin-head{fill:#e43f3f;stroke:#a91f1f;stroke-width:1.2;stroke-linejoin:round}
+.pdf-note-pin .pin-stem{fill:none;stroke:#7d1717;stroke-width:1.7;stroke-linecap:round}
+.pdf-note-card{position:absolute;left:15px;top:15px;width:300px;min-height:185px;background:#fff68a;border:1px solid #e6d956;border-radius:6px;box-shadow:0 8px 24px rgba(15,23,42,.24);overflow:hidden;display:none;z-index:3}
+.pdf-note.open .pdf-note-card,.pdf-note.hover-open .pdf-note-card{display:block}
+.pdf-note-card header{height:40px;padding:0 10px 0 12px;display:flex;align-items:center;justify-content:space-between;color:#5d5729;background:rgba(255,255,255,.12);border-bottom:1px solid rgba(117,104,24,.12)}
+.pdf-note-card header strong{font-size:14px;line-height:1}
+.pdf-note-close{border:0;background:transparent;color:#625b2d;font-size:27px;line-height:1;cursor:pointer;padding:0 2px}
+.pdf-note-card textarea{box-sizing:border-box;display:block;width:100%;height:155px;min-height:155px;resize:both;border:0;outline:0;padding:11px 12px;background:transparent;color:#35321f;font:15px/1.45 Arial,sans-serif}
+.pdf-note-card textarea::placeholder{color:#8a824c}
+.pdf-note-card:focus-within{border-color:#d2c232;box-shadow:0 8px 24px rgba(15,23,42,.24),0 0 0 2px rgba(210,194,50,.22)}
+
+/* PDFMint v3.4.3 — draggable note pins */
+.pdf-note-pin{
+  cursor:grab;
+  touch-action:none;
+}
+.pdf-note.dragging{
+  z-index:120;
+}
+.pdf-note.dragging .pdf-note-pin{
+  cursor:grabbing;
+}
+.pdf-note.dragging .pdf-note-card{
+  display:none !important;
+}
+
+/* PDFMint v3.5.0 — expanded footer tool navigation */
+@media (min-width: 1000px){
+  .site-footer .footer-grid{
+    grid-template-columns:minmax(220px,1.35fr) repeat(4,minmax(130px,1fr));
+  }
 }
