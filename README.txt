@@ -1,40 +1,28 @@
-PDFMINT v1.8 — ACCESS AND PAYMENT FLOW
+PDFMINT v1.9 — HEADER DROPDOWNS
 
-NEW CHECKOUT FLOW
-1. User finishes editing and clicks Done.
-2. User selects PDF format and confirms the filename.
-3. User enters a valid email address, or uses the Google/Apple demonstration
-   buttons.
-4. A full-screen access-plan page opens.
-5. User selects an access type and clicks Continue.
-6. A full payment page opens with:
-   - Card and PayPal tabs
-   - Cardholder, card number, expiry, CVC and postcode fields
-   - Order summary
-   - Selected-plan pricing and renewal disclosure
-   - Document preview
-   - Checkout progress indicator
+NEW
+- PDF Converter now opens a two-column dropdown.
+- PDF Editor now opens a two-column dropdown.
+- Dropdowns open on hover or click.
+- Clicking elsewhere or pressing Escape closes them.
+- Mobile navigation now uses expandable Converter and Editor groups.
+- Existing homepage, editor, export and checkout functionality is retained.
 
-ACCESS OPTIONS INCLUDED
-- 7-day limited access: £0.50, no automatic renewal
-- 7-day full access: £1 today, then £24.90 every four weeks
-- Annual plan: £24.90 per month
+PDF CONVERTER MENU
+Convert from PDF:
+PDF to Word, PDF to PPTX, PDF to Excel, PDF to JPG, PDF to PNG.
 
-PAYMENT STATUS
-This release builds the complete front-end layout only. Card and PayPal buttons
-open a clear demonstration notice. They do not process a payment and do not
-download the PDF.
+Convert to PDF:
+Word to PDF, PPTX to PDF, Excel to PDF, JPG to PDF, PNG to PDF, View all.
 
-IMPORTANT
-Before accepting real payments, the following must be added:
-- A secure backend
-- A payment provider
-- Server-created payment sessions
-- Webhook confirmation
-- Subscription and cancellation management
-- Clear consumer disclosures and consent records
-- Download release only after verified payment
+PDF EDITOR MENU
+Edit PDF, Sign PDF, Rotate PDF, Merge PDF, Split PDF, Crop PDF,
+Add watermark, Add image to PDF, Compress image, Compress PDF,
+Delete pages and OCR PDF.
+
+The links currently lead to the tools section. Individual tool pages and routes
+can be connected as each tool is built.
 
 DEPLOYMENT
 Replace all files in the GitHub repository with this package, commit, wait for
-Sevalla to redeploy, then hard-refresh the application.
+Sevalla to redeploy, then hard-refresh the homepage.

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=180" />
+  <link rel="stylesheet" href="styles.css?v=190" />
 </head>
 <body>
   <header class="site-header">
@@ -18,9 +18,56 @@
         <span>PDFMint</span>
       </a>
       <nav class="desktop-nav" aria-label="Primary navigation">
-        <a href="#tools">PDF Converter</a>
-        <a href="#tools">PDF Editor</a>
-        <a href="#forms">Forms</a>
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-toggle" type="button" aria-expanded="false">
+            PDF Converter <span aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-dropdown-menu converter-menu">
+            <div class="dropdown-column">
+              <strong>Convert from PDF</strong>
+              <a href="#tools">PDF to Word</a>
+              <a href="#tools">PDF to PPTX</a>
+              <a href="#tools">PDF to Excel</a>
+              <a href="#tools">PDF to JPG</a>
+              <a href="#tools">PDF to PNG</a>
+            </div>
+            <div class="dropdown-column">
+              <strong>Convert to PDF</strong>
+              <a href="#tools">Word to PDF</a>
+              <a href="#tools">PPTX to PDF</a>
+              <a href="#tools">Excel to PDF</a>
+              <a href="#tools">JPG to PDF</a>
+              <a href="#tools">PNG to PDF</a>
+              <a class="dropdown-view-all" href="#tools">View all</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="nav-dropdown">
+          <button class="nav-dropdown-toggle" type="button" aria-expanded="false">
+            PDF Editor <span aria-hidden="true">▾</span>
+          </button>
+          <div class="nav-dropdown-menu editor-menu">
+            <div class="dropdown-column">
+              <a href="#tools">Edit PDF</a>
+              <a href="#tools">Sign PDF</a>
+              <a href="#tools">Rotate PDF</a>
+              <a href="#tools">Merge PDF</a>
+              <a href="#tools">Split PDF</a>
+              <a href="#tools">Crop PDF</a>
+            </div>
+            <div class="dropdown-column">
+              <a href="#tools">Add watermark</a>
+              <a href="#tools">Add image to PDF</a>
+              <a href="#tools">Compress image</a>
+              <a href="#tools">Compress PDF</a>
+              <a href="#tools">Delete pages</a>
+              <a href="#tools">OCR PDF</a>
+            </div>
+          </div>
+        </div>
+
+        <a class="plain-nav-link" href="#forms">Forms <span aria-hidden="true">▾</span></a>
       </nav>
       <div class="nav-actions">
         <a class="link-muted" href="mailto:support@pdfmint.com">Contact us</a>
@@ -29,8 +76,50 @@
       <button class="menu-button" aria-label="Open menu" aria-expanded="false">☰</button>
     </div>
     <div class="mobile-menu" hidden>
-      <a href="#tools">PDF Converter</a>
-      <a href="#tools">PDF Editor</a>
+      <details class="mobile-nav-group">
+        <summary>PDF Converter</summary>
+        <div class="mobile-nav-columns">
+          <div>
+            <strong>Convert from PDF</strong>
+            <a href="#tools">PDF to Word</a>
+            <a href="#tools">PDF to PPTX</a>
+            <a href="#tools">PDF to Excel</a>
+            <a href="#tools">PDF to JPG</a>
+            <a href="#tools">PDF to PNG</a>
+          </div>
+          <div>
+            <strong>Convert to PDF</strong>
+            <a href="#tools">Word to PDF</a>
+            <a href="#tools">PPTX to PDF</a>
+            <a href="#tools">Excel to PDF</a>
+            <a href="#tools">JPG to PDF</a>
+            <a href="#tools">PNG to PDF</a>
+          </div>
+        </div>
+      </details>
+
+      <details class="mobile-nav-group">
+        <summary>PDF Editor</summary>
+        <div class="mobile-nav-columns">
+          <div>
+            <a href="#tools">Edit PDF</a>
+            <a href="#tools">Sign PDF</a>
+            <a href="#tools">Rotate PDF</a>
+            <a href="#tools">Merge PDF</a>
+            <a href="#tools">Split PDF</a>
+            <a href="#tools">Crop PDF</a>
+          </div>
+          <div>
+            <a href="#tools">Add watermark</a>
+            <a href="#tools">Add image to PDF</a>
+            <a href="#tools">Compress image</a>
+            <a href="#tools">Compress PDF</a>
+            <a href="#tools">Delete pages</a>
+            <a href="#tools">OCR PDF</a>
+          </div>
+        </div>
+      </details>
+
       <a href="#forms">Forms</a>
       <a href="mailto:support@pdfmint.com">Contact us</a>
       <a href="#">Log in</a>
@@ -626,6 +715,6 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="script.js?v=180"></script>
+<script src="script.js?v=190"></script>
 </body>
 </html>

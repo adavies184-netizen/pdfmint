@@ -332,3 +332,39 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .demo-payment-modal{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:20px}.demo-payment-modal[hidden]{display:none}.demo-payment-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.64)}.demo-payment-modal section{position:relative;z-index:1;width:min(460px,calc(100vw - 30px));padding:40px;background:#fff;border-radius:18px;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.3)}.demo-payment-modal section>button:first-child{position:absolute;right:12px;top:9px;border:0;background:transparent;font-size:27px;color:#7c8794;cursor:pointer}.demo-payment-icon{width:54px;height:54px;border-radius:50%;background:#e9faf4;color:#168a68;display:grid;place-items:center;margin:0 auto 16px;font-size:26px}.demo-payment-modal h2{margin:0 0 12px}.demo-payment-modal p{font-size:12px;line-height:1.55;color:#667085}.demo-payment-modal #return-to-payment{height:47px;padding:0 24px;border:0;border-radius:8px;background:#21b887;color:#fff;font:800 13px Inter;cursor:pointer}
 @media(max-width:900px){.checkout-progress small{display:none}.checkout-progress i{width:20px}.access-layout,.payment-layout{grid-template-columns:1fr}.document-ready-card{max-width:560px}.checkout-review-grid{grid-template-columns:1fr}.order-summary-card{position:static}.compact-footer{display:block;text-align:center}}
 @media(max-width:600px){.checkout-header{padding:0 18px}.checkout-brand{font-size:18px}.checkout-main,.payment-main{width:calc(100% - 28px)}.access-layout{gap:20px}.document-preview-frame{min-height:390px}.checkout-reviews{padding:28px 18px;margin-top:40px}.plan-option{padding:8px 12px}.payment-form-card,.order-summary-card{padding:17px}.payment-field-row{grid-template-columns:1fr}.payment-brand-row{flex-wrap:wrap;gap:18px}.checkout-footer nav{flex-wrap:wrap}}
+
+
+/* PDFMint v1.9 — header dropdown navigation */
+.site-header{overflow:visible}
+.nav-wrap{position:relative}
+.desktop-nav{height:100%;align-items:stretch;gap:8px}
+.nav-dropdown{position:relative;display:flex;align-items:stretch}
+.nav-dropdown-toggle,.plain-nav-link{height:100%;display:flex;align-items:center;gap:5px;padding:0 14px;border:0;background:transparent;color:#172033;font:700 14px Inter;cursor:pointer}
+.nav-dropdown-toggle span,.plain-nav-link span{font-size:10px;transition:transform .18s ease}
+.nav-dropdown:hover .nav-dropdown-toggle,.nav-dropdown.open .nav-dropdown-toggle,.plain-nav-link:hover{color:var(--mint-dark)}
+.nav-dropdown:hover .nav-dropdown-toggle span,.nav-dropdown.open .nav-dropdown-toggle span{transform:rotate(180deg)}
+.nav-dropdown-menu{position:absolute;top:calc(100% - 1px);left:0;display:grid;grid-template-columns:1fr 1fr;gap:34px;padding:27px 31px;background:#fff;border:1px solid #edf0f4;border-radius:0 0 11px 11px;box-shadow:0 14px 34px rgba(23,32,51,.13);opacity:0;visibility:hidden;transform:translateY(8px);transition:opacity .16s ease,transform .16s ease,visibility .16s;z-index:100}
+.converter-menu{width:400px}
+.editor-menu{width:370px}
+.nav-dropdown:hover .nav-dropdown-menu,.nav-dropdown.open .nav-dropdown-menu{opacity:1;visibility:visible;transform:translateY(0)}
+.dropdown-column{display:flex;flex-direction:column;min-width:0}
+.dropdown-column strong{font-size:17px;margin-bottom:11px;color:#172033;white-space:nowrap}
+.dropdown-column a{padding:7px 0;color:#4f5663;font-size:15px;font-weight:500;white-space:nowrap}
+.dropdown-column a:hover{color:var(--mint-dark)}
+.dropdown-column .dropdown-view-all{color:#246fda;text-decoration:underline;margin-top:1px}
+
+.mobile-nav-group{border-bottom:1px solid var(--line)}
+.mobile-nav-group summary{list-style:none;padding:13px 0;font-weight:750;cursor:pointer;position:relative}
+.mobile-nav-group summary::-webkit-details-marker{display:none}
+.mobile-nav-group summary:after{content:'+';position:absolute;right:2px;font-size:19px;color:var(--mint-dark)}
+.mobile-nav-group[open] summary:after{content:'−'}
+.mobile-nav-columns{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:0 0 14px}
+.mobile-nav-columns strong{display:block;font-size:12px;color:#667085;margin:5px 0}
+.mobile-menu .mobile-nav-columns a{padding:6px 0;font-size:13px;font-weight:550}
+
+@media(max-width:900px){
+  .desktop-nav{display:none}
+}
+@media(max-width:520px){
+  .mobile-nav-columns{grid-template-columns:1fr}
+}
