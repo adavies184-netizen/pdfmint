@@ -95,7 +95,23 @@ let editor = {
   selectedEditCreatedTextId: null,
   signatures: {},
   selectedSignatureId: null,
-  pendingSignature: null
+  pendingSignature: null,
+  drawings: {},
+  drawTool: 'marker',
+  drawColour: '#111111',
+  drawThickness: 4,
+  activeDrawing: null,
+  shapes: {},
+  shapeTool: 'line',
+  shapeStroke: '#111111',
+  shapeFill: '#ffffff',
+  shapeFillEnabled: false,
+  shapeOpacity: 1,
+  shapeThickness: 2,
+  activeShape: null,
+  selectedShapeId: null,
+  textHighlights: {},
+  highlightColour: '#fff200'
 };
 let splitFile = null;
 let splitPageCount = 0;
@@ -109,10 +125,14 @@ function cloneEditorState() {
     extractedText: editor.extractedText,
     editCreatedText: editor.editCreatedText,
     signatures: editor.signatures,
+    drawings: editor.drawings,
+    shapes: editor.shapes,
+    textHighlights: editor.textHighlights,
     selectedIndex: editor.selectedIndex,
     selectedAnnotationId: editor.selectedAnnotationId,
     selectedExistingTextId: editor.selectedExistingTextId,
-    selectedSignatureId: editor.selectedSignatureId
+    selectedSignatureId: editor.selectedSignatureId,
+    selectedShapeId: editor.selectedShapeId
   }));
 }
 function restoreEditorState(snapshot) {
@@ -122,10 +142,14 @@ function restoreEditorState(snapshot) {
   editor.extractedText = snapshot.extractedText || {};
   editor.editCreatedText = snapshot.editCreatedText || {};
   editor.signatures = snapshot.signatures || {};
+  editor.drawings = snapshot.drawings || {};
+  editor.shapes = snapshot.shapes || {};
+  editor.textHighlights = snapshot.textHighlights || {};
   editor.selectedIndex = Math.min(snapshot.selectedIndex, Math.max(0, editor.pages.length - 1));
   editor.selectedAnnotationId = snapshot.selectedAnnotationId;
   editor.selectedExistingTextId = snapshot.selectedExistingTextId || null;
   editor.selectedSignatureId = snapshot.selectedSignatureId || null;
+  editor.selectedShapeId = snapshot.selectedShapeId || null;
   editorHistory.restoring = false;
   renderThumbnails().then(() => renderSelectedPage());
   updateEditorUi();
@@ -233,7 +257,23 @@ async function loadEditorPdf(file) {
       selectedEditCreatedTextId: null,
       signatures: {},
       selectedSignatureId: null,
-      pendingSignature: null
+      pendingSignature: null,
+      drawings: {},
+      drawTool: 'marker',
+      drawColour: '#111111',
+      drawThickness: 4,
+      activeDrawing: null,
+      shapes: {},
+      shapeTool: 'line',
+      shapeStroke: '#111111',
+      shapeFill: '#ffffff',
+      shapeFillEnabled: false,
+      shapeOpacity: 1,
+      shapeThickness: 2,
+      activeShape: null,
+      selectedShapeId: null,
+      textHighlights: {},
+      highlightColour: '#fff200'
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
@@ -299,11 +339,20 @@ function setEditorMode(mode) {
   const editTextTool = document.getElementById('edit-text-tool');
   if (addTextTool) addTextTool.classList.toggle('active', mode === 'text');
   if (editTextTool) editTextTool.classList.toggle('active', mode === 'edit-existing');
+  document.getElementById('draw-tool')?.classList.toggle('active', mode === 'draw');
+  document.getElementById('line-tool')?.classList.toggle('active', mode === 'shape');
+  document.getElementById('text-highlight-tool')?.classList.toggle('active', mode === 'text-highlight');
 
   const addOptionsBar = document.getElementById('text-options-bar');
   const editOptionsBar = document.getElementById('edit-text-options-bar');
+  const drawOptionsBar = document.getElementById('draw-options-bar');
+  const lineOptionsBar = document.getElementById('line-options-bar');
+  const highlightOptionsBar = document.getElementById('text-highlight-options-bar');
   if (addOptionsBar) addOptionsBar.hidden = mode !== 'text';
   if (editOptionsBar) editOptionsBar.hidden = mode !== 'edit-existing';
+  if (drawOptionsBar) drawOptionsBar.hidden = mode !== 'draw';
+  if (lineOptionsBar) lineOptionsBar.hidden = mode !== 'shape';
+  if (highlightOptionsBar) highlightOptionsBar.hidden = mode !== 'text-highlight';
 
   if (mode !== 'edit-existing') {
     editor.editTextBoxMode = false;
@@ -319,11 +368,19 @@ function setEditorMode(mode) {
   layer.classList.toggle('edit-text-mode', mode === 'edit-existing');
   layer.classList.toggle('add-edit-box-mode', mode === 'edit-existing' && editor.editTextBoxMode);
   layer.classList.toggle('signature-place-mode', mode === 'signature-place');
+  layer.classList.toggle('draw-mode', mode === 'draw');
+  layer.classList.toggle('eraser-mode', mode === 'draw' && editor.drawTool === 'eraser');
+  layer.classList.toggle('shape-mode', mode === 'shape');
+  layer.classList.toggle('text-highlight-mode', mode === 'text-highlight');
+  layer.classList.remove('text-highlight-dragging');
 
   if (mode === 'text') {
     showEditorHint('Click anywhere on the page to add text.');
   } else if (mode === 'edit-existing') {
     showEditorHint('Click once to select text. Double-click to edit it.');
+    ensureExistingTextForCurrentPage().then(renderAnnotations);
+  } else if (mode === 'text-highlight') {
+    showEditorHint('Drag across any text to highlight it.');
     ensureExistingTextForCurrentPage().then(renderAnnotations);
   } else {
     renderAnnotations();
@@ -507,6 +564,84 @@ async function ensureExistingTextForCurrentPage() {
     const width = Math.max(12, paragraph.right - paragraph.left);
     const height = Math.max(paragraph.avgHeight * 1.15, paragraph.bottom - paragraph.top);
 
+    // Character-level geometry shared by text annotation tools.
+    // Widths are measured per glyph and then normalised to the exact PDF run width.
+    const highlightCharacters = [];
+    const measurementCanvas = document.createElement('canvas');
+    const measurementContext = measurementCanvas.getContext('2d');
+
+    paragraph.lines.forEach(({line}, paragraphLineIndex) => {
+      line.runs.forEach(run => {
+        const characters = Array.from(String(run.text || ''));
+        if (!characters.length) return;
+
+        const family =
+          run.font === 'TimesRoman' ? 'Times New Roman' :
+          run.font === 'Courier' ? 'Courier New' :
+          'Arial';
+
+        measurementContext.font =
+          `${run.italic ? 'italic ' : ''}${run.bold ? '700 ' : '400 '}${run.height}px "${family}"`;
+
+        const measured = characters.map(character => {
+          const metrics = measurementContext.measureText(character);
+          return {
+            character,
+            width: Math.max(.01, metrics.width),
+            ascent: Number.isFinite(metrics.actualBoundingBoxAscent)
+              ? metrics.actualBoundingBoxAscent
+              : run.height * .78,
+            descent: Number.isFinite(metrics.actualBoundingBoxDescent)
+              ? metrics.actualBoundingBoxDescent
+              : run.height * .18
+          };
+        });
+
+        const measuredTotal = Math.max(
+          .01,
+          measured.reduce((sum, item) => sum + item.width, 0)
+        );
+        const widthScale = run.width / measuredTotal;
+
+        const maxAscent = Math.max(...measured.map(item => item.ascent), run.height * .7);
+        const maxDescent = Math.max(...measured.map(item => item.descent), run.height * .12);
+        const metricTotal = Math.max(1, maxAscent + maxDescent);
+        const metricScale = run.height / metricTotal;
+
+        // PDF.js tx[5] is the visual baseline in viewport coordinates.
+        const baseline = run.top + run.height;
+        const glyphAscent = maxAscent * metricScale;
+        const glyphDescent = maxDescent * metricScale;
+
+        // Small, even padding above and below the actual glyph bounds.
+        const verticalPadding = Math.max(.45, run.height * .055);
+        const highlightTop = baseline - glyphAscent - verticalPadding;
+        const highlightBottom = baseline + glyphDescent + verticalPadding;
+        const highlightHeight = Math.max(2, highlightBottom - highlightTop);
+
+        let cursorX = run.x;
+
+        measured.forEach((item, characterIndex) => {
+          const characterWidth = item.width * widthScale;
+          const isWhitespace = /\s/.test(item.character);
+
+          highlightCharacters.push({
+            text: item.character,
+            isWhitespace,
+            lineIndex: paragraphLineIndex,
+            runIndex: run.index,
+            characterIndex,
+            x: Math.max(0, cursorX / viewport.width),
+            y: Math.max(0, highlightTop / viewport.height),
+            w: Math.min(1, Math.max(.0005, characterWidth / viewport.width)),
+            h: Math.min(1, Math.max(.004, highlightHeight / viewport.height))
+          });
+
+          cursorX += characterWidth;
+        });
+      });
+    });
+
     return {
       id: `existing-${sourceIndex}-${index}`,
       type: 'existing-text',
@@ -529,6 +664,7 @@ async function ensureExistingTextForCurrentPage() {
       bold: firstRun.bold,
       italic: firstRun.italic,
       lineHeight: paragraph.avgHeight,
+      highlightCharacters,
       modified: false
     };
   });
@@ -902,6 +1038,237 @@ function renderEditCreatedTextBoxes(layer, metrics) {
     layer.appendChild(box);
   });
 }
+
+
+function getPageTextHighlights(sourceIndex) {
+  const key = String(sourceIndex);
+  if (!editor.textHighlights[key]) editor.textHighlights[key] = [];
+  return editor.textHighlights[key];
+}
+
+function getHighlightCharactersForPage(sourceIndex) {
+  const characters = [];
+
+  getExistingTextItems(sourceIndex).forEach(paragraph => {
+    (paragraph.highlightCharacters || []).forEach(character => {
+      characters.push({
+        ...character,
+        paragraphId: paragraph.id
+      });
+    });
+  });
+
+  return characters
+    .sort((a,b) => {
+      const sameVisualLine =
+        Math.abs(a.y - b.y) <= Math.max(a.h,b.h) * .42;
+
+      if (!sameVisualLine) return a.y - b.y;
+      if (a.x !== b.x) return a.x - b.x;
+      if (a.runIndex !== b.runIndex) return a.runIndex - b.runIndex;
+      return a.characterIndex - b.characterIndex;
+    })
+    .map((character,index) => ({...character, order:index}));
+}
+
+function renderSavedTextHighlights(layer, metrics) {
+  if (!editor.pages.length) return;
+  const sourceIndex = getCurrentSourcePageIndex();
+
+  getPageTextHighlights(sourceIndex).forEach(highlight => {
+    highlight.rects.forEach(rect => {
+      const element = document.createElement('div');
+      element.className = 'saved-text-highlight';
+      element.style.left = `${rect.x * metrics.width}px`;
+      element.style.top = `${rect.y * metrics.height}px`;
+      element.style.width = `${rect.w * metrics.width}px`;
+      element.style.height = `${rect.h * metrics.height}px`;
+      element.style.background = highlight.colour;
+      element.style.opacity = '.48';
+      layer.appendChild(element);
+    });
+  });
+}
+
+function mergeHighlightCharacterRects(selectedCharacters) {
+  const sorted = [...selectedCharacters].sort((a,b) => a.order - b.order);
+  const rows = [];
+
+  sorted.forEach(word => {
+    let row = rows.find(candidate =>
+      Math.abs(candidate.y - word.y) <= Math.max(candidate.h,word.h) * .48
+    );
+
+    if (!row) {
+      row = {y:word.y, h:word.h, words:[]};
+      rows.push(row);
+    }
+
+    row.words.push(word);
+    row.y = Math.min(row.y,word.y);
+    row.h = Math.max(row.h,word.h);
+  });
+
+  return rows
+    .sort((a,b) => a.y - b.y)
+    .map(row => {
+      row.words.sort((a,b) => a.x - b.x);
+      const visible = row.words.filter(character => !character.isWhitespace);
+      const source = visible.length ? visible : row.words;
+      const left = Math.min(...source.map(character => character.x));
+      const right = Math.max(...source.map(character => character.x + character.w));
+      const top = Math.min(...source.map(character => character.y));
+      const bottom = Math.max(...source.map(character => character.y + character.h));
+
+      return {
+        x:left,
+        y:top,
+        w:right-left,
+        h:bottom-top
+      };
+    });
+}
+
+function renderTextHighlightInteraction(layer, metrics) {
+  if (editor.mode !== 'text-highlight' || !editor.pages.length) return;
+
+  const sourceIndex = getCurrentSourcePageIndex();
+  const characters = getHighlightCharactersForPage(sourceIndex);
+  if (!characters.length) {
+    showEditorHint('No selectable text was found on this PDF page.');
+    return;
+  }
+
+  const shield = document.createElement('div');
+  shield.className = 'text-highlight-drag-shield';
+  layer.appendChild(shield);
+
+  let startOrder = null;
+  let currentOrder = null;
+  let pointerId = null;
+  let previewElements = [];
+
+  const clearPreview = () => {
+    previewElements.forEach(element => element.classList.remove('preview'));
+    previewElements = [];
+  };
+
+  const showPreview = () => {
+    clearPreview();
+    if (startOrder === null || currentOrder === null) return;
+
+    const first = Math.min(startOrder,currentOrder);
+    const last = Math.max(startOrder,currentOrder);
+
+    layer.querySelectorAll('.text-highlight-hit').forEach(element => {
+      const order = Number(element.dataset.order);
+      if (
+        order >= first &&
+        order <= last &&
+        element.dataset.whitespace !== 'true'
+      ) {
+        element.classList.add('preview');
+        previewElements.push(element);
+      }
+    });
+  };
+
+  const orderAtPoint = (clientX,clientY) => {
+    const bounds = layer.getBoundingClientRect();
+    const x = (clientX - bounds.left) / bounds.width;
+    const y = (clientY - bounds.top) / bounds.height;
+
+    let best = null;
+    let bestDistance = Infinity;
+
+    characters.forEach(character => {
+      const centreX = character.x + character.w / 2;
+      const centreY = character.y + character.h / 2;
+      const dx = Math.max(0,Math.abs(x-centreX)-character.w/2);
+      const dy = Math.max(0,Math.abs(y-centreY)-character.h/2);
+      const distance = dx*dx + dy*dy*5;
+
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = character;
+      }
+    });
+
+    return best?.order ?? null;
+  };
+
+  const move = event => {
+    if (startOrder === null) return;
+    currentOrder = orderAtPoint(event.clientX,event.clientY);
+    showPreview();
+  };
+
+  const finish = event => {
+    if (startOrder === null) return;
+
+    currentOrder = orderAtPoint(event.clientX,event.clientY) ?? currentOrder ?? startOrder;
+    const first = Math.min(startOrder,currentOrder);
+    const last = Math.max(startOrder,currentOrder);
+    const selectedCharacters = characters.filter(character =>
+      character.order >= first &&
+      character.order <= last
+    );
+
+    if (selectedCharacters.length) {
+      recordHistory();
+      getPageTextHighlights(sourceIndex).push({
+        id:`highlight-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+        colour:editor.highlightColour,
+        rects:mergeHighlightCharacterRects(selectedCharacters)
+      });
+    }
+
+    startOrder = null;
+    currentOrder = null;
+    clearPreview();
+    layer.classList.remove('text-highlight-dragging');
+
+    window.removeEventListener('pointermove',move);
+    window.removeEventListener('pointerup',finish);
+    window.removeEventListener('pointercancel',finish);
+    renderAnnotations();
+  };
+
+  characters.forEach(character => {
+    const hit = document.createElement('div');
+    hit.className = 'text-highlight-hit';
+    hit.dataset.order = String(character.order);
+    hit.dataset.whitespace = character.isWhitespace ? 'true' : 'false';
+    hit.style.left = `${character.x * metrics.width}px`;
+    hit.style.top = `${character.y * metrics.height}px`;
+    hit.style.width = `${Math.max(1,character.w * metrics.width)}px`;
+    hit.style.height = `${Math.max(6,character.h * metrics.height)}px`;
+
+    if (!character.isWhitespace) {
+      hit.addEventListener('pointerdown',event => {
+        if (editor.mode !== 'text-highlight') return;
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        pointerId = event.pointerId;
+        startOrder = character.order;
+        currentOrder = character.order;
+        layer.classList.add('text-highlight-dragging');
+        showPreview();
+
+        window.addEventListener('pointermove',move);
+        window.addEventListener('pointerup',finish);
+        window.addEventListener('pointercancel',finish);
+      });
+    } else {
+      hit.style.pointerEvents = 'none';
+    }
+
+    layer.appendChild(hit);
+  });
+}
+
 
 function renderExistingTextBoxes(layer, metrics) {
   if (editor.mode !== 'edit-existing') return;
@@ -1313,6 +1680,81 @@ function placePendingSignatureCentered() {
   renderAnnotations();
 }
 
+
+function getPageDrawings(sourceIndex){
+  const key=String(sourceIndex);
+  if(!editor.drawings[key]) editor.drawings[key]=[];
+  return editor.drawings[key];
+}
+function paintStroke(ctx,stroke,w,h){
+  if(!stroke.points||stroke.points.length<2)return;
+  ctx.save();ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.strokeStyle=stroke.colour;ctx.globalAlpha=stroke.tool==='highlighter'?.32:1;
+  ctx.lineWidth=Math.max(1,stroke.thickness*w/1000);
+  ctx.beginPath();ctx.moveTo(stroke.points[0].x*w,stroke.points[0].y*h);
+  for(let i=1;i<stroke.points.length;i++){
+    const p=stroke.points[i-1],q=stroke.points[i];
+    ctx.quadraticCurveTo(p.x*w,p.y*h,(p.x+q.x)*w/2,(p.y+q.y)*h/2);
+  }
+  const last=stroke.points.at(-1);ctx.lineTo(last.x*w,last.y*h);ctx.stroke();ctx.restore();
+}
+function redrawDrawingCanvas(canvas){
+  if(!editor.pages.length)return;
+  const rect=canvas.getBoundingClientRect(),dpr=window.devicePixelRatio||1;
+  canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);
+  const ctx=canvas.getContext('2d');ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,rect.width,rect.height);
+  getPageDrawings(editor.pages[editor.selectedIndex].sourceIndex).forEach(s=>paintStroke(ctx,s,rect.width,rect.height));
+  if(editor.activeDrawing)paintStroke(ctx,editor.activeDrawing,rect.width,rect.height);
+}
+function eraseDrawingAt(x,y){
+  const strokes=getPageDrawings(editor.pages[editor.selectedIndex].sourceIndex);
+  let hit=-1,best=Infinity;
+  strokes.forEach((s,i)=>s.points.forEach(p=>{const d=Math.hypot(p.x-x,p.y-y);if(d<best){best=d;hit=i}}));
+  if(hit>=0&&best<=Math.max(.015,editor.drawThickness/650)){strokes.splice(hit,1);return true}
+  return false;
+}
+function attachDrawingCanvas(layer){
+  const canvas=document.createElement('canvas');canvas.className='drawing-canvas';layer.appendChild(canvas);
+  const point=e=>{const r=canvas.getBoundingClientRect();return{x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height}};
+  canvas.addEventListener('pointerdown',e=>{
+    if(editor.mode!=='draw')return;e.preventDefault();e.stopPropagation();canvas.setPointerCapture?.(e.pointerId);
+    const p=point(e);
+    if(editor.drawTool==='eraser'){recordHistory();eraseDrawingAt(p.x,p.y);redrawDrawingCanvas(canvas);return}
+    recordHistory();editor.activeDrawing={id:`draw-${Date.now()}`,tool:editor.drawTool,colour:editor.drawColour,
+      thickness:editor.drawTool==='highlighter'?Math.max(14,editor.drawThickness*4):editor.drawThickness,points:[p]};
+    redrawDrawingCanvas(canvas);
+  });
+  canvas.addEventListener('pointermove',e=>{
+    if(editor.mode!=='draw')return;const p=point(e);
+    if(editor.drawTool==='eraser'&&e.buttons){if(eraseDrawingAt(p.x,p.y))redrawDrawingCanvas(canvas);return}
+    if(!editor.activeDrawing)return;editor.activeDrawing.points.push(p);redrawDrawingCanvas(canvas);
+  });
+  const finish=e=>{
+    if(!editor.activeDrawing)return;
+    if(editor.activeDrawing.points.length===1)editor.activeDrawing.points.push({...editor.activeDrawing.points[0]});
+    getPageDrawings(editor.pages[editor.selectedIndex].sourceIndex).push(editor.activeDrawing);
+    editor.activeDrawing=null;redrawDrawingCanvas(canvas);
+  };
+  canvas.addEventListener('pointerup',finish);canvas.addEventListener('pointercancel',finish);
+  requestAnimationFrame(()=>redrawDrawingCanvas(canvas));
+}
+
+
+function getPageShapes(sourceIndex){const key=String(sourceIndex);if(!editor.shapes[key])editor.shapes[key]=[];return editor.shapes[key]}
+function getSelectedShape(){if(!editor.pages.length)return null;return getPageShapes(editor.pages[editor.selectedIndex].sourceIndex).find(s=>s.id===editor.selectedShapeId)||null}
+function svgEl(name,attrs={}){const el=document.createElementNS('http://www.w3.org/2000/svg',name);Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));return el}
+function shapeBounds(s){return{x:Math.min(s.x1,s.x2),y:Math.min(s.y1,s.y2),w:Math.abs(s.x2-s.x1),h:Math.abs(s.y2-s.y1)}}
+function updateShapeToolbar(){const s=getSelectedShape();if(!s)return;document.getElementById('line-stroke-colour').value=s.stroke;document.getElementById('line-fill-colour').value=s.fill;document.getElementById('line-fill-enabled').checked=s.fillEnabled;document.getElementById('line-opacity').value=Math.round(s.opacity*100);document.getElementById('line-opacity-value').textContent=`${Math.round(s.opacity*100)}%`;document.getElementById('line-thickness').value=String(s.thickness)}
+function startShapeDrag(e,s,svg){e.preventDefault();e.stopPropagation();const r=svg.getBoundingClientRect(),sx=e.clientX,sy=e.clientY,o={x1:s.x1,y1:s.y1,x2:s.x2,y2:s.y2};let moved=false;const move=ev=>{if(!moved&&Math.hypot(ev.clientX-sx,ev.clientY-sy)<4)return;if(!moved){recordHistory();moved=true}const dx=(ev.clientX-sx)/r.width,dy=(ev.clientY-sy)/r.height;s.x1=Math.max(0,Math.min(1,o.x1+dx));s.x2=Math.max(0,Math.min(1,o.x2+dx));s.y1=Math.max(0,Math.min(1,o.y1+dy));s.y2=Math.max(0,Math.min(1,o.y2+dy));renderAnnotations()};const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up)};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up)}
+function startShapeResize(e,s,handle,svg){e.preventDefault();e.stopPropagation();recordHistory();const r=svg.getBoundingClientRect();const move=ev=>{const x=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width)),y=Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height));if(s.type==='line'||s.type==='arrow'){if(handle==='start'){s.x1=x;s.y1=y}else{s.x2=x;s.y2=y}}else{const b=shapeBounds(s);let left=b.x,right=b.x+b.w,top=b.y,bottom=b.y+b.h;if(handle.includes('w'))left=x;if(handle.includes('e'))right=x;if(handle.includes('n'))top=y;if(handle.includes('s'))bottom=y;s.x1=left;s.x2=right;s.y1=top;s.y2=bottom}renderAnnotations()};const up=()=>{window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up)};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up)}
+function renderShapes(layer,metrics){if(!editor.pages.length)return;const svg=svgEl('svg',{class:'shape-svg-layer',viewBox:`0 0 ${metrics.width} ${metrics.height}`,preserveAspectRatio:'none'});const defs=svgEl('defs');const marker=svgEl('marker',{id:'pdfmint-arrowhead',markerWidth:'10',markerHeight:'10',refX:'8',refY:'3',orient:'auto',markerUnits:'strokeWidth'});marker.appendChild(svgEl('path',{d:'M0,0 L0,6 L9,3 z',fill:'context-stroke'}));defs.appendChild(marker);svg.appendChild(defs);
+ const shapes=getPageShapes(editor.pages[editor.selectedIndex].sourceIndex);if(editor.activeShape)shapes.concat([editor.activeShape]).forEach(s=>renderOne(s));else shapes.forEach(s=>renderOne(s));
+ function renderOne(s){const x1=s.x1*metrics.width,y1=s.y1*metrics.height,x2=s.x2*metrics.width,y2=s.y2*metrics.height,b=shapeBounds(s),bx=b.x*metrics.width,by=b.y*metrics.height,bw=b.w*metrics.width,bh=b.h*metrics.height;let shape;if(s.type==='line'||s.type==='arrow'){shape=svgEl('line',{x1,y1,x2,y2})}else if(s.type==='box'){shape=svgEl('rect',{x:bx,y:by,width:bw,height:bh,rx:'1'})}else{shape=svgEl('ellipse',{cx:bx+bw/2,cy:by+bh/2,rx:bw/2,ry:bh/2})}shape.setAttribute('class',`shape-object${s.fillEnabled?' has-fill':''}`);shape.setAttribute('stroke',s.stroke);shape.setAttribute('stroke-width',s.thickness);shape.setAttribute('fill',s.type==='line'||s.type==='arrow'?'none':(s.fillEnabled?s.fill:'transparent'));shape.setAttribute('opacity',s.opacity);shape.setAttribute('vector-effect','non-scaling-stroke');if(s.type==='arrow')shape.setAttribute('marker-end','url(#pdfmint-arrowhead)');svg.appendChild(shape);
+ let zone;if(s.type==='line'||s.type==='arrow')zone=svgEl('line',{x1,y1,x2,y2,class:'shape-drag-zone'});else if(s.type==='box')zone=svgEl('rect',{x:bx,y:by,width:bw,height:bh,class:'shape-drag-zone area'});else zone=svgEl('ellipse',{cx:bx+bw/2,cy:by+bh/2,rx:bw/2,ry:bh/2,class:'shape-drag-zone area'});zone.addEventListener('pointerdown',e=>{editor.selectedShapeId=s.id;updateShapeToolbar();startShapeDrag(e,s,svg)});svg.appendChild(zone);
+ if(s.id===editor.selectedShapeId&&!editor.activeShape){if(s.type==='line'||s.type==='arrow'){[['start',x1,y1],['end',x2,y2]].forEach(([h,x,y])=>{const c=svgEl('circle',{cx:x,cy:y,r:6,class:'shape-handle'});c.addEventListener('pointerdown',e=>startShapeResize(e,s,h,svg));svg.appendChild(c)})}else{svg.appendChild(svgEl('rect',{x:bx,y:by,width:bw,height:bh,class:'shape-selection'}));[['nw',bx,by],['n',bx+bw/2,by],['ne',bx+bw,by],['w',bx,by+bh/2],['e',bx+bw,by+bh/2],['sw',bx,by+bh],['s',bx+bw/2,by+bh],['se',bx+bw,by+bh]].forEach(([h,x,y])=>{const c=svgEl('circle',{cx:x,cy:y,r:6,class:'shape-handle'});c.addEventListener('pointerdown',e=>startShapeResize(e,s,h,svg));svg.appendChild(c)})}}
+ }
+ svg.addEventListener('pointerdown',e=>{if(e.target!==svg||editor.mode!=='shape')return;e.preventDefault();const r=svg.getBoundingClientRect(),p={x:(e.clientX-r.left)/r.width,y:(e.clientY-r.top)/r.height};recordHistory();editor.selectedShapeId=null;editor.activeShape={id:`shape-${Date.now()}`,type:editor.shapeTool,x1:p.x,y1:p.y,x2:p.x,y2:p.y,stroke:editor.shapeStroke,fill:editor.shapeFill,fillEnabled:editor.shapeFillEnabled,opacity:editor.shapeOpacity,thickness:editor.shapeThickness};const move=ev=>{editor.activeShape.x2=Math.max(0,Math.min(1,(ev.clientX-r.left)/r.width));editor.activeShape.y2=Math.max(0,Math.min(1,(ev.clientY-r.top)/r.height));renderAnnotations()};const up=()=>{const made=editor.activeShape;editor.activeShape=null;if(Math.hypot(made.x2-made.x1,made.y2-made.y1)>.006){getPageShapes(editor.pages[editor.selectedIndex].sourceIndex).push(made);editor.selectedShapeId=made.id}window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);renderAnnotations()};window.addEventListener('pointermove',move);window.addEventListener('pointerup',up)});layer.appendChild(svg)}
+
 function renderAnnotations() {
   const layer = document.getElementById('annotation-layer');
   layer.innerHTML = '';
@@ -1389,9 +1831,13 @@ function renderAnnotations() {
     });
     layer.appendChild(el);
   });
+  renderSavedTextHighlights(layer, metrics);
   renderExistingTextBoxes(layer, metrics);
   renderEditCreatedTextBoxes(layer, metrics);
   renderSignatures(layer, metrics);
+  renderShapes(layer, metrics);
+  attachDrawingCanvas(layer);
+  renderTextHighlightInteraction(layer, metrics);
   syncTextInspector();
   syncEditTextToolbar();
 }
@@ -1752,6 +2198,19 @@ document.addEventListener('keydown', event => {
 });
 document.getElementById('add-text-tool').addEventListener('click', () => setEditorMode('text'));
 document.getElementById('edit-text-tool').addEventListener('click', () => setEditorMode('edit-existing'));
+
+document.getElementById('text-highlight-tool').addEventListener('click', () => {
+  setEditorMode('text-highlight');
+});
+
+document.querySelectorAll('[data-highlight-colour]').forEach(button => {
+  button.addEventListener('click', () => {
+    editor.highlightColour = button.dataset.highlightColour;
+    document.querySelectorAll('[data-highlight-colour]').forEach(item => {
+      item.classList.toggle('active',item === button);
+    });
+  });
+});
 document.getElementById('annotation-layer').addEventListener('mousedown', event => {
   if (event.target !== event.currentTarget) return;
   if (editor.mode === 'text') {
@@ -1766,6 +2225,7 @@ document.getElementById('annotation-layer').addEventListener('mousedown', event 
     }
   } else {
     editor.selectedSignatureId = null;
+    editor.selectedShapeId = null;
     deselectAnnotation();
     renderAnnotations();
   }
@@ -1989,6 +2449,53 @@ async function createEditedPdfBytes() {
       });
     }
 
+    const pageShapes = getPageShapes(state.sourceIndex);
+    for (const shape of pageShapes) {
+      const c=hexToRgb01(shape.stroke||'#111111'), fill=hexToRgb01(shape.fill||'#ffffff');
+      const x1=shape.x1*width,y1=height-shape.y1*height,x2=shape.x2*width,y2=height-shape.y2*height;
+      const x=Math.min(x1,x2), y=Math.min(y1,y2), w=Math.abs(x2-x1), h=Math.abs(y2-y1);
+      if(shape.type==='line'||shape.type==='arrow'){
+        page.drawLine({start:{x:x1,y:y1},end:{x:x2,y:y2},thickness:shape.thickness,color:PDFLib.rgb(c.r,c.g,c.b),opacity:shape.opacity});
+        if(shape.type==='arrow'){
+          const angle=Math.atan2(y2-y1,x2-x1),size=Math.max(8,shape.thickness*4),a1=angle+Math.PI*.82,a2=angle-Math.PI*.82;
+          page.drawLine({start:{x:x2,y:y2},end:{x:x2+Math.cos(a1)*size,y:y2+Math.sin(a1)*size},thickness:shape.thickness,color:PDFLib.rgb(c.r,c.g,c.b),opacity:shape.opacity});
+          page.drawLine({start:{x:x2,y:y2},end:{x:x2+Math.cos(a2)*size,y:y2+Math.sin(a2)*size},thickness:shape.thickness,color:PDFLib.rgb(c.r,c.g,c.b),opacity:shape.opacity});
+        }
+      } else if(shape.type==='box') page.drawRectangle({x,y,width:w,height:h,borderWidth:shape.thickness,borderColor:PDFLib.rgb(c.r,c.g,c.b),color:shape.fillEnabled?PDFLib.rgb(fill.r,fill.g,fill.b):undefined,opacity:shape.opacity,borderOpacity:shape.opacity});
+      else page.drawEllipse({x:x+w/2,y:y+h/2,xScale:w/2,yScale:h/2,borderWidth:shape.thickness,borderColor:PDFLib.rgb(c.r,c.g,c.b),color:shape.fillEnabled?PDFLib.rgb(fill.r,fill.g,fill.b):undefined,opacity:shape.opacity,borderOpacity:shape.opacity});
+    }
+
+    const pageHighlights = getPageTextHighlights(state.sourceIndex);
+    for (const highlight of pageHighlights) {
+      const colour = hexToRgb01(highlight.colour || '#fff200');
+
+      for (const rect of highlight.rects) {
+        page.drawRectangle({
+          x:rect.x * width,
+          y:height - (rect.y + rect.h) * height,
+          width:rect.w * width,
+          height:rect.h * height,
+          color:PDFLib.rgb(colour.r,colour.g,colour.b),
+          opacity:.48
+        });
+      }
+    }
+
+    const drawingStrokes = getPageDrawings(state.sourceIndex);
+    for (const stroke of drawingStrokes) {
+      const c = hexToRgb01(stroke.colour || '#111111');
+      for (let i=1;i<stroke.points.length;i++) {
+        const a=stroke.points[i-1], b=stroke.points[i];
+        page.drawLine({
+          start:{x:a.x*width,y:height-a.y*height},
+          end:{x:b.x*width,y:height-b.y*height},
+          thickness:Math.max(.5,(stroke.thickness||4)*width/1000),
+          color:PDFLib.rgb(c.r,c.g,c.b),
+          opacity:stroke.tool==='highlighter'?.32:1
+        });
+      }
+    }
+
     const signatures = getPageSignatures(state.sourceIndex);
 
     for (const item of signatures) {
@@ -2069,6 +2576,86 @@ async function createEditedPdfBytes() {
 
 
 
+
+
+
+function selectShapeTool(type){editor.shapeTool=type;const labels={line:'Line',arrow:'Arrow',box:'Box',circle:'Circle'},icons={line:'／',arrow:'↗',box:'▢',circle:'○'};document.getElementById('line-tool-label').textContent=labels[type];document.getElementById('line-tool-icon').textContent=icons[type];document.getElementById('line-current-shape').textContent=labels[type];document.querySelectorAll('[data-line-shape]').forEach(b=>b.classList.toggle('active',b.dataset.lineShape===type));document.getElementById('line-shape-menu').hidden=true;setEditorMode('shape');showEditorHint(`Drag on the PDF to add a ${labels[type].toLowerCase()}.`)}
+function positionLineShapeMenu(){
+  const button=document.getElementById('line-tool');
+  const menu=document.getElementById('line-shape-menu');
+  if(!button||!menu||menu.hidden)return;
+
+  const rect=button.getBoundingClientRect();
+  const menuWidth=158;
+  const viewportPadding=8;
+  const left=Math.min(
+    window.innerWidth-menuWidth-viewportPadding,
+    Math.max(viewportPadding,rect.left)
+  );
+
+  menu.style.left=`${left}px`;
+  menu.style.top=`${rect.bottom+4}px`;
+}
+
+document.getElementById('line-tool').addEventListener('click',e=>{
+  e.stopPropagation();
+  const menu=document.getElementById('line-shape-menu');
+
+  if(editor.mode!=='shape'){
+    selectShapeTool(editor.shapeTool);
+  }
+
+  menu.hidden=!menu.hidden;
+
+  if(!menu.hidden){
+    requestAnimationFrame(positionLineShapeMenu);
+  }
+});
+
+document.querySelectorAll('[data-line-shape]').forEach(b=>b.addEventListener('click',e=>{
+  e.stopPropagation();
+  selectShapeTool(b.dataset.lineShape);
+}));
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.line-tool-wrap')&&!e.target.closest('.line-shape-menu')){
+    document.getElementById('line-shape-menu').hidden=true;
+  }
+});
+
+window.addEventListener('resize',positionLineShapeMenu);
+document.querySelector('.desktop-ribbon')?.addEventListener('scroll',positionLineShapeMenu);
+
+function updateSelectedShapeProperty(fn){const s=getSelectedShape();if(s){recordHistory();fn(s);renderAnnotations()}}
+document.getElementById('line-stroke-colour').addEventListener('input',e=>{editor.shapeStroke=e.target.value;const s=getSelectedShape();if(s){s.stroke=e.target.value;renderAnnotations()}});document.getElementById('line-stroke-colour').addEventListener('change',()=>{if(getSelectedShape())recordHistory()});
+document.getElementById('line-fill-colour').addEventListener('input',e=>{editor.shapeFill=e.target.value;const s=getSelectedShape();if(s){s.fill=e.target.value;renderAnnotations()}});document.getElementById('line-fill-enabled').addEventListener('change',e=>{editor.shapeFillEnabled=e.target.checked;updateSelectedShapeProperty(s=>s.fillEnabled=e.target.checked)});
+document.getElementById('line-opacity').addEventListener('input',e=>{editor.shapeOpacity=Number(e.target.value)/100;document.getElementById('line-opacity-value').textContent=`${e.target.value}%`;const s=getSelectedShape();if(s){s.opacity=editor.shapeOpacity;renderAnnotations()}});document.getElementById('line-thickness').addEventListener('change',e=>{editor.shapeThickness=Number(e.target.value)||2;updateSelectedShapeProperty(s=>s.thickness=editor.shapeThickness)});
+
+function setDrawTool(tool){
+  editor.drawTool=tool;
+  document.getElementById('draw-marker-tool').classList.toggle('active',tool==='marker');
+  document.getElementById('draw-highlighter-tool').classList.toggle('active',tool==='highlighter');
+  document.getElementById('draw-eraser-tool').classList.toggle('active',tool==='eraser');
+  document.getElementById('annotation-layer').classList.toggle('eraser-mode',tool==='eraser');
+}
+document.getElementById('draw-tool').addEventListener('click',()=>{
+  clearEditTextInterfaceImmediately();editor.selectedSignatureId=null;setEditorMode('draw');setDrawTool(editor.drawTool);renderAnnotations();
+});
+document.getElementById('draw-marker-tool').addEventListener('click',()=>setDrawTool('marker'));
+document.getElementById('draw-highlighter-tool').addEventListener('click',()=>setDrawTool('highlighter'));
+document.getElementById('draw-eraser-tool').addEventListener('click',()=>setDrawTool('eraser'));
+document.getElementById('draw-thickness').addEventListener('change',e=>editor.drawThickness=Number(e.target.value)||4);
+document.querySelectorAll('[data-draw-colour]').forEach(b=>b.addEventListener('click',()=>{
+  editor.drawColour=b.dataset.drawColour;document.getElementById('draw-custom-colour').value=editor.drawColour;
+  document.querySelectorAll('[data-draw-colour]').forEach(x=>x.classList.toggle('active',x===b));
+}));
+document.getElementById('draw-custom-colour').addEventListener('input',e=>{
+  editor.drawColour=e.target.value;document.querySelectorAll('[data-draw-colour]').forEach(x=>x.classList.remove('active'));
+});
+document.getElementById('draw-clear-page').addEventListener('click',()=>{
+  if(!editor.pages.length)return;const key=String(editor.pages[editor.selectedIndex].sourceIndex);
+  if(!(editor.drawings[key]||[]).length)return;recordHistory();editor.drawings[key]=[];renderAnnotations();
+});
 
 const signatureState = {
   tab: 'draw',
@@ -2372,10 +2959,10 @@ document.querySelector('[data-close-signature]').addEventListener('click', close
 
 document.addEventListener('click', event => {
   const toolButton = event.target.closest(
-    '.editor-tool-button, .tool-button, [data-editor-tool], #add-text-tool, #edit-text-tool, #sign-tool'
+    '.editor-tool-button, .tool-button, [data-editor-tool], #add-text-tool, #edit-text-tool, #sign-tool, #draw-tool, #line-tool'
   );
 
-  if (!toolButton || toolButton.id === 'edit-text-tool' || toolButton.id === 'sign-tool') return;
+  if (!toolButton || toolButton.id === 'edit-text-tool' || toolButton.id === 'sign-tool' || toolButton.id === 'draw-tool' || toolButton.id === 'text-highlight-tool' || toolButton.id === 'line-tool') return;
 
   if (editor.mode === 'edit-existing') {
     clearEditTextInterfaceImmediately();

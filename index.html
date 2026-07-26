@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=255" />
+  <link rel="stylesheet" href="styles.css?v=301" />
 </head>
 <body>
   <header class="site-header">
@@ -304,9 +304,17 @@
       <button class="ribbon-tool" id="add-text-tool" type="button"><b>T</b><span>Add text</span></button>
       <button class="ribbon-tool" id="edit-text-tool" type="button"><b>✎</b><span>Edit text</span></button>
       <button class="ribbon-tool" id="sign-tool" type="button"><b>⌁</b><span>Sign</span></button>
-      <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Draw</span></button>
-      <button class="ribbon-tool" type="button" disabled><b>／</b><span>Line</span></button>
-      <button class="ribbon-tool" type="button" disabled><b>T̲</b><span>Text highlight</span></button>
+      <button class="ribbon-tool" id="draw-tool" type="button"><b>✎</b><span>Draw</span></button>
+      <div class="line-tool-wrap">
+        <button class="ribbon-tool" id="line-tool" type="button"><b id="line-tool-icon">／</b><span id="line-tool-label">Line</span><i class="line-tool-caret">⌄</i></button>
+        <div class="line-shape-menu" id="line-shape-menu" hidden>
+          <button type="button" data-line-shape="line"><b>／</b><span>Line</span></button>
+          <button type="button" data-line-shape="arrow"><b>↗</b><span>Arrow</span></button>
+          <button type="button" data-line-shape="box"><b>▢</b><span>Box</span></button>
+          <button type="button" data-line-shape="circle"><b>○</b><span>Circle</span></button>
+        </div>
+      </div>
+      <button class="ribbon-tool" id="text-highlight-tool" type="button"><b>T̲</b><span>Text highlight</span></button>
       <button class="ribbon-tool" type="button" disabled><b>▧</b><span>Image</span></button>
       <button class="ribbon-tool" type="button" disabled><b>♙</b><span>Stamp</span></button>
       <button class="ribbon-tool" type="button" disabled><b>🔗</b><span>Link</span></button>
@@ -423,7 +431,55 @@
       <button class="edit-format-toggle" id="edit-text-italic" type="button" title="Italic"><em>I</em></button>
     </div>
 
-    <div class="desktop-editor-body">
+    
+    <div class="draw-options-bar" id="draw-options-bar" hidden>
+      <button class="draw-tool-choice active" id="draw-marker-tool" type="button"><b>✎</b><small>Marker</small></button>
+      <button class="draw-tool-choice" id="draw-highlighter-tool" type="button"><b>▰</b><small>Highlighter</small></button>
+      <button class="draw-tool-choice" id="draw-eraser-tool" type="button"><b>▱</b><small>Rubber</small></button>
+
+      <label class="draw-control"><span>Thickness</span>
+        <select id="draw-thickness">
+          <option value="2">2 px</option><option value="4" selected>4 px</option>
+          <option value="6">6 px</option><option value="8">8 px</option>
+          <option value="12">12 px</option><option value="16">16 px</option>
+          <option value="22">22 px</option><option value="30">30 px</option>
+        </select>
+      </label>
+
+      <div class="draw-colour-section"><span>Color</span><div class="draw-preset-colours">
+        <button class="draw-colour-swatch active" data-draw-colour="#111111" style="--c:#111111"></button>
+        <button class="draw-colour-swatch" data-draw-colour="#ef4444" style="--c:#ef4444"></button>
+        <button class="draw-colour-swatch" data-draw-colour="#f59e0b" style="--c:#f59e0b"></button>
+        <button class="draw-colour-swatch" data-draw-colour="#facc15" style="--c:#facc15"></button>
+        <button class="draw-colour-swatch" data-draw-colour="#16a34a" style="--c:#16a34a"></button>
+        <button class="draw-colour-swatch" data-draw-colour="#2563eb" style="--c:#2563eb"></button>
+        <button class="draw-colour-swatch" data-draw-colour="#7c3aed" style="--c:#7c3aed"></button>
+      </div></div>
+
+      <label class="draw-custom-colour"><span>Custom RGB</span><input id="draw-custom-colour" type="color" value="#111111"></label>
+      <button class="draw-clear-page" id="draw-clear-page" type="button">Clear page drawings</button>
+    </div>
+
+
+    <div class="line-options-bar" id="line-options-bar" hidden>
+      <div class="line-current-shape"><span>Shape</span><strong id="line-current-shape">Line</strong></div>
+      <label class="line-option"><span>Color</span><input id="line-stroke-colour" type="color" value="#111111"></label>
+      <label class="line-option"><span>Fill color</span><div class="line-fill-row"><input id="line-fill-enabled" type="checkbox"><input id="line-fill-colour" type="color" value="#ffffff"></div></label>
+      <label class="line-option line-opacity"><span>Opacity <b id="line-opacity-value">100%</b></span><input id="line-opacity" type="range" min="10" max="100" value="100"></label>
+      <label class="line-option"><span>Line thickness</span><select id="line-thickness"><option value="1">1 px</option><option value="2" selected>2 px</option><option value="3">3 px</option><option value="4">4 px</option><option value="6">6 px</option><option value="8">8 px</option><option value="12">12 px</option><option value="16">16 px</option></select></label>
+    </div>
+
+    <div class="text-highlight-options-bar" id="text-highlight-options-bar" hidden>
+      <span class="text-highlight-options-title">Highlight colour</span>
+      <div class="text-highlight-colours" role="group" aria-label="Highlight colour">
+        <button class="text-highlight-colour active" type="button" data-highlight-colour="#fff200" aria-label="Yellow" title="Yellow" style="--swatch:#fff200"></button>
+        <button class="text-highlight-colour" type="button" data-highlight-colour="#55a8ff" aria-label="Blue" title="Blue" style="--swatch:#55a8ff"></button>
+        <button class="text-highlight-colour" type="button" data-highlight-colour="#61d875" aria-label="Green" title="Green" style="--swatch:#61d875"></button>
+        <button class="text-highlight-colour" type="button" data-highlight-colour="#ff6262" aria-label="Red" title="Red" style="--swatch:#ff6262"></button>
+      </div>
+    </div>
+
+<div class="desktop-editor-body">
       <aside class="desktop-thumbnails">
         <div class="thumbnail-tab-header"><span>⠿</span><strong>Thumbnails</strong></div>
         <div class="thumbnail-list" id="thumbnail-list"></div>
@@ -851,6 +907,6 @@
     </section>
   </div>
 
-  <script src="script.js?v=255"></script>
+  <script src="script.js?v=301"></script>
 </body>
 </html>

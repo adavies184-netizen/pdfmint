@@ -976,3 +976,154 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .signature-annotation.selected .signature-resize-handle{
   pointer-events:auto;
 }
+
+.draw-options-bar{min-height:72px;background:#f8fafc;border-bottom:1px solid #dfe5ec;display:flex;align-items:stretch;padding:0 12px;z-index:16;overflow:visible}
+.draw-options-bar[hidden]{display:none}
+.draw-tool-choice{min-width:92px;border:0;border-right:1px solid #e3e8ef;background:#f8fafc;color:#344054;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.draw-tool-choice:hover,.draw-tool-choice.active{background:#e9faf4;color:#168a68}
+.draw-tool-choice b{font-size:23px}.draw-tool-choice small{font:600 10px Inter}
+.draw-control,.draw-custom-colour,.draw-colour-section{border-right:1px solid #e3e8ef;padding:8px 14px;display:flex;flex-direction:column;justify-content:center;gap:6px}
+.draw-control span,.draw-custom-colour span,.draw-colour-section>span{font:600 10px Inter;color:#667085}
+.draw-control select{height:38px;min-width:105px;border:1px solid #d6dde6;border-radius:7px;background:#fff;padding:0 10px;font:600 13px Inter}
+.draw-preset-colours{display:flex;gap:9px}.draw-colour-swatch{width:24px;height:24px;border-radius:50%;border:2px solid #fff;background:var(--c);box-shadow:0 0 0 1px #cfd6df;cursor:pointer}
+.draw-colour-swatch.active{box-shadow:0 0 0 3px rgba(52,120,223,.28)}
+.draw-custom-colour input{width:56px;height:34px;padding:2px;border:1px solid #d6dde6;border-radius:6px;background:#fff}
+.draw-clear-page{margin:13px 0 13px 14px;padding:0 16px;border:1px solid #d7dee8;border-radius:7px;background:#fff;color:#d92d20;font:600 12px Inter;cursor:pointer}
+.drawing-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:5;touch-action:none;pointer-events:none}
+.annotation-layer.draw-mode .drawing-canvas{pointer-events:auto;cursor:crosshair}
+.annotation-layer.draw-mode.eraser-mode .drawing-canvas{cursor:cell}
+@media(max-width:900px){.draw-options-bar{overflow-x:auto}.draw-tool-choice,.draw-control,.draw-custom-colour,.draw-colour-section,.draw-clear-page{flex:none}}
+
+
+/* PDFMint v2.6.1 — keep drawing overlay transparent */
+.document-canvas-wrap .drawing-canvas,
+.desktop-document-area .drawing-canvas,
+.drawing-canvas{
+  background:transparent!important;
+  box-shadow:none!important;
+}
+
+/* PDFMint v2.7 — Line, arrow and shape tools */
+.line-tool-wrap{position:relative;display:flex}.line-tool-wrap .ribbon-tool i{font-style:normal;font-size:9px;margin-left:2px}.line-shape-menu{position:absolute;top:100%;left:0;width:158px;padding:8px;background:#fff;border:1px solid #d7dee8;border-radius:6px;box-shadow:0 14px 32px rgba(15,23,42,.18);z-index:80}.line-shape-menu[hidden]{display:none}.line-shape-menu button{width:100%;height:48px;border:0;background:#fff;display:flex;align-items:center;gap:16px;padding:0 14px;border-radius:5px;color:#344054;font:500 13px Inter;cursor:pointer}.line-shape-menu button:hover,.line-shape-menu button.active{background:#f2f6fb;color:#168a68}.line-shape-menu button b{width:25px;font-size:24px;font-weight:400}
+.line-options-bar{min-height:70px;background:#f8fafc;border-bottom:1px solid #dfe5ec;display:flex;align-items:stretch;padding:0 12px;z-index:16}.line-options-bar[hidden]{display:none}.line-current-shape,.line-option{padding:8px 16px;border-right:1px solid #e3e8ef;display:flex;flex-direction:column;justify-content:center;gap:6px}.line-current-shape span,.line-option>span{font:600 10px Inter;color:#667085}.line-current-shape strong{font:600 14px Inter;color:#344054}.line-option input[type=color]{width:58px;height:35px;padding:2px;border:1px solid #d6dde6;border-radius:6px;background:#fff}.line-fill-row{display:flex;align-items:center;gap:8px}.line-fill-row input[type=checkbox]{width:16px;height:16px}.line-opacity{min-width:180px}.line-opacity span{display:flex;justify-content:space-between}.line-opacity input{width:150px}.line-option select{height:38px;min-width:108px;border:1px solid #d6dde6;border-radius:7px;background:#fff;padding:0 10px;font:600 13px Inter}
+.shape-svg-layer{position:absolute;inset:0;width:100%;height:100%;z-index:4;overflow:visible;pointer-events:none}.annotation-layer.shape-mode .shape-svg-layer{pointer-events:auto;cursor:crosshair}.shape-object{pointer-events:stroke}.shape-object.has-fill{pointer-events:all}.shape-selection{fill:none;stroke:#398bff;stroke-width:1.5;stroke-dasharray:4 3;vector-effect:non-scaling-stroke;pointer-events:none}.shape-handle{fill:#398bff;stroke:#fff;stroke-width:2;vector-effect:non-scaling-stroke;cursor:pointer;pointer-events:all}.shape-drag-zone{fill:transparent;stroke:transparent;stroke-width:14;pointer-events:stroke;cursor:move}.shape-drag-zone.area{pointer-events:all;cursor:move}
+@media(max-width:850px){.line-options-bar{overflow-x:auto}.line-current-shape,.line-option{flex:none}}
+
+
+/* PDFMint v2.7.1 — line dropdown positioning */
+.line-tool-wrap{
+  position:relative;
+  display:flex;
+  flex:0 0 auto;
+  overflow:visible;
+}
+#line-tool{
+  position:relative;
+  padding-right:15px;
+}
+#line-tool .line-tool-caret{
+  position:absolute;
+  right:5px;
+  top:50%;
+  transform:translateY(-50%);
+  margin:0;
+  font-style:normal;
+  font-size:11px;
+  line-height:1;
+}
+.line-shape-menu{
+  position:fixed;
+  top:auto;
+  left:auto;
+  z-index:1200;
+  width:158px;
+  max-height:none;
+  overflow:visible;
+}
+
+
+/* PDFMint v3.0 — shared text engine / highlight tool */
+.text-highlight-options-bar{
+  min-height:62px;
+  padding:0 20px;
+  display:flex;
+  align-items:center;
+  gap:18px;
+  background:#f8fafc;
+  border-bottom:1px solid #dfe5ec;
+  position:relative;
+  z-index:18
+}
+.text-highlight-options-bar[hidden]{display:none}
+.text-highlight-options-title{
+  color:#475467;
+  font-size:12px;
+  font-weight:650
+}
+.text-highlight-colours{
+  display:flex;
+  align-items:center;
+  gap:14px
+}
+.text-highlight-colour{
+  width:28px;
+  height:28px;
+  padding:0;
+  border-radius:50%;
+  border:3px solid #fff;
+  background:var(--swatch);
+  box-shadow:0 0 0 1px #cbd3dd;
+  cursor:pointer
+}
+.text-highlight-colour:hover{
+  transform:translateY(-1px);
+  box-shadow:0 0 0 2px #aeb9c7
+}
+.text-highlight-colour.active{
+  box-shadow:0 0 0 3px rgba(45,113,220,.28)
+}
+.annotation-layer.text-highlight-mode{
+  pointer-events:none
+}
+.saved-text-highlight{
+  position:absolute;
+  z-index:2;
+  pointer-events:none;
+  border-radius:2px;
+  mix-blend-mode:multiply
+}
+.text-highlight-hit{
+  position:absolute;
+  z-index:30;
+  pointer-events:auto;
+  cursor:text!important;
+  background:transparent;
+  touch-action:none;
+  user-select:none
+}
+.text-highlight-hit.preview{
+  background:rgba(48,120,255,.25)
+}
+.text-highlight-drag-shield{
+  position:absolute;
+  inset:0;
+  z-index:29;
+  pointer-events:none;
+  cursor:text!important;
+  touch-action:none
+}
+.annotation-layer.text-highlight-dragging .text-highlight-drag-shield{
+  pointer-events:auto
+}
+
+
+/* PDFMint v3.0.1 — character precision */
+.text-highlight-hit{
+  min-width:1px;
+}
+.text-highlight-hit.preview{
+  border-radius:1px;
+}
+.saved-text-highlight{
+  border-radius:1px;
+}
