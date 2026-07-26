@@ -7,8 +7,8 @@
   <title>PDFMint — Online PDF editor and converter</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=190" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=255" />
 </head>
 <body>
   <header class="site-header">
@@ -302,8 +302,8 @@
       <button class="ribbon-tool history-tool" id="undo-tool" type="button" disabled><b>↶</b><span>Undo</span></button>
       <button class="ribbon-tool history-tool" id="redo-tool" type="button" disabled><b>↷</b><span>Redo</span></button>
       <button class="ribbon-tool" id="add-text-tool" type="button"><b>T</b><span>Add text</span></button>
-      <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Edit text</span></button>
-      <button class="ribbon-tool" type="button" disabled><b>⌁</b><span>Sign</span></button>
+      <button class="ribbon-tool" id="edit-text-tool" type="button"><b>✎</b><span>Edit text</span></button>
+      <button class="ribbon-tool" id="sign-tool" type="button"><b>⌁</b><span>Sign</span></button>
       <button class="ribbon-tool" type="button" disabled><b>✎</b><span>Draw</span></button>
       <button class="ribbon-tool" type="button" disabled><b>／</b><span>Line</span></button>
       <button class="ribbon-tool" type="button" disabled><b>T̲</b><span>Text highlight</span></button>
@@ -355,6 +355,72 @@
         <button class="alignment-button align-centre" id="text-align-center" type="button" title="Align centre"><span></span><span></span><span></span></button>
         <button class="alignment-button align-right" id="text-align-right" type="button" title="Align right"><span></span><span></span><span></span></button>
       </div>
+    </div>
+
+    
+    <div class="edit-text-options-bar" id="edit-text-options-bar" hidden aria-label="Edit text options">
+      <button class="edit-option-button add-edit-text-box" id="edit-add-text-box" type="button">
+        <span class="edit-option-icon">T+</span>
+        <small>Add text box</small>
+      </button>
+
+      <div class="edit-option-dropdown colour-dropdown">
+        <button class="edit-option-button" id="edit-text-colour-button" type="button">
+          <span class="edit-colour-icon">A</span>
+          <span class="edit-colour-line" id="edit-colour-line"></span>
+          <small>Color</small>
+        </button>
+        <div class="edit-colour-menu" id="edit-colour-menu" hidden>
+          <button type="button" data-edit-colour="#111827" style="--swatch:#111827" aria-label="Black"></button>
+          <button type="button" data-edit-colour="#ffffff" style="--swatch:#ffffff" aria-label="White"></button>
+          <button type="button" data-edit-colour="#ef4444" style="--swatch:#ef4444" aria-label="Red"></button>
+          <button type="button" data-edit-colour="#f97316" style="--swatch:#f97316" aria-label="Orange"></button>
+          <button type="button" data-edit-colour="#eab308" style="--swatch:#eab308" aria-label="Yellow"></button>
+          <button type="button" data-edit-colour="#22c55e" style="--swatch:#22c55e" aria-label="Green"></button>
+          <button type="button" data-edit-colour="#14b8a6" style="--swatch:#14b8a6" aria-label="Teal"></button>
+          <button type="button" data-edit-colour="#3b82f6" style="--swatch:#3b82f6" aria-label="Blue"></button>
+          <button type="button" data-edit-colour="#6366f1" style="--swatch:#6366f1" aria-label="Indigo"></button>
+          <button type="button" data-edit-colour="#8b5cf6" style="--swatch:#8b5cf6" aria-label="Purple"></button>
+          <button type="button" data-edit-colour="#ec4899" style="--swatch:#ec4899" aria-label="Pink"></button>
+          <button type="button" data-edit-colour="#6b7280" style="--swatch:#6b7280" aria-label="Grey"></button>
+        </div>
+      </div>
+
+      <label class="edit-option-control edit-font-control">
+        <span>Font</span>
+        <select id="edit-text-font">
+          <option value="Helvetica">Helvetica</option>
+          <option value="Arial">Arial</option>
+          <option value="Verdana">Verdana</option>
+          <option value="Tahoma">Tahoma</option>
+          <option value="Trebuchet">Trebuchet MS</option>
+          <option value="TimesRoman">Times New Roman</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Garamond">Garamond</option>
+          <option value="Courier">Courier New</option>
+          <option value="LucidaConsole">Lucida Console</option>
+          <option value="Impact">Impact</option>
+          <option value="ComicSans">Comic Sans MS</option>
+        </select>
+      </label>
+
+      <label class="edit-option-control edit-size-control">
+        <span>Font size</span>
+        <select id="edit-text-size">
+          <option value="4">4</option><option value="6">6</option><option value="8">8</option>
+          <option value="10">10</option><option value="12">12</option><option value="14">14</option>
+          <option value="16">16</option><option value="18" selected>18</option><option value="20">20</option>
+          <option value="22">22</option><option value="24">24</option><option value="28">28</option>
+          <option value="32">32</option><option value="36">36</option><option value="40">40</option>
+          <option value="48">48</option><option value="56">56</option><option value="64">64</option>
+          <option value="72">72</option><option value="84">84</option><option value="96">96</option>
+          <option value="110">110</option><option value="128">128</option><option value="144">144</option>
+          <option value="160">160</option><option value="180">180</option><option value="200">200</option>
+        </select>
+      </label>
+
+      <button class="edit-format-toggle" id="edit-text-bold" type="button" title="Bold"><strong>B</strong></button>
+      <button class="edit-format-toggle" id="edit-text-italic" type="button" title="Italic"><em>I</em></button>
     </div>
 
     <div class="desktop-editor-body">
@@ -715,6 +781,76 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-<script src="script.js?v=190"></script>
+<div class="signature-modal-shell" id="signature-modal" hidden>
+    <div class="signature-modal-backdrop" data-close-signature></div>
+    <section class="signature-modal" role="dialog" aria-modal="true" aria-labelledby="signature-modal-title">
+      <header class="signature-modal-header">
+        <h2 id="signature-modal-title">Add Signature</h2>
+        <button class="signature-close" id="signature-close" type="button" aria-label="Close">×</button>
+      </header>
+
+      <nav class="signature-tabs" role="tablist">
+        <button class="signature-tab active" data-signature-tab="draw" type="button">Draw</button>
+        <button class="signature-tab" data-signature-tab="image" type="button">Image</button>
+        <button class="signature-tab" data-signature-tab="type" type="button">Type</button>
+      </nav>
+
+      <div class="signature-modal-body">
+        <div class="signature-colours" aria-label="Signature colour">
+          <button class="signature-colour active" data-signature-colour="#111111" style="--signature-colour:#111111" type="button" aria-label="Black"></button>
+          <button class="signature-colour" data-signature-colour="#2188f3" style="--signature-colour:#2188f3" type="button" aria-label="Blue"></button>
+          <button class="signature-colour" data-signature-colour="#4936d9" style="--signature-colour:#4936d9" type="button" aria-label="Purple"></button>
+        </div>
+
+        <section class="signature-panel active" data-signature-panel="draw">
+          <div class="signature-draw-wrap">
+            <canvas id="signature-draw-canvas" width="1200" height="420"></canvas>
+          </div>
+          <button class="signature-clear" id="signature-clear-draw" type="button">Clear Signature</button>
+        </section>
+
+        <section class="signature-panel" data-signature-panel="image" hidden>
+          <label class="signature-upload-zone" id="signature-upload-zone">
+            <input id="signature-image-input" type="file" accept="image/png,image/jpeg,image/webp" hidden>
+            <span class="signature-upload-button">Select Image</span>
+            <small>Select or drag an image</small>
+            <img id="signature-image-preview" alt="Signature preview" hidden>
+          </label>
+        </section>
+
+        <section class="signature-panel" data-signature-panel="type" hidden>
+          <div class="typed-signature-box">
+            <input class="typed-signature-input" id="signature-name-input" type="text" placeholder="Signature" aria-label="Type your signature">
+          </div>
+          <button class="signature-type-action" id="signature-clear-type" type="button">Sign Here</button>
+          <div class="signature-font-grid">
+            <label class="signature-font-choice active">
+              <input type="radio" name="signature-font" value="Caveat" checked>
+              <span style="font-family:Caveat,cursive">Signature</span>
+            </label>
+            <label class="signature-font-choice">
+              <input type="radio" name="signature-font" value="Dancing Script">
+              <span style="font-family:'Dancing Script',cursive">Signature</span>
+            </label>
+            <label class="signature-font-choice">
+              <input type="radio" name="signature-font" value="Great Vibes">
+              <span style="font-family:'Great Vibes',cursive">Signature</span>
+            </label>
+            <label class="signature-font-choice">
+              <input type="radio" name="signature-font" value="Pacifico">
+              <span style="font-family:Pacifico,cursive">Signature</span>
+            </label>
+          </div>
+        </section>
+      </div>
+
+      <footer class="signature-modal-footer">
+        <button class="signature-cancel" id="signature-cancel" type="button">Cancel</button>
+        <button class="signature-done" id="signature-done" type="button" disabled>Done</button>
+      </footer>
+    </section>
+  </div>
+
+  <script src="script.js?v=255"></script>
 </body>
 </html>

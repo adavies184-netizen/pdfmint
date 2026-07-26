@@ -87,7 +87,15 @@ let editor = {
   mode: 'select',
   annotations: {},
   selectedAnnotationId: null,
-  canvasMetrics: null
+  canvasMetrics: null,
+  extractedText: {},
+  selectedExistingTextId: null,
+  editTextBoxMode: false,
+  editCreatedText: {},
+  selectedEditCreatedTextId: null,
+  signatures: {},
+  selectedSignatureId: null,
+  pendingSignature: null
 };
 let splitFile = null;
 let splitPageCount = 0;
@@ -98,16 +106,26 @@ function cloneEditorState() {
   return JSON.parse(JSON.stringify({
     pages: editor.pages,
     annotations: editor.annotations,
+    extractedText: editor.extractedText,
+    editCreatedText: editor.editCreatedText,
+    signatures: editor.signatures,
     selectedIndex: editor.selectedIndex,
-    selectedAnnotationId: editor.selectedAnnotationId
+    selectedAnnotationId: editor.selectedAnnotationId,
+    selectedExistingTextId: editor.selectedExistingTextId,
+    selectedSignatureId: editor.selectedSignatureId
   }));
 }
 function restoreEditorState(snapshot) {
   editorHistory.restoring = true;
   editor.pages = snapshot.pages;
   editor.annotations = snapshot.annotations;
+  editor.extractedText = snapshot.extractedText || {};
+  editor.editCreatedText = snapshot.editCreatedText || {};
+  editor.signatures = snapshot.signatures || {};
   editor.selectedIndex = Math.min(snapshot.selectedIndex, Math.max(0, editor.pages.length - 1));
   editor.selectedAnnotationId = snapshot.selectedAnnotationId;
+  editor.selectedExistingTextId = snapshot.selectedExistingTextId || null;
+  editor.selectedSignatureId = snapshot.selectedSignatureId || null;
   editorHistory.restoring = false;
   renderThumbnails().then(() => renderSelectedPage());
   updateEditorUi();
@@ -207,7 +225,15 @@ async function loadEditorPdf(file) {
       mode: 'select',
       annotations: {},
       selectedAnnotationId: null,
-      canvasMetrics: null
+      canvasMetrics: null,
+      extractedText: {},
+      selectedExistingTextId: null,
+      editTextBoxMode: false,
+      editCreatedText: {},
+      selectedEditCreatedTextId: null,
+      signatures: {},
+      selectedSignatureId: null,
+      pendingSignature: null
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
@@ -232,17 +258,78 @@ function getSelectedAnnotation() {
   return getPageAnnotations(editor.pages[editor.selectedIndex].sourceIndex)
     .find(item => item.id === editor.selectedAnnotationId) || null;
 }
+
+function clearEditTextInterfaceImmediately() {
+  editor.editTextBoxMode = false;
+  editor.selectedExistingTextId = null;
+  editor.selectedEditCreatedTextId = null;
+
+  const editOptionsBar = document.getElementById('edit-text-options-bar');
+  const addBoxButton = document.getElementById('edit-add-text-box');
+  const colourMenu = document.getElementById('edit-colour-menu');
+  const layer = document.getElementById('annotation-layer');
+
+  if (editOptionsBar) editOptionsBar.hidden = true;
+  if (addBoxButton) addBoxButton.classList.remove('active');
+  if (colourMenu) colourMenu.hidden = true;
+
+  if (layer) {
+    layer.classList.remove('edit-text-mode', 'add-edit-box-mode');
+  }
+
+  // Remove the visible Edit Text layer now, during the toolbar click itself.
+  // Do not wait for a later click on the PDF preview.
+  document.querySelectorAll(
+    '.existing-text-box, .existing-text-whiteout, .edit-created-text'
+  ).forEach(element => element.remove());
+}
+
 function setEditorMode(mode) {
+  if (mode !== 'edit-existing') {
+    clearEditTextInterfaceImmediately();
+  }
+
   editor.mode = mode;
+  if (mode !== 'signature-place') {
+    editor.selectedSignatureId = null;
+    editor.pendingSignature = null;
+  }
+
   const addTextTool = document.getElementById('add-text-tool');
+  const editTextTool = document.getElementById('edit-text-tool');
   if (addTextTool) addTextTool.classList.toggle('active', mode === 'text');
-  const optionsBar = document.getElementById('text-options-bar');
-  if (optionsBar) optionsBar.hidden = mode !== 'text';
+  if (editTextTool) editTextTool.classList.toggle('active', mode === 'edit-existing');
+
+  const addOptionsBar = document.getElementById('text-options-bar');
+  const editOptionsBar = document.getElementById('edit-text-options-bar');
+  if (addOptionsBar) addOptionsBar.hidden = mode !== 'text';
+  if (editOptionsBar) editOptionsBar.hidden = mode !== 'edit-existing';
+
+  if (mode !== 'edit-existing') {
+    editor.editTextBoxMode = false;
+    editor.selectedExistingTextId = null;
+    editor.selectedEditCreatedTextId = null;
+    const addBoxButton = document.getElementById('edit-add-text-box');
+    if (addBoxButton) addBoxButton.classList.remove('active');
+  }
+
   const layer = document.getElementById('annotation-layer');
   layer.classList.toggle('text-mode', mode === 'text');
   layer.classList.toggle('select-mode', mode === 'select');
-  if (mode === 'text') showEditorHint('Click anywhere on the page to add text.');
+  layer.classList.toggle('edit-text-mode', mode === 'edit-existing');
+  layer.classList.toggle('add-edit-box-mode', mode === 'edit-existing' && editor.editTextBoxMode);
+  layer.classList.toggle('signature-place-mode', mode === 'signature-place');
+
+  if (mode === 'text') {
+    showEditorHint('Click anywhere on the page to add text.');
+  } else if (mode === 'edit-existing') {
+    showEditorHint('Click once to select text. Double-click to edit it.');
+    ensureExistingTextForCurrentPage().then(renderAnnotations);
+  } else {
+    renderAnnotations();
+  }
 }
+
 function showEditorHint(message) {
   let toast = document.querySelector('.editor-help-toast');
   if (!toast) {
@@ -263,6 +350,969 @@ function hexToRgb01(hex) {
     b: parseInt(full.slice(4,6),16)/255
   };
 }
+
+function getCurrentSourcePageIndex() {
+  if (!editor.pages.length) return null;
+  return editor.pages[editor.selectedIndex].sourceIndex;
+}
+
+function getExistingTextItems(sourceIndex) {
+  const key = String(sourceIndex);
+  if (!editor.extractedText[key]) editor.extractedText[key] = [];
+  return editor.extractedText[key];
+}
+
+function approximatePdfFont(fontName = '') {
+  const lower = String(fontName).toLowerCase();
+  const bold = /bold|black|semibold|demi/.test(lower);
+  const italic = /italic|oblique/.test(lower);
+  let font = 'Helvetica';
+  if (/times|serif|roman/.test(lower)) font = 'TimesRoman';
+  else if (/courier|mono/.test(lower)) font = 'Courier';
+  return {font, bold, italic};
+}
+
+async function ensureExistingTextForCurrentPage() {
+  const sourceIndex = getCurrentSourcePageIndex();
+  if (sourceIndex === null) return [];
+
+  const key = String(sourceIndex);
+  if (editor.extractedText[key]?.length) return editor.extractedText[key];
+
+  const page = await editor.pdfjs.getPage(sourceIndex + 1);
+  const textContent = await page.getTextContent();
+  const viewport = page.getViewport({scale: 1});
+
+  const runs = textContent.items
+    .map((textItem, index) => {
+      const text = String(textItem.str || '');
+      if (!text.trim()) return null;
+
+      const tx = pdfjsLib.Util.transform(viewport.transform, textItem.transform);
+      const fontHeight = Math.max(5, Math.hypot(tx[2], tx[3]));
+      const x = tx[4];
+      const top = tx[5] - fontHeight;
+      const width = Math.max(8, Math.abs(textItem.width || 0));
+      const style = approximatePdfFont(textItem.fontName);
+
+      return {
+        index,
+        text,
+        x,
+        top,
+        width,
+        height: fontHeight,
+        baselineY: textItem.transform[5],
+        pdfX: textItem.transform[4],
+        pdfY: textItem.transform[5],
+        pdfFontSize: Math.max(5, Math.hypot(textItem.transform[0], textItem.transform[1])),
+        fontName: textItem.fontName || '',
+        font: style.font,
+        bold: style.bold,
+        italic: style.italic
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => {
+      const vertical = a.top - b.top;
+      return Math.abs(vertical) > Math.max(a.height, b.height) * .55 ? vertical : a.x - b.x;
+    });
+
+  // First group runs into visual lines.
+  const lines = [];
+  for (const run of runs) {
+    let line = lines.find(candidate => {
+      const tolerance = Math.max(candidate.avgHeight, run.height) * .55;
+      return Math.abs(candidate.top - run.top) <= tolerance;
+    });
+
+    if (!line) {
+      line = {
+        runs: [],
+        top: run.top,
+        bottom: run.top + run.height,
+        left: run.x,
+        right: run.x + run.width,
+        avgHeight: run.height
+      };
+      lines.push(line);
+    }
+
+    line.runs.push(run);
+    line.top = Math.min(line.top, run.top);
+    line.bottom = Math.max(line.bottom, run.top + run.height);
+    line.left = Math.min(line.left, run.x);
+    line.right = Math.max(line.right, run.x + run.width);
+    line.avgHeight = line.runs.reduce((sum, item) => sum + item.height, 0) / line.runs.length;
+  }
+
+  lines.sort((a, b) => a.top - b.top);
+  lines.forEach(line => line.runs.sort((a, b) => a.x - b.x));
+
+  // Then group neighbouring lines into paragraph boxes.
+  const paragraphs = [];
+  for (const line of lines) {
+    const text = line.runs.map((run, i) => {
+      if (i === 0) return run.text;
+      const prev = line.runs[i - 1];
+      const gap = run.x - (prev.x + prev.width);
+      return `${gap > Math.max(2, line.avgHeight * .16) ? ' ' : ''}${run.text}`;
+    }).join('');
+
+    const firstRun = line.runs[0];
+    const paragraphCandidate = paragraphs[paragraphs.length - 1];
+    const lineGap = paragraphCandidate ? line.top - paragraphCandidate.bottom : Infinity;
+    const sameLeftEdge = paragraphCandidate
+      ? Math.abs(line.left - paragraphCandidate.left) <= Math.max(8, line.avgHeight * .85)
+      : false;
+    const closeVertically = paragraphCandidate
+      ? lineGap <= Math.max(line.avgHeight, paragraphCandidate.avgHeight) * .72
+      : false;
+    const previousFirstRun = paragraphCandidate?.firstRun;
+    const sameFontFamily = previousFirstRun
+      ? previousFirstRun.font === firstRun.font
+      : false;
+    const similarFontSize = previousFirstRun
+      ? Math.abs(previousFirstRun.pdfFontSize - firstRun.pdfFontSize) <= Math.max(1.2, firstRun.pdfFontSize * .14)
+      : false;
+
+    if (paragraphCandidate && closeVertically && sameLeftEdge && sameFontFamily && similarFontSize) {
+      paragraphCandidate.lines.push({text, line});
+      paragraphCandidate.text += `\n${text}`;
+      paragraphCandidate.originalText = paragraphCandidate.text;
+      paragraphCandidate.left = Math.min(paragraphCandidate.left, line.left);
+      paragraphCandidate.right = Math.max(paragraphCandidate.right, line.right);
+      paragraphCandidate.top = Math.min(paragraphCandidate.top, line.top);
+      paragraphCandidate.bottom = Math.max(paragraphCandidate.bottom, line.bottom);
+      paragraphCandidate.avgHeight =
+        paragraphCandidate.lines.reduce((sum, item) => sum + item.line.avgHeight, 0) /
+        paragraphCandidate.lines.length;
+    } else {
+      paragraphs.push({
+        lines: [{text, line}],
+        text,
+        originalText: text,
+        left: line.left,
+        right: line.right,
+        top: line.top,
+        bottom: line.bottom,
+        avgHeight: line.avgHeight,
+        firstRun
+      });
+    }
+  }
+
+  const items = paragraphs.map((paragraph, index) => {
+    const firstRun = paragraph.firstRun;
+    const width = Math.max(12, paragraph.right - paragraph.left);
+    const height = Math.max(paragraph.avgHeight * 1.15, paragraph.bottom - paragraph.top);
+
+    return {
+      id: `existing-${sourceIndex}-${index}`,
+      type: 'existing-text',
+      originalText: paragraph.originalText,
+      text: paragraph.text,
+      x: Math.max(0, paragraph.left / viewport.width),
+      y: Math.max(0, paragraph.top / viewport.height),
+      w: Math.min(1, Math.max(.02, width / viewport.width)),
+      h: Math.min(.75, Math.max(.018, height / viewport.height)),
+      originalX: Math.max(0, paragraph.left / viewport.width),
+      originalY: Math.max(0, paragraph.top / viewport.height),
+      originalW: Math.min(1, Math.max(.02, width / viewport.width)),
+      originalH: Math.min(.75, Math.max(.018, height / viewport.height)),
+      pdfX: firstRun.pdfX,
+      pdfY: firstRun.pdfY,
+      pdfWidth: width,
+      pdfFontSize: firstRun.pdfFontSize,
+      fontName: firstRun.fontName,
+      font: firstRun.font,
+      bold: firstRun.bold,
+      italic: firstRun.italic,
+      lineHeight: paragraph.avgHeight,
+      modified: false
+    };
+  });
+
+  editor.extractedText[key] = items;
+  return items;
+}
+
+function getSelectedExistingText() {
+  const sourceIndex = getCurrentSourcePageIndex();
+  if (sourceIndex === null || !editor.selectedExistingTextId) return null;
+  return getExistingTextItems(sourceIndex).find(item => item.id === editor.selectedExistingTextId) || null;
+}
+
+function refreshExistingTextSelectionClasses() {
+  document.querySelectorAll('.existing-text-box').forEach(box => {
+    const selected = box.dataset.id === editor.selectedExistingTextId;
+    box.classList.toggle('selected', selected);
+    if (!selected) {
+      box.classList.remove('editing');
+      const content = box.querySelector('.existing-text-content');
+      if (content) content.removeAttribute('contenteditable');
+    }
+  });
+}
+
+function selectExistingText(id) {
+  editor.selectedExistingTextId = id;
+  editor.selectedAnnotationId = null;
+  refreshExistingTextSelectionClasses();
+}
+
+function deselectExistingText() {
+  editor.selectedExistingTextId = null;
+  refreshExistingTextSelectionClasses();
+}
+
+function startExistingTextResize(event, item, side, box, content) {
+  event.preventDefault();
+  event.stopPropagation();
+  selectExistingText(item.id);
+  recordHistory();
+
+  const metrics = editor.canvasMetrics;
+  const startX = event.clientX;
+  const originalX = item.x;
+  const originalW = item.w;
+
+  const updateBox = () => {
+    box.classList.add('modified');
+    content.style.display = 'block';
+
+    box.style.left = `${item.x * metrics.width}px`;
+    box.style.width = `${item.w * metrics.width}px`;
+
+    // Ensure a whiteout exists over the full original paragraph while the
+    // resized replacement is being previewed.
+    let whiteout = document.querySelector(`.existing-text-whiteout[data-for="${item.id}"]`);
+    if (!whiteout) {
+      whiteout = document.createElement('div');
+      whiteout.className = 'existing-text-whiteout';
+      whiteout.dataset.for = item.id;
+      document.getElementById('annotation-layer').insertBefore(whiteout, box);
+    }
+    whiteout.style.left = `${item.originalX * metrics.width}px`;
+    whiteout.style.top = `${item.originalY * metrics.height}px`;
+    whiteout.style.width = `${item.originalW * metrics.width}px`;
+    whiteout.style.height = `${Math.max(16, item.originalH * metrics.height)}px`;
+
+    const requiredHeight = Math.max(
+      item.h * metrics.height,
+      content.scrollHeight
+    );
+    box.style.minHeight = `${requiredHeight}px`;
+    item.h = Math.min(1 - item.y, requiredHeight / metrics.height);
+  };
+
+  const move = moveEvent => {
+    const delta = (moveEvent.clientX - startX) / metrics.width;
+
+    if (side === 'left') {
+      const newX = Math.max(0, Math.min(originalX + originalW - .03, originalX + delta));
+      item.w = originalW + (originalX - newX);
+      item.x = newX;
+    } else {
+      item.w = Math.max(.03, Math.min(1 - item.x, originalW + delta));
+    }
+
+    item.modified = true;
+    updateBox();
+  };
+
+  const up = () => {
+    updateBox();
+    window.removeEventListener('mousemove', move);
+    window.removeEventListener('mouseup', up);
+  };
+
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+}
+
+
+function getEditCreatedTextItems(sourceIndex) {
+  const key = String(sourceIndex);
+  if (!editor.editCreatedText[key]) editor.editCreatedText[key] = [];
+  return editor.editCreatedText[key];
+}
+
+function getSelectedEditTarget() {
+  const sourceIndex = getCurrentSourcePageIndex();
+  if (sourceIndex === null) return null;
+
+  if (editor.selectedExistingTextId) {
+    return getExistingTextItems(sourceIndex).find(item => item.id === editor.selectedExistingTextId) || null;
+  }
+
+  if (editor.selectedEditCreatedTextId) {
+    return getEditCreatedTextItems(sourceIndex).find(item => item.id === editor.selectedEditCreatedTextId) || null;
+  }
+
+  return null;
+}
+
+function syncEditTextToolbar() {
+  const item = getSelectedEditTarget();
+  if (!item) return;
+
+  const font = document.getElementById('edit-text-font');
+  const size = document.getElementById('edit-text-size');
+  const bold = document.getElementById('edit-text-bold');
+  const italic = document.getElementById('edit-text-italic');
+  const colourLine = document.getElementById('edit-colour-line');
+
+  if (font) font.value = item.font || 'Helvetica';
+
+  if (size) {
+    const requested = Math.max(4, Math.min(200, Math.round(item.pdfFontSize || item.size || 18)));
+    let option = Array.from(size.options).find(opt => Number(opt.value) === requested);
+    if (!option) {
+      option = document.createElement('option');
+      option.value = String(requested);
+      option.textContent = String(requested);
+      size.appendChild(option);
+    }
+    size.value = String(requested);
+  }
+
+  if (bold) bold.classList.toggle('active', Boolean(item.bold));
+  if (italic) italic.classList.toggle('active', Boolean(item.italic));
+  if (colourLine) colourLine.style.background = item.color || '#111827';
+}
+
+function updateEditTarget(mutator) {
+  const item = getSelectedEditTarget();
+  if (!item) return;
+  recordHistory();
+  mutator(item);
+  item.modified = true;
+  renderAnnotations();
+}
+
+function applyColourToCurrentSelection(colour) {
+  const active = document.activeElement;
+  const isEditable =
+    active &&
+    (active.classList.contains('existing-text-content') || active.classList.contains('edit-created-text')) &&
+    active.isContentEditable;
+
+  if (isEditable) {
+    const selection = window.getSelection();
+    if (selection && !selection.isCollapsed && active.contains(selection.anchorNode)) {
+      document.execCommand('styleWithCSS', false, true);
+      document.execCommand('foreColor', false, colour);
+      const target = getSelectedEditTarget();
+      if (target) {
+        target.html = active.innerHTML;
+        target.text = active.innerText.replace(/\r/g, '');
+        target.modified = true;
+      }
+      return;
+    }
+  }
+
+  updateEditTarget(item => {
+    item.color = colour;
+    item.html = '';
+  });
+}
+
+function placeCaretAtEnd(element) {
+  element.focus({preventScroll: true});
+  const range = document.createRange();
+  range.selectNodeContents(element);
+  range.collapse(false);
+  const selection = window.getSelection();
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+function addEditTextBoxAt(clientX, clientY) {
+  const sourceIndex = getCurrentSourcePageIndex();
+  const layer = document.getElementById('annotation-layer');
+  const rect = layer.getBoundingClientRect();
+  if (sourceIndex === null || !rect.width || !rect.height) return;
+
+  const item = {
+    id: `edit-created-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    type: 'edit-created-text',
+    text: '',
+    html: '',
+    x: Math.max(0, Math.min(.82, (clientX - rect.left) / rect.width)),
+    y: Math.max(0, Math.min(.93, (clientY - rect.top) / rect.height)),
+    w: .18,
+    h: .045,
+    font: document.getElementById('edit-text-font').value || 'Helvetica',
+    pdfFontSize: Number(document.getElementById('edit-text-size').value) || 18,
+    bold: document.getElementById('edit-text-bold').classList.contains('active'),
+    italic: document.getElementById('edit-text-italic').classList.contains('active'),
+    color: document.getElementById('edit-colour-line').style.background || '#111827',
+    modified: true
+  };
+
+  recordHistory();
+  getEditCreatedTextItems(sourceIndex).push(item);
+  editor.selectedExistingTextId = null;
+  editor.selectedEditCreatedTextId = item.id;
+  editor.editTextBoxMode = false;
+  document.getElementById('edit-add-text-box').classList.remove('active');
+  layer.classList.remove('add-edit-box-mode');
+
+  renderAnnotations();
+
+  requestAnimationFrame(() => {
+    const element = document.querySelector(`.edit-created-text[data-id="${item.id}"]`);
+    if (!element) return;
+    element.classList.add('editing');
+    element.setAttribute('contenteditable', 'plaintext-only');
+    if (element.contentEditable !== 'plaintext-only') element.setAttribute('contenteditable', 'true');
+    placeCaretAtEnd(element);
+  });
+}
+
+function startEditCreatedResize(event, item, side, box) {
+  event.preventDefault();
+  event.stopPropagation();
+  recordHistory();
+
+  const metrics = editor.canvasMetrics;
+  const startX = event.clientX;
+  const originalX = item.x;
+  const originalW = item.w;
+
+  const move = moveEvent => {
+    const delta = (moveEvent.clientX - startX) / metrics.width;
+    if (side === 'left') {
+      const newX = Math.max(0, Math.min(originalX + originalW - .03, originalX + delta));
+      item.w = originalW + (originalX - newX);
+      item.x = newX;
+    } else {
+      item.w = Math.max(.03, Math.min(1 - item.x, originalW + delta));
+    }
+
+    box.style.left = `${item.x * metrics.width}px`;
+    box.style.width = `${item.w * metrics.width}px`;
+    const height = Math.max(30, box.scrollHeight);
+    box.style.minHeight = `${height}px`;
+    item.h = Math.min(1 - item.y, height / metrics.height);
+  };
+
+  const up = () => {
+    window.removeEventListener('mousemove', move);
+    window.removeEventListener('mouseup', up);
+  };
+
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+}
+
+function renderEditCreatedTextBoxes(layer, metrics) {
+  if (editor.mode !== 'edit-existing') return;
+  const sourceIndex = getCurrentSourcePageIndex();
+  if (sourceIndex === null) return;
+
+  getEditCreatedTextItems(sourceIndex).forEach(item => {
+    const box = document.createElement('div');
+    box.className = 'edit-created-text';
+    if (item.id === editor.selectedEditCreatedTextId) box.classList.add('selected');
+    box.dataset.id = item.id;
+    box.style.left = `${item.x * metrics.width}px`;
+    box.style.top = `${item.y * metrics.height}px`;
+    box.style.width = `${item.w * metrics.width}px`;
+    box.style.minHeight = `${Math.max(30, item.h * metrics.height)}px`;
+    box.style.fontFamily = item.font === 'TimesRoman'
+      ? '"Times New Roman", Times, serif'
+      : item.font === 'Courier'
+        ? '"Courier New", monospace'
+        : 'Helvetica, Arial, sans-serif';
+    box.style.fontWeight = item.bold ? '700' : '400';
+    box.style.fontStyle = item.italic ? 'italic' : 'normal';
+    box.style.fontSize = `${Math.max(4, item.pdfFontSize * metrics.scale)}px`;
+    box.style.color = item.color || '#111827';
+
+    if (item.html) box.innerHTML = item.html;
+    else box.textContent = item.text || '';
+
+    const leftHandle = document.createElement('span');
+    leftHandle.className = 'existing-handle left-handle';
+    leftHandle.contentEditable = 'false';
+
+    const rightHandle = document.createElement('span');
+    rightHandle.className = 'existing-handle right-handle';
+    rightHandle.contentEditable = 'false';
+
+    box.append(leftHandle, rightHandle);
+
+    box.addEventListener('click', event => {
+      event.stopPropagation();
+
+      if (box.classList.contains('editing')) return;
+
+      editor.selectedExistingTextId = null;
+      editor.selectedEditCreatedTextId = item.id;
+      document.querySelectorAll('.existing-text-box').forEach(el => el.classList.remove('selected'));
+      document.querySelectorAll('.edit-created-text').forEach(el => el.classList.toggle('selected', el === box));
+      syncEditTextToolbar();
+    });
+
+    box.addEventListener('dblclick', event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      editor.selectedExistingTextId = null;
+      editor.selectedEditCreatedTextId = item.id;
+      box.classList.add('selected', 'editing');
+      box.setAttribute('contenteditable', 'plaintext-only');
+      if (box.contentEditable !== 'plaintext-only') box.setAttribute('contenteditable', 'true');
+
+      requestAnimationFrame(() => placeCaretAtEnd(box));
+    });
+
+    box.addEventListener('input', () => {
+      const handles = box.querySelectorAll('.existing-handle');
+      handles.forEach(handle => handle.remove());
+
+      item.html = box.innerHTML;
+      item.text = box.innerText.replace(/\r/g, '');
+      item.modified = true;
+
+      box.append(leftHandle, rightHandle);
+      const height = Math.max(30, box.scrollHeight);
+      box.style.minHeight = `${height}px`;
+      item.h = Math.min(1 - item.y, height / metrics.height);
+    });
+
+    box.addEventListener('blur', () => {
+      if (!box.classList.contains('editing')) return;
+      box.removeAttribute('contenteditable');
+      box.classList.remove('editing');
+
+      const handles = box.querySelectorAll('.existing-handle');
+      handles.forEach(handle => handle.remove());
+      item.html = box.innerHTML;
+      item.text = box.innerText.replace(/\r/g, '');
+      box.append(leftHandle, rightHandle);
+    });
+
+    leftHandle.addEventListener('mousedown', event => startEditCreatedResize(event, item, 'left', box));
+    rightHandle.addEventListener('mousedown', event => startEditCreatedResize(event, item, 'right', box));
+
+    layer.appendChild(box);
+  });
+}
+
+function renderExistingTextBoxes(layer, metrics) {
+  if (editor.mode !== 'edit-existing') return;
+
+  const sourceIndex = getCurrentSourcePageIndex();
+  if (sourceIndex === null) return;
+
+  getExistingTextItems(sourceIndex).forEach(item => {
+    const isSelected = item.id === editor.selectedExistingTextId;
+    const isModified = Boolean(item.modified);
+
+    // Whenever the text is selected, resized or edited, hide the original PDF
+    // text beneath the complete original paragraph area.
+    if (isSelected || isModified) {
+      const whiteout = document.createElement('div');
+      whiteout.className = 'existing-text-whiteout';
+      whiteout.dataset.for = item.id;
+      whiteout.style.left = `${item.originalX * metrics.width}px`;
+      whiteout.style.top = `${item.originalY * metrics.height}px`;
+      whiteout.style.width = `${item.originalW * metrics.width}px`;
+      whiteout.style.height = `${Math.max(16, item.originalH * metrics.height)}px`;
+      layer.appendChild(whiteout);
+    }
+
+    const box = document.createElement('div');
+    box.className = 'existing-text-box';
+    if (isSelected) box.classList.add('selected');
+    if (isModified) box.classList.add('modified');
+    box.dataset.id = item.id;
+    box.style.left = `${item.x * metrics.width}px`;
+    box.style.top = `${item.y * metrics.height}px`;
+    box.style.width = `${item.w * metrics.width}px`;
+    box.style.minHeight = `${Math.max(16, item.h * metrics.height)}px`;
+
+    const content = document.createElement('div');
+    content.className = 'existing-text-content';
+    if (item.html) content.innerHTML = item.html;
+    else content.textContent = item.text;
+    content.spellcheck = false;
+    content.style.fontFamily = item.font === 'TimesRoman'
+      ? '"Times New Roman", Times, serif'
+      : item.font === 'Courier'
+        ? '"Courier New", monospace'
+        : 'Helvetica, Arial, sans-serif';
+    content.style.fontWeight = item.bold ? '700' : '400';
+    content.style.fontStyle = item.italic ? 'italic' : 'normal';
+    content.style.fontSize = `${Math.max(4, item.pdfFontSize * metrics.scale)}px`;
+    content.style.color = item.color || '#111827';
+
+    const leftHandle = document.createElement('span');
+    leftHandle.className = 'existing-handle left-handle';
+    const rightHandle = document.createElement('span');
+    rightHandle.className = 'existing-handle right-handle';
+
+    box.append(content, leftHandle, rightHandle);
+
+    box.addEventListener('click', event => {
+      event.stopPropagation();
+      if (box.classList.contains('editing')) return;
+      selectExistingText(item.id);
+      editor.selectedEditCreatedTextId = null;
+      syncEditTextToolbar();
+    });
+
+    box.addEventListener('dblclick', event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      selectExistingText(item.id);
+      recordHistory();
+
+      // Mark modified immediately so the replacement overlay remains visible
+      // after the user clicks away, even when only deleting text.
+      item.modified = true;
+      box.classList.add('selected', 'editing', 'modified');
+      content.setAttribute('contenteditable', 'plaintext-only');
+      if (content.contentEditable !== 'plaintext-only') {
+        content.setAttribute('contenteditable', 'true');
+      }
+      content.style.display = 'block';
+
+      requestAnimationFrame(() => {
+        content.focus({preventScroll: true});
+        const range = document.createRange();
+        range.selectNodeContents(content);
+        range.collapse(false);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+    });
+
+    content.addEventListener('mousedown', event => {
+      if (box.classList.contains('editing')) event.stopPropagation();
+    });
+
+    content.addEventListener('click', event => {
+      if (box.classList.contains('editing')) event.stopPropagation();
+    });
+
+    content.addEventListener('input', () => {
+      item.text = content.innerText.replace(/\r/g, '');
+      item.modified = true;
+      box.classList.add('modified');
+
+      const requiredHeight = Math.max(16, content.scrollHeight);
+      box.style.minHeight = `${requiredHeight}px`;
+      item.h = Math.min(1 - item.y, requiredHeight / metrics.height);
+    });
+
+    content.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        content.blur();
+      }
+    });
+
+    content.addEventListener('blur', () => {
+      if (!box.classList.contains('editing')) return;
+
+      content.removeAttribute('contenteditable');
+      box.classList.remove('editing');
+      box.classList.add('modified');
+
+      item.text = content.innerText.replace(/\r/g, '');
+      item.modified = true;
+
+      const requiredHeight = Math.max(16, content.scrollHeight);
+      box.style.minHeight = `${requiredHeight}px`;
+      item.h = Math.min(1 - item.y, requiredHeight / metrics.height);
+
+      // Keep the replacement visible. Do not restore the original PDF text.
+      refreshExistingTextSelectionClasses();
+    });
+
+    leftHandle.addEventListener('mousedown', event => {
+      item.modified = true;
+      box.classList.add('modified');
+      startExistingTextResize(event, item, 'left', box, content);
+    });
+    rightHandle.addEventListener('mousedown', event => {
+      item.modified = true;
+      box.classList.add('modified');
+      startExistingTextResize(event, item, 'right', box, content);
+    });
+
+    layer.appendChild(box);
+  });
+}
+
+
+function getPageSignatures(sourceIndex) {
+  const key = String(sourceIndex);
+  if (!editor.signatures[key]) editor.signatures[key] = [];
+  return editor.signatures[key];
+}
+
+function getSelectedSignature() {
+  if (!editor.selectedSignatureId || !editor.pages.length) return null;
+  const sourceIndex = editor.pages[editor.selectedIndex].sourceIndex;
+  return getPageSignatures(sourceIndex).find(item => item.id === editor.selectedSignatureId) || null;
+}
+
+function selectSignature(id) {
+  editor.selectedSignatureId = id;
+  editor.selectedAnnotationId = null;
+  editor.selectedExistingTextId = null;
+  editor.selectedEditCreatedTextId = null;
+  renderAnnotations();
+}
+
+function startDragSignature(event, item, element) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  const metrics = editor.canvasMetrics;
+  const startClientX = event.clientX;
+  const startClientY = event.clientY;
+  const startLeft = item.x;
+  const startTop = item.y;
+  const dragThreshold = 5;
+  let dragging = false;
+  let historyRecorded = false;
+
+  try {
+    element.setPointerCapture(event.pointerId);
+  } catch (_) {}
+
+  const move = moveEvent => {
+    const pixelDx = moveEvent.clientX - startClientX;
+    const pixelDy = moveEvent.clientY - startClientY;
+
+    if (!dragging && Math.hypot(pixelDx, pixelDy) < dragThreshold) {
+      return;
+    }
+
+    if (!dragging) {
+      dragging = true;
+      element.classList.add('dragging');
+
+      if (!historyRecorded) {
+        recordHistory();
+        historyRecorded = true;
+      }
+    }
+
+    item.x = Math.max(
+      0,
+      Math.min(1 - item.w, startLeft + pixelDx / metrics.width)
+    );
+    item.y = Math.max(
+      0,
+      Math.min(1 - item.h, startTop + pixelDy / metrics.height)
+    );
+
+    // Update the existing element directly while dragging. Rebuilding the
+    // annotation layer on every pointer move made the handles difficult to use.
+    element.style.left = `${item.x * metrics.width}px`;
+    element.style.top = `${item.y * metrics.height}px`;
+  };
+
+  const up = upEvent => {
+    try {
+      element.releasePointerCapture(event.pointerId);
+    } catch (_) {}
+
+    element.classList.remove('dragging');
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    window.removeEventListener('pointercancel', up);
+
+    // A simple click/tap only selects and anchors the signature in place.
+    // The blue handles remain available immediately afterwards.
+    if (!dragging) {
+      editor.selectedSignatureId = item.id;
+      element.classList.add('selected');
+    }
+  };
+
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
+}
+
+function startResizeSignature(event, item, handleName, element) {
+  event.preventDefault();
+  event.stopPropagation();
+  recordHistory();
+
+  const metrics = editor.canvasMetrics;
+  const startX = event.clientX;
+  const startY = event.clientY;
+  const original = {x:item.x, y:item.y, w:item.w, h:item.h};
+  const aspect = item.aspect || (item.w / item.h) || 3;
+  const minW = .06;
+  const minH = .025;
+
+  try {
+    element.setPointerCapture(event.pointerId);
+  } catch (_) {}
+
+  const move = moveEvent => {
+    const dx = (moveEvent.clientX - startX) / metrics.width;
+    const dy = (moveEvent.clientY - startY) / metrics.height;
+
+    let x = original.x;
+    let y = original.y;
+    let w = original.w;
+    let h = original.h;
+
+    const corner = ['nw','ne','sw','se'].includes(handleName);
+
+    if (corner) {
+      let proposedW = original.w;
+      if (handleName.includes('e')) proposedW = original.w + dx;
+      if (handleName.includes('w')) proposedW = original.w - dx;
+
+      proposedW = Math.max(minW, proposedW);
+      let proposedH = proposedW / aspect;
+
+      if (handleName.includes('w')) x = original.x + (original.w - proposedW);
+      if (handleName.includes('n')) y = original.y + (original.h - proposedH);
+
+      w = proposedW;
+      h = Math.max(minH, proposedH);
+    } else {
+      if (handleName === 'e') w = Math.max(minW, original.w + dx);
+      if (handleName === 'w') {
+        w = Math.max(minW, original.w - dx);
+        x = original.x + (original.w - w);
+      }
+      if (handleName === 's') h = Math.max(minH, original.h + dy);
+      if (handleName === 'n') {
+        h = Math.max(minH, original.h - dy);
+        y = original.y + (original.h - h);
+      }
+    }
+
+    if (x < 0) {
+      w += x;
+      x = 0;
+    }
+    if (y < 0) {
+      h += y;
+      y = 0;
+    }
+    if (x + w > 1) w = 1 - x;
+    if (y + h > 1) h = 1 - y;
+
+    item.x = x;
+    item.y = y;
+    item.w = Math.max(minW, w);
+    item.h = Math.max(minH, h);
+
+    element.style.left = `${item.x * metrics.width}px`;
+    element.style.top = `${item.y * metrics.height}px`;
+    element.style.width = `${item.w * metrics.width}px`;
+    element.style.height = `${item.h * metrics.height}px`;
+  };
+
+  const up = () => {
+    try {
+      element.releasePointerCapture(event.pointerId);
+    } catch (_) {}
+
+    window.removeEventListener('pointermove', move);
+    window.removeEventListener('pointerup', up);
+    window.removeEventListener('pointercancel', up);
+
+    editor.selectedSignatureId = item.id;
+    element.classList.add('selected');
+  };
+
+  window.addEventListener('pointermove', move);
+  window.addEventListener('pointerup', up);
+  window.addEventListener('pointercancel', up);
+}
+
+function renderSignatures(layer, metrics) {
+  if (!editor.pages.length) return;
+  const sourceIndex = editor.pages[editor.selectedIndex].sourceIndex;
+
+  getPageSignatures(sourceIndex).forEach(item => {
+    const element = document.createElement('div');
+    element.className = `signature-annotation${item.id === editor.selectedSignatureId ? ' selected' : ''}`;
+    element.dataset.id = item.id;
+    element.style.left = `${item.x * metrics.width}px`;
+    element.style.top = `${item.y * metrics.height}px`;
+    element.style.width = `${item.w * metrics.width}px`;
+    element.style.height = `${item.h * metrics.height}px`;
+
+    const image = document.createElement('img');
+    image.src = item.dataUrl;
+    image.alt = 'Signature';
+
+    element.appendChild(image);
+
+    ['nw','n','ne','w','e','sw','s','se'].forEach(name => {
+      const handle = document.createElement('span');
+      handle.className = `signature-resize-handle ${name}`;
+      handle.dataset.handle = name;
+      handle.addEventListener('pointerdown', event => {
+        editor.selectedSignatureId = item.id;
+        element.classList.add('selected');
+        startResizeSignature(event, item, name, element);
+      });
+      element.appendChild(handle);
+    });
+
+    element.addEventListener('pointerdown', event => {
+      if (event.target.closest('.signature-resize-handle')) return;
+      // First tap/click selects. Movement beyond a small threshold drags.
+      editor.selectedSignatureId = item.id;
+      document.querySelectorAll('.signature-annotation').forEach(node => {
+        node.classList.toggle('selected', node === element);
+      });
+      startDragSignature(event, item, element);
+    });
+
+    layer.appendChild(element);
+  });
+}
+
+function placePendingSignatureCentered() {
+  if (!editor.pendingSignature || !editor.pages.length) return;
+
+  recordHistory();
+
+  const aspect = editor.pendingSignature.aspect || 3;
+  const w = Math.min(.52, Math.max(.34, editor.pendingSignature.defaultWidth || .42));
+  const h = Math.max(.055, Math.min(.32, w / aspect));
+  const x = Math.max(0, (1 - w) / 2);
+  const y = Math.max(0, (1 - h) / 2);
+
+  const item = {
+    id: `sig-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
+    type: 'signature',
+    dataUrl: editor.pendingSignature.dataUrl,
+    source: editor.pendingSignature.source,
+    x, y, w, h, aspect
+  };
+
+  getPageSignatures(editor.pages[editor.selectedIndex].sourceIndex).push(item);
+  editor.selectedSignatureId = item.id;
+  editor.pendingSignature = null;
+  editor.mode = 'select';
+  document.getElementById('sign-tool')?.classList.remove('active');
+  document.getElementById('annotation-layer')?.classList.remove('signature-place-mode');
+  renderAnnotations();
+}
+
 function renderAnnotations() {
   const layer = document.getElementById('annotation-layer');
   layer.innerHTML = '';
@@ -339,7 +1389,11 @@ function renderAnnotations() {
     });
     layer.appendChild(el);
   });
+  renderExistingTextBoxes(layer, metrics);
+  renderEditCreatedTextBoxes(layer, metrics);
+  renderSignatures(layer, metrics);
   syncTextInspector();
+  syncEditTextToolbar();
 }
 function selectAnnotation(id) {
   editor.selectedAnnotationId = id;
@@ -531,6 +1585,9 @@ async function renderSelectedPage() {
     originalWidth: baseViewport.width,
     originalHeight: baseViewport.height
   };
+  if (editor.mode === 'edit-existing') {
+    await ensureExistingTextForCurrentPage();
+  }
   renderAnnotations();
   updateEditorUi();
 }
@@ -609,6 +1666,7 @@ async function selectRelative(delta) {
   if (next < 0 || next >= editor.pages.length) return;
   editor.selectedIndex = next;
   editor.selectedAnnotationId = null;
+  editor.selectedExistingTextId = null;
   refreshThumbnailStates();
   updateEditorUi();
   await renderSelectedPage();
@@ -654,6 +1712,7 @@ document.getElementById('current-page-input').addEventListener('change', async e
   const page = Math.max(1, Math.min(editor.pages.length, Number(event.target.value) || 1));
   editor.selectedIndex = page - 1;
   editor.selectedAnnotationId = null;
+  editor.selectedExistingTextId = null;
   refreshThumbnailStates(); updateEditorUi(); await renderSelectedPage();
 });
 document.getElementById('zoom-out').addEventListener('click', () => changeZoom(-.15));
@@ -679,13 +1738,37 @@ document.addEventListener('keydown', event => {
     if (event.shiftKey) redoEditor(); else undoEditor();
   } else if (modifier && event.key.toLowerCase() === 'y') {
     event.preventDefault(); redoEditor();
+  } else if ((event.key === 'Delete' || event.key === 'Backspace') &&
+             editor.selectedSignatureId &&
+             !event.target.matches('input,textarea,[contenteditable="true"]')) {
+    event.preventDefault();
+    recordHistory();
+    const sourceIndex = editor.pages[editor.selectedIndex].sourceIndex;
+    editor.signatures[String(sourceIndex)] =
+      getPageSignatures(sourceIndex).filter(item => item.id !== editor.selectedSignatureId);
+    editor.selectedSignatureId = null;
+    renderAnnotations();
   }
 });
 document.getElementById('add-text-tool').addEventListener('click', () => setEditorMode('text'));
+document.getElementById('edit-text-tool').addEventListener('click', () => setEditorMode('edit-existing'));
 document.getElementById('annotation-layer').addEventListener('mousedown', event => {
   if (event.target !== event.currentTarget) return;
-  if (editor.mode === 'text') addTextAt(event.clientX, event.clientY);
-  else deselectAnnotation();
+  if (editor.mode === 'text') {
+    addTextAt(event.clientX, event.clientY);
+  } else if (editor.mode === 'edit-existing') {
+    if (editor.editTextBoxMode) {
+      addEditTextBoxAt(event.clientX, event.clientY);
+    } else {
+      deselectExistingText();
+      editor.selectedEditCreatedTextId = null;
+      document.querySelectorAll('.edit-created-text').forEach(el => el.classList.remove('selected'));
+    }
+  } else {
+    editor.selectedSignatureId = null;
+    deselectAnnotation();
+    renderAnnotations();
+  }
 });
 document.getElementById('text-font').addEventListener('change', e => {
   recordHistory();
@@ -787,7 +1870,141 @@ async function createEditedPdfBytes() {
     output.addPage(page);
 
     const annotations = getPageAnnotations(state.sourceIndex);
+    const existingEdits = getExistingTextItems(state.sourceIndex).filter(item => item.modified);
     const {width, height} = page.getSize();
+
+    for (const item of existingEdits) {
+      const font = await getFont(item);
+      const fontSize = item.pdfFontSize || 12;
+      const targetWidth = Math.max(10, item.w * width);
+      const lineHeight = fontSize * 1.15;
+      const x = Math.max(0, item.x * width);
+      const topY = height - item.y * height;
+
+      const rawLines = String(item.text || '').split(/\r?\n/);
+      const wrappedLines = [];
+
+      for (const rawLine of rawLines) {
+        const words = rawLine.split(/\s+/);
+        let current = '';
+
+        for (const word of words) {
+          const test = current ? `${current} ${word}` : word;
+          if (font.widthOfTextAtSize(test, fontSize) > targetWidth && current) {
+            wrappedLines.push(current);
+            current = word;
+          } else {
+            current = test;
+          }
+        }
+
+        wrappedLines.push(current || '');
+      }
+
+      const replacementHeight = Math.max(
+        item.h * height,
+        wrappedLines.length * lineHeight + fontSize * .35
+      );
+
+      // Always cover the complete original paragraph footprint first.
+      const originalX = item.originalX * width;
+      const originalTopY = height - item.originalY * height;
+      const originalWidth = item.originalW * width;
+      const originalHeight = item.originalH * height;
+
+      page.drawRectangle({
+        x: Math.max(0, originalX - 2),
+        y: Math.max(0, originalTopY - originalHeight - 2),
+        width: Math.min(width - originalX + 2, originalWidth + 4),
+        height: originalHeight + 4,
+        color: PDFLib.rgb(1, 1, 1)
+      });
+
+      // If the replacement wraps lower than the original paragraph, cover that
+      // additional vertical area too.
+      if (replacementHeight > originalHeight) {
+        page.drawRectangle({
+          x: Math.max(0, x - 2),
+          y: Math.max(0, topY - replacementHeight - 2),
+          width: Math.min(width - x + 2, targetWidth + 4),
+          height: replacementHeight + 4,
+          color: PDFLib.rgb(1, 1, 1)
+        });
+      }
+
+      wrappedLines.forEach((line, lineIndex) => {
+        page.drawText(line, {
+          x,
+          y: topY - fontSize - lineIndex * lineHeight,
+          size: fontSize,
+          font,
+          color: (() => {
+            const c = hexToRgb01(item.color || '#111827');
+            return PDFLib.rgb(c.r, c.g, c.b);
+          })(),
+          maxWidth: targetWidth
+        });
+      });
+    }
+
+    const createdEditItems = getEditCreatedTextItems(state.sourceIndex);
+
+    for (const item of createdEditItems) {
+      const font = await getFont(item);
+      const rgb = hexToRgb01(item.color || '#111827');
+      const fontSize = item.pdfFontSize || 18;
+      const lineHeight = fontSize * 1.15;
+      const maxWidth = Math.max(10, item.w * width);
+      const startX = item.x * width;
+      const topY = height - item.y * height;
+
+      const rawLines = String(item.text || '').split(/\r?\n/);
+      const wrapped = [];
+
+      for (const raw of rawLines) {
+        const words = raw.split(/\s+/);
+        let line = '';
+
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (font.widthOfTextAtSize(test, fontSize) > maxWidth && line) {
+            wrapped.push(line);
+            line = word;
+          } else {
+            line = test;
+          }
+        }
+
+        wrapped.push(line || '');
+      }
+
+      wrapped.forEach((line, idx) => {
+        page.drawText(line, {
+          x: startX,
+          y: topY - fontSize - idx * lineHeight,
+          size: fontSize,
+          font,
+          color: PDFLib.rgb(rgb.r, rgb.g, rgb.b)
+        });
+      });
+    }
+
+    const signatures = getPageSignatures(state.sourceIndex);
+
+    for (const item of signatures) {
+      const data = item.dataUrl.split(',')[1];
+      const bytes = Uint8Array.from(atob(data), character => character.charCodeAt(0));
+      const image = item.dataUrl.startsWith('data:image/jpeg')
+        ? await output.embedJpg(bytes)
+        : await output.embedPng(bytes);
+
+      page.drawImage(image, {
+        x: item.x * width,
+        y: height - (item.y + item.h) * height,
+        width: item.w * width,
+        height: item.h * height
+      });
+    }
 
     for (const item of annotations) {
       const font = await getFont(item);
@@ -849,6 +2066,384 @@ async function createEditedPdfBytes() {
 
   return output.save();
 }
+
+
+
+
+const signatureState = {
+  tab: 'draw',
+  colour: '#111111',
+  drawing: false,
+  hasDrawing: false,
+  imageDataUrl: null,
+  typedFont: 'Caveat'
+};
+
+const signatureModal = document.getElementById('signature-modal');
+const signatureCanvas = document.getElementById('signature-draw-canvas');
+const signatureContext = signatureCanvas.getContext('2d', {willReadFrequently: true});
+
+function resetSignatureCanvas() {
+  signatureContext.clearRect(0, 0, signatureCanvas.width, signatureCanvas.height);
+  signatureContext.lineCap = 'round';
+  signatureContext.lineJoin = 'round';
+  signatureContext.lineWidth = 7;
+  signatureContext.strokeStyle = signatureState.colour;
+  signatureState.hasDrawing = false;
+  updateSignatureDoneState();
+}
+
+function updateTypedSignaturePreview() {
+  const input = document.getElementById('signature-name-input');
+  const action = document.getElementById('signature-clear-type');
+  const value = input.value.trim();
+  const hasValue = Boolean(value);
+
+  input.style.fontFamily = `"${signatureState.typedFont}", cursive`;
+  input.style.color = signatureState.colour;
+
+  action.textContent = hasValue ? 'Clear Signature' : 'Sign Here';
+  action.classList.toggle('has-value', hasValue);
+
+  document.querySelectorAll('.signature-font-choice span').forEach(span => {
+    span.textContent = value || 'Signature';
+    span.style.color = signatureState.colour;
+  });
+
+  updateSignatureDoneState();
+}
+
+function updateSignatureDoneState() {
+  const done = document.getElementById('signature-done');
+  done.disabled =
+    signatureState.tab === 'draw' ? !signatureState.hasDrawing :
+    signatureState.tab === 'image' ? !signatureState.imageDataUrl :
+    !document.getElementById('signature-name-input').value.trim();
+}
+
+function switchSignatureTab(tab) {
+  signatureState.tab = tab;
+  document.querySelectorAll('.signature-tab').forEach(button => {
+    button.classList.toggle('active', button.dataset.signatureTab === tab);
+  });
+  document.querySelectorAll('[data-signature-panel]').forEach(panel => {
+    const active = panel.dataset.signaturePanel === tab;
+    panel.hidden = !active;
+    panel.classList.toggle('active', active);
+  });
+  updateSignatureDoneState();
+
+  if (tab === 'type') {
+    requestAnimationFrame(() => {
+      const input = document.getElementById('signature-name-input');
+      input.focus({preventScroll:true});
+    });
+  }
+}
+
+function openSignatureModal() {
+  clearEditTextInterfaceImmediately();
+  setEditorMode('select');
+  document.getElementById('sign-tool')?.classList.add('active');
+  signatureModal.hidden = false;
+  switchSignatureTab('draw');
+  resetSignatureCanvas();
+}
+
+function closeSignatureModal() {
+  signatureModal.hidden = true;
+  document.getElementById('sign-tool')?.classList.remove('active');
+}
+
+function signatureCanvasPoint(event) {
+  const rect = signatureCanvas.getBoundingClientRect();
+  return {
+    x: (event.clientX - rect.left) * signatureCanvas.width / rect.width,
+    y: (event.clientY - rect.top) * signatureCanvas.height / rect.height
+  };
+}
+
+signatureCanvas.addEventListener('pointerdown', event => {
+  event.preventDefault();
+  signatureState.drawing = true;
+  signatureCanvas.setPointerCapture(event.pointerId);
+  const point = signatureCanvasPoint(event);
+  signatureContext.beginPath();
+  signatureContext.moveTo(point.x, point.y);
+});
+
+signatureCanvas.addEventListener('pointermove', event => {
+  if (!signatureState.drawing) return;
+  event.preventDefault();
+  const point = signatureCanvasPoint(event);
+  signatureContext.strokeStyle = signatureState.colour;
+  signatureContext.lineTo(point.x, point.y);
+  signatureContext.stroke();
+  signatureState.hasDrawing = true;
+  updateSignatureDoneState();
+});
+
+function endSignatureStroke(event) {
+  if (!signatureState.drawing) return;
+  signatureState.drawing = false;
+  try { signatureCanvas.releasePointerCapture(event.pointerId); } catch (_) {}
+}
+signatureCanvas.addEventListener('pointerup', endSignatureStroke);
+signatureCanvas.addEventListener('pointercancel', endSignatureStroke);
+
+document.querySelectorAll('.signature-tab').forEach(button => {
+  button.addEventListener('click', () => switchSignatureTab(button.dataset.signatureTab));
+});
+
+document.querySelectorAll('[data-signature-colour]').forEach(button => {
+  button.addEventListener('click', () => {
+    signatureState.colour = button.dataset.signatureColour;
+    document.querySelectorAll('[data-signature-colour]').forEach(item => item.classList.toggle('active', item === button));
+    signatureContext.strokeStyle = signatureState.colour;
+    updateTypedSignaturePreview();
+  });
+});
+
+document.getElementById('signature-clear-draw').addEventListener('click', resetSignatureCanvas);
+document.getElementById('signature-clear-type').addEventListener('click', () => {
+  const input = document.getElementById('signature-name-input');
+  if (!input.value.trim()) {
+    input.focus();
+    return;
+  }
+
+  input.value = '';
+  updateTypedSignaturePreview();
+  input.focus();
+});
+document.getElementById('signature-name-input').addEventListener('input', updateTypedSignaturePreview);
+
+document.querySelectorAll('input[name="signature-font"]').forEach(input => {
+  input.addEventListener('change', () => {
+    signatureState.typedFont = input.value;
+    document.querySelectorAll('.signature-font-choice').forEach(label => {
+      label.classList.toggle('active', label.contains(input) && input.checked);
+    });
+    updateTypedSignaturePreview();
+  });
+});
+
+function loadSignatureImage(file) {
+  if (!file || !/^image\/(png|jpeg|webp)$/.test(file.type)) {
+    showAlert('Please choose a PNG, JPG or WEBP image.');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    signatureState.imageDataUrl = reader.result;
+    const preview = document.getElementById('signature-image-preview');
+    preview.src = reader.result;
+    preview.hidden = false;
+    document.querySelector('.signature-upload-button').hidden = true;
+    updateSignatureDoneState();
+  };
+  reader.readAsDataURL(file);
+}
+
+document.getElementById('signature-image-input').addEventListener('change', event => {
+  loadSignatureImage(event.target.files[0]);
+  event.target.value = '';
+});
+
+const signatureUploadZone = document.getElementById('signature-upload-zone');
+['dragenter','dragover'].forEach(name => signatureUploadZone.addEventListener(name, event => {
+  event.preventDefault();
+  signatureUploadZone.classList.add('dragover');
+}));
+['dragleave','drop'].forEach(name => signatureUploadZone.addEventListener(name, event => {
+  event.preventDefault();
+  signatureUploadZone.classList.remove('dragover');
+}));
+signatureUploadZone.addEventListener('drop', event => loadSignatureImage(event.dataTransfer.files[0]));
+
+function trimCanvasToContent(sourceCanvas) {
+  const context = sourceCanvas.getContext('2d', {willReadFrequently: true});
+  const {width, height} = sourceCanvas;
+  const pixels = context.getImageData(0, 0, width, height).data;
+  let left = width, right = 0, top = height, bottom = 0;
+
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      if (pixels[(y * width + x) * 4 + 3] > 8) {
+        left = Math.min(left, x);
+        right = Math.max(right, x);
+        top = Math.min(top, y);
+        bottom = Math.max(bottom, y);
+      }
+    }
+  }
+
+  if (right < left || bottom < top) return sourceCanvas;
+
+  const padding = 18;
+  left = Math.max(0, left - padding);
+  top = Math.max(0, top - padding);
+  right = Math.min(width - 1, right + padding);
+  bottom = Math.min(height - 1, bottom + padding);
+
+  const output = document.createElement('canvas');
+  output.width = right - left + 1;
+  output.height = bottom - top + 1;
+  output.getContext('2d').drawImage(
+    sourceCanvas,
+    left, top, output.width, output.height,
+    0, 0, output.width, output.height
+  );
+  return output;
+}
+
+async function createTypedSignatureCanvas() {
+  const text = document.getElementById('signature-name-input').value.trim();
+  await document.fonts.load(`72px "${signatureState.typedFont}"`);
+  const canvas = document.createElement('canvas');
+  canvas.width = 1200;
+  canvas.height = 300;
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = signatureState.colour;
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+  context.font = `72px "${signatureState.typedFont}", cursive`;
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
+  return trimCanvasToContent(canvas);
+}
+
+async function resolveSignatureData() {
+  if (signatureState.tab === 'draw') {
+    const trimmed = trimCanvasToContent(signatureCanvas);
+    return {
+      dataUrl: trimmed.toDataURL('image/png'),
+      aspect: trimmed.width / trimmed.height,
+      source: 'draw'
+    };
+  }
+
+  if (signatureState.tab === 'image') {
+    const image = new Image();
+    await new Promise((resolve, reject) => {
+      image.onload = resolve;
+      image.onerror = reject;
+      image.src = signatureState.imageDataUrl;
+    });
+    return {
+      dataUrl: signatureState.imageDataUrl,
+      aspect: image.naturalWidth / image.naturalHeight,
+      source: 'image'
+    };
+  }
+
+  const typed = await createTypedSignatureCanvas();
+  return {
+    dataUrl: typed.toDataURL('image/png'),
+    aspect: typed.width / typed.height,
+    source: 'type'
+  };
+}
+
+document.getElementById('signature-done').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  if (button.disabled) return;
+  button.disabled = true;
+  button.textContent = 'Preparing…';
+
+  try {
+    editor.pendingSignature = await resolveSignatureData();
+    closeSignatureModal();
+    placePendingSignatureCentered();
+    showEditorHint('Drag the signature to position it. Use the blue handles to resize.');
+  } catch (_) {
+    showAlert('PDFMint could not prepare that signature.');
+  } finally {
+    button.textContent = 'Done';
+    updateSignatureDoneState();
+  }
+});
+
+document.getElementById('sign-tool').addEventListener('click', openSignatureModal);
+document.getElementById('signature-cancel').addEventListener('click', closeSignatureModal);
+document.getElementById('signature-close').addEventListener('click', closeSignatureModal);
+document.querySelector('[data-close-signature]').addEventListener('click', closeSignatureModal);
+
+
+document.addEventListener('click', event => {
+  const toolButton = event.target.closest(
+    '.editor-tool-button, .tool-button, [data-editor-tool], #add-text-tool, #edit-text-tool, #sign-tool'
+  );
+
+  if (!toolButton || toolButton.id === 'edit-text-tool' || toolButton.id === 'sign-tool') return;
+
+  if (editor.mode === 'edit-existing') {
+    clearEditTextInterfaceImmediately();
+
+    // Placeholder tools do not yet have their own mode handler, so move the
+    // editor to neutral select mode while preserving the user's edits.
+    if (toolButton.id !== 'add-text-tool') {
+      editor.mode = 'select';
+
+      document.getElementById('edit-text-tool')?.classList.remove('active');
+      document.getElementById('add-text-tool')?.classList.remove('active');
+
+      const addOptionsBar = document.getElementById('text-options-bar');
+      if (addOptionsBar) addOptionsBar.hidden = true;
+
+      const layer = document.getElementById('annotation-layer');
+      layer?.classList.remove('text-mode', 'edit-text-mode', 'add-edit-box-mode');
+      layer?.classList.add('select-mode');
+    }
+  }
+}, true);
+
+document.getElementById('edit-add-text-box').addEventListener('click', () => {
+  editor.editTextBoxMode = !editor.editTextBoxMode;
+  const button = document.getElementById('edit-add-text-box');
+  button.classList.toggle('active', editor.editTextBoxMode);
+  document.getElementById('annotation-layer').classList.toggle('add-edit-box-mode', editor.editTextBoxMode);
+  if (editor.editTextBoxMode) showEditorHint('Click anywhere on the document to create a text box.');
+});
+
+document.getElementById('edit-text-colour-button').addEventListener('click', event => {
+  event.stopPropagation();
+  const menu = document.getElementById('edit-colour-menu');
+  menu.hidden = !menu.hidden;
+});
+
+document.querySelectorAll('[data-edit-colour]').forEach(button => {
+  button.addEventListener('click', event => {
+    event.stopPropagation();
+    const colour = button.dataset.editColour;
+    document.getElementById('edit-colour-line').style.background = colour;
+    applyColourToCurrentSelection(colour);
+    document.getElementById('edit-colour-menu').hidden = true;
+  });
+});
+
+document.addEventListener('click', event => {
+  if (!event.target.closest('.colour-dropdown')) {
+    const menu = document.getElementById('edit-colour-menu');
+    if (menu) menu.hidden = true;
+  }
+});
+
+document.getElementById('edit-text-font').addEventListener('change', event => {
+  updateEditTarget(item => item.font = event.target.value);
+});
+
+document.getElementById('edit-text-size').addEventListener('change', event => {
+  updateEditTarget(item => item.pdfFontSize = Math.max(4, Math.min(200, Number(event.target.value) || 18)));
+});
+
+document.getElementById('edit-text-bold').addEventListener('click', () => {
+  updateEditTarget(item => item.bold = !item.bold);
+});
+
+document.getElementById('edit-text-italic').addEventListener('click', () => {
+  updateEditTarget(item => item.italic = !item.italic);
+});
 
 document.getElementById('download-edited-pdf').addEventListener('click', openFormatModal);
 
