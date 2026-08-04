@@ -91,3 +91,16 @@ Changes:
 - JPG and PNG pages are rendered at a 300 DPI-equivalent scale.
 - A 40-million-pixel safety cap protects phones and lower-memory devices from oversized canvas failures on unusually large PDF pages.
 - Standard A4 and Letter pages export at approximately 2480 × 3508 pixels and 2550 × 3300 pixels respectively.
+
+
+PDFMint v3.7.2 — Image export library fix
+
+Root cause:
+- JSZip was stored as a separate local script.
+- On the user's local/file-based test environment, the separate script was not available when the image exporter checked for JSZip.
+
+Fix:
+- JSZip is now embedded directly at the beginning of script.js.
+- There is no separate vendor script request.
+- Multi-page JPG and PNG exports can always access the packaging library once PDFMint's main script has loaded.
+- The 300 DPI image rendering remains unchanged.
