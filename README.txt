@@ -36,3 +36,19 @@ PDFMint v3.5.0 — PDF Editor landing pages
 - OCR PDF: ocr-pdf.html
 
 All desktop dropdown, mobile dropdown and footer links have been connected.
+
+
+PDFMint v3.5.1 — PDF Converter landing pages
+
+- PDF to Word: pdf-to-word.html
+- PDF to PPTX: pdf-to-pptx.html
+- PDF to Excel: pdf-to-excel.html
+- PDF to JPG: pdf-to-jpg.html
+- PDF to PNG: pdf-to-png.html
+- Word to PDF: word-to-pdf.html
+- PPTX to PDF: pptx-to-pdf.html
+- Excel to PDF: excel-to-pdf.html
+- JPG to PDF: jpg-to-pdf.html
+- PNG to PDF: png-to-pdf.html
+
+All desktop dropdown, mobile dropdown, homepage converter cards and footer links have been connected.
