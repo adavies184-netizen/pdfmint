@@ -104,3 +104,21 @@ Fix:
 - There is no separate vendor script request.
 - Multi-page JPG and PNG exports can always access the packaging library once PDFMint's main script has loaded.
 - The 300 DPI image rendering remains unchanged.
+
+
+PDFMint v3.8.0 — Self-hosted DOCX/DOC conversion
+
+Frontend:
+- DOCX and DOC are enabled.
+- All export formats show progress.
+- DOCX/DOC send the final edited PDF to the configured self-hosted endpoint.
+- Set conversionApiBaseUrl in config.js.
+
+Backend:
+- conversion-server/ contains a Dockerised FastAPI service.
+- pdf2docx performs PDF -> DOCX.
+- LibreOffice performs DOCX -> DOC.
+- Files are size-checked, converted in isolated temporary directories and deleted.
+- No paid conversion API is used.
+
+Deployment is required before DOCX/DOC can work on the public website.

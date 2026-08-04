@@ -1452,3 +1452,40 @@ button:disabled{opacity:.45;cursor:not-allowed}
     grid-template-columns:minmax(220px,1.35fr) repeat(4,minmax(130px,1fr));
   }
 }
+
+/* PDFMint v3.8.0 — export progress */
+.export-progress-panel{
+  margin:0 0 16px;
+  padding:14px;
+  border:1px solid #dce8e2;
+  border-radius:9px;
+  background:#f5fbf8;
+}
+.export-progress-heading{
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  color:#174f3a;
+  font-size:13px;
+}
+.export-progress-track{
+  height:8px;
+  margin:10px 0 8px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#dcece4;
+}
+.export-progress-track span{
+  display:block;
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:#22a06b;
+  transition:width .22s ease;
+}
+.export-progress-panel p{
+  margin:0;
+  color:#587064;
+  font-size:12px;
+  line-height:1.45;
+}

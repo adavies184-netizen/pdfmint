@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=360" />
+  <link rel="stylesheet" href="styles.css?v=380" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -580,13 +580,13 @@
             <span class="format-icon pdf-icon">PDF</span>
             <span class="format-name">PDF</span>
           </label>
-          <label class="format-choice unavailable" title="Coming soon">
-            <input type="radio" name="export-format" value="docx" disabled>
-            <span class="format-radio"></span><span class="format-icon doc-icon">DOCX</span><span class="format-name">DOCX<small>Soon</small></span>
+          <label class="format-choice">
+            <input type="radio" name="export-format" value="docx">
+            <span class="format-radio"></span><span class="format-icon doc-icon">DOCX</span><span class="format-name">DOCX</span>
           </label>
-          <label class="format-choice unavailable" title="Coming soon">
-            <input type="radio" name="export-format" value="doc" disabled>
-            <span class="format-radio"></span><span class="format-icon doc-icon">DOC</span><span class="format-name">DOC<small>Soon</small></span>
+          <label class="format-choice">
+            <input type="radio" name="export-format" value="doc">
+            <span class="format-radio"></span><span class="format-icon doc-icon">DOC</span><span class="format-name">DOC</span>
           </label>
           <label class="format-choice unavailable" title="Coming soon">
             <input type="radio" name="export-format" value="ppt" disabled>
@@ -655,6 +655,16 @@
           <input id="download-email" type="email" placeholder="email@example.com" autocomplete="email">
         </label>
         <p class="email-error" id="email-error" hidden>Please enter a valid email address.</p>
+
+
+        <div class="export-progress-panel" id="export-progress-panel" hidden aria-live="polite">
+          <div class="export-progress-heading">
+            <strong id="export-progress-title">Preparing document</strong>
+            <span id="export-progress-percent">0%</span>
+          </div>
+          <div class="export-progress-track"><span id="export-progress-bar"></span></div>
+          <p id="export-progress-detail">Applying your edits…</p>
+        </div>
 
         <button class="final-download-button" id="final-download" type="button">Download</button>
 
@@ -1025,6 +1035,7 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="script.js?v=372"></script>
+  <script src="config.js?v=380"></script>
+  <script src="script.js?v=380"></script>
 </body>
 </html>

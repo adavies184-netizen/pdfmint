@@ -3731,6 +3731,112 @@ document.getElementById('return-to-payment').addEventListener('click', () => {
 });
 
 
+
+const PDFMINT_CONVERSION_API = String(
+  window.PDFMINT_CONFIG?.conversionApiBaseUrl || ''
+).replace(/\/+$/, '');
+
+function updateExportProgress(percent, title, detail) {
+  const panel = document.getElementById('export-progress-panel');
+  const titleNode = document.getElementById('export-progress-title');
+  const detailNode = document.getElementById('export-progress-detail');
+  const percentNode = document.getElementById('export-progress-percent');
+  const bar = document.getElementById('export-progress-bar');
+
+  if (panel) panel.hidden = false;
+  const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+  if (titleNode) titleNode.textContent = title || 'Preparing document';
+  if (detailNode) detailNode.textContent = detail || '';
+  if (percentNode) percentNode.textContent = `${safePercent}%`;
+  if (bar) bar.style.width = `${safePercent}%`;
+}
+
+function resetExportProgress() {
+  const panel = document.getElementById('export-progress-panel');
+  if (panel) panel.hidden = true;
+  updateExportProgress(0, 'Preparing document', 'Applying your edits…');
+  if (panel) panel.hidden = true;
+}
+
+function convertPdfThroughSelfHostedApi(pdfBlob, format, filename) {
+  if (!PDFMINT_CONVERSION_API) {
+    return Promise.reject(new Error(
+      'The PDFMint conversion server URL has not been configured.'
+    ));
+  }
+
+  return new Promise((resolve, reject) => {
+    const form = new FormData();
+    form.append('file', pdfBlob, `${filename}.pdf`);
+    form.append('format', format);
+
+    const request = new XMLHttpRequest();
+    request.open('POST', `${PDFMINT_CONVERSION_API}/v1/convert`, true);
+    request.responseType = 'blob';
+    request.timeout = 180000;
+
+    request.upload.addEventListener('progress', event => {
+      if (!event.lengthComputable) return;
+      const uploadPercent = event.loaded / event.total;
+      updateExportProgress(
+        20 + uploadPercent * 25,
+        'Uploading securely',
+        `Uploading the completed PDF… ${Math.round(uploadPercent * 100)}%`
+      );
+    });
+
+    request.upload.addEventListener('load', () => {
+      updateExportProgress(
+        50,
+        `Converting to ${format.toUpperCase()}`,
+        format === 'docx'
+          ? 'Reconstructing editable Word content and layout…'
+          : 'Creating DOCX, then converting it to the legacy Word format…'
+      );
+    });
+
+    request.addEventListener('load', async () => {
+      if (request.status >= 200 && request.status < 300) {
+        updateExportProgress(95, 'Preparing download', 'The converted document is ready.');
+        resolve(request.response);
+        return;
+      }
+
+      let message = `Conversion failed with status ${request.status}.`;
+      try {
+        const text = await request.response.text();
+        const parsed = JSON.parse(text);
+        if (parsed.detail) message = parsed.detail;
+      } catch (_) {}
+      reject(new Error(message));
+    });
+
+    request.addEventListener('error', () => {
+      reject(new Error('Could not connect to the PDFMint conversion server.'));
+    });
+    request.addEventListener('timeout', () => {
+      reject(new Error('The Word conversion took too long. Please try again.'));
+    });
+    request.send(form);
+  });
+}
+
+async function exportEditedPdfAsWord(format) {
+  const baseName = safeExportBaseName();
+  updateExportProgress(8, 'Preparing document', 'Applying your PDF edits…');
+  const pdfBlob = await buildFinalEditedPdfBlob();
+  updateExportProgress(20, 'Preparing upload', 'The edited PDF has been created.');
+
+  const convertedBlob = await convertPdfThroughSelfHostedApi(
+    pdfBlob,
+    format,
+    baseName
+  );
+
+  updateExportProgress(100, 'Download ready', `${baseName}.${format} is ready.`);
+  downloadBlob(convertedBlob, `${baseName}.${format}`);
+}
+
 async function buildFinalEditedPdfBlob() {
   const bytes = await createEditedPdfBytes();
   return new Blob([bytes], { type: 'application/pdf' });
@@ -3810,13 +3916,17 @@ async function renderPdfPageToImageBlob(pdf, pageNumber, format) {
 }
 
 async function exportEditedPdfAsImages(format) {
+  updateExportProgress(8, 'Preparing document', 'Applying your PDF edits…');
   const pdfBlob = await buildFinalEditedPdfBlob();
+  updateExportProgress(18, `Preparing ${format.toUpperCase()}`, 'Loading the completed PDF…');
   const pdf = await loadPdfDocumentFromBlob(pdfBlob);
   const baseName = safeExportBaseName();
   const extension = format === 'jpg' ? 'jpg' : 'png';
 
   if (pdf.numPages === 1) {
+    updateExportProgress(35, `Rendering ${format.toUpperCase()}`, 'Rendering page 1 of 1 at high quality…');
     const blob = await renderPdfPageToImageBlob(pdf, 1, format);
+    updateExportProgress(100, 'Download ready', `${baseName}.${extension} is ready.`);
     downloadBlob(blob, `${baseName}.${extension}`);
     return;
   }
@@ -3829,26 +3939,46 @@ async function exportEditedPdfAsImages(format) {
   const digits = String(pdf.numPages).length;
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const pageProgress = 20 + (pageNumber - 1) / pdf.numPages * 60;
+    updateExportProgress(
+      pageProgress,
+      `Rendering ${format.toUpperCase()} pages`,
+      `Rendering page ${pageNumber} of ${pdf.numPages}…`
+    );
     const blob = await renderPdfPageToImageBlob(pdf, pageNumber, format);
     const padded = String(pageNumber).padStart(digits, '0');
     zip.file(`${baseName}-page-${padded}.${extension}`, blob);
   }
 
+  updateExportProgress(84, 'Packaging images', `Creating one ZIP with ${pdf.numPages} images…`);
   const zipBlob = await zip.generateAsync({
     type: 'blob',
     compression: 'DEFLATE',
     compressionOptions: { level: 6 }
+  }, metadata => {
+    updateExportProgress(
+      84 + metadata.percent * .14,
+      'Packaging images',
+      `Creating ZIP… ${Math.round(metadata.percent)}%`
+    );
   });
 
-  downloadBlob(zipBlob, `${baseName}-${extension}-pages.zip`);
+  updateExportProgress(100, 'Download ready', `${baseName}-images.zip is ready.`);
+  downloadBlob(zipBlob, `${baseName}-images.zip`);
 }
 
 async function extractEditedPdfText() {
+  updateExportProgress(8, 'Preparing document', 'Applying your PDF edits…');
   const pdfBlob = await buildFinalEditedPdfBlob();
   const pdf = await loadPdfDocumentFromBlob(pdfBlob);
   const pages = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    updateExportProgress(
+      20 + pageNumber / pdf.numPages * 70,
+      'Extracting text',
+      `Reading page ${pageNumber} of ${pdf.numPages}…`
+    );
     const page = await pdf.getPage(pageNumber);
     const textContent = await page.getTextContent();
     const lines = [];
@@ -3878,8 +4008,15 @@ async function exportEditedDocument(format) {
   const baseName = safeExportBaseName();
 
   if (format === 'pdf') {
+    updateExportProgress(10, 'Preparing PDF', 'Applying your edits…');
     const blob = await buildFinalEditedPdfBlob();
+    updateExportProgress(100, 'Download ready', `${baseName}.pdf is ready.`);
     downloadBlob(blob, `${baseName}.pdf`);
+    return;
+  }
+
+  if (format === 'docx' || format === 'doc') {
+    await exportEditedPdfAsWord(format);
     return;
   }
 
@@ -3891,6 +4028,7 @@ async function exportEditedDocument(format) {
   if (format === 'txt') {
     const text = await extractEditedPdfText();
     const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    updateExportProgress(100, 'Download ready', `${baseName}.txt is ready.`);
     downloadBlob(blob, `${baseName}.txt`);
     return;
   }
@@ -3916,6 +4054,8 @@ document.getElementById('final-download').addEventListener('click', async () => 
   const originalText = button.textContent;
 
   button.disabled = true;
+  resetExportProgress();
+  updateExportProgress(2, 'Starting export', `Preparing ${selectedFormat.toUpperCase()}…`);
   button.textContent = selectedFormat === 'pdf' ? 'Preparing PDF…' : `Preparing ${selectedFormat.toUpperCase()}…`;
 
   try {
@@ -4442,7 +4582,7 @@ document.getElementById('annotation-layer')?.addEventListener('pointerdown', eve
 }, true);
 
 
-/* PDFMint v3.6.0 — one shared editor route */
+/* PDFMint v3.8.0 — one shared editor route */
 const PDFMINT_TRANSFER_DB = 'pdfmint-editor-transfer';
 const PDFMINT_TRANSFER_STORE = 'uploads';
 const PDFMINT_TRANSFER_KEY = 'pending-pdf';
