@@ -4250,3 +4250,133 @@ document.getElementById('send-to-email')?.addEventListener('click', function(eve
 document.getElementById('annotation-layer')?.addEventListener('pointerdown', event => {
   if (editor.mode === 'note') placeNoteAt(event);
 }, true);
+
+
+/* PDFMint v3.6.0 — one shared editor route */
+const PDFMINT_TRANSFER_DB = 'pdfmint-editor-transfer';
+const PDFMINT_TRANSFER_STORE = 'uploads';
+const PDFMINT_TRANSFER_KEY = 'pending-pdf';
+
+function openPdfMintTransferDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(PDFMINT_TRANSFER_DB, 1);
+    request.onupgradeneeded = () => {
+      const db = request.result;
+      if (!db.objectStoreNames.contains(PDFMINT_TRANSFER_STORE)) {
+        db.createObjectStore(PDFMINT_TRANSFER_STORE);
+      }
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function storePdfForSharedEditor(file) {
+  const db = await openPdfMintTransferDb();
+  const bytes = await file.arrayBuffer();
+  await new Promise((resolve, reject) => {
+    const tx = db.transaction(PDFMINT_TRANSFER_STORE, 'readwrite');
+    tx.objectStore(PDFMINT_TRANSFER_STORE).put({
+      name: file.name,
+      type: file.type || 'application/pdf',
+      lastModified: file.lastModified || Date.now(),
+      bytes
+    }, PDFMINT_TRANSFER_KEY);
+    tx.oncomplete = resolve;
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+async function takePdfForSharedEditor() {
+  const db = await openPdfMintTransferDb();
+  const record = await new Promise((resolve, reject) => {
+    const tx = db.transaction(PDFMINT_TRANSFER_STORE, 'readwrite');
+    const store = tx.objectStore(PDFMINT_TRANSFER_STORE);
+    const request = store.get(PDFMINT_TRANSFER_KEY);
+    request.onsuccess = () => {
+      const value = request.result || null;
+      store.delete(PDFMINT_TRANSFER_KEY);
+      resolve(value);
+    };
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+
+  if (!record) return null;
+  return new File([record.bytes], record.name, {
+    type: record.type || 'application/pdf',
+    lastModified: record.lastModified || Date.now()
+  });
+}
+
+function sharedEditorUrl(tool) {
+  return `editor.html?tool=${encodeURIComponent(tool || 'edit')}`;
+}
+
+async function routeLandingUploadToEditor(file) {
+  if (!file) return;
+  const status = document.getElementById('file-status');
+  if (status) status.textContent = `${file.name} selected — opening editor…`;
+
+  try {
+    await storePdfForSharedEditor(file);
+    const tool = document.body.dataset.landingTool || 'edit';
+    window.location.href = sharedEditorUrl(tool);
+  } catch (error) {
+    console.error('Could not transfer PDF to editor:', error);
+    if (status) status.textContent = 'Could not open the editor. Please try again.';
+  }
+}
+
+function activateSharedEditorTool(tool) {
+  const buttonIds = {
+    edit: 'edit-text-tool',
+    sign: 'sign-tool',
+    image: 'image-tool',
+    link: 'link-tool',
+    note: 'note-tool'
+  };
+  const id = buttonIds[tool];
+  if (id) requestAnimationFrame(() => document.getElementById(id)?.click());
+}
+
+async function initialiseSharedEditorRoute() {
+  if (document.body.dataset.editorRoute !== 'true') return;
+
+  const tool = new URLSearchParams(window.location.search).get('tool') || 'edit';
+
+  try {
+    const file = await takePdfForSharedEditor();
+    if (!file) {
+      window.location.replace('index.html');
+      return;
+    }
+
+    await loadEditorPdf(file);
+    document.body.classList.remove('editor-route-loading');
+    activateSharedEditorTool(tool);
+  } catch (error) {
+    console.error('Shared editor failed:', error);
+    document.body.classList.remove('editor-route-loading');
+    showAlert('PDFMint could not open this document in the editor.');
+  }
+}
+
+document.addEventListener('change', event => {
+  const input = event.target;
+  if (
+    document.body.dataset.editorRoute !== 'true' &&
+    input instanceof HTMLInputElement &&
+    input.id === 'file-input' &&
+    input.type === 'file'
+  ) {
+    const file = input.files?.[0];
+    if (!file) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    routeLandingUploadToEditor(file);
+  }
+}, true);
+
+document.addEventListener('DOMContentLoaded', initialiseSharedEditorRoute);

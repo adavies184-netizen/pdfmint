@@ -52,3 +52,21 @@ PDFMint v3.5.1 — PDF Converter landing pages
 - PNG to PDF: png-to-pdf.html
 
 All desktop dropdown, mobile dropdown, homepage converter cards and footer links have been connected.
+
+
+PDFMint v3.6.0 — Shared editor routing
+
+- Every SEO landing page remains unique.
+- Uploading from any landing page stores the PDF temporarily in IndexedDB.
+- The user is redirected to one shared editor:
+  editor.html?tool=<tool>
+- The shared editor retrieves the PDF and opens the relevant tool where available.
+
+Examples:
+- sign-pdf.html -> editor.html?tool=sign
+- edit-pdf.html -> editor.html?tool=edit
+- add-image-to-pdf.html -> editor.html?tool=image
+- merge-pdf.html -> editor.html?tool=merge
+- pdf-to-word.html -> editor.html?tool=pdf-to-word
+
+Only one editor implementation now needs to be maintained.

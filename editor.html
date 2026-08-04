@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Extract selected pages or separate a large PDF into smaller documents in just a few simple steps." />
-  <title>Split PDF Online — PDFMint</title>
+  <meta name="description" content="PDFMint makes it easy to edit, convert, sign and organise PDF files online." />
+  <title>PDFMint Editor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=360" />
-</head>
-<body data-landing-tool="split">
+<style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
+<body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="PDFMint home">
@@ -25,19 +25,19 @@
           <div class="nav-dropdown-menu converter-menu">
             <div class="dropdown-column">
               <strong>Convert from PDF</strong>
-              <a href="#tools">PDF to Word</a>
-              <a href="#tools">PDF to PPTX</a>
-              <a href="#tools">PDF to Excel</a>
-              <a href="#tools">PDF to JPG</a>
-              <a href="#tools">PDF to PNG</a>
+              <a href="pdf-to-word.html">PDF to Word</a>
+              <a href="pdf-to-pptx.html">PDF to PPTX</a>
+              <a href="pdf-to-excel.html">PDF to Excel</a>
+              <a href="pdf-to-jpg.html">PDF to JPG</a>
+              <a href="pdf-to-png.html">PDF to PNG</a>
             </div>
             <div class="dropdown-column">
               <strong>Convert to PDF</strong>
-              <a href="#tools">Word to PDF</a>
-              <a href="#tools">PPTX to PDF</a>
-              <a href="#tools">Excel to PDF</a>
-              <a href="#tools">JPG to PDF</a>
-              <a href="#tools">PNG to PDF</a>
+              <a href="word-to-pdf.html">Word to PDF</a>
+              <a href="pptx-to-pdf.html">PPTX to PDF</a>
+              <a href="excel-to-pdf.html">Excel to PDF</a>
+              <a href="jpg-to-pdf.html">JPG to PDF</a>
+              <a href="png-to-pdf.html">PNG to PDF</a>
               <a class="dropdown-view-all" href="#tools">View all</a>
             </div>
           </div>
@@ -81,19 +81,19 @@
         <div class="mobile-nav-columns">
           <div>
             <strong>Convert from PDF</strong>
-            <a href="#tools">PDF to Word</a>
-            <a href="#tools">PDF to PPTX</a>
-            <a href="#tools">PDF to Excel</a>
-            <a href="#tools">PDF to JPG</a>
-            <a href="#tools">PDF to PNG</a>
+            <a href="pdf-to-word.html">PDF to Word</a>
+            <a href="pdf-to-pptx.html">PDF to PPTX</a>
+            <a href="pdf-to-excel.html">PDF to Excel</a>
+            <a href="pdf-to-jpg.html">PDF to JPG</a>
+            <a href="pdf-to-png.html">PDF to PNG</a>
           </div>
           <div>
             <strong>Convert to PDF</strong>
-            <a href="#tools">Word to PDF</a>
-            <a href="#tools">PPTX to PDF</a>
-            <a href="#tools">Excel to PDF</a>
-            <a href="#tools">JPG to PDF</a>
-            <a href="#tools">PNG to PDF</a>
+            <a href="word-to-pdf.html">Word to PDF</a>
+            <a href="pptx-to-pdf.html">PPTX to PDF</a>
+            <a href="excel-to-pdf.html">Excel to PDF</a>
+            <a href="jpg-to-pdf.html">JPG to PDF</a>
+            <a href="png-to-pdf.html">PNG to PDF</a>
           </div>
         </div>
       </details>
@@ -131,8 +131,8 @@
       <div class="container hero-grid">
         <div class="hero-copy">
           <span class="eyebrow">SMARTER DOCUMENT TOOLS</span>
-          <h1>Split PDFs exactly how you need</h1>
-          <p class="hero-subtitle">Extract selected pages or separate a large PDF into smaller documents in just a few simple steps.</p>
+          <h1>Your all-in-one PDF editor and converter</h1>
+          <p class="hero-subtitle">Edit, convert and sign PDFs in seconds — everything you need in one simple workspace.</p>
           <ul class="check-list">
             <li>Works on any device</li>
             <li>No software installation</li>
@@ -174,7 +174,7 @@
         </div>
 
         <div class="tool-panel active" id="edit-tools">
-          <a class="tool-card" href="delete-pdf-pages.html"><span class="tool-icon">✎</span><span>Edit PDF</span><small>Change text, images and pages</small></a>
+          <a class="tool-card" href="png-to-pdf.html"><span class="tool-icon">✎</span><span>Edit PDF</span><small>Change text, images and pages</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">✓</span><span>Sign PDF</span><small>Add a secure electronic signature</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">⇲</span><span>Compress PDF</span><small>Reduce file size in seconds</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">◫</span><span>Add watermark</span><small>Protect and brand documents</small></a>
@@ -292,7 +292,18 @@
         <a href="delete-pdf-pages.html">Delete pages</a>
         <a href="ocr-pdf.html">OCR PDF</a>
       </div>
-      <div><h3>Convert</h3><a href="#">PDF to Word</a><a href="#">PDF to Excel</a><a href="#">PDF to JPG</a><a href="#">Word to PDF</a><a href="#">JPG to PDF</a></div>
+      <div><h3>Convert</h3>
+        <a href="pdf-to-word.html">PDF to Word</a>
+        <a href="pdf-to-pptx.html">PDF to PPTX</a>
+        <a href="pdf-to-excel.html">PDF to Excel</a>
+        <a href="pdf-to-jpg.html">PDF to JPG</a>
+        <a href="pdf-to-png.html">PDF to PNG</a>
+        <a href="word-to-pdf.html">Word to PDF</a>
+        <a href="pptx-to-pdf.html">PPTX to PDF</a>
+        <a href="excel-to-pdf.html">Excel to PDF</a>
+        <a href="jpg-to-pdf.html">JPG to PDF</a>
+        <a href="png-to-pdf.html">PNG to PDF</a>
+      </div>
       <div><h3>Company</h3><a href="mailto:support@pdfmint.com">Contact us</a><a href="privacy-policy.html">Privacy Policy</a><a href="terms-of-use.html">Terms of Use</a><a href="cookie-policy.html">Cookie Policy</a><a href="subscription-policy.html">Subscription Policy</a></div>
     </div>
     <div class="container footer-bottom">
