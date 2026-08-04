@@ -70,3 +70,24 @@ Examples:
 - pdf-to-word.html -> editor.html?tool=pdf-to-word
 
 Only one editor implementation now needs to be maintained.
+
+
+PDFMint v3.7.0 — PDF, JPG, PNG and TXT export
+
+Available formats:
+- PDF: downloads the completed edited PDF.
+- JPG: downloads one JPG for a one-page PDF. Multi-page PDFs download as one ZIP containing one JPG per page.
+- PNG: downloads one PNG for a one-page PDF. Multi-page PDFs download as one ZIP containing one PNG per page.
+- TXT: extracts text from the completed edited PDF and downloads one UTF-8 TXT file.
+
+All conversions start from the final edited PDF, so placed text, signatures, images, drawings, highlights and other flattened visual changes are present in JPG and PNG exports.
+
+
+PDFMint v3.7.1 — Local JSZip and 300 DPI image export
+
+Changes:
+- JSZip is now bundled locally at vendor/jszip.min.js.
+- The editor no longer depends on the jsDelivr CDN for multi-page image ZIP downloads.
+- JPG and PNG pages are rendered at a 300 DPI-equivalent scale.
+- A 40-million-pixel safety cap protects phones and lower-memory devices from oversized canvas failures on unusually large PDF pages.
+- Standard A4 and Letter pages export at approximately 2480 × 3508 pixels and 2550 × 3300 pixels respectively.

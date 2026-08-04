@@ -3715,28 +3715,203 @@ document.getElementById('return-to-payment').addEventListener('click', () => {
   document.getElementById('demo-payment-modal').hidden = true;
 });
 
-document.getElementById('final-download').addEventListener('click', () => {
+
+async function buildFinalEditedPdfBlob() {
+  const bytes = await createEditedPdfBytes();
+  return new Blob([bytes], { type: 'application/pdf' });
+}
+
+function safeExportBaseName() {
+  const input = document.getElementById('export-filename');
+  const raw = String(input?.value || editor.file?.name || 'document')
+    .replace(/\.[^.]+$/, '')
+    .trim();
+  return (raw || 'document').replace(/[<>:"/\\|?*\u0000-\u001F]/g, '_');
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function loadPdfDocumentFromBlob(blob) {
+  const bytes = new Uint8Array(await blob.arrayBuffer());
+  return pdfjsLib.getDocument({ data: bytes }).promise;
+}
+
+async function renderPdfPageToImageBlob(pdf, pageNumber, format) {
+  const page = await pdf.getPage(pageNumber);
+  const PDF_POINTS_PER_INCH = 72;
+  const TARGET_DPI = 300;
+  const targetScale = TARGET_DPI / PDF_POINTS_PER_INCH;
+  const viewport = page.getViewport({ scale: targetScale });
+
+  const canvas = document.createElement('canvas');
+  const MAX_CANVAS_PIXELS = 40_000_000;
+  let renderWidth = Math.ceil(viewport.width);
+  let renderHeight = Math.ceil(viewport.height);
+
+  if (renderWidth * renderHeight > MAX_CANVAS_PIXELS) {
+    const reduction = Math.sqrt(MAX_CANVAS_PIXELS / (renderWidth * renderHeight));
+    renderWidth = Math.max(1, Math.floor(renderWidth * reduction));
+    renderHeight = Math.max(1, Math.floor(renderHeight * reduction));
+  }
+
+  canvas.width = renderWidth;
+  canvas.height = renderHeight;
+
+  const renderScaleX = renderWidth / viewport.width;
+  const renderScaleY = renderHeight / viewport.height;
+  const context = canvas.getContext('2d', { alpha: format === 'png' });
+
+  if (format === 'jpg') {
+    context.save();
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.restore();
+  }
+
+  await page.render({
+    canvasContext: context,
+    viewport,
+    transform: [renderScaleX, 0, 0, renderScaleY, 0, 0]
+  }).promise;
+
+  const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
+  const quality = format === 'jpg' ? 0.92 : undefined;
+
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(blob => {
+      if (blob) resolve(blob);
+      else reject(new Error(`Could not create ${format.toUpperCase()} image.`));
+    }, mime, quality);
+  });
+}
+
+async function exportEditedPdfAsImages(format) {
+  const pdfBlob = await buildFinalEditedPdfBlob();
+  const pdf = await loadPdfDocumentFromBlob(pdfBlob);
+  const baseName = safeExportBaseName();
+  const extension = format === 'jpg' ? 'jpg' : 'png';
+
+  if (pdf.numPages === 1) {
+    const blob = await renderPdfPageToImageBlob(pdf, 1, format);
+    downloadBlob(blob, `${baseName}.${extension}`);
+    return;
+  }
+
+  if (typeof JSZip === 'undefined') {
+    throw new Error('The image packaging library could not be loaded.');
+  }
+
+  const zip = new JSZip();
+  const digits = String(pdf.numPages).length;
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const blob = await renderPdfPageToImageBlob(pdf, pageNumber, format);
+    const padded = String(pageNumber).padStart(digits, '0');
+    zip.file(`${baseName}-page-${padded}.${extension}`, blob);
+  }
+
+  const zipBlob = await zip.generateAsync({
+    type: 'blob',
+    compression: 'DEFLATE',
+    compressionOptions: { level: 6 }
+  });
+
+  downloadBlob(zipBlob, `${baseName}-${extension}-pages.zip`);
+}
+
+async function extractEditedPdfText() {
+  const pdfBlob = await buildFinalEditedPdfBlob();
+  const pdf = await loadPdfDocumentFromBlob(pdfBlob);
+  const pages = [];
+
+  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
+    const page = await pdf.getPage(pageNumber);
+    const textContent = await page.getTextContent();
+    const lines = [];
+    let currentLine = [];
+    let lastY = null;
+
+    textContent.items.forEach(item => {
+      const y = Math.round(item.transform?.[5] || 0);
+      if (lastY !== null && Math.abs(y - lastY) > 3) {
+        if (currentLine.length) lines.push(currentLine.join(' ').replace(/\s+/g, ' ').trim());
+        currentLine = [];
+      }
+      if (item.str) currentLine.push(item.str);
+      lastY = y;
+    });
+
+    if (currentLine.length) lines.push(currentLine.join(' ').replace(/\s+/g, ' ').trim());
+
+    const pageText = lines.filter(Boolean).join('\n');
+    pages.push(pdf.numPages > 1 ? `--- Page ${pageNumber} ---\n${pageText}` : pageText);
+  }
+
+  return pages.join('\n\n');
+}
+
+async function exportEditedDocument(format) {
+  const baseName = safeExportBaseName();
+
+  if (format === 'pdf') {
+    const blob = await buildFinalEditedPdfBlob();
+    downloadBlob(blob, `${baseName}.pdf`);
+    return;
+  }
+
+  if (format === 'jpg' || format === 'png') {
+    await exportEditedPdfAsImages(format);
+    return;
+  }
+
+  if (format === 'txt') {
+    const text = await extractEditedPdfText();
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    downloadBlob(blob, `${baseName}.txt`);
+    return;
+  }
+
+  throw new Error('That export format is not available yet.');
+}
+
+document.getElementById('final-download').addEventListener('click', async () => {
   const emailInput = document.getElementById('download-email');
   const error = document.getElementById('email-error');
-  const valid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value.trim());
+  const email = String(emailInput?.value || '').trim();
 
-  if (!valid) {
-    emailInput.classList.add('invalid');
-    error.hidden = false;
-    emailInput.focus();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (error) error.hidden = false;
+    emailInput?.focus();
     return;
   }
 
-  emailInput.classList.remove('invalid');
-  error.hidden = true;
+  if (error) error.hidden = true;
 
-  if (!preparedExportBytes) {
-    showAlert('The document is no longer prepared. Please click Done again.');
-    closeEmailModal();
-    return;
+  const button = document.getElementById('final-download');
+  const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
+  const originalText = button.textContent;
+
+  button.disabled = true;
+  button.textContent = selectedFormat === 'pdf' ? 'Preparing PDF…' : `Preparing ${selectedFormat.toUpperCase()}…`;
+
+  try {
+    await exportEditedDocument(selectedFormat);
+  } catch (exportError) {
+    console.error('Export failed:', exportError);
+    showAlert(exportError?.message || 'PDFMint could not create that download.');
+  } finally {
+    button.disabled = false;
+    button.textContent = originalText;
   }
-
-  openAccessPage();
 });
 
 document.getElementById('download-email').addEventListener('input', event => {
@@ -4380,3 +4555,17 @@ document.addEventListener('change', event => {
 }, true);
 
 document.addEventListener('DOMContentLoaded', initialiseSharedEditorRoute);
+
+document.querySelectorAll('input[name="export-format"]').forEach(input => {
+  input.addEventListener('change', () => {
+    document.querySelectorAll('.format-choice').forEach(choice => {
+      choice.classList.toggle('active', choice.contains(input) && input.checked);
+    });
+
+    const extension = document.getElementById('export-extension');
+    if (extension) {
+      const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
+      extension.textContent = `.${format}`;
+    }
+  });
+});

@@ -596,17 +596,17 @@
             <input type="radio" name="export-format" value="pptx" disabled>
             <span class="format-radio"></span><span class="format-icon ppt-icon">PPTX</span><span class="format-name">PPTX<small>Soon</small></span>
           </label>
-          <label class="format-choice unavailable" title="Coming soon">
-            <input type="radio" name="export-format" value="jpg" disabled>
-            <span class="format-radio"></span><span class="format-icon image-icon">JPG</span><span class="format-name">JPG<small>Soon</small></span>
+          <label class="format-choice">
+            <input type="radio" name="export-format" value="jpg">
+            <span class="format-radio"></span><span class="format-icon image-icon">JPG</span><span class="format-name">JPG</span>
           </label>
-          <label class="format-choice unavailable" title="Coming soon">
-            <input type="radio" name="export-format" value="png" disabled>
-            <span class="format-radio"></span><span class="format-icon image-icon">PNG</span><span class="format-name">PNG<small>Soon</small></span>
+          <label class="format-choice">
+            <input type="radio" name="export-format" value="png">
+            <span class="format-radio"></span><span class="format-icon image-icon">PNG</span><span class="format-name">PNG</span>
           </label>
-          <label class="format-choice unavailable" title="Coming soon">
-            <input type="radio" name="export-format" value="txt" disabled>
-            <span class="format-radio"></span><span class="format-icon txt-icon">TXT</span><span class="format-name">TXT<small>Soon</small></span>
+          <label class="format-choice">
+            <input type="radio" name="export-format" value="txt">
+            <span class="format-radio"></span><span class="format-icon txt-icon">TXT</span><span class="format-name">TXT</span>
           </label>
           <label class="format-choice unavailable" title="Coming soon">
             <input type="radio" name="export-format" value="xlsx" disabled>
@@ -1025,6 +1025,7 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="script.js?v=360"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="script.js?v=371"></script>
 </body>
 </html>
