@@ -1,15 +1,10 @@
-# PDFMint Engine — Sevalla-ready v1.0.1
+# PDFMint Engine — Sevalla-ready v1.0.2
 
-## Sevalla H1 requirement
-
-Set:
+## Sevalla H1 setting
 
 ```text
 WEB_CONCURRENCY=1
 ```
-
-The 0.3 GB RAM plan should not run two Python workers while LibreOffice is
-starting.
 
 ## Environment variables
 
@@ -20,14 +15,20 @@ ALLOWED_ORIGINS=https://pdfmint-j6ewx.kinsta.page
 WEB_CONCURRENCY=1
 ```
 
+## DOC export behaviour
+
+PDFMint now tries multiple LibreOffice DOC export modes automatically:
+
+1. `doc`
+2. `doc:"MS Word 97"`
+3. `doc:"MS Word 95"`
+4. `doc:"Office Open XML Text"`
+
+Each attempt uses a clean LibreOffice profile. The first attempt that creates a
+valid `.doc` file is returned to the customer. Logs record which filter worked.
+
 ## Deployment
 
 - Dockerfile path: `pdfmint-engine/Dockerfile`
 - Docker context: `pdfmint-engine`
 - Health endpoint: `/v1/health`
-
-## Diagnostics
-
-DOC jobs now log LibreOffice's command, exit code, stdout, stderr, output
-existence and output size. Each request also receives a reference such as
-`PM-8A12BC34`.
