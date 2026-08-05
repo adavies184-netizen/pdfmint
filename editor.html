@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=390" />
+  <link rel="stylesheet" href="styles.css?v=395" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -664,6 +664,9 @@
           </div>
           <div class="export-progress-track"><span id="export-progress-bar"></span></div>
           <p id="export-progress-detail">Applying your edits…</p>
+          <p class="export-progress-eta" id="export-progress-eta" hidden>
+            <span id="export-progress-simple-message">Usually ready in a few seconds</span>
+          </p>
         </div>
 
         <button class="final-download-button" id="final-download" type="button">Download</button>
@@ -1036,6 +1039,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=390"></script>
+  <script src="script.js?v=395"></script>
 </body>
 </html>

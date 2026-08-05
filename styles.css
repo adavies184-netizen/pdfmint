@@ -1496,3 +1496,35 @@ button:disabled{opacity:.45;cursor:not-allowed}
   margin-top:18px !important;
   margin-bottom:18px !important;
 }
+
+/* PDFMint v3.9.4 — Word export loading bar and ETA */
+.export-progress-eta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  margin-top:8px !important;
+  padding-top:8px;
+  border-top:1px solid #dce8e2;
+  color:#48685a !important;
+  font-size:12px !important;
+}
+.export-progress-eta strong{
+  color:#174f3a;
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;
+}
+.export-progress-track span{
+  transition:width .28s ease;
+}
+
+/* PDFMint v3.9.5 — simplified customer progress */
+.export-progress-eta{
+  justify-content:flex-start !important;
+  text-align:left;
+}
+.export-progress-eta span{
+  color:#48685a;
+  font-size:12px;
+  line-height:1.4;
+}

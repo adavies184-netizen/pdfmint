@@ -3743,6 +3743,81 @@ let pdfMintEngineHealth = {
   available: false
 };
 
+
+
+let pdfMintExportTimer = null;
+let pdfMintExportStartedAt = 0;
+let pdfMintExportEstimatedSeconds = 0;
+let pdfMintExportDisplayedProgress = 0;
+let pdfMintExportFormat = '';
+
+function stopExportCountdown() {
+  if (pdfMintExportTimer) {
+    clearInterval(pdfMintExportTimer);
+    pdfMintExportTimer = null;
+  }
+
+  const eta = document.getElementById('export-progress-eta');
+  if (eta) eta.hidden = true;
+}
+
+function updateSimpleProgressMessage() {
+  const eta = document.getElementById('export-progress-eta');
+  const message = document.getElementById('export-progress-simple-message');
+  if (!eta || !message || !pdfMintExportFormat) return;
+
+  const elapsed = (Date.now() - pdfMintExportStartedAt) / 1000;
+  const remaining = Math.max(0, pdfMintExportEstimatedSeconds - elapsed);
+
+  eta.hidden = false;
+
+  if (remaining <= 2) {
+    message.textContent = 'Nearly ready…';
+  } else if (pdfMintExportFormat === 'doc') {
+    message.textContent = 'Usually ready in around 10 seconds';
+  } else if (pdfMintExportFormat === 'docx') {
+    message.textContent = 'Usually ready in a few seconds';
+  } else {
+    eta.hidden = true;
+  }
+}
+
+function startExportCountdown(format) {
+  stopExportCountdown();
+
+  const estimates = {
+    docx: 6,
+    doc: 10
+  };
+
+  pdfMintExportFormat = format;
+  pdfMintExportEstimatedSeconds = estimates[format] || 0;
+  pdfMintExportStartedAt = Date.now();
+  pdfMintExportDisplayedProgress = 2;
+
+  if (!pdfMintExportEstimatedSeconds) return;
+
+  updateSimpleProgressMessage();
+
+  pdfMintExportTimer = setInterval(() => {
+    updateSimpleProgressMessage();
+
+    const elapsed = (Date.now() - pdfMintExportStartedAt) / 1000;
+    const ratio = Math.min(1, elapsed / pdfMintExportEstimatedSeconds);
+    const eased = 1 - Math.pow(1 - ratio, 2.1);
+    const estimatedProgress = Math.min(93, 42 + eased * 51);
+
+    if (estimatedProgress > pdfMintExportDisplayedProgress) {
+      pdfMintExportDisplayedProgress = estimatedProgress;
+      const bar = document.getElementById('export-progress-bar');
+      const percentNode = document.getElementById('export-progress-percent');
+
+      if (bar) bar.style.width = `${estimatedProgress}%`;
+      if (percentNode) percentNode.textContent = `${Math.round(estimatedProgress)}%`;
+    }
+  }, 250);
+}
+
 function updateExportProgress(percent, title, detail) {
   const panel = document.getElementById('export-progress-panel');
   const titleNode = document.getElementById('export-progress-title');
@@ -3751,7 +3826,14 @@ function updateExportProgress(percent, title, detail) {
   const bar = document.getElementById('export-progress-bar');
 
   if (panel) panel.hidden = false;
-  const safePercent = Math.max(0, Math.min(100, Math.round(percent)));
+  const requestedPercent = Math.max(0, Math.min(100, Number(percent) || 0));
+  pdfMintExportDisplayedProgress = Math.max(pdfMintExportDisplayedProgress, requestedPercent);
+  const safePercent = Math.round(pdfMintExportDisplayedProgress);
+
+  if (requestedPercent >= 100 || String(title || '').toLowerCase().includes('could not')) {
+    stopExportCountdown();
+  }
+
   if (titleNode) titleNode.textContent = title || 'Preparing document';
   if (detailNode) detailNode.textContent = detail || '';
   if (percentNode) percentNode.textContent = `${safePercent}%`;
@@ -3759,6 +3841,12 @@ function updateExportProgress(percent, title, detail) {
 }
 
 function resetExportProgress() {
+  stopExportCountdown();
+  pdfMintExportStartedAt = 0;
+  pdfMintExportEstimatedSeconds = 0;
+  pdfMintExportDisplayedProgress = 0;
+  pdfMintExportFormat = '';
+
   const panel = document.getElementById('export-progress-panel');
   if (panel) panel.hidden = true;
   updateExportProgress(0, 'Preparing document', 'Applying your edits…');
@@ -3833,8 +3921,8 @@ async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
     request.upload.addEventListener('load', () => {
       updateExportProgress(
         50,
-        'Processing document',
-        `Running ${operation.replaceAll('-', ' ')}…`
+        operation === 'pdf-to-doc' ? 'Preparing your DOC…' : 'Preparing your DOCX…',
+        'Please keep this window open while your download is prepared.'
       );
     });
 
@@ -3870,9 +3958,9 @@ async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
 
 async function exportEditedPdfAsWord(format) {
   const baseName = safeExportBaseName();
-  updateExportProgress(8, 'Preparing document', 'Applying your PDF edits…');
+  updateExportProgress(8, `Preparing your ${format.toUpperCase()}…`, 'Please keep this window open.');
   const pdfBlob = await buildFinalEditedPdfBlob();
-  updateExportProgress(20, 'Preparing upload', 'The edited PDF has been created.');
+  updateExportProgress(20, `Preparing your ${format.toUpperCase()}…`, 'Your document is being prepared securely.');
 
   const operation = format === 'docx' ? 'pdf-to-docx' : 'pdf-to-doc';
   const convertedBlob = await convertPdfThroughPdfMintEngine(
@@ -4103,6 +4191,7 @@ document.getElementById('final-download').addEventListener('click', async () => 
 
   button.disabled = true;
   resetExportProgress();
+  startExportCountdown(selectedFormat);
   updateExportProgress(2, 'Starting export', `Preparing ${selectedFormat.toUpperCase()}…`);
   button.textContent = selectedFormat === 'pdf' ? 'Preparing PDF…' : `Preparing ${selectedFormat.toUpperCase()}…`;
 
@@ -4117,6 +4206,7 @@ document.getElementById('final-download').addEventListener('click', async () => 
     );
     showAlert(exportError?.message || 'PDFMint could not create that download.');
   } finally {
+    stopExportCountdown();
     button.disabled = false;
     button.textContent = originalText;
   }
