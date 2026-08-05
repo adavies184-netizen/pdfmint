@@ -3732,9 +3732,16 @@ document.getElementById('return-to-payment').addEventListener('click', () => {
 
 
 
-const PDFMINT_CONVERSION_API = String(
-  window.PDFMINT_CONFIG?.conversionApiBaseUrl || ''
+const PDFMINT_ENGINE_URL = String(
+  window.PDFMINT_CONFIG?.engineBaseUrl ||
+  window.PDFMINT_CONFIG?.conversionApiBaseUrl ||
+  ''
 ).replace(/\/+$/, '');
+
+let pdfMintEngineHealth = {
+  checkedAt: 0,
+  available: false
+};
 
 function updateExportProgress(percent, title, detail) {
   const panel = document.getElementById('export-progress-panel');
@@ -3758,28 +3765,66 @@ function resetExportProgress() {
   if (panel) panel.hidden = true;
 }
 
-function convertPdfThroughSelfHostedApi(pdfBlob, format, filename) {
-  if (!PDFMINT_CONVERSION_API) {
-    return Promise.reject(new Error(
-      'The PDFMint conversion server URL has not been configured.'
-    ));
+
+async function ensurePdfMintEngineAvailable() {
+  if (!PDFMINT_ENGINE_URL) {
+    throw new Error('The PDFMint Engine URL has not been configured.');
   }
+
+  const now = Date.now();
+  if (pdfMintEngineHealth.available && now - pdfMintEngineHealth.checkedAt < 30000) {
+    return;
+  }
+
+  updateExportProgress(12, 'Connecting to PDFMint Engine', 'Checking the conversion service…');
+
+  let response;
+  try {
+    response = await fetch(`${PDFMINT_ENGINE_URL}/v1/health`, {
+      method: 'GET',
+      mode: 'cors',
+      cache: 'no-store',
+      signal: AbortSignal.timeout ? AbortSignal.timeout(7000) : undefined
+    });
+  } catch (error) {
+    pdfMintEngineHealth = { checkedAt: now, available: false };
+    throw new Error(
+      'PDFMint Engine is not running or cannot be reached. Start the engine and check the URL in config.js.'
+    );
+  }
+
+  if (!response.ok) {
+    pdfMintEngineHealth = { checkedAt: now, available: false };
+    throw new Error(`PDFMint Engine health check failed (${response.status}).`);
+  }
+
+  const data = await response.json().catch(() => ({}));
+  if (data.status !== 'ok') {
+    pdfMintEngineHealth = { checkedAt: now, available: false };
+    throw new Error('PDFMint Engine reported that it is unavailable.');
+  }
+
+  pdfMintEngineHealth = { checkedAt: now, available: true };
+}
+
+async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
+  await ensurePdfMintEngineAvailable();
 
   return new Promise((resolve, reject) => {
     const form = new FormData();
     form.append('file', pdfBlob, `${filename}.pdf`);
-    form.append('format', format);
+    form.append('operation', operation);
 
     const request = new XMLHttpRequest();
-    request.open('POST', `${PDFMINT_CONVERSION_API}/v1/convert`, true);
+    request.open('POST', `${PDFMINT_ENGINE_URL}/v1/jobs`, true);
     request.responseType = 'blob';
-    request.timeout = 180000;
+    request.timeout = 240000;
 
     request.upload.addEventListener('progress', event => {
       if (!event.lengthComputable) return;
       const uploadPercent = event.loaded / event.total;
       updateExportProgress(
-        20 + uploadPercent * 25,
+        25 + uploadPercent * 20,
         'Uploading securely',
         `Uploading the completed PDF… ${Math.round(uploadPercent * 100)}%`
       );
@@ -3788,10 +3833,8 @@ function convertPdfThroughSelfHostedApi(pdfBlob, format, filename) {
     request.upload.addEventListener('load', () => {
       updateExportProgress(
         50,
-        `Converting to ${format.toUpperCase()}`,
-        format === 'docx'
-          ? 'Reconstructing editable Word content and layout…'
-          : 'Creating DOCX, then converting it to the legacy Word format…'
+        'Processing document',
+        `Running ${operation.replaceAll('-', ' ')}…`
       );
     });
 
@@ -3802,7 +3845,7 @@ function convertPdfThroughSelfHostedApi(pdfBlob, format, filename) {
         return;
       }
 
-      let message = `Conversion failed with status ${request.status}.`;
+      let message = `PDFMint Engine returned status ${request.status}.`;
       try {
         const text = await request.response.text();
         const parsed = JSON.parse(text);
@@ -3812,11 +3855,15 @@ function convertPdfThroughSelfHostedApi(pdfBlob, format, filename) {
     });
 
     request.addEventListener('error', () => {
-      reject(new Error('Could not connect to the PDFMint conversion server.'));
+      reject(new Error(
+        'The connection to PDFMint Engine was interrupted. Check that the engine is running and CORS is configured.'
+      ));
     });
+
     request.addEventListener('timeout', () => {
-      reject(new Error('The Word conversion took too long. Please try again.'));
+      reject(new Error('The conversion took too long. Please try again.'));
     });
+
     request.send(form);
   });
 }
@@ -3827,9 +3874,10 @@ async function exportEditedPdfAsWord(format) {
   const pdfBlob = await buildFinalEditedPdfBlob();
   updateExportProgress(20, 'Preparing upload', 'The edited PDF has been created.');
 
-  const convertedBlob = await convertPdfThroughSelfHostedApi(
+  const operation = format === 'docx' ? 'pdf-to-docx' : 'pdf-to-doc';
+  const convertedBlob = await convertPdfThroughPdfMintEngine(
     pdfBlob,
-    format,
+    operation,
     baseName
   );
 
@@ -4062,6 +4110,11 @@ document.getElementById('final-download').addEventListener('click', async () => 
     await exportEditedDocument(selectedFormat);
   } catch (exportError) {
     console.error('Export failed:', exportError);
+    updateExportProgress(
+      0,
+      'Export could not be completed',
+      exportError?.message || 'PDFMint could not create that download.'
+    );
     showAlert(exportError?.message || 'PDFMint could not create that download.');
   } finally {
     button.disabled = false;

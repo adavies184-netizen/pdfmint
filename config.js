@@ -1,7 +1,7 @@
 window.PDFMINT_CONFIG = {
-  // Development:
-  conversionApiBaseUrl: "http://localhost:8000",
+  // Keep this during local development.
+  engineBaseUrl: "http://localhost:8000"
 
-  // Production example:
-  // conversionApiBaseUrl: "https://convert.pdfmint.com"
+  // After the Sevalla engine app is deployed, replace the line above with:
+  // engineBaseUrl: "https://YOUR-SEVALLA-ENGINE-DOMAIN"
 };

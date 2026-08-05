@@ -122,3 +122,15 @@ Backend:
 - No paid conversion API is used.
 
 Deployment is required before DOCX/DOC can work on the public website.
+
+
+PDFMint v3.9.0 — PDFMint Engine
+
+- Replaced the one-purpose conversion server with one extensible engine.
+- Frontend checks /v1/health before uploading.
+- DOCX uses operation pdf-to-docx.
+- DOC uses operation pdf-to-doc.
+- Progress panel now has 18px spacing above and below.
+- Engine includes a capability registry ready for OCR, compression, merge,
+  split, rotate and watermark operations.
+- The engine must be started or deployed before DOC/DOCX conversion works.

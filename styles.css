@@ -1489,3 +1489,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
   font-size:12px;
   line-height:1.45;
 }
+
+/* PDFMint v3.9.0 — progress spacing */
+.email-modal .export-progress-panel,
+.export-progress-panel{
+  margin-top:18px !important;
+  margin-bottom:18px !important;
+}
