@@ -4,6 +4,9 @@ from __future__ import annotations
 import shutil
 import subprocess
 import tempfile
+import logging
+import time
+import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
@@ -15,6 +18,8 @@ from .files import create_download_copy, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 
+
+logger = logging.getLogger("pdfmint.engine")
 
 app = FastAPI(
     title="PDFMint Engine",
@@ -72,26 +77,56 @@ async def create_job(
             detail=f"Unsupported operation '{operation}'."
         )
 
+    job_id = f"PM-{uuid.uuid4().hex[:8].upper()}"
+    started_at = time.monotonic()
     original_name = Path(file.filename or "document.pdf").name
     base_name = Path(original_name).stem or "document"
 
-    with tempfile.TemporaryDirectory(prefix="pdfmint-job-") as temporary_name:
+    logger.info(
+        "JOB START id=%s operation=%s filename=%s",
+        job_id,
+        operation,
+        original_name,
+    )
+
+    with tempfile.TemporaryDirectory(prefix=f"pdfmint-job-{job_id.lower()}-") as temporary_name:
         workspace = Path(temporary_name)
         pdf_path = await save_uploaded_pdf(file, workspace)
 
         try:
             result = execute_operation(operation, pdf_path, workspace, base_name)
         except subprocess.TimeoutExpired as exc:
-            raise HTTPException(status_code=504, detail="The conversion timed out.") from exc
+            logger.exception("JOB TIMEOUT id=%s operation=%s", job_id, operation)
+            raise HTTPException(
+                status_code=504,
+                detail=f"Conversion timed out. Reference: {job_id}"
+            ) from exc
         except Exception as exc:
+            logger.exception(
+                "JOB FAILED id=%s operation=%s error=%s",
+                job_id,
+                operation,
+                exc,
+            )
             raise HTTPException(
                 status_code=422,
-                detail=f"Operation '{operation}' failed: {exc}"
+                detail=(
+                    f"{operation.replace('-', ' ').upper()} could not be completed. "
+                    f"Reference: {job_id}. {exc}"
+                )
             ) from exc
 
         download_path, download_dir = create_download_copy(
             result.path,
             result.filename,
+        )
+
+        logger.info(
+            "JOB COMPLETE id=%s operation=%s duration_seconds=%.2f output_bytes=%s",
+            job_id,
+            operation,
+            time.monotonic() - started_at,
+            download_path.stat().st_size,
         )
 
         return FileResponse(

@@ -1,39 +1,33 @@
-# PDFMint Engine — Sevalla-ready
+# PDFMint Engine — Sevalla-ready v1.0.1
 
-Deploy this folder as a separate Sevalla **Application** while the PDFMint
-website remains the main site.
+## Sevalla H1 requirement
 
-## Sevalla application settings
+Set:
 
-- Build method: Dockerfile
-- Root directory / Docker context: `pdfmint-engine`
-- Port: supplied through the `PORT` environment variable
-- Health endpoint: `/v1/health`
+```text
+WEB_CONCURRENCY=1
+```
+
+The 0.3 GB RAM plan should not run two Python workers while LibreOffice is
+starting.
 
 ## Environment variables
 
 ```text
 MAX_UPLOAD_BYTES=104857600
 JOB_TIMEOUT_SECONDS=180
-ALLOWED_ORIGINS=https://pdfmint.com,https://www.pdfmint.com
-WEB_CONCURRENCY=2
+ALLOWED_ORIGINS=https://pdfmint-j6ewx.kinsta.page
+WEB_CONCURRENCY=1
 ```
 
-During testing, add the temporary Sevalla website domain to `ALLOWED_ORIGINS`.
+## Deployment
 
-## Current operations
+- Dockerfile path: `pdfmint-engine/Dockerfile`
+- Docker context: `pdfmint-engine`
+- Health endpoint: `/v1/health`
 
-- `pdf-to-docx`
-- `pdf-to-doc`
+## Diagnostics
 
-## Local development
-
-```bash
-docker compose up --build
-```
-
-Local health check:
-
-```text
-http://localhost:8000/v1/health
-```
+DOC jobs now log LibreOffice's command, exit code, stdout, stderr, output
+existence and output size. Each request also receives a reference such as
+`PM-8A12BC34`.
