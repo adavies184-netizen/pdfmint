@@ -200,3 +200,15 @@ Frontend-only update. PDFMint Engine unchanged.
 - Mobile menu order matches desktop.
 
 Frontend-only update. PDFMint Engine unchanged.
+
+
+## PDFMint v4.0.6 — header dropdown isolation fix
+
+- Kept menu order: PDF Editor → PDF Converter → Forms.
+- Added clear spacing between Editor and Converter triggers.
+- Each dropdown is now isolated to its own parent.
+- Opening one dropdown automatically closes the other.
+- Clicking outside closes any open dropdown.
+- Existing footer, OCR CTA, conversion logic and engine are unchanged.
+
+Frontend-only update.

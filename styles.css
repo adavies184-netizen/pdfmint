@@ -1577,3 +1577,29 @@ button:disabled{opacity:.45;cursor:not-allowed}
   font-weight:800;
   letter-spacing:-.02em;
 }
+
+
+/* PDFMint v4.0.6 — isolated header dropdowns */
+.desktop-nav{
+  display:flex;
+  align-items:center;
+  gap:28px;
+}
+.desktop-nav .nav-dropdown{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+}
+.desktop-nav .nav-dropdown-menu{
+  display:none;
+  position:absolute;
+  top:calc(100% + 12px);
+  left:0;
+  z-index:1000;
+}
+.desktop-nav .nav-dropdown.is-open > .nav-dropdown-menu{
+  display:flex;
+}
+.desktop-nav .nav-dropdown:not(.is-open) > .nav-dropdown-menu{
+  display:none !important;
+}

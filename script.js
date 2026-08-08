@@ -5031,3 +5031,41 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   applyPdfMintLandingUploadLabel();
 });
+
+
+document.addEventListener('DOMContentLoaded', () => {
+  const dropdowns = Array.from(document.querySelectorAll('.desktop-nav .nav-dropdown'));
+
+  dropdowns.forEach(dropdown => {
+    const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+    if (!toggle) return;
+
+    toggle.addEventListener('click', event => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      const shouldOpen = !dropdown.classList.contains('is-open');
+
+      dropdowns.forEach(other => {
+        other.classList.remove('is-open');
+        const otherToggle = other.querySelector('.nav-dropdown-toggle');
+        if (otherToggle) otherToggle.setAttribute('aria-expanded', 'false');
+      });
+
+      if (shouldOpen) {
+        dropdown.classList.add('is-open');
+        toggle.setAttribute('aria-expanded', 'true');
+      }
+    });
+  });
+
+  document.addEventListener('click', event => {
+    if (!event.target.closest('.desktop-nav .nav-dropdown')) {
+      dropdowns.forEach(dropdown => {
+        dropdown.classList.remove('is-open');
+        const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+        if (toggle) toggle.setAttribute('aria-expanded', 'false');
+      });
+    }
+  });
+});
