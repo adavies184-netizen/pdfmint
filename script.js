@@ -135,7 +135,9 @@ let editor = {
   crops: {},
   cropDraft: null,
   cropScope: 'current',
-  watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false }
+  watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false },
+  splitPoints: [],
+  splitApplied: false
 };
 let splitFile = null;
 let splitPageCount = 0;
@@ -156,6 +158,8 @@ function cloneEditorState() {
     notes: editor.notes,
     crops: editor.crops,
     watermark: editor.watermark,
+    splitPoints: editor.splitPoints,
+    splitApplied: editor.splitApplied,
     selectedIndex: editor.selectedIndex,
     selectedAnnotationId: editor.selectedAnnotationId,
     selectedExistingTextId: editor.selectedExistingTextId,
@@ -181,6 +185,8 @@ function restoreEditorState(snapshot) {
   editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false };
   editor.watermark.align = editor.watermark.align || 'center';
   editor.watermark.vertical = Number.isFinite(editor.watermark.vertical) ? editor.watermark.vertical : 50;
+  editor.splitPoints = snapshot.splitPoints || [];
+  editor.splitApplied = Boolean(snapshot.splitApplied);
   editor.activeLinkDraft = null;
   editor.selectedIndex = Math.min(snapshot.selectedIndex, Math.max(0, editor.pages.length - 1));
   editor.selectedAnnotationId = snapshot.selectedAnnotationId;
@@ -320,7 +326,9 @@ async function loadEditorPdf(file) {
       crops: {},
       cropDraft: null,
       cropScope: 'current',
-      watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false }
+      watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false },
+      splitPoints: [],
+      splitApplied: false
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
@@ -403,6 +411,7 @@ function setEditorMode(mode) {
   document.getElementById('note-tool')?.classList.toggle('active', mode === 'note');
   document.getElementById('watermark-tool')?.classList.toggle('active', mode === 'watermark');
   document.getElementById('crop-tool')?.classList.toggle('active', mode === 'crop');
+  document.getElementById('split-tool')?.classList.toggle('active', mode === 'split');
 
   const addOptionsBar = document.getElementById('text-options-bar');
   const editOptionsBar = document.getElementById('edit-text-options-bar');
@@ -411,6 +420,7 @@ function setEditorMode(mode) {
   const highlightOptionsBar = document.getElementById('text-highlight-options-bar');
   const watermarkOptionsBar = document.getElementById('watermark-options-bar');
   const cropOptionsBar = document.getElementById('crop-options-bar');
+  const splitOptionsBar = document.getElementById('split-options-bar');
   if (addOptionsBar) addOptionsBar.hidden = mode !== 'text';
   if (editOptionsBar) editOptionsBar.hidden = mode !== 'edit-existing';
   if (drawOptionsBar) drawOptionsBar.hidden = mode !== 'draw';
@@ -418,6 +428,12 @@ function setEditorMode(mode) {
   if (highlightOptionsBar) highlightOptionsBar.hidden = mode !== 'text-highlight';
   if (watermarkOptionsBar) watermarkOptionsBar.hidden = mode !== 'watermark';
   if (cropOptionsBar) cropOptionsBar.hidden = mode !== 'crop';
+  if (splitOptionsBar) splitOptionsBar.hidden = mode !== 'split';
+
+  const normalEditorBody = document.querySelector('.desktop-editor-body');
+  const splitWorkspace = document.getElementById('split-workspace');
+  if (normalEditorBody) normalEditorBody.hidden = mode === 'split';
+  if (splitWorkspace) splitWorkspace.hidden = mode !== 'split';
 
   if (mode !== 'edit-existing') {
     editor.editTextBoxMode = false;
@@ -459,6 +475,9 @@ function setEditorMode(mode) {
   } else if (mode === 'crop') {
     showEditorHint('Press and drag on the page to select the area to keep.');
     renderAnnotations();
+  } else if (mode === 'split') {
+    showEditorHint('Click the scissors between pages to create separate files.');
+    renderSplitWorkspace();
   } else {
     renderAnnotations();
   }
@@ -2920,6 +2939,102 @@ document.getElementById('watermark-done').addEventListener('click', () => {
   openFormatModal();
 });
 
+let selectedSplitPage = 0;
+function normaliseSplitPoints() {
+  editor.splitPoints = Array.from(new Set(editor.splitPoints || []))
+    .map(Number)
+    .filter(point => Number.isInteger(point) && point > 0 && point < editor.pages.length)
+    .sort((a, b) => a - b);
+}
+function updateSplitSummary() {
+  normaliseSplitPoints();
+  const count = editor.splitPoints.length;
+  const sectionCount = document.getElementById('split-section-count');
+  const pointCount = document.getElementById('split-point-count');
+  const apply = document.getElementById('split-apply');
+  if (sectionCount) sectionCount.textContent = `${count + 1} output file${count ? 's' : ''}`;
+  if (pointCount) pointCount.textContent = count ? `${count} split point${count === 1 ? '' : 's'} selected` : 'No split points selected';
+  if (apply) apply.disabled = count === 0;
+}
+async function renderSplitWorkspace() {
+  const grid = document.getElementById('split-page-grid');
+  if (!grid || !editor.pdfjs) return;
+  normaliseSplitPoints();
+  grid.innerHTML = '';
+  for (let index = 0; index < editor.pages.length; index++) {
+    const state = editor.pages[index];
+    const card = document.createElement('article');
+    card.className = `split-page-card${index === selectedSplitPage ? ' selected' : ''}`;
+    card.draggable = true;
+    card.dataset.splitIndex = String(index);
+    card.innerHTML = `<div class="split-page-paper"><canvas></canvas><span class="split-drag-handle" aria-hidden="true">⋮⋮</span></div><strong>Page ${index + 1}</strong>`;
+    grid.appendChild(card);
+    card.addEventListener('click', () => {
+      selectedSplitPage = index;
+      grid.querySelectorAll('.split-page-card').forEach((item, itemIndex) => item.classList.toggle('selected', itemIndex === index));
+    });
+    card.addEventListener('dragstart', event => {
+      card.classList.add('dragging');
+      event.dataTransfer.setData('text/plain', String(index));
+      event.dataTransfer.effectAllowed = 'move';
+    });
+    card.addEventListener('dragover', event => { event.preventDefault(); card.classList.add('drop-target'); });
+    card.addEventListener('dragleave', () => card.classList.remove('drop-target'));
+    card.addEventListener('dragend', () => grid.querySelectorAll('.split-page-card').forEach(item => item.classList.remove('dragging','drop-target')));
+    card.addEventListener('drop', async event => {
+      event.preventDefault();
+      const from = Number(event.dataTransfer.getData('text/plain'));
+      const to = Number(card.dataset.splitIndex);
+      if (!Number.isInteger(from) || from === to) return;
+      recordHistory();
+      const [moved] = editor.pages.splice(from, 1);
+      editor.pages.splice(to, 0, moved);
+      selectedSplitPage = to;
+      editor.splitApplied = false;
+      await renderSplitWorkspace();
+    });
+    try {
+      const page = await editor.pdfjs.getPage(state.sourceIndex + 1);
+      const base = page.getViewport({scale:1,rotation:state.rotation});
+      const viewport = page.getViewport({scale:180/base.width,rotation:state.rotation});
+      const canvas = card.querySelector('canvas');
+      canvas.width = Math.floor(viewport.width); canvas.height = Math.floor(viewport.height);
+      await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise;
+    } catch (_) {}
+    if (index < editor.pages.length - 1) {
+      const cut = document.createElement('button');
+      const active = editor.splitPoints.includes(index + 1);
+      cut.type = 'button';
+      cut.className = `split-marker${active ? ' active' : ''}`;
+      cut.dataset.splitPoint = String(index + 1);
+      cut.setAttribute('aria-label', active ? `Remove split after page ${index + 1}` : `Split after page ${index + 1}`);
+      cut.innerHTML = `<span>✂</span><small>${active ? 'Split here' : 'Add split'}</small>`;
+      grid.appendChild(cut);
+      cut.addEventListener('click', () => {
+        const point = Number(cut.dataset.splitPoint);
+        editor.splitPoints = editor.splitPoints.includes(point) ? editor.splitPoints.filter(item => item !== point) : [...editor.splitPoints, point];
+        editor.splitApplied = false;
+        renderSplitWorkspace();
+      });
+    }
+  }
+  updateSplitSummary();
+}
+document.getElementById('split-tool')?.addEventListener('click', () => setEditorMode('split'));
+document.getElementById('split-reset')?.addEventListener('click', () => {
+  editor.splitPoints = [];
+  editor.splitApplied = false;
+  renderSplitWorkspace();
+});
+document.getElementById('split-apply')?.addEventListener('click', () => {
+  if (!editor.splitPoints.length) return;
+  recordHistory();
+  editor.splitApplied = true;
+  const files = editor.splitPoints.length + 1;
+  setEditorMode('select');
+  showAlert(`Split applied. ${files} files will be created when you export as PDF.`);
+});
+
 document.getElementById('crop-tool').addEventListener('click', () => {
   editor.cropDraft = null;
   document.getElementById('crop-specific-page').max = Math.max(1, editor.pages.length);
@@ -4592,7 +4707,32 @@ async function extractEditedPdfText() {
   return pages.join('\n\n');
 }
 
+async function exportAppliedSplitArchive() {
+  const editedBytes = await createEditedPdfBytes();
+  const source = await PDFLib.PDFDocument.load(editedBytes);
+  normaliseSplitPoints();
+  const boundaries = [0, ...editor.splitPoints, source.getPageCount()];
+  const archive = new JSZip();
+  const baseName = safeExportBaseName();
+  for (let section = 0; section < boundaries.length - 1; section++) {
+    const start = boundaries[section];
+    const end = boundaries[section + 1];
+    const output = await PDFLib.PDFDocument.create();
+    const indices = Array.from({length:end-start}, (_, offset) => start + offset);
+    const pages = await output.copyPages(source, indices);
+    pages.forEach(page => output.addPage(page));
+    archive.file(`${baseName}-part-${section + 1}.pdf`, await output.save());
+  }
+  const blob = await archive.generateAsync({type:'blob',compression:'DEFLATE'});
+  updateExportProgress(100, 'Download ready', `${boundaries.length - 1} split PDF files are ready.`);
+  downloadBlob(blob, `${baseName}-split.zip`);
+}
+
 async function exportEditedDocument(format) {
+  if (format === 'pdf' && editor.splitApplied && editor.splitPoints?.length) {
+    await exportAppliedSplitArchive();
+    return;
+  }
   const baseName = safeExportBaseName();
 
   if (format === 'pdf') {
@@ -5317,7 +5457,8 @@ function activateSharedEditorTool(tool) {
     link: 'link-tool',
     note: 'note-tool',
     watermark: 'watermark-tool',
-    crop: 'crop-tool'
+    crop: 'crop-tool',
+    split: 'split-tool'
   };
   const id = buttonIds[tool];
   if (id) requestAnimationFrame(() => document.getElementById(id)?.click());

@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4021" />
+  <link rel="stylesheet" href="styles.css?v=4100" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -344,6 +344,10 @@
         <span class="tool-icon crop-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13"/><path d="M2 7h15a2 2 0 0 1 2 2v13"/></svg></span>
         <span class="tool-label">Crop</span>
       </button>
+      <button class="ribbon-tool" id="split-tool" type="button">
+        <span class="tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="7" r="3"/><circle cx="6" cy="17" r="3"/><path d="m8.5 8.5 11 7.5M8.5 15.5l11-7.5"/></svg></span>
+        <span class="tool-label">Split</span>
+      </button>
       <button class="ribbon-tool menu-fix-sign" id="sign-tool" type="button">
       <span class="tool-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m5 18 2.2-5.8L16.8 2.6l4.6 4.6-9.6 9.6z"/><path d="M4 21c3-2.2 5.6-2.2 8-.2 2.1 1.7 4.8 1.4 8-.8"/></svg>
@@ -559,6 +563,13 @@
       </div>
     </div>
 
+    <div class="split-options-bar" id="split-options-bar" hidden aria-label="Split PDF options">
+      <div class="split-help-copy"><strong>Choose where to split</strong><small>Click a scissors marker between pages. Drag a page to reorder it.</small></div>
+      <div class="split-summary"><span id="split-section-count">1 output file</span><small id="split-point-count">No split points selected</small></div>
+      <button class="split-reset" id="split-reset" type="button">Reset</button>
+      <button class="split-apply" id="split-apply" type="button" disabled>Apply split</button>
+    </div>
+
 <div class="desktop-editor-body">
       <aside class="desktop-thumbnails">
         <div class="thumbnail-tab-header"><span>⠿</span><strong>Thumbnails</strong></div>
@@ -591,6 +602,10 @@
       </main>
 
     </div>
+    <main class="split-workspace" id="split-workspace" hidden>
+      <header><div><h2>Split and organise pages</h2><p>Select a scissors marker to begin a new file. Drag pages into the order you want.</p></div><span class="split-drag-hint">↕ Drag to reorder</span></header>
+      <div class="split-page-grid" id="split-page-grid"></div>
+    </main>
     <div class="workspace-alert" id="workspace-alert" hidden></div>
   </section>
 </div>
@@ -1093,6 +1108,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=4020"></script>
+  <script src="script.js?v=4100"></script>
 </body>
 </html>
