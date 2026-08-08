@@ -3777,6 +3777,10 @@ function updateSimpleProgressMessage() {
     message.textContent = 'Usually ready in around 10 seconds';
   } else if (pdfMintExportFormat === 'docx') {
     message.textContent = 'Usually ready in a few seconds';
+  } else if (pdfMintExportFormat === 'xlsx') {
+    message.textContent = 'Usually ready in a few seconds';
+  } else if (pdfMintExportFormat === 'xls') {
+    message.textContent = 'Usually ready in around 7 seconds';
   } else {
     eta.hidden = true;
   }
@@ -3787,7 +3791,9 @@ function startExportCountdown(format) {
 
   const estimates = {
     docx: 6,
-    doc: 10
+    doc: 10,
+    xlsx: 5,
+    xls: 7
   };
 
   pdfMintExportFormat = format;
@@ -3919,9 +3925,10 @@ async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
     });
 
     request.upload.addEventListener('load', () => {
+      const formatLabel = operation.replace('pdf-to-', '').toUpperCase();
       updateExportProgress(
         50,
-        operation === 'pdf-to-doc' ? 'Preparing your DOC…' : 'Preparing your DOCX…',
+        `Preparing your ${formatLabel}…`,
         'Please keep this window open while your download is prepared.'
       );
     });
@@ -3956,13 +3963,24 @@ async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
   });
 }
 
-async function exportEditedPdfAsWord(format) {
+async function exportEditedPdfThroughEngine(format) {
   const baseName = safeExportBaseName();
   updateExportProgress(8, `Preparing your ${format.toUpperCase()}…`, 'Please keep this window open.');
   const pdfBlob = await buildFinalEditedPdfBlob();
   updateExportProgress(20, `Preparing your ${format.toUpperCase()}…`, 'Your document is being prepared securely.');
 
-  const operation = format === 'docx' ? 'pdf-to-docx' : 'pdf-to-doc';
+  const operationMap = {
+    docx: 'pdf-to-docx',
+    doc: 'pdf-to-doc',
+    xlsx: 'pdf-to-xlsx',
+    xls: 'pdf-to-xls'
+  };
+
+  const operation = operationMap[format];
+  if (!operation) {
+    throw new Error('That server conversion format is not available.');
+  }
+
   const convertedBlob = await convertPdfThroughPdfMintEngine(
     pdfBlob,
     operation,
@@ -4151,8 +4169,8 @@ async function exportEditedDocument(format) {
     return;
   }
 
-  if (format === 'docx' || format === 'doc') {
-    await exportEditedPdfAsWord(format);
+  if (format === 'docx' || format === 'doc' || format === 'xlsx' || format === 'xls') {
+    await exportEditedPdfThroughEngine(format);
     return;
   }
 

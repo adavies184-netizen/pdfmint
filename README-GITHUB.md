@@ -89,3 +89,17 @@ This is a website-only update. The PDFMint Engine does not need redeploying.
 - Added a fully responsive PDFMint-styled contact form.
 - Current form validates inputs and shows a success state in the browser.
 - No email backend is wired in this version.
+
+
+## PDFMint v3.9.7 — XLSX / XLS conversion
+
+- Enabled XLSX and XLS in the editor download format selector.
+- Added `pdf-to-xlsx` to PDFMint Engine.
+- Added `pdf-to-xls` to PDFMint Engine.
+- XLSX uses PyMuPDF + openpyxl for fast, basic row/column extraction.
+- XLS uses XLSX output + LibreOffice Calc conversion.
+- Each PDF page becomes a worksheet.
+- Added simple loading estimates for XLSX/XLS.
+- Header Contact Us links now point to `contact.html`.
+
+This release changes BOTH the website and `pdfmint-engine`; deploy both.

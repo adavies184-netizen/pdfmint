@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Callable
 
 from .operations.word import pdf_to_doc, pdf_to_docx
+from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
 
 
 @dataclass(frozen=True)
@@ -37,9 +38,32 @@ def run_pdf_to_doc(pdf_path: Path, workspace: Path, base_name: str) -> Operation
     )
 
 
+
+
+def run_pdf_to_xlsx(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = workspace / f"{base_name}.xlsx"
+    pdf_to_xlsx(pdf_path, output)
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    )
+
+
+def run_pdf_to_xls(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = pdf_to_xls(pdf_path, workspace, base_name)
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/vnd.ms-excel",
+    )
+
+
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,
     "pdf-to-doc": run_pdf_to_doc,
+    "pdf-to-xlsx": run_pdf_to_xlsx,
+    "pdf-to-xls": run_pdf_to_xls,
 }
 
 

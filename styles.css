@@ -1570,3 +1570,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .contact-form-status.error{border:1px solid #efd1d1;background:#fff6f6;color:#a23e3e}
 @media (max-width:860px){.contact-grid{grid-template-columns:1fr}}
 @media (max-width:640px){.contact-hero{padding:56px 18px 36px}.contact-hero h1{font-size:42px}.contact-hero p{font-size:16px}.contact-section{padding:18px 14px 64px}.contact-info-card,.contact-form-card{border-radius:18px}.contact-info-inner,.contact-form{padding:22px}.contact-form-row{grid-template-columns:1fr;gap:0}}
+
+/* PDFMint v3.9.7 — spreadsheet export tiles */
+.format-icon.sheet-icon{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:-.02em;
+}
