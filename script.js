@@ -5097,7 +5097,10 @@ async function routeLandingUploadToEditor(file) {
   if (status) status.textContent = `${file.name} selected — opening editor…`;
 
   try {
-    const tool = document.body.dataset.landingTool || 'edit';
+    let tool = document.body.dataset.landingTool || 'edit';
+    if (tool === 'none' && /(?:^|\/)add-watermark\.html$/i.test(window.location.pathname)) {
+      tool = 'watermark';
+    }
     await routeFileToSharedEditor(file, { tool });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
@@ -5112,7 +5115,8 @@ function activateSharedEditorTool(tool) {
     sign: 'sign-tool',
     image: 'image-tool',
     link: 'link-tool',
-    note: 'note-tool'
+    note: 'note-tool',
+    watermark: 'watermark-tool'
   };
   const id = buttonIds[tool];
   if (id) requestAnimationFrame(() => document.getElementById(id)?.click());
