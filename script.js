@@ -4839,6 +4839,33 @@ async function storePdfForSharedEditor(file) {
   db.close();
 }
 
+async function routeFileToSharedEditor(file, options = {}) {
+  if (!file) throw new Error('No file was provided for the editor.');
+
+  await storePdfForSharedEditor(file);
+
+  const params = new URLSearchParams();
+  if (options.tool && options.tool !== 'none') params.set('tool', options.tool);
+  if (options.exportFormat) {
+    params.set('export', '1');
+    params.set('format', options.exportFormat);
+  }
+
+  const query = params.toString();
+  window.location.href = `editor.html${query ? `?${query}` : ''}`;
+}
+
+window.PDFMintShared = Object.assign(window.PDFMintShared || {}, {
+  compressPdfThroughEngine(file, level) {
+    const safeLevel = ['light', 'standard', 'high'].includes(level) ? level : 'standard';
+    const baseName = String(file?.name || 'document').replace(/\.pdf$/i, '');
+    return convertPdfThroughPdfMintEngine(file, `compress-pdf-${safeLevel}`, baseName);
+  },
+  openEditorWithExport(file, format) {
+    return routeFileToSharedEditor(file, { exportFormat: format });
+  }
+});
+
 async function takePdfForSharedEditor() {
   const db = await openPdfMintTransferDb();
   const record = await new Promise((resolve, reject) => {
@@ -4872,9 +4899,8 @@ async function routeLandingUploadToEditor(file) {
   if (status) status.textContent = `${file.name} selected — opening editor…`;
 
   try {
-    await storePdfForSharedEditor(file);
     const tool = document.body.dataset.landingTool || 'edit';
-    window.location.href = sharedEditorUrl(tool);
+    await routeFileToSharedEditor(file, { tool });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
     if (status) status.textContent = 'Could not open the editor. Please try again.';
@@ -4924,6 +4950,7 @@ async function initialiseSharedEditorRoute() {
         document.querySelectorAll('.format-choice').forEach(choice => {
           choice.classList.toggle('active', choice.contains(radio));
         });
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
       }
 
       requestAnimationFrame(() => openFormatModal());
@@ -5109,5 +5136,4 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
 

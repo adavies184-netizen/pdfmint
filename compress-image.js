@@ -149,37 +149,6 @@
     );
   }
 
-  async function storeForEditor(file) {
-    const DB_NAME = 'pdfmint-transfer';
-    const DB_VERSION = 1;
-    const STORE = 'files';
-    const KEY = 'current-pdf';
-
-    const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
-        if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE);
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-
-    const bytes = await file.arrayBuffer();
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE,'readwrite');
-      tx.objectStore(STORE).put({
-        bytes,
-        name:file.name,
-        type:file.type,
-        lastModified:file.lastModified
-      }, KEY);
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-
-    db.close();
-  }
-
   async function run() {
     if (!selectedFile) return;
 
@@ -207,11 +176,8 @@
       $('#compression-result').hidden = false;
 
       const pdfFile = await makePdfFromImage(blob, selectedFile.name);
-      await storeForEditor(pdfFile);
-
-      setTimeout(() => {
-        window.location.href = 'editor.html?export=1&format=png';
-      }, 450);
+      await new Promise(resolve => setTimeout(resolve, 450));
+      await window.PDFMintShared.openEditorWithExport(pdfFile, 'png');
     } catch (error) {
       clearInterval(progressTimer);
       $('#compression-progress-modal').hidden = true;

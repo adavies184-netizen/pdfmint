@@ -72,66 +72,6 @@
     }, 180);
   }
 
-  async function engineCompress(file, level) {
-    const cfg = window.PDFMINT_CONFIG || {};
-    const base = String(cfg.engineBaseUrl || '').replace(/\/+$/, '');
-    if (!base) throw new Error('PDFMint Engine URL is not configured.');
-
-    const form = new FormData();
-    form.append('file', file, file.name);
-    form.append('operation', `compress-pdf-${level}`);
-
-    const response = await fetch(`${base}/v1/jobs`, {
-      method: 'POST',
-      body: form
-    });
-
-    if (!response.ok) {
-      let detail = '';
-      try {
-        const data = await response.json();
-        detail = data?.detail ? ` ${data.detail}` : '';
-      } catch (_) {}
-      throw new Error(`PDFMint Engine returned status ${response.status}.${detail}`);
-    }
-
-    return response.blob();
-  }
-
-  async function storeForEditor(file) {
-    const DB_NAME = 'pdfmint-transfer';
-    const DB_VERSION = 1;
-    const STORE = 'files';
-    const KEY = 'current-pdf';
-
-    const db = await new Promise((resolve, reject) => {
-      const req = indexedDB.open(DB_NAME, DB_VERSION);
-      req.onupgradeneeded = () => {
-        if (!req.result.objectStoreNames.contains(STORE)) {
-          req.result.createObjectStore(STORE);
-        }
-      };
-      req.onsuccess = () => resolve(req.result);
-      req.onerror = () => reject(req.error);
-    });
-
-    const bytes = await file.arrayBuffer();
-
-    await new Promise((resolve, reject) => {
-      const tx = db.transaction(STORE, 'readwrite');
-      tx.objectStore(STORE).put({
-        bytes,
-        name: file.name,
-        type: file.type,
-        lastModified: file.lastModified
-      }, KEY);
-      tx.oncomplete = resolve;
-      tx.onerror = () => reject(tx.error);
-    });
-
-    db.close();
-  }
-
   async function run() {
     if (!selectedFile) return;
 
@@ -146,7 +86,7 @@
     animateProgress();
 
     try {
-      const blob = await engineCompress(selectedFile, level);
+      const blob = await window.PDFMintShared.compressPdfThroughEngine(selectedFile, level);
       clearInterval(progressTimer);
       setProgress(100, 'Complete', 'Your compressed PDF is ready.');
 
@@ -164,11 +104,8 @@
         { type:'application/pdf', lastModified:Date.now() }
       );
 
-      await storeForEditor(output);
-
-      setTimeout(() => {
-        window.location.href = 'editor.html?export=1&format=pdf';
-      }, 550);
+      await new Promise(resolve => setTimeout(resolve, 550));
+      await window.PDFMintShared.openEditorWithExport(output, 'pdf');
     } catch (error) {
       clearInterval(progressTimer);
       $('#compression-progress-modal').hidden = true;
