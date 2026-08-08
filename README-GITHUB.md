@@ -81,3 +81,11 @@ Customer-facing changes:
 - The bar stops below 100% until the actual download response is received.
 
 This is a website-only update. The PDFMint Engine does not need redeploying.
+
+
+## PDFMint v3.9.6 — Contact page
+- Added `contact.html`.
+- Added Contact Us to the Company footer links across the site.
+- Added a fully responsive PDFMint-styled contact form.
+- Current form validates inputs and shows a success state in the browser.
+- No email backend is wired in this version.

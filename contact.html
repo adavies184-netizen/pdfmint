@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="PDFMint makes it easy to edit, convert, sign and organise PDF files online." />
-  <title>PDFMint Editor</title>
+  <meta name="description" content="Contact PDFMint support for help with PDF editing, conversions, accounts and general enquiries." />
+  <title>Contact Us — PDFMint</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=396" />
-<style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
-<body class="editor-route-loading" data-editor-route="true">
+</head>
+<body data-landing-tool="edit">
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="PDFMint home">
@@ -126,152 +126,67 @@
     </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <span class="eyebrow">SMARTER DOCUMENT TOOLS</span>
-          <h1>Your all-in-one PDF editor and converter</h1>
-          <p class="hero-subtitle">Edit, convert and sign PDFs in seconds — everything you need in one simple workspace.</p>
-          <ul class="check-list">
-            <li>Works on any device</li>
-            <li>No software installation</li>
-            <li>Private and secure processing</li>
-            <li>Keeps your document layout intact</li>
-            <li>Supports popular file formats</li>
-          </ul>
-        </div>
-
-        <div class="upload-card" id="upload-card">
-          <div class="upload-icon" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img"><path d="M16 4h22l10 10v42a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M38 4v12h12M32 45V24m0 0-8 8m8-8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  
+<main class="contact-page-main">
+  <section class="contact-hero">
+    <div class="container">
+      <span class="contact-eyebrow">PDFMint Support</span>
+      <h1>Contact Us</h1>
+      <p>Need help with PDFMint? Send us a message and our support team will get back to you as soon as possible.</p>
+    </div>
+  </section>
+  <section class="contact-section">
+    <div class="container">
+      <div class="contact-grid">
+        <div class="contact-info-card">
+          <div class="contact-info-inner">
+            <h2>How can we help?</h2>
+            <p>Have a question about PDFMint, your account or a document conversion? Complete the form and we’ll get back to you as soon as possible.</p>
+            <div class="contact-support-list">
+              <div class="contact-support-item"><div class="contact-support-icon">✉</div><div><strong>Email support</strong><span>support@pdfmint.com</span></div></div>
+              <div class="contact-support-item"><div class="contact-support-icon">◷</div><div><strong>Response time</strong><span>We aim to reply within one business day.</span></div></div>
+              <div class="contact-support-item"><div class="contact-support-icon">?</div><div><strong>General enquiries</strong><span>Questions about features, accounts or document tools.</span></div></div>
+            </div>
+            <div class="contact-help-box">
+              <h3>Support centre</h3>
+              <div class="contact-help-links">
+                <span>PDF editing &amp; conversions</span>
+                <span>Billing &amp; subscriptions</span>
+                <span>Privacy &amp; security</span>
+              </div>
+            </div>
           </div>
-          <h2>Upload your files</h2>
-          <p>Drop PDF files here</p>
-          <span class="or-label">OR</span>
-          <label class="button button-primary upload-button">
-            Upload to edit
-            <input type="file" id="file-input" accept="application/pdf" hidden />
-          </label>
-          <small>Upload documents up to 100 MB</small>
-          <div id="file-status" class="file-status" aria-live="polite"></div>
+        </div>
+        <div class="contact-form-card">
+          <form id="contact-form" class="contact-form" novalidate>
+            <div class="contact-form-row">
+              <div class="contact-field">
+                <label for="contact-name">Full name</label>
+                <input id="contact-name" name="name" type="text" autocomplete="name" placeholder="Your name" required>
+              </div>
+              <div class="contact-field">
+                <label for="contact-email">Email address</label>
+                <input id="contact-email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+              </div>
+            </div>
+            <div class="contact-field">
+              <label for="contact-subject">Subject</label>
+              <input id="contact-subject" name="subject" type="text" placeholder="How can we help?" required>
+            </div>
+            <div class="contact-field">
+              <label for="contact-message">Message</label>
+              <textarea id="contact-message" name="message" rows="7" placeholder="Tell us a little more..." required></textarea>
+            </div>
+            <div class="contact-form-status" id="contact-form-status" hidden aria-live="polite"></div>
+            <button class="contact-submit-button" type="submit"><span>Send Message</span><span aria-hidden="true">→</span></button>
+            <p class="contact-form-note">By submitting this form, you agree that PDFMint may use your details to respond to your enquiry.</p>
+          </form>
         </div>
       </div>
-    </section>
+    </div>
+  </section>
+</main>
 
-    <section class="section tools-section" id="tools">
-      <div class="container">
-        <div class="section-heading centered">
-          <span class="eyebrow">EVERYDAY PDF TOOLS</span>
-          <h2>Unlimited access to 50+ PDF tools</h2>
-          <p>Use a dependable toolkit to edit, sign and convert documents quickly, wherever you are.</p>
-        </div>
-
-        <div class="tool-tabs" role="tablist">
-          <button class="tool-tab active" data-target="edit-tools">Edit PDF</button>
-          <button class="tool-tab" data-target="from-tools">Convert from PDF</button>
-          <button class="tool-tab" data-target="to-tools">Convert to PDF</button>
-        </div>
-
-        <div class="tool-panel active" id="edit-tools">
-          <a class="tool-card" href="png-to-pdf.html"><span class="tool-icon">✎</span><span>Edit PDF</span><small>Change text, images and pages</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">✓</span><span>Sign PDF</span><small>Add a secure electronic signature</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">⇲</span><span>Compress PDF</span><small>Reduce file size in seconds</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">◫</span><span>Add watermark</span><small>Protect and brand documents</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">↻</span><span>Rotate PDF</span><small>Turn individual pages instantly</small></a>
-          <button class="tool-card tool-card-button" type="button" data-open-tool="merge"><span class="tool-icon">⧉</span><span>Merge PDF</span><small>Combine several files into one</small></button>
-          <button class="tool-card tool-card-button" type="button" data-open-tool="split"><span class="tool-icon">✂</span><span>Split PDF</span><small>Separate selected pages</small></button>
-          <a class="tool-card" href="#"><span class="tool-icon">⌫</span><span>Delete pages</span><small>Remove pages you no longer need</small></a>
-        </div>
-
-        <div class="tool-panel" id="from-tools">
-          <a class="tool-card" href="#"><span class="tool-icon">W</span><span>PDF to Word</span><small>Create editable Word documents</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">P</span><span>PDF to PPTX</span><small>Turn pages into slides</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">X</span><span>PDF to Excel</span><small>Extract tables and data</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">J</span><span>PDF to JPG</span><small>Export pages as images</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">N</span><span>PDF to PNG</span><small>Create high-quality PNG files</small></a>
-        </div>
-
-        <div class="tool-panel" id="to-tools">
-          <a class="tool-card" href="#"><span class="tool-icon">W</span><span>Word to PDF</span><small>Make a polished PDF document</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">P</span><span>PPTX to PDF</span><small>Share presentations anywhere</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">X</span><span>Excel to PDF</span><small>Preserve spreadsheet formatting</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">J</span><span>JPG to PDF</span><small>Combine photos into a PDF</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">N</span><span>PNG to PDF</span><small>Convert PNG images with ease</small></a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section reviews-section">
-      <div class="container">
-        <div class="section-heading centered compact">
-          <span class="eyebrow">CUSTOMER STORIES</span>
-          <h2>What our users are saying</h2>
-        </div>
-        <div class="review-grid">
-          <article class="review-card"><div class="stars">★★★★★</div><time>19 May 2026</time><h3>Exactly what I needed</h3><p>Editing a form took less than two minutes. The controls were clear and the finished PDF looked exactly right.</p><strong>Lisa O.</strong></article>
-          <article class="review-card"><div class="stars">★★★★★</div><time>1 April 2026</time><h3>Quick and convenient</h3><p>I signed and downloaded a contract from my phone without installing anything. It could not have been easier.</p><strong>Chantal R.</strong></article>
-          <article class="review-card"><div class="stars">★★★★★</div><time>8 February 2026</time><h3>Reliable conversions</h3><p>I regularly convert Word and spreadsheet files. The formatting stays clean and the results are consistently fast.</p><strong>Greg C.</strong></article>
-        </div>
-      </div>
-    </section>
-
-    <section class="section forms-section" id="forms">
-      <div class="container">
-        <div class="forms-header">
-          <div>
-            <span class="eyebrow">READY-MADE DOCUMENTS</span>
-            <h2>Get paperwork done in minutes</h2>
-            <p>Open, complete and download commonly used forms for work, finance and everyday life.</p>
-          </div>
-          <a class="button button-outline" href="#">View all forms</a>
-        </div>
-        <div class="form-grid">
-          <a class="form-card" href="#"><div class="paper-preview"><span>W-9</span><i></i><i></i><i></i></div><h3>W-9 Form</h3><span class="text-link">View form →</span></a>
-          <a class="form-card" href="#"><div class="paper-preview"><span>DS-11</span><i></i><i></i><i></i></div><h3>DS-11 Form</h3><span class="text-link">View form →</span></a>
-          <a class="form-card" href="#"><div class="paper-preview"><span>1099</span><i></i><i></i><i></i></div><h3>1099-MISC</h3><span class="text-link">View form →</span></a>
-          <a class="form-card" href="#"><div class="paper-preview"><span>1040</span><i></i><i></i><i></i></div><h3>IRS 1040</h3><span class="text-link">View form →</span></a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section difference-section">
-      <div class="container">
-        <div class="section-heading centered">
-          <span class="eyebrow">BUILT FOR SIMPLE WORKFLOWS</span>
-          <h2>Why PDFMint is different</h2>
-          <p>Practical, fast and secure — a complete online workspace for everyday documents.</p>
-        </div>
-        <div class="feature-grid">
-          <article><span class="feature-number">01</span><h3>50+ useful PDF tools</h3><p>Edit, sign, merge, highlight, watermark, add images and organise pages in one place.</p></article>
-          <article><span class="feature-number">02</span><h3>Works in your browser</h3><p>Use PDFMint on desktop, tablet or mobile without downloading extra software.</p></article>
-          <article><span class="feature-number">03</span><h3>Accurate text recognition</h3><p>Turn scanned pages into searchable, editable content using modern OCR technology.</p></article>
-          <article><span class="feature-number">04</span><h3>Fast document conversion</h3><p>Convert popular formats while preserving fonts, images, spacing and page layouts.</p></article>
-          <article><span class="feature-number">05</span><h3>Made for global users</h3><p>A simple interface designed for individuals, educators and businesses worldwide.</p></article>
-          <article><span class="feature-number">06</span><h3>Privacy comes first</h3><p>Secure connections, clear retention rules and responsible handling of your files.</p></article>
-        </div>
-
-        <div class="security-banner">
-          <div class="shield">✓</div>
-          <div><h3>Your files and information stay protected</h3><p>Strong encryption and modern security practices help keep every document private.</p></div>
-          <div class="security-badges"><span>SSL</span><span>GDPR</span><span>PCI</span></div>
-        </div>
-      </div>
-    </section>
-
-    <section class="section faq-section">
-      <div class="container faq-layout">
-        <div class="faq-intro"><span class="eyebrow">HELP CENTRE</span><h2>Got questions?</h2><p>Find quick answers about PDFMint, document security and using our online tools.</p></div>
-        <div class="faq-list">
-          <details open><summary>What is PDFMint?</summary><p>PDFMint is an online document service for editing, signing, organising and converting PDFs directly in your browser. The interface is designed to be quick to learn and easy to use.</p></details>
-          <details><summary>Is PDFMint safe to use?</summary><p>PDFMint is being designed around encrypted transfers, limited file retention and clear privacy controls. Final policies will be published before the service accepts live customer documents.</p></details>
-          <details><summary>What tools will PDFMint offer?</summary><p>The platform will include PDF editing, signatures, compression, merging, splitting, watermarks, page management and popular file conversions.</p></details>
-          <details><summary>Do I need to install software?</summary><p>No. PDFMint runs in modern desktop and mobile browsers. You only need a browser and an internet connection.</p></details>
-          <details><summary>Will my original formatting be preserved?</summary><p>Our goal is to retain text positioning, images, fonts and page dimensions as accurately as possible during editing and conversion.</p></details>
-        </div>
-      </div>
-    </section>
-  </main>
 
   <footer class="site-footer" id="footer">
     <div class="container footer-grid">
@@ -581,13 +496,13 @@
             <span class="format-icon pdf-icon">PDF</span>
             <span class="format-name">PDF</span>
           </label>
-          <label class="format-choice">
-            <input type="radio" name="export-format" value="docx">
-            <span class="format-radio"></span><span class="format-icon doc-icon">DOCX</span><span class="format-name">DOCX</span>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="docx" disabled>
+            <span class="format-radio"></span><span class="format-icon doc-icon">DOCX</span><span class="format-name">DOCX<small>Soon</small></span>
           </label>
-          <label class="format-choice">
-            <input type="radio" name="export-format" value="doc">
-            <span class="format-radio"></span><span class="format-icon doc-icon">DOC</span><span class="format-name">DOC</span>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="doc" disabled>
+            <span class="format-radio"></span><span class="format-icon doc-icon">DOC</span><span class="format-name">DOC<small>Soon</small></span>
           </label>
           <label class="format-choice unavailable" title="Coming soon">
             <input type="radio" name="export-format" value="ppt" disabled>
@@ -597,17 +512,17 @@
             <input type="radio" name="export-format" value="pptx" disabled>
             <span class="format-radio"></span><span class="format-icon ppt-icon">PPTX</span><span class="format-name">PPTX<small>Soon</small></span>
           </label>
-          <label class="format-choice">
-            <input type="radio" name="export-format" value="jpg">
-            <span class="format-radio"></span><span class="format-icon image-icon">JPG</span><span class="format-name">JPG</span>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="jpg" disabled>
+            <span class="format-radio"></span><span class="format-icon image-icon">JPG</span><span class="format-name">JPG<small>Soon</small></span>
           </label>
-          <label class="format-choice">
-            <input type="radio" name="export-format" value="png">
-            <span class="format-radio"></span><span class="format-icon image-icon">PNG</span><span class="format-name">PNG</span>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="png" disabled>
+            <span class="format-radio"></span><span class="format-icon image-icon">PNG</span><span class="format-name">PNG<small>Soon</small></span>
           </label>
-          <label class="format-choice">
-            <input type="radio" name="export-format" value="txt">
-            <span class="format-radio"></span><span class="format-icon txt-icon">TXT</span><span class="format-name">TXT</span>
+          <label class="format-choice unavailable" title="Coming soon">
+            <input type="radio" name="export-format" value="txt" disabled>
+            <span class="format-radio"></span><span class="format-icon txt-icon">TXT</span><span class="format-name">TXT<small>Soon</small></span>
           </label>
           <label class="format-choice unavailable" title="Coming soon">
             <input type="radio" name="export-format" value="xlsx" disabled>
@@ -656,19 +571,6 @@
           <input id="download-email" type="email" placeholder="email@example.com" autocomplete="email">
         </label>
         <p class="email-error" id="email-error" hidden>Please enter a valid email address.</p>
-
-
-        <div class="export-progress-panel" id="export-progress-panel" hidden aria-live="polite">
-          <div class="export-progress-heading">
-            <strong id="export-progress-title">Preparing document</strong>
-            <span id="export-progress-percent">0%</span>
-          </div>
-          <div class="export-progress-track"><span id="export-progress-bar"></span></div>
-          <p id="export-progress-detail">Applying your edits…</p>
-          <p class="export-progress-eta" id="export-progress-eta" hidden>
-            <span id="export-progress-simple-message">Usually ready in a few seconds</span>
-          </p>
-        </div>
 
         <button class="final-download-button" id="final-download" type="button">Download</button>
 
@@ -1039,7 +941,6 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="config.js?v=390"></script>
   <script src="script.js?v=396"></script>
 </body>
 </html>

@@ -4867,3 +4867,33 @@ document.querySelectorAll('input[name="export-format"]').forEach(input => {
     }
   });
 });
+
+/* PDFMint v3.9.6 — Contact page */
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('contact-form');
+  if (!form) return;
+  const status = document.getElementById('contact-form-status');
+  const button = form.querySelector('.contact-submit-button');
+
+  form.addEventListener('submit', event => {
+    event.preventDefault();
+    const name = form.querySelector('#contact-name')?.value.trim() || '';
+    const email = form.querySelector('#contact-email')?.value.trim() || '';
+    const subject = form.querySelector('#contact-subject')?.value.trim() || '';
+    const message = form.querySelector('#contact-message')?.value.trim() || '';
+    const validEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!name || !validEmail || !subject || !message) {
+      status.hidden = false;
+      status.className = 'contact-form-status error';
+      status.textContent = 'Please complete all fields and enter a valid email address.';
+      return;
+    }
+
+    status.hidden = false;
+    status.className = 'contact-form-status success';
+    status.textContent = 'Thanks for contacting PDFMint. Your message is ready to send.';
+    button.disabled = true;
+    setTimeout(() => button.disabled = false, 1200);
+  });
+});
