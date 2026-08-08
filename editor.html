@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4012" />
+  <link rel="stylesheet" href="styles.css?v=4013" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -336,6 +336,10 @@
       <button class="ribbon-tool history-tool" id="redo-tool" type="button" disabled><b>↷</b><span>Redo</span></button>
       <button class="ribbon-tool" id="add-text-tool" type="button"><b>T</b><span>Add text</span></button>
       <button class="ribbon-tool" id="edit-text-tool" type="button"><b>✎</b><span>Edit text</span></button>
+      <button class="ribbon-tool" id="watermark-tool" type="button">
+        <span class="tool-icon watermark-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19 9.2 5h2.2l3.1 8.5L17.7 5H20l-5.1 14h-2.2L10 11.5 7.2 19z"/><path d="M3 21h18"/></svg></span>
+        <span class="tool-label">Watermark</span>
+      </button>
       <button class="ribbon-tool menu-fix-sign" id="sign-tool" type="button">
       <span class="tool-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m5 18 2.2-5.8L16.8 2.6l4.6 4.6-9.6 9.6z"/><path d="M4 21c3-2.2 5.6-2.2 8-.2 2.1 1.7 4.8 1.4 8-.8"/></svg>
@@ -477,6 +481,19 @@
     </div>
 
     
+    <div class="watermark-options-bar" id="watermark-options-bar" hidden aria-label="Watermark options">
+      <label class="watermark-control watermark-text-control"><span>Text</span><input id="watermark-text" type="text" value="HELLO WORLD!" maxlength="160"></label>
+      <label class="watermark-control watermark-range-control"><span>Size</span><input id="watermark-size" type="range" min="0" max="100" value="35"><output id="watermark-size-value">35%</output></label>
+      <label class="watermark-control watermark-range-control"><span>Opacity</span><input id="watermark-opacity" type="range" min="0" max="100" value="50"><output id="watermark-opacity-value">50%</output></label>
+      <div class="watermark-colour-control"><span>Colour</span><div class="watermark-swatches" role="group" aria-label="Watermark colour">
+        <button type="button" class="watermark-swatch" data-watermark-colour="#ef4444" style="--watermark-colour:#ef4444" aria-label="Red"></button><button type="button" class="watermark-swatch" data-watermark-colour="#f97316" style="--watermark-colour:#f97316" aria-label="Orange"></button><button type="button" class="watermark-swatch" data-watermark-colour="#eab308" style="--watermark-colour:#eab308" aria-label="Yellow"></button><button type="button" class="watermark-swatch" data-watermark-colour="#22c55e" style="--watermark-colour:#22c55e" aria-label="Green"></button><button type="button" class="watermark-swatch" data-watermark-colour="#3b82f6" style="--watermark-colour:#3b82f6" aria-label="Blue"></button><button type="button" class="watermark-swatch" data-watermark-colour="#ec4899" style="--watermark-colour:#ec4899" aria-label="Pink"></button><button type="button" class="watermark-swatch active" data-watermark-colour="#111827" style="--watermark-colour:#111827" aria-label="Black"></button>
+      </div></div>
+      <label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#111827" aria-label="Custom watermark colour"></label>
+      <label class="watermark-control watermark-angle-control"><span>Angle</span><div><input id="watermark-angle" type="number" min="-180" max="180" step="1" value="-45"><b>°</b></div></label>
+      <div class="watermark-all-pages"><span>Apply to:</span><strong>All pages</strong></div>
+      <button class="watermark-done" id="watermark-done" type="button">Done</button>
+    </div>
+
     <div class="draw-options-bar" id="draw-options-bar" hidden>
       <button class="draw-tool-choice active" id="draw-marker-tool" type="button"><b>✎</b><small>Marker</small></button>
       <button class="draw-tool-choice" id="draw-highlighter-tool" type="button"><b>▰</b><small>Highlighter</small></button>
@@ -1049,6 +1066,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=4012"></script>
+  <script src="script.js?v=4013"></script>
 </body>
 </html>
