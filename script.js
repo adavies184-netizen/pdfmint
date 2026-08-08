@@ -2364,6 +2364,10 @@ function syncCropDimensions(rect) {
 }
 function renderCropSelection(layer, metrics) {
   if (editor.mode !== 'crop') return;
+  if (metrics.appliedCrop && !editor.cropDraft) {
+    syncCropDimensions(metrics.appliedCrop);
+    return;
+  }
   const rect = editor.cropDraft || getCurrentAppliedCrop();
   syncCropDimensions(rect);
   if (!rect) return;
@@ -2554,11 +2558,27 @@ async function renderSelectedPage() {
   const baseScale = fitWidth / baseViewport.width;
   const viewport = page.getViewport({scale: baseScale * editor.zoom, rotation: pageState.rotation});
   if (token !== editor.renderToken) return;
-  canvas.width = Math.floor(viewport.width);
-  canvas.height = Math.floor(viewport.height);
+  const appliedCrop = editor.crops[String(pageState.sourceIndex)] || null;
+  if (appliedCrop) {
+    const fullCanvas = document.createElement('canvas');
+    fullCanvas.width = Math.floor(viewport.width);
+    fullCanvas.height = Math.floor(viewport.height);
+    await page.render({canvasContext: fullCanvas.getContext('2d'), viewport}).promise;
+    if (token !== editor.renderToken) return;
+    const sourceX = Math.round(appliedCrop.x * fullCanvas.width);
+    const sourceY = Math.round(appliedCrop.y * fullCanvas.height);
+    const sourceWidth = Math.max(1, Math.round(appliedCrop.w * fullCanvas.width));
+    const sourceHeight = Math.max(1, Math.round(appliedCrop.h * fullCanvas.height));
+    canvas.width = sourceWidth;
+    canvas.height = sourceHeight;
+    canvas.getContext('2d').drawImage(fullCanvas, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, sourceWidth, sourceHeight);
+  } else {
+    canvas.width = Math.floor(viewport.width);
+    canvas.height = Math.floor(viewport.height);
+    await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+  }
   canvas.hidden = false;
   placeholder.hidden = true;
-  await page.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
   const layer = document.getElementById('annotation-layer');
   layer.style.width = `${canvas.width}px`;
   layer.style.height = `${canvas.height}px`;
@@ -2568,7 +2588,8 @@ async function renderSelectedPage() {
     scale: viewport.scale,
     rotation: pageState.rotation,
     originalWidth: baseViewport.width,
-    originalHeight: baseViewport.height
+    originalHeight: baseViewport.height,
+    appliedCrop
   };
   if (editor.mode === 'edit-existing') {
     await ensureExistingTextForCurrentPage();
@@ -2634,9 +2655,20 @@ async function renderThumbnails() {
       const base = page.getViewport({scale: 1, rotation: state.rotation});
       const viewport = page.getViewport({scale: 132 / base.width, rotation: state.rotation});
       const thumbCanvas = item.querySelector('canvas');
-      thumbCanvas.width = Math.floor(viewport.width);
-      thumbCanvas.height = Math.floor(viewport.height);
-      await page.render({canvasContext: thumbCanvas.getContext('2d'), viewport}).promise;
+      const crop = editor.crops[String(state.sourceIndex)];
+      if (crop) {
+        const fullCanvas=document.createElement('canvas');
+        fullCanvas.width=Math.floor(viewport.width); fullCanvas.height=Math.floor(viewport.height);
+        await page.render({canvasContext:fullCanvas.getContext('2d'),viewport}).promise;
+        const sx=Math.round(crop.x*fullCanvas.width),sy=Math.round(crop.y*fullCanvas.height);
+        const sw=Math.max(1,Math.round(crop.w*fullCanvas.width)),sh=Math.max(1,Math.round(crop.h*fullCanvas.height));
+        thumbCanvas.width=sw; thumbCanvas.height=sh;
+        thumbCanvas.getContext('2d').drawImage(fullCanvas,sx,sy,sw,sh,0,0,sw,sh);
+      } else {
+        thumbCanvas.width = Math.floor(viewport.width);
+        thumbCanvas.height = Math.floor(viewport.height);
+        await page.render({canvasContext: thumbCanvas.getContext('2d'), viewport}).promise;
+      }
     } catch (_) {}
   }
 }
@@ -2903,8 +2935,27 @@ document.getElementById('crop-cancel').addEventListener('click', () => {
 });
 document.getElementById('crop-apply').addEventListener('click', () => {
   if (!editor.cropDraft) return;
+  const modal = document.getElementById('crop-confirm-modal');
+  if (modal) modal.hidden = false;
+});
+function closeCropConfirmModal() {
+  const modal = document.getElementById('crop-confirm-modal');
+  if (modal) modal.hidden = true;
+}
+document.querySelectorAll('[data-close-crop-confirm]').forEach(button => button.addEventListener('click', closeCropConfirmModal));
+document.getElementById('crop-confirm-ok')?.addEventListener('click', async () => {
+  if (!editor.cropDraft) return closeCropConfirmModal();
   recordHistory();
-  const crop = {...editor.cropDraft};
+  let crop = {...editor.cropDraft};
+  const baseCrop = getCurrentAppliedCrop();
+  if (baseCrop) {
+    crop = {
+      x:baseCrop.x + crop.x * baseCrop.w,
+      y:baseCrop.y + crop.y * baseCrop.h,
+      w:crop.w * baseCrop.w,
+      h:crop.h * baseCrop.h
+    };
+  }
   if (editor.cropScope === 'all') {
     editor.pages.forEach(page => { editor.crops[String(page.sourceIndex)] = {...crop}; });
   } else if (editor.cropScope === 'specific') {
@@ -2914,7 +2965,9 @@ document.getElementById('crop-apply').addEventListener('click', () => {
     editor.crops[String(editor.pages[editor.selectedIndex].sourceIndex)] = {...crop};
   }
   editor.cropDraft = null;
-  renderAnnotations();
+  closeCropConfirmModal();
+  await renderThumbnails();
+  await renderSelectedPage();
   showEditorHint(editor.cropScope === 'all' ? 'Crop applied to all pages.' : 'Crop applied. Press Done when you are ready to export.');
 });
 document.getElementById('annotation-layer').addEventListener('pointerdown', event => {

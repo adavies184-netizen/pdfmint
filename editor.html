@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4017" />
+  <link rel="stylesheet" href="styles.css?v=4018" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -595,6 +595,15 @@
   </section>
 </div>
 
+  <div class="crop-confirm-layer" id="crop-confirm-modal" hidden>
+    <div class="crop-confirm-backdrop" data-close-crop-confirm></div>
+    <section class="crop-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="crop-confirm-title">
+      <header><h2 id="crop-confirm-title">Apply crop?</h2><button type="button" data-close-crop-confirm aria-label="Close">×</button></header>
+      <p>This action will crop the selected pages. Content outside the selected area will be removed from the exported document.</p>
+      <footer><button class="crop-confirm-cancel" type="button" data-close-crop-confirm>Cancel</button><button class="crop-confirm-ok" id="crop-confirm-ok" type="button">Apply crop</button></footer>
+    </section>
+  </div>
+
   <div class="export-modal-layer" id="format-modal" hidden>
     <div class="export-modal-backdrop"></div>
     <section class="export-modal format-modal" role="dialog" aria-modal="true" aria-labelledby="format-modal-title">
@@ -1084,6 +1093,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=4017"></script>
+  <script src="script.js?v=4018"></script>
 </body>
 </html>
