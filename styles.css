@@ -188,7 +188,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 /* PDFMint v1.3 text editor */
 .mode-button.active{background:#eafaf4;border-color:var(--mint);color:var(--mint-dark)}
 .pdf-page-surface{position:relative;display:inline-block;line-height:0}
-.annotation-layer{position:absolute;inset:0;pointer-events:none}
+.annotation-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .annotation-layer.text-mode{pointer-events:auto;cursor:crosshair}
 .annotation-layer.select-mode{pointer-events:auto;cursor:default}
 .text-annotation{position:absolute;min-width:70px;min-height:28px;padding:3px 5px;border:1px solid transparent;line-height:1.15;white-space:pre-wrap;word-break:break-word;cursor:move;transform-origin:center center;pointer-events:auto}

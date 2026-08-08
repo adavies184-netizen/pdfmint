@@ -543,9 +543,19 @@ async function ensureExistingTextForCurrentPage() {
 
       const tx = pdfjsLib.Util.transform(viewport.transform, textItem.transform);
       const fontHeight = Math.max(5, Math.hypot(tx[2], tx[3]));
-      const x = tx[4];
-      const top = tx[5] - fontHeight;
-      const width = Math.max(8, Math.abs(textItem.width || 0));
+      const rawX = tx[4];
+      const rawTop = tx[5] - fontHeight;
+      const rawWidth = Math.max(1, Math.abs(textItem.width || 0));
+      const x = Math.max(0, Math.min(viewport.width, rawX));
+      const right = Math.max(0, Math.min(viewport.width, rawX + rawWidth));
+      const top = Math.max(0, Math.min(viewport.height, rawTop));
+      const bottom = Math.max(0, Math.min(viewport.height, rawTop + fontHeight));
+      const width = right - x;
+      const clippedHeight = bottom - top;
+      // Some scanned PDFs contain malformed invisible OCR runs positioned far
+      // outside the page. They previously produced selection boxes across the
+      // editor. Ignore those runs and clip partial runs to the visible page.
+      if (width < 1 || clippedHeight < 1) return null;
       const style = approximatePdfFont(textItem.fontName);
 
       return {
@@ -554,7 +564,7 @@ async function ensureExistingTextForCurrentPage() {
         x,
         top,
         width,
-        height: fontHeight,
+        height: clippedHeight,
         baselineY: textItem.transform[5],
         pdfX: textItem.transform[4],
         pdfY: textItem.transform[5],
@@ -659,6 +669,10 @@ async function ensureExistingTextForCurrentPage() {
     const firstRun = paragraph.firstRun;
     const width = Math.max(12, paragraph.right - paragraph.left);
     const height = Math.max(paragraph.avgHeight * 1.15, paragraph.bottom - paragraph.top);
+    const normalisedX = Math.max(0, Math.min(.995, paragraph.left / viewport.width));
+    const normalisedY = Math.max(0, Math.min(.995, paragraph.top / viewport.height));
+    const normalisedWidth = Math.min(1 - normalisedX, Math.max(.005, width / viewport.width));
+    const normalisedHeight = Math.min(1 - normalisedY, Math.max(.008, height / viewport.height));
 
     // Character-level geometry shared by text annotation tools.
     // Widths are measured per glyph and then normalised to the exact PDF run width.
@@ -743,14 +757,14 @@ async function ensureExistingTextForCurrentPage() {
       type: 'existing-text',
       originalText: paragraph.originalText,
       text: paragraph.text,
-      x: Math.max(0, paragraph.left / viewport.width),
-      y: Math.max(0, paragraph.top / viewport.height),
-      w: Math.min(1, Math.max(.02, width / viewport.width)),
-      h: Math.min(.75, Math.max(.018, height / viewport.height)),
-      originalX: Math.max(0, paragraph.left / viewport.width),
-      originalY: Math.max(0, paragraph.top / viewport.height),
-      originalW: Math.min(1, Math.max(.02, width / viewport.width)),
-      originalH: Math.min(.75, Math.max(.018, height / viewport.height)),
+      x: normalisedX,
+      y: normalisedY,
+      w: normalisedWidth,
+      h: normalisedHeight,
+      originalX: normalisedX,
+      originalY: normalisedY,
+      originalW: normalisedWidth,
+      originalH: normalisedHeight,
       pdfX: firstRun.pdfX,
       pdfY: firstRun.pdfY,
       pdfWidth: width,
@@ -4291,7 +4305,7 @@ document.getElementById('return-to-payment').addEventListener('click', () => {
 const PDFMINT_ENGINE_URL = String(
   window.PDFMINT_CONFIG?.engineBaseUrl ||
   window.PDFMINT_CONFIG?.conversionApiBaseUrl ||
-  ''
+  'https://pdfmint-engine-5dfdx.sevalla.app'
 ).replace(/\/+$/, '');
 
 let pdfMintEngineHealth = {
