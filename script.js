@@ -4881,7 +4881,8 @@ heroInput.addEventListener('change', event => {
   if (
     document.body.dataset.compressFlow === 'true' ||
     document.body.dataset.compressImageFlow === 'true' ||
-    document.body.dataset.mergeFlow === 'true'
+    document.body.dataset.mergeFlow === 'true' ||
+    document.body.dataset.ocrFlow === 'true'
   ) return;
   const file = event.target.files[0];
   if (file) {
@@ -4908,6 +4909,10 @@ heroCard.addEventListener('drop', event => {
   }
   if (document.body.dataset.mergeFlow === 'true') {
     window.dispatchEvent(new CustomEvent('pdfmint:merge-drop', { detail: { files: event.dataTransfer.files } }));
+    return;
+  }
+  if (document.body.dataset.ocrFlow === 'true') {
+    window.dispatchEvent(new CustomEvent('pdfmint:ocr-drop', { detail: { file } }));
     return;
   }
   loadEditorPdf(file);
@@ -5613,6 +5618,92 @@ if (document.body.dataset.mergeFlow === 'true') {
   renderMergeLandingFiles();
 }
 
+if (document.body.dataset.ocrFlow === 'true') {
+  let ocrPendingFile = null;
+  let ocrOutputFormat = 'docx';
+  const ocrModal = document.getElementById('ocr-format-modal');
+  const ocrInput = document.getElementById('file-input');
+  const ocrStatus = document.getElementById('file-status');
+
+  function openOcrFormatModal(file) {
+    if (!validPdf(file)) {
+      ocrStatus.textContent = 'Please select a valid PDF file.';
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      ocrStatus.textContent = 'Please select a PDF no larger than 100 MB.';
+      return;
+    }
+    ocrPendingFile = file;
+    ocrOutputFormat = 'docx';
+    document.getElementById('ocr-file-name').textContent = file.name;
+    document.getElementById('ocr-file-size').textContent = formatBytes(file.size);
+    document.querySelectorAll('input[name="ocr-format"]').forEach(input => { input.checked = input.value === 'docx'; });
+    document.querySelectorAll('.ocr-format-choice').forEach(choice => choice.classList.toggle('active', choice.querySelector('input').checked));
+    ocrStatus.textContent = `${file.name} selected`;
+    ocrModal.hidden = false;
+  }
+  function closeOcrFormatModal() { ocrModal.hidden = true; }
+
+  ocrInput.addEventListener('change', event => {
+    const file = event.target.files?.[0];
+    if (file) openOcrFormatModal(file);
+    event.target.value = '';
+  });
+  window.addEventListener('pdfmint:ocr-drop', event => openOcrFormatModal(event.detail.file));
+  document.querySelectorAll('[data-close-ocr-format]').forEach(button => button.addEventListener('click', closeOcrFormatModal));
+  document.querySelectorAll('input[name="ocr-format"]').forEach(input => input.addEventListener('change', () => {
+    ocrOutputFormat = input.value;
+    document.querySelectorAll('.ocr-format-choice').forEach(choice => choice.classList.toggle('active', choice.contains(input) && input.checked));
+  }));
+  document.getElementById('ocr-apply').addEventListener('click', () => {
+    if (!ocrPendingFile) return;
+    ocrOutputFormat = document.querySelector('input[name="ocr-format"]:checked')?.value || 'docx';
+    closeOcrFormatModal();
+    document.getElementById('download-email').value = '';
+    document.getElementById('email-error').hidden = true;
+    openEmailModal();
+  });
+
+  document.getElementById('final-download').addEventListener('click', async event => {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    const emailInput = document.getElementById('download-email');
+    const error = document.getElementById('email-error');
+    const email = String(emailInput.value || '').trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      error.textContent = 'Please enter a valid email address.';
+      error.hidden = false;
+      emailInput.focus();
+      return;
+    }
+    if (!ocrPendingFile) return;
+    error.hidden = true;
+    const button = event.currentTarget;
+    const originalText = button.textContent;
+    const operation = {docx:'ocr-docx',pdf:'ocr-pdf',txt:'ocr-txt'}[ocrOutputFormat] || 'ocr-docx';
+    const extension = {docx:'docx',pdf:'pdf',txt:'txt'}[ocrOutputFormat] || 'docx';
+    const baseName = ocrPendingFile.name.replace(/\.pdf$/i,'').replace(/[<>:"/\\|?*\u0000-\u001F]/g,'_') || 'document';
+    button.disabled = true;
+    button.textContent = 'Applying OCR…';
+    ocrStatus.textContent = 'Recognising text and preparing your download…';
+    try {
+      const result = await convertPdfThroughPdfMintEngine(ocrPendingFile, operation, baseName);
+      downloadBlob(result, `${baseName}-ocr.${extension}`);
+      closeEmailModal();
+      ocrStatus.textContent = `${baseName}-ocr.${extension} downloaded successfully.`;
+    } catch (ocrError) {
+      console.error('OCR failed:', ocrError);
+      error.textContent = ocrError?.message || 'PDFMint could not recognise this document. Please try again.';
+      error.hidden = false;
+      ocrStatus.textContent = 'OCR could not be completed. Please try again.';
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  }, true);
+}
+
 document.addEventListener('change', event => {
   const input = event.target;
   if (
@@ -5620,6 +5711,7 @@ document.addEventListener('change', event => {
     document.body.dataset.compressFlow !== 'true' &&
     document.body.dataset.compressImageFlow !== 'true' &&
     document.body.dataset.mergeFlow !== 'true' &&
+    document.body.dataset.ocrFlow !== 'true' &&
     input instanceof HTMLInputElement &&
     input.id === 'file-input' &&
     input.type === 'file'

@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4020" />
+  <link rel="stylesheet" href="styles.css?v=4300" />
 </head>
-<body data-landing-tool="ocr">
+<body data-landing-tool="ocr" data-ocr-flow="true">
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="PDFMint home">
@@ -132,8 +132,8 @@
       <div class="container hero-grid">
         <div class="hero-copy">
           <span class="eyebrow">SMARTER DOCUMENT TOOLS</span>
-          <h1>Turn scanned PDFs into usable text</h1>
-          <p class="hero-subtitle">Recognise text inside scanned documents so your PDF content becomes easier to search, copy and work with.</p>
+          <h1>OCR PDF</h1>
+          <p class="hero-subtitle">Convert scanned PDFs into searchable, editable text online — no software installation required.</p>
           <ul class="check-list">
             <li>Works on any device</li>
             <li>No software installation</li>
@@ -641,6 +641,21 @@
     </section>
   </div>
 
+  <div class="ocr-format-layer" id="ocr-format-modal" hidden>
+    <div class="ocr-format-backdrop" data-close-ocr-format></div>
+    <section class="ocr-format-dialog" role="dialog" aria-modal="true" aria-labelledby="ocr-format-title">
+      <header><h2 id="ocr-format-title">OCR PDF</h2><button type="button" data-close-ocr-format aria-label="Close">×</button></header>
+      <div class="ocr-file-summary"><span>PDF</span><strong id="ocr-file-name">Document.pdf</strong><small id="ocr-file-size">—</small></div>
+      <p>Select the format you want to download:</p>
+      <div class="ocr-format-choices">
+        <label class="ocr-format-choice active"><input type="radio" name="ocr-format" value="docx" checked><i></i><span class="ocr-choice-icon word">W</span><strong>WORD<small>Editable text with original formatting</small></strong></label>
+        <label class="ocr-format-choice"><input type="radio" name="ocr-format" value="pdf"><i></i><span class="ocr-choice-icon pdf">PDF</span><strong>PDF<small>Selectable and searchable text</small></strong></label>
+        <label class="ocr-format-choice"><input type="radio" name="ocr-format" value="txt"><i></i><span class="ocr-choice-icon txt">TXT</span><strong>TXT<small>Unformatted editable text</small></strong></label>
+      </div>
+      <button class="ocr-apply-button" id="ocr-apply" type="button">Apply OCR</button>
+    </section>
+  </div>
+
   <div class="export-modal-layer" id="email-modal" hidden>
     <div class="export-modal-backdrop"></div>
     <section class="export-modal email-modal" role="dialog" aria-modal="true" aria-labelledby="email-modal-title">
@@ -1031,6 +1046,6 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="script.js?v=4020"></script>
+  <script src="script.js?v=4300"></script>
 </body>
 </html>
