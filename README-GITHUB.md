@@ -265,3 +265,26 @@ This release changes BOTH:
 2. pdfmint-engine
 
 Ghostscript was already present in the engine Docker image, so no new system dependency was required.
+
+
+## PDFMint v4.0.10 — Compress CTA + header hover fix
+
+Compression:
+- Fixed the Compress PDF CTA event binding.
+- The click is now handled by delegated document-level binding, so modal
+  initialisation order cannot leave the CTA inactive.
+- Clicking Compress PDF immediately changes the CTA to “Starting…” and opens
+  the progress modal before the engine request begins.
+- Progress initially displays “Connecting to PDFMint Engine…”.
+- Any startup/network error now produces a visible PDFMint error instead of an
+  apparently dead button.
+
+Header:
+- Fixed malformed desktop dropdown nesting left by the earlier menu reorder.
+- PDF Editor and PDF Converter are now true sibling dropdowns.
+- Hovering PDF Converter no longer also highlights PDF Editor.
+- Existing menu open/close behaviour and menu order are preserved.
+
+Frontend-only patch relative to v4.0.9.
+The v4.0.9 engine already contains the required compression operations, so
+the engine does NOT need to be redeployed again if v4.0.9 engine is live.

@@ -1927,3 +1927,13 @@ button:disabled{opacity:.45;cursor:not-allowed}
   .compression-file-meta strong{grid-column:auto}
   .compression-progress-modal{padding:34px 22px}
 }
+
+
+/* PDFMint v4.0.10 — top-level dropdown hover isolation */
+.desktop-nav > .nav-dropdown:hover > .nav-dropdown-toggle,
+.desktop-nav > .nav-dropdown.is-open > .nav-dropdown-toggle{
+  color:#22a06b !important;
+}
+.desktop-nav > .nav-dropdown:not(:hover):not(.is-open) > .nav-dropdown-toggle{
+  color:inherit !important;
+}

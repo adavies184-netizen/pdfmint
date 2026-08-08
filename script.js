@@ -5201,7 +5201,9 @@ async function compressPdfMintFile(file, level) {
 }
 
 async function runPdfMintCompression() {
-  if (!pdfMintCompressionFile) return;
+  if (!pdfMintCompressionFile) {
+    throw new Error('Please upload a PDF before starting compression.');
+  }
 
   const selected =
     document.querySelector('input[name="compression-level"]:checked')?.value ||
@@ -5212,10 +5214,14 @@ async function runPdfMintCompression() {
   const startButton = document.getElementById('compression-start');
   const result = document.getElementById('compression-result');
 
-  startButton.disabled = true;
+  // Show progress synchronously before contacting the engine.
   optionsModal.hidden = true;
   progressModal.hidden = false;
   result.hidden = true;
+  setPdfMintCompressionProgress(4, 'Connecting', 'Connecting to PDFMint Engine…');
+
+  // Allow browser to paint the modal before network work begins.
+  await new Promise(resolve => requestAnimationFrame(() => resolve()));
 
   startPdfMintCompressionProgressAnimation();
 
@@ -5261,8 +5267,6 @@ async function runPdfMintCompression() {
       error?.message ||
       'PDFMint could not compress this PDF. Please try again.'
     );
-  } finally {
-    startButton.disabled = false;
   }
 }
 
@@ -5277,15 +5281,48 @@ document.addEventListener('DOMContentLoaded', () => {
       event.target.value = '';
     });
   }
+});
 
-  document.querySelectorAll('input[name="compression-level"]').forEach(input => {
-    input.addEventListener('change', syncPdfMintCompressionCards);
-  });
+/* v4.0.10: delegated compression controls.
+   This deliberately does not depend on modal initialisation order. */
+document.addEventListener('change', event => {
+  if (document.body.dataset.compressFlow !== 'true') return;
+  if (event.target?.matches('input[name="compression-level"]')) {
+    syncPdfMintCompressionCards();
+  }
+});
 
-  document.getElementById('compression-start')?.addEventListener('click', runPdfMintCompression);
+document.addEventListener('click', event => {
+  if (document.body.dataset.compressFlow !== 'true') return;
 
-  document.getElementById('compression-options-close')?.addEventListener('click', () => {
+  const start = event.target.closest('#compression-start');
+  if (start) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    // Immediate visual feedback proves the click was received.
+    start.disabled = true;
+    start.textContent = 'Starting…';
+
+    Promise.resolve()
+      .then(() => runPdfMintCompression())
+      .catch(error => {
+        console.error('PDFMint compression start failed:', error);
+        document.getElementById('compression-progress-modal').hidden = true;
+        document.getElementById('compression-options-modal').hidden = false;
+        showAlert(error?.message || 'PDFMint could not start compression. Please try again.');
+      })
+      .finally(() => {
+        start.disabled = false;
+        start.textContent = 'Compress PDF';
+      });
+
+    return;
+  }
+
+  if (event.target.closest('#compression-options-close')) {
+    event.preventDefault();
     document.getElementById('compression-options-modal').hidden = true;
     pdfMintCompressionFile = null;
-  });
+  }
 });
