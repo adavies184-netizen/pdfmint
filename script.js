@@ -411,7 +411,7 @@ function setEditorMode(mode) {
   document.getElementById('note-tool')?.classList.toggle('active', mode === 'note');
   document.getElementById('watermark-tool')?.classList.toggle('active', mode === 'watermark');
   document.getElementById('crop-tool')?.classList.toggle('active', mode === 'crop');
-  document.getElementById('split-tool')?.classList.toggle('active', mode === 'split');
+  document.getElementById('manage-tool')?.classList.toggle('active', mode === 'manage');
 
   const addOptionsBar = document.getElementById('text-options-bar');
   const editOptionsBar = document.getElementById('edit-text-options-bar');
@@ -420,7 +420,7 @@ function setEditorMode(mode) {
   const highlightOptionsBar = document.getElementById('text-highlight-options-bar');
   const watermarkOptionsBar = document.getElementById('watermark-options-bar');
   const cropOptionsBar = document.getElementById('crop-options-bar');
-  const splitOptionsBar = document.getElementById('split-options-bar');
+  const managerOptionsBar = document.getElementById('manager-options-bar');
   if (addOptionsBar) addOptionsBar.hidden = mode !== 'text';
   if (editOptionsBar) editOptionsBar.hidden = mode !== 'edit-existing';
   if (drawOptionsBar) drawOptionsBar.hidden = mode !== 'draw';
@@ -428,12 +428,12 @@ function setEditorMode(mode) {
   if (highlightOptionsBar) highlightOptionsBar.hidden = mode !== 'text-highlight';
   if (watermarkOptionsBar) watermarkOptionsBar.hidden = mode !== 'watermark';
   if (cropOptionsBar) cropOptionsBar.hidden = mode !== 'crop';
-  if (splitOptionsBar) splitOptionsBar.hidden = mode !== 'split';
+  if (managerOptionsBar) managerOptionsBar.hidden = mode !== 'manage';
 
   const normalEditorBody = document.querySelector('.desktop-editor-body');
-  const splitWorkspace = document.getElementById('split-workspace');
-  if (normalEditorBody) normalEditorBody.hidden = mode === 'split';
-  if (splitWorkspace) splitWorkspace.hidden = mode !== 'split';
+  const managerWorkspace = document.getElementById('manager-workspace');
+  if (normalEditorBody) normalEditorBody.hidden = mode === 'manage';
+  if (managerWorkspace) managerWorkspace.hidden = mode !== 'manage';
 
   if (mode !== 'edit-existing') {
     editor.editTextBoxMode = false;
@@ -475,9 +475,9 @@ function setEditorMode(mode) {
   } else if (mode === 'crop') {
     showEditorHint('Press and drag on the page to select the area to keep.');
     renderAnnotations();
-  } else if (mode === 'split') {
-    showEditorHint('Click the scissors between pages to create separate files.');
-    renderSplitWorkspace();
+  } else if (mode === 'manage') {
+    showEditorHint('Select pages, then choose an action or drag them into a new position.');
+    openManagerWorkspace();
   } else {
     renderAnnotations();
   }
@@ -2939,6 +2939,57 @@ document.getElementById('watermark-done').addEventListener('click', () => {
   openFormatModal();
 });
 
+let managerSelection = new Set();
+let managerZoom = 1;
+let managerSessionSnapshot = null;
+const managerHistory = {undo:[],redo:[]};
+function managerStateSnapshot(){return {pages:JSON.parse(JSON.stringify(editor.pages)),splitPoints:[...(editor.splitPoints||[])],splitApplied:Boolean(editor.splitApplied)}}
+function restoreManagerState(state){editor.pages=JSON.parse(JSON.stringify(state.pages));editor.splitPoints=[...(state.splitPoints||[])];editor.splitApplied=Boolean(state.splitApplied);managerSelection.clear();renderManagerWorkspace()}
+function recordManagerHistory(){managerHistory.undo.push(managerStateSnapshot());if(managerHistory.undo.length>40)managerHistory.undo.shift();managerHistory.redo=[]}
+function updateManagerButtons(){
+  const selected=managerSelection.size;
+  ['manager-delete','manager-duplicate','manager-rotate-left','manager-rotate-right','manager-move-left','manager-move-right'].forEach(id=>{const button=document.getElementById(id);if(button)button.disabled=!selected});
+  const undo=document.getElementById('manager-undo'),redo=document.getElementById('manager-redo');if(undo)undo.disabled=!managerHistory.undo.length;if(redo)redo.disabled=!managerHistory.redo.length;
+  const count=document.getElementById('manager-selection-count');if(count)count.textContent=`${selected} selected`;
+  const summary=document.getElementById('manager-split-summary');const splits=(editor.splitPoints||[]).length;if(summary)summary.textContent=splits?`${splits+1} split files`:'No split points';
+}
+function managerActionName(){return new URLSearchParams(window.location.search).get('action')||'manage'}
+function openManagerWorkspace(){
+  if(!managerSessionSnapshot){managerSessionSnapshot=managerStateSnapshot();managerHistory.undo=[];managerHistory.redo=[];managerSelection.clear()}
+  const action=managerActionName();const title=document.getElementById('manager-title'),instructions=document.getElementById('manager-instructions');
+  if(title)title.textContent=action==='rotate'?'Rotate PDF pages':action==='delete'?'Delete PDF pages':action==='split'?'Split and organise pages':'Manage pages';
+  if(instructions)instructions.textContent=action==='split'?'Click the scissors between pages to create separate files. Drag pages to reorder.':'Click any page to select it, then choose an action above. Drag pages to reorder.';
+  renderManagerWorkspace();
+}
+function normaliseManagerSplitPoints(){editor.splitPoints=Array.from(new Set(editor.splitPoints||[])).map(Number).filter(point=>Number.isInteger(point)&&point>0&&point<editor.pages.length).sort((a,b)=>a-b)}
+async function renderManagerWorkspace(){
+  const grid=document.getElementById('manager-page-grid');if(!grid||!editor.pdfjs)return;normaliseManagerSplitPoints();grid.style.setProperty('--manager-zoom',String(managerZoom));grid.innerHTML='';
+  for(let index=0;index<editor.pages.length;index++){
+    const state=editor.pages[index];const unit=document.createElement('div');unit.className='manager-page-unit';
+    const card=document.createElement('article');card.className=`manager-page-card${managerSelection.has(index)?' selected':''}`;card.draggable=true;card.dataset.managerIndex=String(index);card.innerHTML=`<div class="manager-page-paper"><canvas></canvas><span class="manager-drag-handle">⋮⋮</span><span class="manager-selected-check">✓</span></div><strong>${index+1}</strong>`;unit.appendChild(card);
+    card.addEventListener('click',()=>{managerSelection.has(index)?managerSelection.delete(index):managerSelection.add(index);renderManagerWorkspace()});
+    card.addEventListener('dragstart',event=>{if(!managerSelection.has(index)){managerSelection.clear();managerSelection.add(index)}card.classList.add('dragging');event.dataTransfer.setData('text/plain',String(index));event.dataTransfer.effectAllowed='move'});
+    card.addEventListener('dragover',event=>{event.preventDefault();card.classList.add('drop-target')});card.addEventListener('dragleave',()=>card.classList.remove('drop-target'));
+    card.addEventListener('drop',event=>{event.preventDefault();const to=Number(card.dataset.managerIndex);const selected=Array.from(managerSelection).sort((a,b)=>a-b);if(!selected.length||selected.includes(to))return;recordManagerHistory();const moving=selected.map(i=>editor.pages[i]);editor.pages=editor.pages.filter((_,i)=>!managerSelection.has(i));const removedBefore=selected.filter(i=>i<to).length;const insertAt=Math.max(0,Math.min(editor.pages.length,to-removedBefore));editor.pages.splice(insertAt,0,...moving);managerSelection=new Set(moving.map((_,i)=>insertAt+i));editor.splitApplied=false;renderManagerWorkspace()});
+    try{const page=await editor.pdfjs.getPage(state.sourceIndex+1);const base=page.getViewport({scale:1,rotation:state.rotation});const viewport=page.getViewport({scale:190/base.width,rotation:state.rotation});const canvas=card.querySelector('canvas');canvas.width=Math.floor(viewport.width);canvas.height=Math.floor(viewport.height);await page.render({canvasContext:canvas.getContext('2d'),viewport}).promise}catch(_){}
+    if(index<editor.pages.length-1){const marker=document.createElement('button');const point=index+1,active=editor.splitPoints.includes(point);marker.type='button';marker.className=`manager-split-marker${active?' active':''}`;marker.setAttribute('aria-label',active?`Remove split after page ${point}`:`Split after page ${point}`);marker.innerHTML='<span>✂</span><small>Split</small>';marker.addEventListener('click',event=>{event.stopPropagation();recordManagerHistory();editor.splitPoints=active?editor.splitPoints.filter(item=>item!==point):[...editor.splitPoints,point];editor.splitApplied=false;renderManagerWorkspace()});unit.appendChild(marker)}
+    grid.appendChild(unit)
+  }
+  updateManagerButtons()
+}
+function selectedManagerIndices(){return Array.from(managerSelection).sort((a,b)=>a-b)}
+function managerRotate(delta){if(!managerSelection.size)return;recordManagerHistory();selectedManagerIndices().forEach(index=>editor.pages[index].rotation=(editor.pages[index].rotation+delta+360)%360);renderManagerWorkspace()}
+function managerDelete(){if(!managerSelection.size)return;if(editor.pages.length-managerSelection.size<1)return showAlert('A PDF must contain at least one page.');recordManagerHistory();editor.pages=editor.pages.filter((_,index)=>!managerSelection.has(index));managerSelection.clear();editor.splitApplied=false;renderManagerWorkspace()}
+function managerDuplicate(){if(!managerSelection.size)return;recordManagerHistory();const selected=selectedManagerIndices();let offset=0;selected.forEach(index=>{editor.pages.splice(index+1+offset,0,JSON.parse(JSON.stringify(editor.pages[index+offset])));offset++});managerSelection.clear();editor.splitApplied=false;renderManagerWorkspace()}
+function managerMove(direction){const selected=selectedManagerIndices();if(!selected.length)return;const edge=direction<0?selected[0]:selected[selected.length-1];if((direction<0&&edge===0)||(direction>0&&edge===editor.pages.length-1))return;recordManagerHistory();const swap=direction<0?selected:[...selected].reverse();swap.forEach(index=>{const other=index+direction;[editor.pages[index],editor.pages[other]]=[editor.pages[other],editor.pages[index]]});managerSelection=new Set(selected.map(index=>index+direction));editor.splitApplied=false;renderManagerWorkspace()}
+document.getElementById('manage-tool')?.addEventListener('click',()=>setEditorMode('manage'));
+document.getElementById('manager-delete')?.addEventListener('click',managerDelete);document.getElementById('manager-duplicate')?.addEventListener('click',managerDuplicate);document.getElementById('manager-rotate-left')?.addEventListener('click',()=>managerRotate(-90));document.getElementById('manager-rotate-right')?.addEventListener('click',()=>managerRotate(90));document.getElementById('manager-move-left')?.addEventListener('click',()=>managerMove(-1));document.getElementById('manager-move-right')?.addEventListener('click',()=>managerMove(1));
+document.getElementById('manager-select-all')?.addEventListener('click',()=>{managerSelection=new Set(editor.pages.map((_,index)=>index));renderManagerWorkspace()});document.getElementById('manager-select-none')?.addEventListener('click',()=>{managerSelection.clear();renderManagerWorkspace()});
+document.getElementById('manager-zoom-out')?.addEventListener('click',()=>{managerZoom=Math.max(.7,managerZoom-.1);renderManagerWorkspace()});document.getElementById('manager-zoom-in')?.addEventListener('click',()=>{managerZoom=Math.min(1.5,managerZoom+.1);renderManagerWorkspace()});
+document.getElementById('manager-undo')?.addEventListener('click',()=>{if(!managerHistory.undo.length)return;managerHistory.redo.push(managerStateSnapshot());restoreManagerState(managerHistory.undo.pop())});document.getElementById('manager-redo')?.addEventListener('click',()=>{if(!managerHistory.redo.length)return;managerHistory.undo.push(managerStateSnapshot());restoreManagerState(managerHistory.redo.pop())});
+document.getElementById('manager-cancel')?.addEventListener('click',()=>{if(managerSessionSnapshot)restoreManagerState(managerSessionSnapshot);managerSessionSnapshot=null;setEditorMode('select')});
+document.getElementById('manager-apply')?.addEventListener('click',async()=>{normaliseManagerSplitPoints();editor.splitApplied=editor.splitPoints.length>0;managerSessionSnapshot=null;managerSelection.clear();editor.selectedIndex=Math.min(editor.selectedIndex,Math.max(0,editor.pages.length-1));await renderThumbnails();await renderSelectedPage();setEditorMode('select');showAlert(`Page changes applied${editor.splitApplied?`. ${editor.splitPoints.length+1} split PDFs will be created on PDF export.`:'.'}`)});
+
 let selectedSplitPage = 0;
 function normaliseSplitPoints() {
   editor.splitPoints = Array.from(new Set(editor.splitPoints || []))
@@ -5381,6 +5432,7 @@ async function routeFileToSharedEditor(file, options = {}) {
 
   const params = new URLSearchParams();
   if (options.tool && options.tool !== 'none') params.set('tool', options.tool);
+  if (options.managerAction) params.set('action', options.managerAction);
   if (options.exportFormat) {
     params.set('export', '1');
     params.set('format', options.exportFormat);
@@ -5441,7 +5493,13 @@ async function routeLandingUploadToEditor(file) {
     if (tool === 'none' && /(?:^|\/)crop-pdf\.html$/i.test(window.location.pathname)) {
       tool = 'crop';
     }
-    await routeFileToSharedEditor(file, { tool });
+    const path = window.location.pathname.toLowerCase();
+    let managerAction = '';
+    if (/(?:^|\/)rotate-pdf\.html$/.test(path)) managerAction = 'rotate';
+    if (/(?:^|\/)delete-pdf-pages\.html$/.test(path)) managerAction = 'delete';
+    if (/(?:^|\/)split-pdf\.html$/.test(path)) managerAction = 'split';
+    if (managerAction) tool = 'manage';
+    await routeFileToSharedEditor(file, { tool, managerAction });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
     if (status) status.textContent = 'Could not open the editor. Please try again.';
@@ -5458,7 +5516,8 @@ function activateSharedEditorTool(tool) {
     note: 'note-tool',
     watermark: 'watermark-tool',
     crop: 'crop-tool',
-    split: 'split-tool'
+    split: 'manage-tool',
+    manage: 'manage-tool'
   };
   const id = buttonIds[tool];
   if (id) requestAnimationFrame(() => document.getElementById(id)?.click());
