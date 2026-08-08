@@ -149,3 +149,23 @@ PPT memory reductions:
 This patch changes BOTH:
 1. normal PDFMint frontend
 2. pdfmint-engine
+
+
+## PDFMint v4.0.3 — landing CTA + editor tool routing
+
+- Edit PDF: Add Text is pre-selected.
+- Sign PDF: “Upload to sign”; Sign pre-selected.
+- Rotate PDF: “Upload to rotate”; no tool selected.
+- Merge PDF: “Upload to merge”; no tool selected.
+- Split PDF: “Upload to split”; no tool selected.
+- Crop PDF: “Upload to crop”; no tool selected.
+- Add Watermark: “Upload to watermark”; no tool selected.
+- Add Image to PDF: button unchanged; no tool selected.
+- Compress Image: “Upload to compress”; no tool selected.
+- Compress PDF: “Upload to compress”; no tool selected.
+- Delete PDF Pages: button unchanged; no tool selected.
+
+Routing now explicitly supports `data-landing-tool="none"` and opens editor.html
+without a tool query, so the editor toolbar remains unselected.
+
+Frontend-only update. PDFMint Engine unchanged.

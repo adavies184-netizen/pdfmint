@@ -4850,7 +4850,8 @@ async function takePdfForSharedEditor() {
 }
 
 function sharedEditorUrl(tool) {
-  return `editor.html?tool=${encodeURIComponent(tool || 'edit')}`;
+  if (!tool || tool === 'none') return 'editor.html';
+  return `editor.html?tool=${encodeURIComponent(tool)}`;
 }
 
 async function routeLandingUploadToEditor(file) {
@@ -4871,6 +4872,7 @@ async function routeLandingUploadToEditor(file) {
 function activateSharedEditorTool(tool) {
   const buttonIds = {
     edit: 'edit-text-tool',
+    text: 'add-text-tool',
     sign: 'sign-tool',
     image: 'image-tool',
     link: 'link-tool',
@@ -4883,7 +4885,7 @@ function activateSharedEditorTool(tool) {
 async function initialiseSharedEditorRoute() {
   if (document.body.dataset.editorRoute !== 'true') return;
 
-  const tool = new URLSearchParams(window.location.search).get('tool') || 'edit';
+  const tool = new URLSearchParams(window.location.search).get('tool') || 'none';
 
   try {
     const file = await takePdfForSharedEditor();
