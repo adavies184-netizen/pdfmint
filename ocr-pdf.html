@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4310" />
+  <link rel="stylesheet" href="styles.css?v=4320" />
 </head>
 <body data-landing-tool="ocr" data-ocr-flow="true">
   <header class="site-header">
@@ -678,6 +678,12 @@
         </label>
         <p class="email-error" id="email-error" hidden>Please enter a valid email address.</p>
 
+        <div class="ocr-progress" id="ocr-progress" hidden aria-live="polite">
+          <div class="ocr-progress-copy"><strong id="ocr-progress-label">Recognising text…</strong><span id="ocr-progress-percent">0%</span></div>
+          <div class="ocr-progress-track" role="progressbar" aria-label="OCR progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span id="ocr-progress-bar"></span></div>
+          <p>Scanning your document and preparing the download. This may take a few seconds.</p>
+        </div>
+
         <button class="final-download-button" id="final-download" type="button">Download</button>
 
         <p class="login-copy">Already have an account? <button type="button" class="text-link-button">Log in</button></p>
@@ -1047,6 +1053,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=4310"></script>
-  <script src="script.js?v=4310"></script>
+  <script src="script.js?v=4320"></script>
 </body>
 </html>

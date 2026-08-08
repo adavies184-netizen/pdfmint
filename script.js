@@ -5676,6 +5676,7 @@ if (document.body.dataset.ocrFlow === 'true') {
     closeOcrFormatModal();
     document.getElementById('download-email').value = '';
     document.getElementById('email-error').hidden = true;
+    document.getElementById('ocr-progress').hidden = true;
     openEmailModal();
   });
 
@@ -5698,20 +5699,46 @@ if (document.body.dataset.ocrFlow === 'true') {
     const operation = {docx:'ocr-docx',pdf:'ocr-pdf',txt:'ocr-txt'}[ocrOutputFormat] || 'ocr-docx';
     const extension = {docx:'docx',pdf:'pdf',txt:'txt'}[ocrOutputFormat] || 'docx';
     const baseName = ocrPendingFile.name.replace(/\.pdf$/i,'').replace(/[<>:"/\\|?*\u0000-\u001F]/g,'_') || 'document';
+    const progress = document.getElementById('ocr-progress');
+    const progressBar = document.getElementById('ocr-progress-bar');
+    const progressTrack = progress.querySelector('[role="progressbar"]');
+    const progressPercent = document.getElementById('ocr-progress-percent');
+    const progressLabel = document.getElementById('ocr-progress-label');
+    let progressValue = 8;
+    const setOcrProgress = value => {
+      progressValue = Math.max(0, Math.min(100, Math.round(value)));
+      progressBar.style.width = `${progressValue}%`;
+      progressPercent.textContent = `${progressValue}%`;
+      progressTrack.setAttribute('aria-valuenow', String(progressValue));
+    };
     button.disabled = true;
     button.textContent = 'Applying OCR…';
+    progress.hidden = false;
+    progressLabel.textContent = 'Recognising text…';
+    setOcrProgress(progressValue);
+    const progressTimer = window.setInterval(() => {
+      if (progressValue < 70) setOcrProgress(progressValue + Math.max(2, (70 - progressValue) * .12));
+      else if (progressValue < 92) setOcrProgress(progressValue + 1);
+    }, 350);
     ocrStatus.textContent = 'Recognising text and preparing your download…';
     try {
       const result = await convertPdfThroughPdfMintEngine(ocrPendingFile, operation, baseName);
+      window.clearInterval(progressTimer);
+      progressLabel.textContent = 'Download ready';
+      setOcrProgress(100);
       downloadBlob(result, `${baseName}-ocr.${extension}`);
+      await new Promise(resolve => window.setTimeout(resolve, 450));
       closeEmailModal();
       ocrStatus.textContent = `${baseName}-ocr.${extension} downloaded successfully.`;
     } catch (ocrError) {
+      window.clearInterval(progressTimer);
+      progress.hidden = true;
       console.error('OCR failed:', ocrError);
       error.textContent = ocrError?.message || 'PDFMint could not recognise this document. Please try again.';
       error.hidden = false;
       ocrStatus.textContent = 'OCR could not be completed. Please try again.';
     } finally {
+      window.clearInterval(progressTimer);
       button.disabled = false;
       button.textContent = originalText;
     }
