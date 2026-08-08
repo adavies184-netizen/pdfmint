@@ -624,6 +624,23 @@ button:disabled{opacity:.45;cursor:not-allowed}
   cursor:pointer
 }
 .desktop-editor:has(.edit-text-options-bar:not([hidden])){grid-template-rows:54px 70px auto minmax(0,1fr)}
+.watermark-options-bar{min-height:66px;background:#f8fafc;border-bottom:1px solid #dfe5ec;display:flex;align-items:stretch;padding:0 12px;overflow-x:auto;position:relative;z-index:15}
+.watermark-options-bar[hidden]{display:none}
+.watermark-control,.watermark-colour-control,.watermark-all-pages{flex:none;min-width:108px;padding:8px 13px;border-right:1px solid #e3e8ef;display:flex;flex-direction:column;justify-content:center;gap:5px;color:#344054}
+.watermark-control>span,.watermark-colour-control>span,.watermark-all-pages span{font:600 10px Inter;color:#667085}
+.watermark-control input[type="text"],.watermark-angle-control div{height:38px;border:1px solid #d6dde6;border-radius:7px;background:#fff;padding:0 10px;font:600 13px Inter;color:#344054}
+.watermark-text-control{min-width:190px}.watermark-text-control input{width:164px}
+.watermark-range-control{min-width:155px}.watermark-range-control input{width:128px;accent-color:#21a47a}.watermark-range-control output{position:absolute;margin-left:103px;margin-top:-23px;font:700 11px Inter;color:#176b53;pointer-events:none}
+.watermark-colour-control{min-width:230px}.watermark-swatches{display:flex;align-items:center;gap:7px}
+.watermark-swatch{width:23px;height:23px;flex:none;border:2px solid #fff;border-radius:50%;background:var(--watermark-colour);box-shadow:0 0 0 1px #cbd5e1;cursor:pointer}
+.watermark-swatch:hover,.watermark-swatch.active{box-shadow:0 0 0 3px rgba(33,164,122,.28)}
+.watermark-custom-control{min-width:92px;align-items:center}.watermark-custom-control input{width:38px;height:34px;padding:2px;border:1px solid #d6dde6;border-radius:7px;background:#fff;cursor:pointer}
+.watermark-angle-control{min-width:92px}.watermark-angle-control div{display:flex;align-items:center}.watermark-angle-control input{width:50px;border:0;outline:0;font:600 13px Inter}.watermark-angle-control b{font-weight:600}
+.watermark-all-pages{min-width:102px}.watermark-all-pages strong{font-size:13px;color:#176b53;white-space:nowrap}
+.watermark-done{align-self:center;flex:none;margin:0 10px;height:40px;padding:0 22px;border:0;border-radius:8px;background:#21a47a;color:#fff;font:750 13px Inter;cursor:pointer}.watermark-done:hover{background:#178461}
+.desktop-editor:has(.watermark-options-bar:not([hidden])){grid-template-rows:54px 70px auto minmax(0,1fr)}
+.watermark-preview{position:absolute;left:50%;top:50%;transform-origin:center;white-space:nowrap;line-height:1;font-family:Helvetica,Arial,sans-serif;font-weight:700;pointer-events:none;user-select:none;z-index:1}
+.watermark-tool-icon svg{fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .edit-created-text{
   position:absolute;
   box-sizing:border-box;

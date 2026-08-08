@@ -131,7 +131,8 @@ let editor = {
   selectedLinkId: null,
   activeLinkDraft: null,
   notes: {},
-  selectedNoteId: null
+  selectedNoteId: null,
+  watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, applied: false }
 };
 let splitFile = null;
 let splitPageCount = 0;
@@ -150,6 +151,7 @@ function cloneEditorState() {
     textHighlights: editor.textHighlights,
     links: editor.links,
     notes: editor.notes,
+    watermark: editor.watermark,
     selectedIndex: editor.selectedIndex,
     selectedAnnotationId: editor.selectedAnnotationId,
     selectedExistingTextId: editor.selectedExistingTextId,
@@ -170,6 +172,7 @@ function restoreEditorState(snapshot) {
   editor.shapes = snapshot.shapes || {};
   editor.textHighlights = snapshot.textHighlights || {};
   editor.links = snapshot.links || {};
+  editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, applied: false };
   editor.activeLinkDraft = null;
   editor.selectedIndex = Math.min(snapshot.selectedIndex, Math.max(0, editor.pages.length - 1));
   editor.selectedAnnotationId = snapshot.selectedAnnotationId;
@@ -305,7 +308,8 @@ async function loadEditorPdf(file) {
       selectedLinkId: null,
       activeLinkDraft: null,
       notes: {},
-      selectedNoteId: null
+      selectedNoteId: null,
+      watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, applied: false }
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
@@ -385,17 +389,20 @@ function setEditorMode(mode) {
   document.getElementById('text-highlight-tool')?.classList.toggle('active', mode === 'text-highlight');
   document.getElementById('link-tool')?.classList.toggle('active', mode === 'link');
   document.getElementById('note-tool')?.classList.toggle('active', mode === 'note');
+  document.getElementById('watermark-tool')?.classList.toggle('active', mode === 'watermark');
 
   const addOptionsBar = document.getElementById('text-options-bar');
   const editOptionsBar = document.getElementById('edit-text-options-bar');
   const drawOptionsBar = document.getElementById('draw-options-bar');
   const lineOptionsBar = document.getElementById('line-options-bar');
   const highlightOptionsBar = document.getElementById('text-highlight-options-bar');
+  const watermarkOptionsBar = document.getElementById('watermark-options-bar');
   if (addOptionsBar) addOptionsBar.hidden = mode !== 'text';
   if (editOptionsBar) editOptionsBar.hidden = mode !== 'edit-existing';
   if (drawOptionsBar) drawOptionsBar.hidden = mode !== 'draw';
   if (lineOptionsBar) lineOptionsBar.hidden = mode !== 'shape';
   if (highlightOptionsBar) highlightOptionsBar.hidden = mode !== 'text-highlight';
+  if (watermarkOptionsBar) watermarkOptionsBar.hidden = mode !== 'watermark';
 
   if (mode !== 'edit-existing') {
     editor.editTextBoxMode = false;
@@ -429,6 +436,9 @@ function setEditorMode(mode) {
     ensureExistingTextForCurrentPage().then(renderAnnotations);
   } else if (mode === 'link') {
     showEditorHint('Drag a box over the text or area you want to make clickable.');
+    renderAnnotations();
+  } else if (mode === 'watermark') {
+    showEditorHint('Changes are applied live to every page.');
     renderAnnotations();
   } else {
     renderAnnotations();
@@ -2219,6 +2229,18 @@ function renderAnnotations() {
   const items = getPageAnnotations(pageState.sourceIndex);
   const metrics = editor.canvasMetrics;
 
+  if (editor.watermark?.applied && editor.watermark.text && editor.watermark.size > 0 && editor.watermark.opacity > 0) {
+    const watermark = document.createElement('div');
+    watermark.className = 'watermark-preview';
+    watermark.textContent = editor.watermark.text;
+    watermark.style.color = editor.watermark.colour;
+    watermark.style.opacity = String(editor.watermark.opacity / 100);
+    const measured = Math.max(1, editor.watermark.text.length * .61);
+    watermark.style.fontSize = `${metrics.width * (editor.watermark.size / 100) / measured}px`;
+    watermark.style.transform = `translate(-50%,-50%) rotate(${editor.watermark.angle}deg)`;
+    layer.appendChild(watermark);
+  }
+
   items.forEach(item => {
     const el = document.createElement('div');
     el.className = 'text-annotation' + (item.id === editor.selectedAnnotationId ? ' selected' : '');
@@ -2664,6 +2686,79 @@ document.getElementById('note-tool')?.addEventListener('click', () => {
 
 document.getElementById('edit-text-tool').addEventListener('click', () => setEditorMode('edit-existing'));
 
+function ensureWatermarkUi() {
+  if (!document.getElementById('watermark-tool')) {
+    const editTool = document.getElementById('edit-text-tool');
+    if (editTool) {
+      const tool = document.createElement('button');
+      tool.className = 'ribbon-tool'; tool.id = 'watermark-tool'; tool.type = 'button';
+      tool.innerHTML = '<span class="tool-icon watermark-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19 9.2 5h2.2l3.1 8.5L17.7 5H20l-5.1 14h-2.2L10 11.5 7.2 19z"/><path d="M3 21h18"/></svg></span><span class="tool-label">Watermark</span>';
+      editTool.after(tool);
+    }
+  }
+  if (!document.getElementById('watermark-options-bar')) {
+    const drawBar = document.getElementById('draw-options-bar');
+    if (drawBar) {
+      const bar = document.createElement('div');
+      bar.className = 'watermark-options-bar'; bar.id = 'watermark-options-bar'; bar.hidden = true; bar.setAttribute('aria-label','Watermark options');
+      bar.innerHTML = `<label class="watermark-control watermark-text-control"><span>Text</span><input id="watermark-text" type="text" value="HELLO WORLD!" maxlength="160"></label><label class="watermark-control watermark-range-control"><span>Size</span><input id="watermark-size" type="range" min="0" max="100" value="35"><output id="watermark-size-value">35%</output></label><label class="watermark-control watermark-range-control"><span>Opacity</span><input id="watermark-opacity" type="range" min="0" max="100" value="50"><output id="watermark-opacity-value">50%</output></label><div class="watermark-colour-control"><span>Colour</span><div class="watermark-swatches" role="group" aria-label="Watermark colour">${[['#ef4444','Red'],['#f97316','Orange'],['#eab308','Yellow'],['#22c55e','Green'],['#3b82f6','Blue'],['#ec4899','Pink'],['#111827','Black']].map(([colour,label]) => `<button type="button" class="watermark-swatch${label === 'Black' ? ' active' : ''}" data-watermark-colour="${colour}" style="--watermark-colour:${colour}" aria-label="${label}"></button>`).join('')}</div></div><label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#111827" aria-label="Custom watermark colour"></label><label class="watermark-control watermark-angle-control"><span>Angle</span><div><input id="watermark-angle" type="number" min="-180" max="180" step="1" value="-45"><b>°</b></div></label><div class="watermark-all-pages"><span>Apply to:</span><strong>All pages</strong></div><button class="watermark-done" id="watermark-done" type="button">Done</button>`;
+      drawBar.before(bar);
+    }
+  }
+}
+ensureWatermarkUi();
+
+function syncWatermarkControls() {
+  const state = editor.watermark;
+  document.getElementById('watermark-text').value = state.text;
+  document.getElementById('watermark-size').value = state.size;
+  document.getElementById('watermark-size-value').textContent = `${state.size}%`;
+  document.getElementById('watermark-opacity').value = state.opacity;
+  document.getElementById('watermark-opacity-value').textContent = `${state.opacity}%`;
+  document.getElementById('watermark-angle').value = state.angle;
+  document.getElementById('watermark-custom-colour').value = state.colour;
+  document.querySelectorAll('[data-watermark-colour]').forEach(button => button.classList.toggle('active', button.dataset.watermarkColour.toLowerCase() === state.colour.toLowerCase()));
+}
+function updateWatermark(property, value) {
+  editor.watermark.applied = true;
+  editor.watermark[property] = value;
+  renderAnnotations();
+}
+document.getElementById('watermark-tool').addEventListener('click', () => {
+  if (!editor.watermark.applied) {
+    recordHistory();
+    editor.watermark.applied = true;
+  }
+  syncWatermarkControls();
+  setEditorMode('watermark');
+});
+document.getElementById('watermark-text').addEventListener('input', event => updateWatermark('text', event.target.value));
+document.getElementById('watermark-size').addEventListener('input', event => {
+  const value = Math.max(0, Math.min(100, Number(event.target.value)));
+  document.getElementById('watermark-size-value').textContent = `${value}%`;
+  updateWatermark('size', value);
+});
+document.getElementById('watermark-opacity').addEventListener('input', event => {
+  const value = Math.max(0, Math.min(100, Number(event.target.value)));
+  document.getElementById('watermark-opacity-value').textContent = `${value}%`;
+  updateWatermark('opacity', value);
+});
+document.querySelectorAll('[data-watermark-colour]').forEach(button => button.addEventListener('click', () => {
+  const colour = button.dataset.watermarkColour;
+  document.getElementById('watermark-custom-colour').value = colour;
+  document.querySelectorAll('[data-watermark-colour]').forEach(item => item.classList.toggle('active', item === button));
+  updateWatermark('colour', colour);
+}));
+document.getElementById('watermark-custom-colour').addEventListener('input', event => {
+  document.querySelectorAll('[data-watermark-colour]').forEach(item => item.classList.remove('active'));
+  updateWatermark('colour', event.target.value);
+});
+document.getElementById('watermark-angle').addEventListener('input', event => updateWatermark('angle', Math.max(-180, Math.min(180, Number(event.target.value) || 0))));
+document.getElementById('watermark-done').addEventListener('click', () => {
+  setEditorMode('select');
+  openFormatModal();
+});
+
 document.getElementById('text-highlight-tool').addEventListener('click', () => {
   setEditorMode('text-highlight');
 });
@@ -2772,6 +2867,11 @@ let preparedExportFilename = '';
 function openFormatModal() {
   if (!editor.pages.length) return;
   preparedExportBytes = null;
+  const pdfChoice = document.querySelector('input[name="export-format"][value="pdf"]');
+  if (pdfChoice) {
+    pdfChoice.checked = true;
+    pdfChoice.dispatchEvent(new Event('change', { bubbles: true }));
+  }
   const originalBase = editor.file.name.replace(/\.pdf$/i, '');
   document.getElementById('export-filename').value = originalBase;
   document.getElementById('format-modal').hidden = false;
@@ -2830,6 +2930,28 @@ async function createEditedPdfBytes() {
     const annotations = getPageAnnotations(state.sourceIndex);
     const existingEdits = getExistingTextItems(state.sourceIndex).filter(item => item.modified);
     const {width, height} = page.getSize();
+
+    if (editor.watermark?.applied && editor.watermark.text && editor.watermark.size > 0 && editor.watermark.opacity > 0) {
+      const watermarkFont = await getFont({font:'Helvetica', bold:true, italic:false});
+      const text = String(editor.watermark.text);
+      const unitWidth = Math.max(.001, watermarkFont.widthOfTextAtSize(text, 1));
+      const fontSize = width * (editor.watermark.size / 100) / unitWidth;
+      const textWidth = watermarkFont.widthOfTextAtSize(text, fontSize);
+      const angle = -Number(editor.watermark.angle || 0);
+      const radians = angle * Math.PI / 180;
+      const rotatedWidth = textWidth * Math.cos(radians) - fontSize * Math.sin(radians);
+      const rotatedHeight = textWidth * Math.sin(radians) + fontSize * Math.cos(radians);
+      const colour = hexToRgb01(editor.watermark.colour || '#111827');
+      page.drawText(text, {
+        x: width / 2 - rotatedWidth / 2,
+        y: height / 2 - rotatedHeight / 2,
+        size: fontSize,
+        font: watermarkFont,
+        color: PDFLib.rgb(colour.r, colour.g, colour.b),
+        opacity: editor.watermark.opacity / 100,
+        rotate: PDFLib.degrees(angle)
+      });
+    }
 
     for (const item of existingEdits) {
       const font = await getFont(item);
@@ -3510,10 +3632,16 @@ document.querySelector('[data-close-signature]').addEventListener('click', close
 
 document.addEventListener('click', event => {
   const toolButton = event.target.closest(
-    '.editor-tool-button, .tool-button, [data-editor-tool], #add-text-tool, #edit-text-tool, #sign-tool, #draw-tool, #line-tool'
+    '.editor-tool-button, .tool-button, [data-editor-tool], .ribbon-tool'
   );
 
-  if (!toolButton || toolButton.id === 'edit-text-tool' || toolButton.id === 'sign-tool' || toolButton.id === 'draw-tool' || toolButton.id === 'text-highlight-tool' || toolButton.id === 'line-tool') return;
+  if (!toolButton) return;
+
+  if (editor.mode === 'watermark' && toolButton.id !== 'watermark-tool') {
+    setEditorMode('select');
+  }
+
+  if (toolButton.id === 'edit-text-tool' || toolButton.id === 'sign-tool' || toolButton.id === 'draw-tool' || toolButton.id === 'text-highlight-tool' || toolButton.id === 'line-tool' || toolButton.id === 'watermark-tool') return;
 
   if (editor.mode === 'edit-existing') {
     clearEditTextInterfaceImmediately();
@@ -5136,4 +5264,3 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
-
