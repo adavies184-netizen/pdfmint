@@ -169,3 +169,21 @@ Routing now explicitly supports `data-landing-tool="none"` and opens editor.html
 without a tool query, so the editor toolbar remains unselected.
 
 Frontend-only update. PDFMint Engine unchanged.
+
+
+## PDFMint v4.0.4 — shared upload CTA + footer cleanup
+
+- Fixed the shared landing-page upload button so the actual visible CTA now changes per page:
+  - Sign PDF → Upload to sign
+  - Rotate PDF → Upload to rotate
+  - Merge PDF → Upload to merge
+  - Split PDF → Upload to split
+  - Crop PDF → Upload to crop
+  - Add Watermark → Upload to watermark
+  - Compress Image/PDF → Upload to compress
+- Removed the company postal address from the footer across the site.
+- Footer contact details are now limited to:
+  - Northstar Ridge Limited
+  - support@pdfmint.com
+
+Frontend-only update. PDFMint Engine unchanged.

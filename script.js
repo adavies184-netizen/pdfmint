@@ -4920,6 +4920,68 @@ document.addEventListener('change', event => {
   }
 }, true);
 
+
+function pdfMintLandingUploadLabel() {
+  const path = window.location.pathname.toLowerCase();
+
+  if (path.endsWith('/sign-pdf.html') || path.endsWith('sign-pdf.html')) return 'Upload to sign';
+  if (path.endsWith('/rotate-pdf.html') || path.endsWith('rotate-pdf.html')) return 'Upload to rotate';
+  if (path.endsWith('/merge-pdf.html') || path.endsWith('merge-pdf.html')) return 'Upload to merge';
+  if (path.endsWith('/split-pdf.html') || path.endsWith('split-pdf.html')) return 'Upload to split';
+  if (path.endsWith('/crop-pdf.html') || path.endsWith('crop-pdf.html')) return 'Upload to crop';
+  if (path.endsWith('/add-watermark.html') || path.endsWith('add-watermark.html')) return 'Upload to watermark';
+  if (path.endsWith('/compress-image.html') || path.endsWith('compress-image.html')) return 'Upload to compress';
+  if (path.endsWith('/compress-pdf.html') || path.endsWith('compress-pdf.html')) return 'Upload to compress';
+
+  return null;
+}
+
+function applyPdfMintLandingUploadLabel() {
+  const label = pdfMintLandingUploadLabel();
+  if (!label) return;
+
+  const candidates = [
+    document.querySelector('[data-upload-button]'),
+    document.querySelector('.upload-btn'),
+    document.querySelector('.upload-button'),
+    document.querySelector('.hero-upload-button'),
+    document.querySelector('.landing-upload-button'),
+    document.querySelector('button[type="button"]'),
+  ].filter(Boolean);
+
+  for (const button of candidates) {
+    const text = (button.textContent || '').trim().toLowerCase();
+    if (text.includes('upload to edit') || text === 'upload' || text.includes('upload pdf')) {
+      const spans = button.querySelectorAll('span');
+      if (spans.length) {
+        let replaced = false;
+        for (const span of spans) {
+          const spanText = (span.textContent || '').trim().toLowerCase();
+          if (spanText.includes('upload')) {
+            span.textContent = label;
+            replaced = true;
+            break;
+          }
+        }
+        if (!replaced) button.textContent = label;
+      } else {
+        button.textContent = label;
+      }
+      return;
+    }
+  }
+
+  // Fallback for the shared clickable label/anchor implementation.
+  const allClickable = document.querySelectorAll('button, a, label');
+  for (const el of allClickable) {
+    const text = (el.textContent || '').trim().toLowerCase();
+    if (text === 'upload to edit') {
+      el.textContent = label;
+      return;
+    }
+  }
+}
+
 document.addEventListener('DOMContentLoaded', initialiseSharedEditorRoute);
 
 document.querySelectorAll('input[name="export-format"]').forEach(input => {
@@ -4964,4 +5026,8 @@ document.addEventListener('DOMContentLoaded', () => {
     button.disabled = true;
     setTimeout(() => button.disabled = false, 1200);
   });
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  applyPdfMintLandingUploadLabel();
 });
