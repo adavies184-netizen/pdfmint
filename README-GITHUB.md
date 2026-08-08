@@ -116,3 +116,13 @@ This release changes BOTH the website and `pdfmint-engine`; deploy both.
 
 Deploy the normal PDFMint website again.
 The engine only needs redeploying if v3.9.7 engine changes were not already deployed.
+
+
+## PDFMint v3.9.9 — Browser PowerPoint export
+
+- Enabled PPTX and PPT in the export popup.
+- PPTX is created entirely in the browser with PptxGenJS.
+- Each PDF page is rendered and placed full-slide into the PowerPoint deck.
+- No PDFMint Engine call is required for PPTX.
+- Current browser-only legacy PPT attempt intentionally returns a clear message instead of producing a fake `.ppt` file, because modern browser libraries do not generate genuine binary PowerPoint 97-2003 files reliably.
+- Normal website redeploy only; the engine does not need redeploying for PPTX.
