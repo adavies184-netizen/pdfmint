@@ -132,7 +132,7 @@ let editor = {
   activeLinkDraft: null,
   notes: {},
   selectedNoteId: null,
-  watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, align: 'center', vertical: 50, applied: false }
+  watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false }
 };
 let splitFile = null;
 let splitPageCount = 0;
@@ -172,7 +172,7 @@ function restoreEditorState(snapshot) {
   editor.shapes = snapshot.shapes || {};
   editor.textHighlights = snapshot.textHighlights || {};
   editor.links = snapshot.links || {};
-  editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, align: 'center', vertical: 50, applied: false };
+  editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false };
   editor.watermark.align = editor.watermark.align || 'center';
   editor.watermark.vertical = Number.isFinite(editor.watermark.vertical) ? editor.watermark.vertical : 50;
   editor.activeLinkDraft = null;
@@ -311,7 +311,7 @@ async function loadEditorPdf(file) {
       activeLinkDraft: null,
       notes: {},
       selectedNoteId: null,
-      watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, align: 'center', vertical: 50, applied: false }
+      watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false }
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
@@ -2708,7 +2708,7 @@ function ensureWatermarkUi() {
     if (drawBar) {
       const bar = document.createElement('div');
       bar.className = 'watermark-options-bar'; bar.id = 'watermark-options-bar'; bar.hidden = true; bar.setAttribute('aria-label','Watermark options');
-      bar.innerHTML = `<label class="watermark-control watermark-text-control"><span>Text</span><input id="watermark-text" type="text" value="HELLO WORLD!" maxlength="160"></label><label class="watermark-control watermark-range-control"><span>Size</span><input id="watermark-size" type="range" min="0" max="100" value="35"><output id="watermark-size-value">35%</output></label><label class="watermark-control watermark-range-control"><span>Opacity</span><input id="watermark-opacity" type="range" min="0" max="100" value="50"><output id="watermark-opacity-value">50%</output></label><div class="watermark-colour-control"><span>Colour</span><div class="watermark-swatches" role="group" aria-label="Watermark colour">${[['#ef4444','Red'],['#f97316','Orange'],['#eab308','Yellow'],['#22c55e','Green'],['#3b82f6','Blue'],['#ec4899','Pink'],['#111827','Black']].map(([colour,label]) => `<button type="button" class="watermark-swatch${label === 'Black' ? ' active' : ''}" data-watermark-colour="${colour}" style="--watermark-colour:${colour}" aria-label="${label}"></button>`).join('')}</div></div><label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#111827" aria-label="Custom watermark colour"></label><div class="watermark-control watermark-align-control"><span>Align</span><div class="watermark-align-buttons" role="group" aria-label="Horizontal position"><button type="button" data-watermark-align="left" title="Align left">≡</button><button type="button" class="active" data-watermark-align="center" title="Align centre">≡</button><button type="button" data-watermark-align="right" title="Align right">≡</button></div></div><label class="watermark-control watermark-vertical-control"><span>Height</span><input id="watermark-vertical" type="range" min="0" max="100" value="50" aria-label="Vertical position"><div class="watermark-height-labels"><small>Top</small><small>Bottom</small></div></label><div class="watermark-control watermark-angle-control"><span>Angle</span><div class="watermark-angle-dial" id="watermark-angle-dial" role="slider" tabindex="0" aria-label="Watermark angle" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="-45"><i id="watermark-angle-knob"></i></div><output id="watermark-angle-value">-45°</output></div><button class="watermark-done" id="watermark-done" type="button">Done</button>`;
+      bar.innerHTML = `<label class="watermark-control watermark-text-control"><span>Text</span><input id="watermark-text" type="text" value="HELLO WORLD!" maxlength="160"></label><label class="watermark-control watermark-range-control"><span>Size</span><input id="watermark-size" type="range" min="0" max="100" value="100"><output id="watermark-size-value">100%</output></label><label class="watermark-control watermark-range-control"><span>Opacity</span><input id="watermark-opacity" type="range" min="0" max="100" value="50"><output id="watermark-opacity-value">50%</output></label><div class="watermark-colour-control"><span>Colour</span><div class="watermark-swatches" role="group" aria-label="Watermark colour">${[['#ef4444','Red'],['#f97316','Orange'],['#eab308','Yellow'],['#22c55e','Green'],['#3b82f6','Blue'],['#ec4899','Pink'],['#111827','Black']].map(([colour,label]) => `<button type="button" class="watermark-swatch${label === 'Red' ? ' active' : ''}" data-watermark-colour="${colour}" style="--watermark-colour:${colour}" aria-label="${label}"></button>`).join('')}</div></div><label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#ef4444" aria-label="Custom watermark colour"></label><div class="watermark-control watermark-align-control"><span>Align</span><div class="watermark-align-buttons" role="group" aria-label="Horizontal position"><button type="button" data-watermark-align="left" title="Align left">≡</button><button type="button" class="active" data-watermark-align="center" title="Align centre">≡</button><button type="button" data-watermark-align="right" title="Align right">≡</button></div></div><label class="watermark-control watermark-vertical-control"><span>Height</span><input id="watermark-vertical" type="range" min="0" max="100" value="50" aria-label="Vertical position"><div class="watermark-height-labels"><small>Top</small><small>Bottom</small></div></label><div class="watermark-control watermark-angle-control"><span>Angle</span><div class="watermark-angle-dial" id="watermark-angle-dial" role="slider" tabindex="0" aria-label="Watermark angle" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="-45"><i id="watermark-angle-knob"></i></div><output id="watermark-angle-value">-45°</output></div><button class="watermark-done" id="watermark-done" type="button">Done</button>`;
       drawBar.before(bar);
     }
   }
