@@ -3989,11 +3989,47 @@ async function exportEditedPdfThroughEngine(format) {
     throw new Error('That server conversion format is not available.');
   }
 
-  const convertedBlob = await convertPdfThroughPdfMintEngine(
-    pdfBlob,
-    operation,
-    baseName
-  );
+  let convertedBlob;
+
+  try {
+    convertedBlob = await convertPdfThroughPdfMintEngine(
+      pdfBlob,
+      operation,
+      baseName
+    );
+  } catch (error) {
+    // Legacy PPT is the only format that gets one silent retry.
+    // LibreOffice Impress can occasionally be killed on the smallest
+    // Sevalla instance during a transient memory spike.
+    if (format !== 'ppt') {
+      throw error;
+    }
+
+    const message = String(error && error.message ? error.message : error);
+    const transient =
+      message.includes('503') ||
+      message.toLowerCase().includes('timed out') ||
+      message.toLowerCase().includes('timeout') ||
+      message.toLowerCase().includes('cannot be reached');
+
+    if (!transient) {
+      throw error;
+    }
+
+    updateExportProgress(
+      74,
+      'Preparing your PPT…',
+      'Nearly ready…'
+    );
+
+    await new Promise(resolve => setTimeout(resolve, 2200));
+
+    convertedBlob = await convertPdfThroughPdfMintEngine(
+      pdfBlob,
+      operation,
+      baseName
+    );
+  }
 
   updateExportProgress(100, 'Download ready', `${baseName}.${format} is ready.`);
   downloadBlob(convertedBlob, `${baseName}.${format}`);

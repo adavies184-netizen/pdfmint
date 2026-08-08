@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import gc
 import os
 import re
 import shutil
@@ -42,9 +43,10 @@ def pdf_to_pptx(pdf_path: Path, output_path: Path) -> Path:
         render_dir.mkdir(parents=True, exist_ok=True)
 
         for page_index, page in enumerate(document, start=1):
-            pixmap = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+            pixmap = page.get_pixmap(matrix=fitz.Matrix(1.5, 1.5), alpha=False)
             image_path = render_dir / f"page-{page_index}.jpg"
-            pixmap.save(str(image_path), jpg_quality=88)
+            pixmap.save(str(image_path), jpg_quality=82)
+            del pixmap
 
             slide = presentation.slides.add_slide(blank_layout)
             slide.shapes.add_picture(
@@ -111,7 +113,9 @@ def pptx_to_ppt(pptx_path: Path, output_dir: Path) -> Path:
                 **os.environ,
                 "HOME": str(profile),
                 "SAL_USE_VCLPLUGIN": "svp",
-                "JAVA_TOOL_OPTIONS": "-Xms16m -Xmx64m",
+                "JAVA_TOOL_OPTIONS": "-Xms8m -Xmx32m",
+                "SAL_DISABLE_SYNCHRONOUS_PRINTER_DETECTION": "1",
+                "OOO_FORCE_DESKTOP": "none",
             },
         )
 
@@ -134,4 +138,9 @@ def pptx_to_ppt(pptx_path: Path, output_dir: Path) -> Path:
 def pdf_to_ppt(pdf_path: Path, output_dir: Path, base_name: str) -> Path:
     pptx_path = output_dir / f"{base_name}.pptx"
     pdf_to_pptx(pdf_path, pptx_path)
+
+    # Force Python to release temporary render/presentation objects before
+    # LibreOffice Impress starts. This matters on the 300 MB Sevalla plan.
+    gc.collect()
+
     return pptx_to_ppt(pptx_path, output_dir)

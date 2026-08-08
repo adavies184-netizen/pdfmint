@@ -130,3 +130,22 @@ Built directly from the user-confirmed stable v3.9.8 baseline.
 - config.js points to the live Sevalla engine URL.
 
 Deploy BOTH the normal PDFMint application and pdfmint-engine.
+
+
+## PDFMint v4.0.2 — PPT silent retry + lower memory
+
+Reliability changes:
+- Legacy PPT gets one silent retry after ~2.2 seconds for transient 503/timeouts.
+- The customer continues to see the normal loading bar during the retry.
+- Other formats are not retried automatically.
+
+PPT memory reductions:
+- PDF pages render at 1.5x instead of 2x.
+- JPEG quality reduced from 88 to 82 (small visual difference, lower memory/file size).
+- PyMuPDF pixmaps are explicitly released after each page.
+- Python garbage collection runs before LibreOffice Impress starts.
+- LibreOffice uses a smaller Java heap hint and disables synchronous printer detection.
+
+This patch changes BOTH:
+1. normal PDFMint frontend
+2. pdfmint-engine
