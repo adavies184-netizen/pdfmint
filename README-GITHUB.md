@@ -126,3 +126,9 @@ The engine only needs redeploying if v3.9.7 engine changes were not already depl
 - No PDFMint Engine call is required for PPTX.
 - Current browser-only legacy PPT attempt intentionally returns a clear message instead of producing a fake `.ppt` file, because modern browser libraries do not generate genuine binary PowerPoint 97-2003 files reliably.
 - Normal website redeploy only; the engine does not need redeploying for PPTX.
+
+## PDFMint v4.0.0 — PPT/PPTX engine fix
+- Removed broken browser PowerPoint path.
+- PPTX now uses PyMuPDF + python-pptx in PDFMint Engine.
+- PPT uses the generated PPTX + LibreOffice Impress.
+- Deploy BOTH the normal PDFMint website and pdfmint-engine.

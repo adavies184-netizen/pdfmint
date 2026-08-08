@@ -3968,87 +3968,6 @@ async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
 }
 
 
-async function exportEditedPdfAsPptx(format) {
-  if (typeof PptxGenJS === 'undefined') {
-    throw new Error('The PowerPoint export library could not be loaded.');
-  }
-
-  const baseName = safeExportBaseName();
-  const pdfDoc = window.currentPdfDoc || currentPdfDoc || pdfDocInstance || null;
-  if (!pdfDoc) {
-    throw new Error('The PDF is not available for PowerPoint export.');
-  }
-
-  const pptx = new PptxGenJS();
-  pptx.author = 'PDFMint';
-  pptx.company = 'PDFMint';
-  pptx.subject = 'PDF export';
-  pptx.title = baseName;
-  pptx.lang = 'en-GB';
-
-  // Use the first page aspect ratio for the deck.
-  const firstPage = await pdfDoc.getPage(1);
-  const firstViewport = firstPage.getViewport({ scale: 1 });
-  const ratio = firstViewport.width / firstViewport.height;
-  const slideHeight = 7.5;
-  const slideWidth = slideHeight * ratio;
-
-  pptx.defineLayout({
-    name: 'PDFMINT_CUSTOM',
-    width: slideWidth,
-    height: slideHeight
-  });
-  pptx.layout = 'PDFMINT_CUSTOM';
-
-  updateExportProgress(8, `Preparing your ${format.toUpperCase()}…`, 'Please keep this window open.');
-
-  const totalPages = pdfDoc.numPages;
-  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber++) {
-    const page = await pdfDoc.getPage(pageNumber);
-    const viewport = page.getViewport({ scale: 2 });
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d', { alpha: false });
-    canvas.width = Math.ceil(viewport.width);
-    canvas.height = Math.ceil(viewport.height);
-
-    await page.render({
-      canvasContext: context,
-      viewport,
-      background: '#ffffff'
-    }).promise;
-
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
-    const slide = pptx.addSlide();
-    slide.background = { color: 'FFFFFF' };
-    slide.addImage({
-      data: dataUrl,
-      x: 0,
-      y: 0,
-      w: slideWidth,
-      h: slideHeight
-    });
-
-    const progress = 15 + Math.round((pageNumber / totalPages) * 70);
-    updateExportProgress(
-      progress,
-      `Preparing your ${format.toUpperCase()}…`,
-      'Your presentation is being created.'
-    );
-  }
-
-  // PptxGenJS creates genuine PPTX files in the browser.
-  // Legacy binary .ppt is not supported by browser libraries reliably.
-  if (format === 'ppt') {
-    throw new Error(
-      'Legacy PPT cannot be created reliably in the browser. Please use PPTX.'
-    );
-  }
-
-  updateExportProgress(92, 'Finalising presentation', 'Your download is almost ready.');
-  await pptx.writeFile({ fileName: `${baseName}.pptx` });
-  updateExportProgress(100, 'Download ready', `${baseName}.pptx is ready.`);
-}
-
 async function exportEditedPdfThroughEngine(format) {
   const baseName = safeExportBaseName();
   updateExportProgress(8, `Preparing your ${format.toUpperCase()}…`, 'Please keep this window open.');
@@ -4059,7 +3978,9 @@ async function exportEditedPdfThroughEngine(format) {
     docx: 'pdf-to-docx',
     doc: 'pdf-to-doc',
     xlsx: 'pdf-to-xlsx',
-    xls: 'pdf-to-xls'
+    xls: 'pdf-to-xls',
+    pptx: 'pdf-to-pptx',
+    ppt: 'pdf-to-ppt'
   };
 
   const operation = operationMap[format];
@@ -4255,12 +4176,7 @@ async function exportEditedDocument(format) {
     return;
   }
 
-  if (format === 'pptx' || format === 'ppt') {
-    await exportEditedPdfAsPptx(format);
-    return;
-  }
-
-  if (format === 'docx' || format === 'doc' || format === 'xlsx' || format === 'xls') {
+  if (['docx','doc','xlsx','xls','pptx','ppt'].includes(format)) {
     await exportEditedPdfThroughEngine(format);
     return;
   }

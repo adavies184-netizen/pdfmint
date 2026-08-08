@@ -7,6 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer \
     libreoffice-calc \
+    libreoffice-impress \
     libreoffice-core \
     poppler-utils \
     ghostscript \

@@ -7,6 +7,7 @@ from typing import Callable
 
 from .operations.word import pdf_to_doc, pdf_to_docx
 from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
+from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
 
 
 @dataclass(frozen=True)
@@ -59,11 +60,23 @@ def run_pdf_to_xls(pdf_path: Path, workspace: Path, base_name: str) -> Operation
     )
 
 
+
+def run_pdf_to_pptx(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = workspace / f"{base_name}.pptx"
+    pdf_to_pptx(pdf_path, output)
+    return OperationResult(output, output.name, "application/vnd.openxmlformats-officedocument.presentationml.presentation")
+
+def run_pdf_to_ppt(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = pdf_to_ppt(pdf_path, workspace, base_name)
+    return OperationResult(output, output.name, "application/vnd.ms-powerpoint")
+
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,
     "pdf-to-doc": run_pdf_to_doc,
     "pdf-to-xlsx": run_pdf_to_xlsx,
     "pdf-to-xls": run_pdf_to_xls,
+    "pdf-to-pptx": run_pdf_to_pptx,
+    "pdf-to-ppt": run_pdf_to_ppt,
 }
 
 
