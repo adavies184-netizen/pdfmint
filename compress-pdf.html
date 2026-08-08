@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4010" />
+  <link rel="stylesheet" href="styles.css?v=4011" />
 </head>
 <body data-landing-tool="none" data-compress-flow="true">
   <header class="site-header">
@@ -1031,24 +1031,21 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="script.js?v=4010"></script>
-
+  <script src="script.js?v=4011"></script>
   <div class="compression-modal-layer" id="compression-options-modal" hidden>
     <div class="compression-modal-backdrop"></div>
     <section class="compression-modal" role="dialog" aria-modal="true" aria-labelledby="compression-modal-title">
       <button class="compression-modal-close" type="button" id="compression-options-close" aria-label="Close">×</button>
-
       <div class="compression-modal-head">
         <span class="compression-kicker">COMPRESS PDF</span>
         <h2 id="compression-modal-title">Choose compression level</h2>
         <p>Select how much you want to reduce the file size.</p>
       </div>
-
       <div class="compression-modal-body">
         <div class="compression-file-card">
           <div class="compression-file-icon">PDF</div>
           <div class="compression-file-meta">
-            <strong id="compression-file-name">document.pdf</strong>
+            <strong id="compression-file-name">document</strong>
             <span>Original size</span>
             <b id="compression-original-size">—</b>
           </div>
@@ -1059,10 +1056,7 @@
             <input type="radio" name="compression-level" value="light">
             <span class="compression-radio"></span>
             <span class="compression-option-copy">
-              <span class="compression-option-heading">
-                <strong>Light</strong>
-                <em>~10% smaller</em>
-              </span>
+              <span class="compression-option-heading"><strong>Light</strong><em>~10% smaller</em></span>
               <span class="compression-estimate">Estimated size <b data-estimated-size="light">—</b></span>
               <small>Highest quality, minimal compression</small>
             </span>
@@ -1073,8 +1067,7 @@
             <span class="compression-radio"></span>
             <span class="compression-option-copy">
               <span class="compression-option-heading">
-                <strong>Standard <i>Recommended</i></strong>
-                <em>~20% smaller</em>
+                <strong>Standard <i>Recommended</i></strong><em>~20% smaller</em>
               </span>
               <span class="compression-estimate">Estimated size <b data-estimated-size="standard">—</b></span>
               <small>Best balance of file size and quality</small>
@@ -1085,17 +1078,14 @@
             <input type="radio" name="compression-level" value="high">
             <span class="compression-radio"></span>
             <span class="compression-option-copy">
-              <span class="compression-option-heading">
-                <strong>High</strong>
-                <em>~40% smaller</em>
-              </span>
+              <span class="compression-option-heading"><strong>High</strong><em>~40% smaller</em></span>
               <span class="compression-estimate">Estimated size <b data-estimated-size="high">—</b></span>
               <small>Smallest file size, reduced image quality</small>
             </span>
           </label>
         </div>
 
-        <button class="button button-primary compression-start-button" id="compression-start" type="button">Compress PDF</button>
+        <button class="button button-primary compression-start-button" id="compression-start" type="button">Compress Pdf</button>
       </div>
     </section>
   </div>
@@ -1106,16 +1096,12 @@
       <div class="compression-progress-icon">P</div>
       <span class="compression-kicker">PDFMINT</span>
       <h2 id="compression-progress-title">Compressing your PDF</h2>
-      <p id="compression-progress-message">Preparing your document…</p>
-
-      <div class="compression-progress-track" aria-hidden="true">
-        <div class="compression-progress-fill" id="compression-progress-fill"></div>
-      </div>
+      <p id="compression-progress-message">Preparing your file…</p>
+      <div class="compression-progress-track"><div class="compression-progress-fill" id="compression-progress-fill"></div></div>
       <div class="compression-progress-row">
         <span id="compression-progress-percent">0%</span>
         <span id="compression-progress-stage">Starting…</span>
       </div>
-
       <div class="compression-result" id="compression-result" hidden>
         <strong id="compression-result-summary"></strong>
         <span id="compression-result-detail"></span>
@@ -1123,5 +1109,6 @@
     </section>
   </div>
 
+  <script src="compress-pdf.js?v=4011"></script>
 </body>
 </html>

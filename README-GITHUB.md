@@ -288,3 +288,37 @@ Header:
 Frontend-only patch relative to v4.0.9.
 The v4.0.9 engine already contains the required compression operations, so
 the engine does NOT need to be redeployed again if v4.0.9 engine is live.
+
+
+## PDFMint v4.0.11 — working Compress PDF + Compress Image flows
+
+Key reliability change:
+- Removed compression CTA control from the huge shared script.
+- Compress PDF and Compress Image now each have a dedicated page-level controller
+  loaded after the shared site script. Their CTA binding no longer depends on
+  shared-editor initialisation order.
+
+Compress PDF:
+- Upload → Light / Standard / High popup.
+- Standard selected by default.
+- Shows percentage estimate + estimated file size.
+- CTA immediately opens progress screen.
+- Uses existing engine operations:
+  - compress-pdf-light
+  - compress-pdf-standard
+  - compress-pdf-high
+- Finished compressed PDF is transferred to editor storage.
+- Existing export popup opens automatically with PDF preselected.
+
+Compress Image:
+- Same compression popup and progress flow.
+- Supports PNG, JPG/JPEG and WEBP upload.
+- Compression is browser-side for speed.
+- Finished image is wrapped into a temporary PDF solely so the existing
+  editor/export system can be reused unchanged.
+- Existing export popup opens automatically with PNG preselected.
+- Other normal export choices remain available.
+
+Engine:
+- No new engine changes versus v4.0.9/v4.0.10.
+- If the v4.0.9 engine is already live, only the normal site needs redeployment.
