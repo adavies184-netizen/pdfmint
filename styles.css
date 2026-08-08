@@ -1627,3 +1627,303 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .desktop-nav .nav-dropdown.is-open ~ .nav-dropdown .nav-dropdown-toggle{
   color:inherit;
 }
+
+
+/* PDFMint v4.0.9 — Compress PDF flow */
+.compression-modal-layer[hidden]{display:none!important}
+.compression-modal-layer{
+  position:fixed;
+  inset:0;
+  z-index:2400;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:24px;
+}
+.compression-modal-backdrop{
+  position:absolute;
+  inset:0;
+  background:rgba(13,25,39,.58);
+  backdrop-filter:blur(2px);
+}
+.compression-modal{
+  position:relative;
+  z-index:1;
+  width:min(760px,100%);
+  max-height:calc(100vh - 48px);
+  overflow:auto;
+  border:1px solid #e1ebe6;
+  border-radius:24px;
+  background:#fff;
+  box-shadow:0 30px 80px rgba(16,40,30,.22);
+}
+.compression-modal-close{
+  position:absolute;
+  top:18px;
+  right:20px;
+  width:38px;
+  height:38px;
+  border:0;
+  background:transparent;
+  color:#829089;
+  font-size:30px;
+  line-height:1;
+  cursor:pointer;
+}
+.compression-modal-head{
+  padding:34px 38px 20px;
+  border-bottom:1px solid #edf2ef;
+}
+.compression-kicker{
+  display:block;
+  margin-bottom:8px;
+  color:#22a06b;
+  font-size:11px;
+  line-height:1;
+  font-weight:800;
+  letter-spacing:.12em;
+}
+.compression-modal-head h2,
+.compression-progress-modal h2{
+  margin:0;
+  color:#14263f;
+  font-size:30px;
+  line-height:1.15;
+  letter-spacing:-.03em;
+}
+.compression-modal-head p{
+  margin:8px 0 0;
+  color:#697b73;
+  font-size:15px;
+}
+.compression-modal-body{
+  padding:26px 38px 34px;
+}
+.compression-file-card{
+  display:flex;
+  align-items:center;
+  gap:15px;
+  margin-bottom:22px;
+  padding:15px 17px;
+  border:1px solid #e2eae6;
+  border-radius:15px;
+  background:#f8fbf9;
+}
+.compression-file-icon{
+  display:flex;
+  width:48px;
+  height:56px;
+  flex:0 0 48px;
+  align-items:center;
+  justify-content:center;
+  border:2px solid #e45858;
+  border-radius:9px;
+  color:#d64040;
+  background:#fff;
+  font-size:11px;
+  font-weight:800;
+}
+.compression-file-meta{
+  min-width:0;
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:3px 18px;
+  align-items:end;
+  width:100%;
+}
+.compression-file-meta strong{
+  grid-column:1/-1;
+  overflow:hidden;
+  color:#20372d;
+  font-size:14px;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.compression-file-meta span{
+  color:#84918b;
+  font-size:12px;
+}
+.compression-file-meta b{
+  color:#27483a;
+  font-size:14px;
+}
+.compression-options{
+  display:grid;
+  gap:12px;
+}
+.compression-option{
+  display:grid;
+  grid-template-columns:24px 1fr;
+  gap:14px;
+  align-items:center;
+  padding:17px 18px;
+  border:1px solid #dfe7e3;
+  border-radius:15px;
+  background:#fff;
+  cursor:pointer;
+  transition:border-color .15s ease,box-shadow .15s ease,background .15s ease;
+}
+.compression-option:hover{
+  border-color:#a9d9c4;
+  background:#fbfefc;
+}
+.compression-option.selected{
+  border-color:#22a06b;
+  background:#f4fbf7;
+  box-shadow:0 0 0 3px rgba(34,160,107,.10);
+}
+.compression-option input{
+  position:absolute;
+  opacity:0;
+  pointer-events:none;
+}
+.compression-radio{
+  display:block;
+  width:20px;
+  height:20px;
+  box-sizing:border-box;
+  border:2px solid #a2aea8;
+  border-radius:50%;
+  background:#fff;
+}
+.compression-option.selected .compression-radio{
+  border:6px solid #22a06b;
+}
+.compression-option-copy{
+  min-width:0;
+  display:grid;
+  gap:4px;
+}
+.compression-option-heading{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+}
+.compression-option-heading strong{
+  color:#19382c;
+  font-size:16px;
+}
+.compression-option-heading strong i{
+  display:inline-flex;
+  margin-left:7px;
+  padding:3px 7px;
+  border-radius:999px;
+  background:#dff4e9;
+  color:#18784f;
+  font-size:9px;
+  font-style:normal;
+  font-weight:800;
+  text-transform:uppercase;
+  vertical-align:2px;
+}
+.compression-option-heading em{
+  color:#12925d;
+  font-size:13px;
+  font-style:normal;
+  font-weight:800;
+  white-space:nowrap;
+}
+.compression-estimate{
+  color:#65766e;
+  font-size:13px;
+}
+.compression-estimate b{
+  margin-left:4px;
+  color:#203c30;
+  font-size:14px;
+}
+.compression-option small{
+  color:#8a9690;
+  font-size:12px;
+}
+.compression-start-button{
+  width:100%;
+  margin-top:22px;
+  min-height:52px;
+  border-radius:12px;
+  font-size:15px;
+  font-weight:800;
+}
+.compression-progress-modal{
+  width:min(570px,100%);
+  padding:42px;
+  text-align:center;
+}
+.compression-progress-icon{
+  display:flex;
+  width:56px;
+  height:56px;
+  margin:0 auto 14px;
+  align-items:center;
+  justify-content:center;
+  border-radius:16px;
+  background:#2fc597;
+  color:#fff;
+  font-size:28px;
+  font-weight:800;
+}
+.compression-progress-modal .compression-kicker{
+  margin-bottom:9px;
+}
+.compression-progress-modal p{
+  margin:10px 0 24px;
+  color:#718078;
+  font-size:14px;
+}
+.compression-progress-track{
+  width:100%;
+  height:10px;
+  overflow:hidden;
+  border-radius:999px;
+  background:#e9efec;
+}
+.compression-progress-fill{
+  width:0;
+  height:100%;
+  border-radius:inherit;
+  background:#22a06b;
+  transition:width .22s ease;
+}
+.compression-progress-row{
+  display:flex;
+  justify-content:space-between;
+  gap:15px;
+  margin-top:9px;
+  color:#74827b;
+  font-size:12px;
+}
+.compression-progress-row span:first-child{
+  color:#1c8056;
+  font-weight:800;
+}
+.compression-result{
+  display:grid;
+  gap:3px;
+  margin-top:22px;
+  padding:14px;
+  border:1px solid #cbead9;
+  border-radius:12px;
+  background:#f1fbf6;
+}
+.compression-result strong{
+  color:#15774e;
+  font-size:16px;
+}
+.compression-result span{
+  color:#64776e;
+  font-size:13px;
+}
+@media(max-width:640px){
+  .compression-modal-layer{padding:12px}
+  .compression-modal{border-radius:19px}
+  .compression-modal-head{padding:28px 22px 18px}
+  .compression-modal-body{padding:20px 22px 26px}
+  .compression-modal-head h2,.compression-progress-modal h2{font-size:25px}
+  .compression-option{padding:15px}
+  .compression-option-heading{align-items:flex-start}
+  .compression-option-heading strong i{display:none}
+  .compression-file-meta{grid-template-columns:1fr}
+  .compression-file-meta strong{grid-column:auto}
+  .compression-progress-modal{padding:34px 22px}
+}

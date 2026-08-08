@@ -240,3 +240,28 @@ Fix:
 - Header/footer/routing/conversions are unchanged.
 
 Frontend-only update. PDFMint Engine unchanged.
+
+
+## PDFMint v4.0.9 — Compress PDF workflow
+
+New Compress PDF experience:
+- Upload PDF → compression options modal.
+- Light: ~10% smaller + estimated output size.
+- Standard: ~20% smaller + estimated output size; selected by default and marked Recommended.
+- High: ~40% smaller + estimated output size.
+- Estimates are calculated from the uploaded file size and clearly presented as estimates.
+- Compression uses Ghostscript in PDFMint Engine:
+  - Light → /printer
+  - Standard → /ebook
+  - High → /screen
+- If a PDF is already optimised and Ghostscript produces a larger file, PDFMint retains the original PDF instead.
+- A PDFMint-themed progress modal appears during compression.
+- Completion briefly shows the real before/after size and actual percentage reduction.
+- The compressed file is then loaded into the shared editor and the existing export popup opens automatically.
+- PDF is selected by default in the export popup; all other existing export formats remain available.
+
+This release changes BOTH:
+1. normal PDFMint frontend
+2. pdfmint-engine
+
+Ghostscript was already present in the engine Docker image, so no new system dependency was required.

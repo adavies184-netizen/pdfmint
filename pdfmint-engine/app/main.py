@@ -57,7 +57,6 @@ def capabilities() -> dict:
         "operations": sorted(OPERATIONS.keys()),
         "planned": [
             "ocr-pdf",
-            "compress-pdf",
             "merge-pdf",
             "split-pdf",
             "rotate-pdf",

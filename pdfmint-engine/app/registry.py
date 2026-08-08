@@ -8,6 +8,7 @@ from typing import Callable
 from .operations.word import pdf_to_doc, pdf_to_docx
 from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
 from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
+from .operations.compress import compress_pdf
 
 
 @dataclass(frozen=True)
@@ -81,6 +82,50 @@ def run_pdf_to_ppt(pdf_path: Path, workspace: Path, base_name: str) -> Operation
     )
 
 
+
+
+def run_compress_pdf_light(
+    pdf_path: Path,
+    workspace: Path,
+    base_name: str,
+) -> OperationResult:
+    output = workspace / f"{base_name}-compressed.pdf"
+    compress_pdf(pdf_path, output, "light")
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/pdf",
+    )
+
+
+def run_compress_pdf_standard(
+    pdf_path: Path,
+    workspace: Path,
+    base_name: str,
+) -> OperationResult:
+    output = workspace / f"{base_name}-compressed.pdf"
+    compress_pdf(pdf_path, output, "standard")
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/pdf",
+    )
+
+
+def run_compress_pdf_high(
+    pdf_path: Path,
+    workspace: Path,
+    base_name: str,
+) -> OperationResult:
+    output = workspace / f"{base_name}-compressed.pdf"
+    compress_pdf(pdf_path, output, "high")
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/pdf",
+    )
+
+
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,
     "pdf-to-doc": run_pdf_to_doc,
@@ -88,6 +133,9 @@ OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-xls": run_pdf_to_xls,
     "pdf-to-pptx": run_pdf_to_pptx,
     "pdf-to-ppt": run_pdf_to_ppt,
+    "compress-pdf-light": run_compress_pdf_light,
+    "compress-pdf-standard": run_compress_pdf_standard,
+    "compress-pdf-high": run_compress_pdf_high,
 }
 
 
