@@ -2,7 +2,8 @@ FROM python:3.11-slim-bookworm
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    DEBIAN_FRONTEND=noninteractive
+    DEBIAN_FRONTEND=noninteractive \
+    PDFMINT_ENGINE_RELEASE=1.2.2
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer \
@@ -11,6 +12,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-core \
     poppler-utils \
     ghostscript \
+    qpdf \
+    tesseract-ocr \
+    tesseract-ocr-eng \
+    unpaper \
+    pngquant \
+    fonts-noto-core \
     fonts-dejavu \
     fonts-liberation \
     fontconfig \

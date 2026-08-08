@@ -50,3 +50,15 @@ XLS is produced from the generated XLSX using LibreOffice Calc.
 
 This is not intended to reproduce complex spreadsheet formatting or advanced
 table structures. It is a basic, fast conversion for ordinary tabular PDFs.
+
+## OCR operations — v1.2
+
+The engine exposes three OCR jobs through `POST /v1/jobs`:
+
+- `ocr-docx` — searchable OCR followed by editable DOCX reconstruction
+- `ocr-pdf` — PDF with a selectable and searchable text layer
+- `ocr-txt` — UTF-8 plain text extracted from the OCR result
+
+The container installs OCRmyPDF, Tesseract English data, QPDF, Ghostscript,
+Unpaper and recommended font support. Deploy the engine before the matching
+site package so the OCR health checks and operations are available.

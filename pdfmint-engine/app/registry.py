@@ -9,6 +9,7 @@ from .operations.word import pdf_to_doc, pdf_to_docx
 from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
 from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
 from .operations.compress import compress_pdf
+from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt
 
 
 @dataclass(frozen=True)
@@ -126,6 +127,28 @@ def run_compress_pdf_high(
     )
 
 
+def run_ocr_pdf(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = workspace / f"{base_name}-searchable.pdf"
+    create_searchable_pdf(pdf_path, output)
+    return OperationResult(output, output.name, "application/pdf")
+
+
+def run_ocr_docx(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = workspace / f"{base_name}-ocr.docx"
+    ocr_pdf_to_docx(pdf_path, output, workspace)
+    return OperationResult(
+        output,
+        output.name,
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    )
+
+
+def run_ocr_txt(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = workspace / f"{base_name}-ocr.txt"
+    ocr_pdf_to_txt(pdf_path, output, workspace)
+    return OperationResult(output, output.name, "text/plain; charset=utf-8")
+
+
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,
     "pdf-to-doc": run_pdf_to_doc,
@@ -136,6 +159,9 @@ OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "compress-pdf-light": run_compress_pdf_light,
     "compress-pdf-standard": run_compress_pdf_standard,
     "compress-pdf-high": run_compress_pdf_high,
+    "ocr-pdf": run_ocr_pdf,
+    "ocr-docx": run_ocr_docx,
+    "ocr-txt": run_ocr_txt,
 }
 
 

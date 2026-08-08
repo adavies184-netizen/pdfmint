@@ -20,10 +20,11 @@ from .settings import ALLOWED_ORIGINS
 
 
 logger = logging.getLogger("pdfmint.engine")
+ENGINE_VERSION = "1.2.2"
 
 app = FastAPI(
     title="PDFMint Engine",
-    version="1.0.0",
+    version=ENGINE_VERSION,
     docs_url="/docs",
     redoc_url=None,
 )
@@ -42,11 +43,14 @@ app.add_middleware(
 def health() -> dict:
     checks = {
         "libreoffice": shutil.which("soffice") is not None,
+        "tesseract": shutil.which("tesseract") is not None,
+        "ocrmypdf": shutil.which("ocrmypdf") is not None,
         "operations": sorted(OPERATIONS.keys()),
     }
     return {
-        "status": "ok" if checks["libreoffice"] else "degraded",
+        "status": "ok" if checks["libreoffice"] and checks["tesseract"] and checks["ocrmypdf"] else "degraded",
         "service": "pdfmint-engine",
+        "version": ENGINE_VERSION,
         "checks": checks,
     }
 
@@ -54,9 +58,10 @@ def health() -> dict:
 @app.get("/v1/capabilities")
 def capabilities() -> dict:
     return {
+        "service": "pdfmint-engine",
+        "version": ENGINE_VERSION,
         "operations": sorted(OPERATIONS.keys()),
         "planned": [
-            "ocr-pdf",
             "merge-pdf",
             "split-pdf",
             "rotate-pdf",
