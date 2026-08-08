@@ -4945,39 +4945,46 @@ function applyPdfMintLandingUploadLabel() {
     document.querySelector('.upload-btn'),
     document.querySelector('.upload-button'),
     document.querySelector('.hero-upload-button'),
-    document.querySelector('.landing-upload-button'),
-    document.querySelector('button[type="button"]'),
+    document.querySelector('.landing-upload-button')
   ].filter(Boolean);
 
   for (const button of candidates) {
-    const text = (button.textContent || '').trim().toLowerCase();
-    if (text.includes('upload to edit') || text === 'upload' || text.includes('upload pdf')) {
-      const spans = button.querySelectorAll('span');
-      if (spans.length) {
-        let replaced = false;
-        for (const span of spans) {
-          const spanText = (span.textContent || '').trim().toLowerCase();
-          if (spanText.includes('upload')) {
-            span.textContent = label;
-            replaced = true;
-            break;
-          }
-        }
-        if (!replaced) button.textContent = label;
-      } else {
-        button.textContent = label;
-      }
-      return;
-    }
-  }
+    const currentText = (button.textContent || '').trim().toLowerCase();
 
-  // Fallback for the shared clickable label/anchor implementation.
-  const allClickable = document.querySelectorAll('button, a, label');
-  for (const el of allClickable) {
-    const text = (el.textContent || '').trim().toLowerCase();
-    if (text === 'upload to edit') {
-      el.textContent = label;
-      return;
+    if (
+      currentText.includes('upload to edit') ||
+      currentText === 'upload' ||
+      currentText.includes('upload pdf') ||
+      currentText.includes('upload to sign') ||
+      currentText.includes('upload to rotate') ||
+      currentText.includes('upload to merge') ||
+      currentText.includes('upload to split') ||
+      currentText.includes('upload to crop') ||
+      currentText.includes('upload to watermark') ||
+      currentText.includes('upload to compress')
+    ) {
+      // IMPORTANT: many landing-page upload buttons are <label> elements
+      // containing the hidden <input type="file">. Never use
+      // button.textContent = ... here, because that deletes the file input.
+      const textNodes = Array.from(button.childNodes).filter(
+        node => node.nodeType === Node.TEXT_NODE && node.textContent.trim()
+      );
+
+      if (textNodes.length) {
+        textNodes[0].textContent = `\n            ${label}\n            `;
+        return;
+      }
+
+      // If the visible label is in a span, change only that span.
+      const spans = Array.from(button.querySelectorAll('span'));
+      const textSpan = spans.find(span =>
+        (span.textContent || '').toLowerCase().includes('upload')
+      );
+
+      if (textSpan) {
+        textSpan.textContent = label;
+        return;
+      }
     }
   }
 }

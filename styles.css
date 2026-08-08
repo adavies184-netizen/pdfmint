@@ -1603,3 +1603,27 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .desktop-nav .nav-dropdown:not(.is-open) > .nav-dropdown-menu{
   display:none !important;
 }
+
+
+/* PDFMint v4.0.7 — isolate desktop dropdown hover state */
+.desktop-nav .nav-dropdown .nav-dropdown-toggle{
+  color:inherit;
+}
+
+.desktop-nav .nav-dropdown:hover > .nav-dropdown-toggle{
+  color:#22a06b;
+}
+
+.desktop-nav .nav-dropdown:not(:hover):not(.is-open) > .nav-dropdown-toggle{
+  color:inherit !important;
+}
+
+.desktop-nav .nav-dropdown.is-open > .nav-dropdown-toggle{
+  color:#22a06b;
+}
+
+/* Prevent a hovered/open sibling from visually activating another dropdown */
+.desktop-nav .nav-dropdown:hover ~ .nav-dropdown .nav-dropdown-toggle,
+.desktop-nav .nav-dropdown.is-open ~ .nav-dropdown .nav-dropdown-toggle{
+  color:inherit;
+}

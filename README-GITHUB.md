@@ -212,3 +212,31 @@ Frontend-only update. PDFMint Engine unchanged.
 - Existing footer, OCR CTA, conversion logic and engine are unchanged.
 
 Frontend-only update.
+
+
+## PDFMint v4.0.7 — header hover-state fix
+
+- Desktop PDF Editor and PDF Converter hover states are now isolated.
+- Hovering one dropdown only highlights that dropdown.
+- The open dropdown remains highlighted green.
+- The other dropdown remains in its normal colour.
+- Dropdown open/close behaviour from v4.0.6 is unchanged.
+
+Frontend-only update.
+
+
+## PDFMint v4.0.8 — upload picker restored
+
+Root cause fixed:
+- The shared upload-label text helper was using `textContent` on the entire upload `<label>`.
+- Those labels contain the hidden `<input type="file">`.
+- Replacing the label text deleted the nested file input at runtime, so clicking the button no longer opened the native file picker.
+
+Fix:
+- Only the visible text node/span is updated.
+- The hidden file input is preserved.
+- Custom upload labels remain unchanged.
+- Homepage/Edit PDF behavior remains unchanged.
+- Header/footer/routing/conversions are unchanged.
+
+Frontend-only update. PDFMint Engine unchanged.
