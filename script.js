@@ -132,6 +132,9 @@ let editor = {
   activeLinkDraft: null,
   notes: {},
   selectedNoteId: null,
+  crops: {},
+  cropDraft: null,
+  cropScope: 'current',
   watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false }
 };
 let splitFile = null;
@@ -151,6 +154,7 @@ function cloneEditorState() {
     textHighlights: editor.textHighlights,
     links: editor.links,
     notes: editor.notes,
+    crops: editor.crops,
     watermark: editor.watermark,
     selectedIndex: editor.selectedIndex,
     selectedAnnotationId: editor.selectedAnnotationId,
@@ -172,6 +176,8 @@ function restoreEditorState(snapshot) {
   editor.shapes = snapshot.shapes || {};
   editor.textHighlights = snapshot.textHighlights || {};
   editor.links = snapshot.links || {};
+  editor.crops = snapshot.crops || {};
+  editor.cropDraft = null;
   editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false };
   editor.watermark.align = editor.watermark.align || 'center';
   editor.watermark.vertical = Number.isFinite(editor.watermark.vertical) ? editor.watermark.vertical : 50;
@@ -311,6 +317,9 @@ async function loadEditorPdf(file) {
       activeLinkDraft: null,
       notes: {},
       selectedNoteId: null,
+      crops: {},
+      cropDraft: null,
+      cropScope: 'current',
       watermark: { text: 'HELLO WORLD!', size: 100, opacity: 50, colour: '#ef4444', angle: -45, align: 'center', vertical: 50, applied: false }
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
@@ -372,6 +381,7 @@ function clearEditTextInterfaceImmediately() {
 }
 
 function setEditorMode(mode) {
+  if (mode !== 'crop') editor.cropDraft = null;
   if (mode !== 'edit-existing') {
     clearEditTextInterfaceImmediately();
   }
@@ -392,6 +402,7 @@ function setEditorMode(mode) {
   document.getElementById('link-tool')?.classList.toggle('active', mode === 'link');
   document.getElementById('note-tool')?.classList.toggle('active', mode === 'note');
   document.getElementById('watermark-tool')?.classList.toggle('active', mode === 'watermark');
+  document.getElementById('crop-tool')?.classList.toggle('active', mode === 'crop');
 
   const addOptionsBar = document.getElementById('text-options-bar');
   const editOptionsBar = document.getElementById('edit-text-options-bar');
@@ -399,12 +410,14 @@ function setEditorMode(mode) {
   const lineOptionsBar = document.getElementById('line-options-bar');
   const highlightOptionsBar = document.getElementById('text-highlight-options-bar');
   const watermarkOptionsBar = document.getElementById('watermark-options-bar');
+  const cropOptionsBar = document.getElementById('crop-options-bar');
   if (addOptionsBar) addOptionsBar.hidden = mode !== 'text';
   if (editOptionsBar) editOptionsBar.hidden = mode !== 'edit-existing';
   if (drawOptionsBar) drawOptionsBar.hidden = mode !== 'draw';
   if (lineOptionsBar) lineOptionsBar.hidden = mode !== 'shape';
   if (highlightOptionsBar) highlightOptionsBar.hidden = mode !== 'text-highlight';
   if (watermarkOptionsBar) watermarkOptionsBar.hidden = mode !== 'watermark';
+  if (cropOptionsBar) cropOptionsBar.hidden = mode !== 'crop';
 
   if (mode !== 'edit-existing') {
     editor.editTextBoxMode = false;
@@ -426,6 +439,7 @@ function setEditorMode(mode) {
   layer.classList.toggle('shape-mode', mode === 'shape');
   layer.classList.toggle('text-highlight-mode', mode === 'text-highlight');
   layer.classList.toggle('link-mode', mode === 'link');
+  layer.classList.toggle('crop-mode', mode === 'crop');
   layer.classList.remove('text-highlight-dragging');
 
   if (mode === 'text') {
@@ -441,6 +455,9 @@ function setEditorMode(mode) {
     renderAnnotations();
   } else if (mode === 'watermark') {
     showEditorHint('Changes are applied live to every page.');
+    renderAnnotations();
+  } else if (mode === 'crop') {
+    showEditorHint('Press and drag on the page to select the area to keep.');
     renderAnnotations();
   } else {
     renderAnnotations();
@@ -2325,8 +2342,43 @@ function renderAnnotations() {
   renderNotes(layer, metrics);
   attachDrawingCanvas(layer);
   renderTextHighlightInteraction(layer, metrics);
+  renderCropSelection(layer, metrics);
   syncTextInspector();
   syncEditTextToolbar();
+}
+
+function getCurrentAppliedCrop() {
+  if (!editor.pages.length) return null;
+  return editor.crops[String(editor.pages[editor.selectedIndex].sourceIndex)] || null;
+}
+function syncCropDimensions(rect) {
+  const values = {
+    'crop-left-value': rect ? `${Math.round(rect.x * 100)}%` : '—',
+    'crop-top-value': rect ? `${Math.round(rect.y * 100)}%` : '—',
+    'crop-width-value': rect ? `${Math.round(rect.w * 100)}%` : '—',
+    'crop-height-value': rect ? `${Math.round(rect.h * 100)}%` : '—'
+  };
+  Object.entries(values).forEach(([id,value]) => { const output=document.getElementById(id); if(output) output.textContent=value; });
+  const apply = document.getElementById('crop-apply');
+  if (apply) apply.disabled = !editor.cropDraft;
+}
+function renderCropSelection(layer, metrics) {
+  if (editor.mode !== 'crop') return;
+  const rect = editor.cropDraft || getCurrentAppliedCrop();
+  syncCropDimensions(rect);
+  if (!rect) return;
+  const x=rect.x*metrics.width,y=rect.y*metrics.height,w=rect.w*metrics.width,h=rect.h*metrics.height;
+  const shades = [
+    {left:0,top:0,width:metrics.width,height:y},
+    {left:0,top:y,width:x,height:h},
+    {left:x+w,top:y,width:Math.max(0,metrics.width-x-w),height:h},
+    {left:0,top:y+h,width:metrics.width,height:Math.max(0,metrics.height-y-h)}
+  ];
+  shades.forEach(bounds => { const shade=document.createElement('div'); shade.className='crop-shade'; Object.assign(shade.style,{left:`${bounds.left}px`,top:`${bounds.top}px`,width:`${bounds.width}px`,height:`${bounds.height}px`}); layer.appendChild(shade); });
+  const selection=document.createElement('div');
+  selection.className=`crop-selection${editor.cropDraft ? '' : ' applied'}`;
+  Object.assign(selection.style,{left:`${x}px`,top:`${y}px`,width:`${w}px`,height:`${h}px`});
+  layer.appendChild(selection);
 }
 function selectAnnotation(id) {
   editor.selectedAnnotationId = id;
@@ -2715,6 +2767,26 @@ function ensureWatermarkUi() {
 }
 ensureWatermarkUi();
 
+function ensureCropUi() {
+  if (!document.getElementById('crop-tool')) {
+    const watermarkTool = document.getElementById('watermark-tool');
+    if (watermarkTool) {
+      const tool=document.createElement('button'); tool.className='ribbon-tool'; tool.id='crop-tool'; tool.type='button';
+      tool.innerHTML='<span class="tool-icon crop-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13"/><path d="M2 7h15a2 2 0 0 1 2 2v13"/></svg></span><span class="tool-label">Crop</span>';
+      watermarkTool.after(tool);
+    }
+  }
+  if (!document.getElementById('crop-options-bar')) {
+    const drawBar=document.getElementById('draw-options-bar');
+    if (drawBar) {
+      const bar=document.createElement('div'); bar.className='crop-options-bar'; bar.id='crop-options-bar'; bar.hidden=true; bar.setAttribute('aria-label','Crop options');
+      bar.innerHTML='<div class="crop-scope-control"><span>Pages to crop</span><div class="crop-scope-choices"><label><input type="radio" name="crop-scope" value="current" checked> Current page</label><label><input type="radio" name="crop-scope" value="all"> All pages</label><label><input type="radio" name="crop-scope" value="specific"> Specific page</label><input id="crop-specific-page" type="number" min="1" value="1" disabled aria-label="Specific page number"></div></div><div class="crop-instructions"><strong>Drag to select</strong><small>Press and hold on the page, then drag around the area to keep.</small></div><div class="crop-dimensions"><span>Crop dimensions</span><div><label>Left <output id="crop-left-value">—</output></label><label>Top <output id="crop-top-value">—</output></label><label>Width <output id="crop-width-value">—</output></label><label>Height <output id="crop-height-value">—</output></label></div></div><button class="crop-action secondary" id="crop-cancel" type="button">Cancel</button><button class="crop-action primary" id="crop-apply" type="button" disabled>Apply crop</button>';
+      drawBar.before(bar);
+    }
+  }
+}
+ensureCropUi();
+
 function syncWatermarkControls() {
   const state = editor.watermark;
   document.getElementById('watermark-text').value = state.text;
@@ -2815,6 +2887,63 @@ document.getElementById('watermark-done').addEventListener('click', () => {
   setEditorMode('select');
   openFormatModal();
 });
+
+document.getElementById('crop-tool').addEventListener('click', () => {
+  editor.cropDraft = null;
+  document.getElementById('crop-specific-page').max = Math.max(1, editor.pages.length);
+  setEditorMode('crop');
+});
+document.querySelectorAll('input[name="crop-scope"]').forEach(input => input.addEventListener('change', event => {
+  editor.cropScope = event.target.value;
+  document.getElementById('crop-specific-page').disabled = editor.cropScope !== 'specific';
+}));
+document.getElementById('crop-cancel').addEventListener('click', () => {
+  editor.cropDraft = null;
+  setEditorMode('select');
+});
+document.getElementById('crop-apply').addEventListener('click', () => {
+  if (!editor.cropDraft) return;
+  recordHistory();
+  const crop = {...editor.cropDraft};
+  if (editor.cropScope === 'all') {
+    editor.pages.forEach(page => { editor.crops[String(page.sourceIndex)] = {...crop}; });
+  } else if (editor.cropScope === 'specific') {
+    const pageNumber = Math.max(1, Math.min(editor.pages.length, Number(document.getElementById('crop-specific-page').value) || 1));
+    editor.crops[String(editor.pages[pageNumber - 1].sourceIndex)] = {...crop};
+  } else {
+    editor.crops[String(editor.pages[editor.selectedIndex].sourceIndex)] = {...crop};
+  }
+  editor.cropDraft = null;
+  renderAnnotations();
+  showEditorHint(editor.cropScope === 'all' ? 'Crop applied to all pages.' : 'Crop applied. Press Done when you are ready to export.');
+});
+document.getElementById('annotation-layer').addEventListener('pointerdown', event => {
+  if (editor.mode !== 'crop' || event.button !== 0) return;
+  event.preventDefault(); event.stopImmediatePropagation();
+  const layer = event.currentTarget;
+  const bounds = layer.getBoundingClientRect();
+  const startX = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+  const startY = Math.max(0, Math.min(1, (event.clientY - bounds.top) / bounds.height));
+  layer.setPointerCapture(event.pointerId);
+  editor.cropDraft = {x:startX,y:startY,w:0,h:0};
+  const move = moveEvent => {
+    const currentX=Math.max(0,Math.min(1,(moveEvent.clientX-bounds.left)/bounds.width));
+    const currentY=Math.max(0,Math.min(1,(moveEvent.clientY-bounds.top)/bounds.height));
+    editor.cropDraft={x:Math.min(startX,currentX),y:Math.min(startY,currentY),w:Math.abs(currentX-startX),h:Math.abs(currentY-startY)};
+    renderAnnotations();
+  };
+  const finish = finishEvent => {
+    layer.removeEventListener('pointermove',move);
+    layer.removeEventListener('pointerup',finish);
+    layer.removeEventListener('pointercancel',finish);
+    if (editor.cropDraft && (editor.cropDraft.w < .02 || editor.cropDraft.h < .02)) editor.cropDraft=null;
+    renderAnnotations();
+  };
+  layer.addEventListener('pointermove',move);
+  layer.addEventListener('pointerup',finish);
+  layer.addEventListener('pointercancel',finish);
+  renderAnnotations();
+}, true);
 
 document.getElementById('text-highlight-tool').addEventListener('click', () => {
   setEditorMode('text-highlight');
@@ -2987,6 +3116,16 @@ async function createEditedPdfBytes() {
     const annotations = getPageAnnotations(state.sourceIndex);
     const existingEdits = getExistingTextItems(state.sourceIndex).filter(item => item.modified);
     const {width, height} = page.getSize();
+
+    const crop = editor.crops[String(state.sourceIndex)];
+    if (crop && crop.w > 0 && crop.h > 0) {
+      page.setCropBox(
+        crop.x * width,
+        (1 - crop.y - crop.h) * height,
+        crop.w * width,
+        crop.h * height
+      );
+    }
 
     if (editor.watermark?.applied && editor.watermark.text && editor.watermark.size > 0 && editor.watermark.opacity > 0) {
       const watermarkFont = await getFont({font:'Helvetica', bold:true, italic:false});
@@ -5101,6 +5240,9 @@ async function routeLandingUploadToEditor(file) {
     if (tool === 'none' && /(?:^|\/)add-watermark\.html$/i.test(window.location.pathname)) {
       tool = 'watermark';
     }
+    if (tool === 'none' && /(?:^|\/)crop-pdf\.html$/i.test(window.location.pathname)) {
+      tool = 'crop';
+    }
     await routeFileToSharedEditor(file, { tool });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
@@ -5116,7 +5258,8 @@ function activateSharedEditorTool(tool) {
     image: 'image-tool',
     link: 'link-tool',
     note: 'note-tool',
-    watermark: 'watermark-tool'
+    watermark: 'watermark-tool',
+    crop: 'crop-tool'
   };
   const id = buttonIds[tool];
   if (id) requestAnimationFrame(() => document.getElementById(id)?.click());

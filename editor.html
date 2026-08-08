@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4016" />
+  <link rel="stylesheet" href="styles.css?v=4017" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -340,6 +340,10 @@
         <span class="tool-icon watermark-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19 9.2 5h2.2l3.1 8.5L17.7 5H20l-5.1 14h-2.2L10 11.5 7.2 19z"/><path d="M3 21h18"/></svg></span>
         <span class="tool-label">Watermark</span>
       </button>
+      <button class="ribbon-tool" id="crop-tool" type="button">
+        <span class="tool-icon crop-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13"/><path d="M2 7h15a2 2 0 0 1 2 2v13"/></svg></span>
+        <span class="tool-label">Crop</span>
+      </button>
       <button class="ribbon-tool menu-fix-sign" id="sign-tool" type="button">
       <span class="tool-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m5 18 2.2-5.8L16.8 2.6l4.6 4.6-9.6 9.6z"/><path d="M4 21c3-2.2 5.6-2.2 8-.2 2.1 1.7 4.8 1.4 8-.8"/></svg>
@@ -493,6 +497,19 @@
       <label class="watermark-control watermark-vertical-control"><span>Height</span><input id="watermark-vertical" type="range" min="0" max="100" value="50" aria-label="Vertical position"><div class="watermark-height-labels"><small>Top</small><small>Bottom</small></div></label>
       <div class="watermark-control watermark-angle-control"><span>Angle</span><div class="watermark-angle-dial" id="watermark-angle-dial" role="slider" tabindex="0" aria-label="Watermark angle" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="-45"><i id="watermark-angle-knob"></i></div><output id="watermark-angle-value">-45°</output></div>
       <button class="watermark-done" id="watermark-done" type="button">Done</button>
+    </div>
+
+    <div class="crop-options-bar" id="crop-options-bar" hidden aria-label="Crop options">
+      <div class="crop-scope-control"><span>Pages to crop</span><div class="crop-scope-choices">
+        <label><input type="radio" name="crop-scope" value="current" checked> Current page</label>
+        <label><input type="radio" name="crop-scope" value="all"> All pages</label>
+        <label><input type="radio" name="crop-scope" value="specific"> Specific page</label>
+        <input id="crop-specific-page" type="number" min="1" value="1" disabled aria-label="Specific page number">
+      </div></div>
+      <div class="crop-instructions"><strong>Drag to select</strong><small>Press and hold on the page, then drag around the area to keep.</small></div>
+      <div class="crop-dimensions"><span>Crop dimensions</span><div><label>Left <output id="crop-left-value">—</output></label><label>Top <output id="crop-top-value">—</output></label><label>Width <output id="crop-width-value">—</output></label><label>Height <output id="crop-height-value">—</output></label></div></div>
+      <button class="crop-action secondary" id="crop-cancel" type="button">Cancel</button>
+      <button class="crop-action primary" id="crop-apply" type="button" disabled>Apply crop</button>
     </div>
 
     <div class="draw-options-bar" id="draw-options-bar" hidden>
@@ -1067,6 +1084,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=4016"></script>
+  <script src="script.js?v=4017"></script>
 </body>
 </html>
