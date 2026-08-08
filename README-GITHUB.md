@@ -103,3 +103,16 @@ This is a website-only update. The PDFMint Engine does not need redeploying.
 - Header Contact Us links now point to `contact.html`.
 
 This release changes BOTH the website and `pdfmint-engine`; deploy both.
+
+
+## PDFMint v3.9.8 — XLSX/XLS selector fix
+
+- Correctly enabled the XLSX and XLS options in the Done/export popup.
+- Removed the disabled/“SOON” state for both formats.
+- Both options now route to:
+  - `pdf-to-xlsx`
+  - `pdf-to-xls`
+- Backend engine code from v3.9.7 is unchanged.
+
+Deploy the normal PDFMint website again.
+The engine only needs redeploying if v3.9.7 engine changes were not already deployed.
