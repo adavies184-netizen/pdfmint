@@ -4689,7 +4689,8 @@ const heroStatus = document.getElementById('file-status');
 heroInput.addEventListener('change', event => {
   if (
     document.body.dataset.compressFlow === 'true' ||
-    document.body.dataset.compressImageFlow === 'true'
+    document.body.dataset.compressImageFlow === 'true' ||
+    document.body.dataset.mergeFlow === 'true'
   ) return;
   const file = event.target.files[0];
   if (file) {
@@ -4712,6 +4713,10 @@ heroCard.addEventListener('drop', event => {
     document.body.dataset.compressImageFlow === 'true'
   ) {
     window.dispatchEvent(new CustomEvent('pdfmint:compression-drop', { detail: { file } }));
+    return;
+  }
+  if (document.body.dataset.mergeFlow === 'true') {
+    window.dispatchEvent(new CustomEvent('pdfmint:merge-drop', { detail: { files: event.dataTransfer.files } }));
     return;
   }
   loadEditorPdf(file);
@@ -5360,12 +5365,61 @@ async function initialiseSharedEditorRoute() {
   }
 }
 
+const mergeLandingFiles = [];
+function renderMergeLandingFiles() {
+  if (document.body.dataset.mergeFlow !== 'true') return;
+  const initial=document.getElementById('merge-initial-upload');
+  const selected=document.getElementById('merge-selected-state');
+  const grid=document.getElementById('merge-file-grid');
+  const button=document.getElementById('merge-main-button');
+  const hasFiles=mergeLandingFiles.length>0;
+  initial.hidden=hasFiles; selected.hidden=!hasFiles;
+  grid.innerHTML=mergeLandingFiles.map((file,index)=>`<article class="merge-file-card"><button class="merge-file-remove" type="button" data-merge-remove="${index}" aria-label="Remove ${escapeHtml(file.name)}">×</button><div class="merge-file-preview"><span>PDF</span></div><strong class="merge-file-name" title="${escapeHtml(file.name)}">${escapeHtml(file.name)}</strong></article>`).join('')+(mergeLandingFiles.length<12?'<button class="merge-add-file" id="merge-add-file" type="button"><b>＋</b><span>Add file</span></button>':'');
+  button.disabled=mergeLandingFiles.length<2;
+  grid.querySelectorAll('[data-merge-remove]').forEach(remove=>remove.addEventListener('click',()=>{mergeLandingFiles.splice(Number(remove.dataset.mergeRemove),1);renderMergeLandingFiles()}));
+  document.getElementById('merge-add-file')?.addEventListener('click',()=>document.getElementById('file-input').click());
+  document.getElementById('file-status').textContent=hasFiles?`${mergeLandingFiles.length} PDF${mergeLandingFiles.length===1?'':'s'} selected`:'';
+}
+function addMergeLandingFiles(fileList) {
+  const candidates=Array.from(fileList||[]);
+  const valid=candidates.filter(file=>validPdf(file)&&file.size<=100*1024*1024);
+  const remaining=Math.max(0,12-mergeLandingFiles.length);
+  mergeLandingFiles.push(...valid.slice(0,remaining));
+  if(valid.length<candidates.length) document.getElementById('file-status').textContent='Only PDF files up to 100 MB can be added.';
+  else if(valid.length>remaining) document.getElementById('file-status').textContent='You can merge up to 12 PDF files at once.';
+  renderMergeLandingFiles();
+}
+if (document.body.dataset.mergeFlow === 'true') {
+  const input=document.getElementById('file-input');
+  document.getElementById('merge-first-file').addEventListener('click',()=>input.click());
+  input.addEventListener('change',event=>{addMergeLandingFiles(event.target.files);event.target.value=''});
+  window.addEventListener('pdfmint:merge-drop',event=>addMergeLandingFiles(event.detail.files));
+  document.getElementById('merge-main-button').addEventListener('click',async event=>{
+    if(mergeLandingFiles.length<2)return;
+    const button=event.currentTarget;button.disabled=true;button.textContent='Merging…';
+    try{
+      const output=await PDFLib.PDFDocument.create();
+      for(const file of mergeLandingFiles){
+        const source=await PDFLib.PDFDocument.load(await file.arrayBuffer());
+        const pages=await output.copyPages(source,source.getPageIndices());
+        pages.forEach(page=>output.addPage(page));
+      }
+      const bytes=await output.save();
+      const firstName=mergeLandingFiles[0].name.replace(/\.pdf$/i,'');
+      const mergedFile=new File([bytes],`${firstName}-merged.pdf`,{type:'application/pdf',lastModified:Date.now()});
+      await routeFileToSharedEditor(mergedFile,{});
+    }catch(error){console.error('Could not merge PDFs:',error);document.getElementById('file-status').textContent='PDFMint could not merge these files. Please try again.';button.disabled=false;button.textContent='Merge PDF'}
+  });
+  renderMergeLandingFiles();
+}
+
 document.addEventListener('change', event => {
   const input = event.target;
   if (
     document.body.dataset.editorRoute !== 'true' &&
     document.body.dataset.compressFlow !== 'true' &&
     document.body.dataset.compressImageFlow !== 'true' &&
+    document.body.dataset.mergeFlow !== 'true' &&
     input instanceof HTMLInputElement &&
     input.id === 'file-input' &&
     input.type === 'file'

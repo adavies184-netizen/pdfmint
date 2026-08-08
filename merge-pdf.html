@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4018" />
+  <link rel="stylesheet" href="styles.css?v=4019" />
 </head>
-<body data-landing-tool="none">
+<body data-landing-tool="none" data-merge-flow="true">
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="PDFMint home">
@@ -143,18 +143,19 @@
           </ul>
         </div>
 
-        <div class="upload-card" id="upload-card">
-          <div class="upload-icon" aria-hidden="true">
-            <svg viewBox="0 0 64 64" role="img"><path d="M16 4h22l10 10v42a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M38 4v12h12M32 45V24m0 0-8 8m8-8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          </div>
+        <div class="upload-card merge-landing-card" id="upload-card">
           <h2>Upload your files</h2>
-          <p>Drop PDF files here</p>
-          <span class="or-label">OR</span>
-          <label class="button button-primary upload-button">
-            Upload to edit
-            <input type="file" id="file-input" accept="application/pdf" hidden />
-          </label>
-          <small>Upload to merges up to 100 MB</small>
+          <input type="file" id="file-input" accept="application/pdf,.pdf" multiple hidden />
+          <div class="merge-initial-upload" id="merge-initial-upload">
+            <div class="merge-hero-icon" aria-hidden="true"><span>PDF</span><b>+</b><span>PDF</span></div>
+            <p>Drop PDF files here</p><span class="or-label">OR</span>
+            <button class="button button-primary" id="merge-first-file" type="button">Upload to merge</button>
+          </div>
+          <div class="merge-selected-state" id="merge-selected-state" hidden>
+            <div class="merge-file-grid" id="merge-file-grid"></div>
+            <button class="button button-primary merge-main-button" id="merge-main-button" type="button" disabled>Merge PDF</button>
+          </div>
+          <small>You can upload up to 12 PDF files, each up to 100 MB.</small>
           <div id="file-status" class="file-status" aria-live="polite"></div>
         </div>
       </div>
@@ -1031,6 +1032,6 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="script.js?v=4018"></script>
+  <script src="script.js?v=4019"></script>
 </body>
 </html>
