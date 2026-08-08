@@ -7,8 +7,8 @@
   <title>PDFMint Editor</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4019" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css?v=4021" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -332,10 +332,10 @@
     </header>
 
     <nav class="desktop-ribbon" aria-label="PDF editing tools">
-      <button class="ribbon-tool history-tool" id="undo-tool" type="button" disabled><b>↶</b><span>Undo</span></button>
-      <button class="ribbon-tool history-tool" id="redo-tool" type="button" disabled><b>↷</b><span>Redo</span></button>
-      <button class="ribbon-tool" id="add-text-tool" type="button"><b>T</b><span>Add text</span></button>
-      <button class="ribbon-tool" id="edit-text-tool" type="button"><b>✎</b><span>Edit text</span></button>
+      <button class="ribbon-tool history-tool" id="undo-tool" type="button" disabled><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 6 6"/></svg></span><span>Undo</span></button>
+      <button class="ribbon-tool history-tool" id="redo-tool" type="button" disabled><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="m15 7 5 5-5 5"/><path d="M20 12H10a6 6 0 0 0-6 6"/></svg></span><span>Redo</span></button>
+      <button class="ribbon-tool" id="add-text-tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></svg></span><span>Add text</span></button>
+      <button class="ribbon-tool" id="edit-text-tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 5h9M9.5 5v10M6 15h7"/><path d="m14 18 5.5-5.5 2 2L16 20l-3 1z"/></svg></span><span>Edit text</span></button>
       <button class="ribbon-tool" id="watermark-tool" type="button">
         <span class="tool-icon watermark-tool-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 19 9.2 5h2.2l3.1 8.5L17.7 5H20l-5.1 14h-2.2L10 11.5 7.2 19z"/><path d="M3 21h18"/></svg></span>
         <span class="tool-label">Watermark</span>
@@ -363,10 +363,10 @@
           <button type="button" data-line-shape="circle"><b>○</b><span>Circle</span></button>
         </div>
       </div>
-      <button class="ribbon-tool" id="text-highlight-tool" type="button"><b>T̲</b><span>Text highlight</span></button>
-      <button class="ribbon-tool" id="image-tool" type="button"><b>▧</b><span>Image</span></button>
-      <button class="ribbon-tool" id="stamp-tool" type="button"><b>♙</b><span>Stamp</span></button>
-      <button class="ribbon-tool" id="link-tool" type="button"><b>🔗</b><span>Link</span></button>
+      <button class="ribbon-tool" id="text-highlight-tool" type="button"><span class="tool-icon highlight-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v12M8 17h8"/><path d="M4 21h16"/></svg></span><span>Text highlight</span></button>
+      <button class="ribbon-tool" id="image-tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 4 4 3-3 5 5"/></svg></span><span>Image</span></button>
+      <button class="ribbon-tool" id="stamp-tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M8 13c1-2 1-3 1-5a3 3 0 0 1 6 0c0 2 0 3 1 5l2 2H6z"/><path d="M5 19h14M7 15v4h10v-4"/></svg></span><span>Stamp</span></button>
+      <button class="ribbon-tool" id="link-tool" type="button"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="m10 13 4-4"/><path d="M7.5 16.5 5 19a4 4 0 0 1-6-6l4-4a4 4 0 0 1 6 0"/><path d="m16.5 7.5 2.5-2.5a4 4 0 0 1 6 6l-4 4a4 4 0 0 1-6 0"/></svg></span><span>Link</span></button>
       <button class="ribbon-tool menu-fix-note" id="note-tool" type="button">
       <span class="tool-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="M12 21v-8"/><path d="M7 4h10l-1.2 6H8.2z"/><path d="M9 4V2h6v2"/></svg>
@@ -1093,6 +1093,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=4019"></script>
+  <script src="script.js?v=4020"></script>
 </body>
 </html>
