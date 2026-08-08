@@ -61,14 +61,25 @@ def run_pdf_to_xls(pdf_path: Path, workspace: Path, base_name: str) -> Operation
 
 
 
+
 def run_pdf_to_pptx(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
     output = workspace / f"{base_name}.pptx"
     pdf_to_pptx(pdf_path, output)
-    return OperationResult(output, output.name, "application/vnd.openxmlformats-officedocument.presentationml.presentation")
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    )
+
 
 def run_pdf_to_ppt(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
     output = pdf_to_ppt(pdf_path, workspace, base_name)
-    return OperationResult(output, output.name, "application/vnd.ms-powerpoint")
+    return OperationResult(
+        path=output,
+        filename=output.name,
+        media_type="application/vnd.ms-powerpoint",
+    )
+
 
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,

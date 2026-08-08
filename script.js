@@ -3781,8 +3781,10 @@ function updateSimpleProgressMessage() {
     message.textContent = 'Usually ready in a few seconds';
   } else if (pdfMintExportFormat === 'xls') {
     message.textContent = 'Usually ready in around 7 seconds';
-  } else if (pdfMintExportFormat === 'pptx' || pdfMintExportFormat === 'ppt') {
+  } else if (pdfMintExportFormat === 'pptx') {
     message.textContent = 'Usually ready in a few seconds';
+  } else if (pdfMintExportFormat === 'ppt') {
+    message.textContent = 'Usually ready in around 7 seconds';
   } else {
     eta.hidden = true;
   }
@@ -3796,8 +3798,8 @@ function startExportCountdown(format) {
     doc: 10,
     xlsx: 5,
     xls: 7,
-    pptx: 4,
-    ppt: 4
+    pptx: 5,
+    ppt: 7
   };
 
   pdfMintExportFormat = format;
@@ -3966,7 +3968,6 @@ async function convertPdfThroughPdfMintEngine(pdfBlob, operation, filename) {
     request.send(form);
   });
 }
-
 
 async function exportEditedPdfThroughEngine(format) {
   const baseName = safeExportBaseName();
@@ -4176,7 +4177,11 @@ async function exportEditedDocument(format) {
     return;
   }
 
-  if (['docx','doc','xlsx','xls','pptx','ppt'].includes(format)) {
+  if (
+    format === 'docx' || format === 'doc' ||
+    format === 'xlsx' || format === 'xls' ||
+    format === 'pptx' || format === 'ppt'
+  ) {
     await exportEditedPdfThroughEngine(format);
     return;
   }

@@ -118,17 +118,15 @@ Deploy the normal PDFMint website again.
 The engine only needs redeploying if v3.9.7 engine changes were not already deployed.
 
 
-## PDFMint v3.9.9 — Browser PowerPoint export
+## PDFMint v4.0.1 — PPT/PPTX from stable v3.9.8
 
-- Enabled PPTX and PPT in the export popup.
-- PPTX is created entirely in the browser with PptxGenJS.
-- Each PDF page is rendered and placed full-slide into the PowerPoint deck.
-- No PDFMint Engine call is required for PPTX.
-- Current browser-only legacy PPT attempt intentionally returns a clear message instead of producing a fake `.ppt` file, because modern browser libraries do not generate genuine binary PowerPoint 97-2003 files reliably.
-- Normal website redeploy only; the engine does not need redeploying for PPTX.
+Built directly from the user-confirmed stable v3.9.8 baseline.
 
-## PDFMint v4.0.0 — PPT/PPTX engine fix
-- Removed broken browser PowerPoint path.
-- PPTX now uses PyMuPDF + python-pptx in PDFMint Engine.
-- PPT uses the generated PPTX + LibreOffice Impress.
-- Deploy BOTH the normal PDFMint website and pdfmint-engine.
+- Existing PDF/DOC/DOCX/JPG/PNG/TXT/XLS/XLSX logic left intact.
+- PPTX enabled and routed through PDFMint Engine.
+- PPT enabled and routed through PDFMint Engine.
+- PDF → PPTX uses PyMuPDF + python-pptx.
+- PDF → PPT uses generated PPTX + LibreOffice Impress.
+- config.js points to the live Sevalla engine URL.
+
+Deploy BOTH the normal PDFMint application and pdfmint-engine.
