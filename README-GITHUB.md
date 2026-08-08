@@ -187,3 +187,16 @@ Frontend-only update. PDFMint Engine unchanged.
   - support@pdfmint.com
 
 Frontend-only update. PDFMint Engine unchanged.
+
+
+## PDFMint v4.0.5 — footer repair, OCR CTA, header order
+
+- Rebuilt the footer with valid markup.
+- Removed duplicate Contact Us.
+- Footer company contact now shows only Northstar Ridge Limited and support@pdfmint.com.
+- Removed postal address.
+- OCR upload button now says “Upload PDF for OCR”.
+- Header order is now PDF Editor, PDF Converter, Forms.
+- Mobile menu order matches desktop.
+
+Frontend-only update. PDFMint Engine unchanged.
