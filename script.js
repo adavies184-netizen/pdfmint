@@ -132,7 +132,7 @@ let editor = {
   activeLinkDraft: null,
   notes: {},
   selectedNoteId: null,
-  watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, applied: false }
+  watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, align: 'center', vertical: 50, applied: false }
 };
 let splitFile = null;
 let splitPageCount = 0;
@@ -172,7 +172,9 @@ function restoreEditorState(snapshot) {
   editor.shapes = snapshot.shapes || {};
   editor.textHighlights = snapshot.textHighlights || {};
   editor.links = snapshot.links || {};
-  editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, applied: false };
+  editor.watermark = snapshot.watermark || { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, align: 'center', vertical: 50, applied: false };
+  editor.watermark.align = editor.watermark.align || 'center';
+  editor.watermark.vertical = Number.isFinite(editor.watermark.vertical) ? editor.watermark.vertical : 50;
   editor.activeLinkDraft = null;
   editor.selectedIndex = Math.min(snapshot.selectedIndex, Math.max(0, editor.pages.length - 1));
   editor.selectedAnnotationId = snapshot.selectedAnnotationId;
@@ -309,7 +311,7 @@ async function loadEditorPdf(file) {
       activeLinkDraft: null,
       notes: {},
       selectedNoteId: null,
-      watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, applied: false }
+      watermark: { text: 'HELLO WORLD!', size: 35, opacity: 50, colour: '#111827', angle: -45, align: 'center', vertical: 50, applied: false }
     };
     editorHistory.undo = []; editorHistory.redo = []; updateHistoryButtons();
     setEditorMode('select');
@@ -2237,7 +2239,12 @@ function renderAnnotations() {
     watermark.style.opacity = String(editor.watermark.opacity / 100);
     const measured = Math.max(1, editor.watermark.text.length * .61);
     watermark.style.fontSize = `${metrics.width * (editor.watermark.size / 100) / measured}px`;
-    watermark.style.transform = `translate(-50%,-50%) rotate(${editor.watermark.angle}deg)`;
+    const alignment = editor.watermark.align || 'center';
+    const horizontal = alignment === 'left' ? 5 : alignment === 'right' ? 95 : 50;
+    const translateX = alignment === 'left' ? 0 : alignment === 'right' ? -100 : -50;
+    watermark.style.left = `${horizontal}%`;
+    watermark.style.top = `${5 + Math.max(0, Math.min(100, editor.watermark.vertical ?? 50)) * .9}%`;
+    watermark.style.transform = `translate(${translateX}%,-50%) rotate(${editor.watermark.angle}deg)`;
     layer.appendChild(watermark);
   }
 
@@ -2701,7 +2708,7 @@ function ensureWatermarkUi() {
     if (drawBar) {
       const bar = document.createElement('div');
       bar.className = 'watermark-options-bar'; bar.id = 'watermark-options-bar'; bar.hidden = true; bar.setAttribute('aria-label','Watermark options');
-      bar.innerHTML = `<label class="watermark-control watermark-text-control"><span>Text</span><input id="watermark-text" type="text" value="HELLO WORLD!" maxlength="160"></label><label class="watermark-control watermark-range-control"><span>Size</span><input id="watermark-size" type="range" min="0" max="100" value="35"><output id="watermark-size-value">35%</output></label><label class="watermark-control watermark-range-control"><span>Opacity</span><input id="watermark-opacity" type="range" min="0" max="100" value="50"><output id="watermark-opacity-value">50%</output></label><div class="watermark-colour-control"><span>Colour</span><div class="watermark-swatches" role="group" aria-label="Watermark colour">${[['#ef4444','Red'],['#f97316','Orange'],['#eab308','Yellow'],['#22c55e','Green'],['#3b82f6','Blue'],['#ec4899','Pink'],['#111827','Black']].map(([colour,label]) => `<button type="button" class="watermark-swatch${label === 'Black' ? ' active' : ''}" data-watermark-colour="${colour}" style="--watermark-colour:${colour}" aria-label="${label}"></button>`).join('')}</div></div><label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#111827" aria-label="Custom watermark colour"></label><label class="watermark-control watermark-angle-control"><span>Angle</span><div><input id="watermark-angle" type="number" min="-180" max="180" step="1" value="-45"><b>°</b></div></label><div class="watermark-all-pages"><span>Apply to:</span><strong>All pages</strong></div><button class="watermark-done" id="watermark-done" type="button">Done</button>`;
+      bar.innerHTML = `<label class="watermark-control watermark-text-control"><span>Text</span><input id="watermark-text" type="text" value="HELLO WORLD!" maxlength="160"></label><label class="watermark-control watermark-range-control"><span>Size</span><input id="watermark-size" type="range" min="0" max="100" value="35"><output id="watermark-size-value">35%</output></label><label class="watermark-control watermark-range-control"><span>Opacity</span><input id="watermark-opacity" type="range" min="0" max="100" value="50"><output id="watermark-opacity-value">50%</output></label><div class="watermark-colour-control"><span>Colour</span><div class="watermark-swatches" role="group" aria-label="Watermark colour">${[['#ef4444','Red'],['#f97316','Orange'],['#eab308','Yellow'],['#22c55e','Green'],['#3b82f6','Blue'],['#ec4899','Pink'],['#111827','Black']].map(([colour,label]) => `<button type="button" class="watermark-swatch${label === 'Black' ? ' active' : ''}" data-watermark-colour="${colour}" style="--watermark-colour:${colour}" aria-label="${label}"></button>`).join('')}</div></div><label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#111827" aria-label="Custom watermark colour"></label><div class="watermark-control watermark-align-control"><span>Align</span><div class="watermark-align-buttons" role="group" aria-label="Horizontal position"><button type="button" data-watermark-align="left" title="Align left">≡</button><button type="button" class="active" data-watermark-align="center" title="Align centre">≡</button><button type="button" data-watermark-align="right" title="Align right">≡</button></div></div><label class="watermark-control watermark-vertical-control"><span>Height</span><input id="watermark-vertical" type="range" min="0" max="100" value="50" aria-label="Vertical position"><div class="watermark-height-labels"><small>Top</small><small>Bottom</small></div></label><div class="watermark-control watermark-angle-control"><span>Angle</span><div class="watermark-angle-dial" id="watermark-angle-dial" role="slider" tabindex="0" aria-label="Watermark angle" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="-45"><i id="watermark-angle-knob"></i></div><output id="watermark-angle-value">-45°</output></div><button class="watermark-done" id="watermark-done" type="button">Done</button>`;
       drawBar.before(bar);
     }
   }
@@ -2715,7 +2722,9 @@ function syncWatermarkControls() {
   document.getElementById('watermark-size-value').textContent = `${state.size}%`;
   document.getElementById('watermark-opacity').value = state.opacity;
   document.getElementById('watermark-opacity-value').textContent = `${state.opacity}%`;
-  document.getElementById('watermark-angle').value = state.angle;
+  document.getElementById('watermark-vertical').value = state.vertical ?? 50;
+  document.querySelectorAll('[data-watermark-align]').forEach(button => button.classList.toggle('active', button.dataset.watermarkAlign === (state.align || 'center')));
+  syncWatermarkAngleDial();
   document.getElementById('watermark-custom-colour').value = state.colour;
   document.querySelectorAll('[data-watermark-colour]').forEach(button => button.classList.toggle('active', button.dataset.watermarkColour.toLowerCase() === state.colour.toLowerCase()));
 }
@@ -2753,7 +2762,55 @@ document.getElementById('watermark-custom-colour').addEventListener('input', eve
   document.querySelectorAll('[data-watermark-colour]').forEach(item => item.classList.remove('active'));
   updateWatermark('colour', event.target.value);
 });
-document.getElementById('watermark-angle').addEventListener('input', event => updateWatermark('angle', Math.max(-180, Math.min(180, Number(event.target.value) || 0))));
+document.querySelectorAll('[data-watermark-align]').forEach(button => button.addEventListener('click', () => {
+  document.querySelectorAll('[data-watermark-align]').forEach(item => item.classList.toggle('active', item === button));
+  updateWatermark('align', button.dataset.watermarkAlign);
+}));
+document.getElementById('watermark-vertical').addEventListener('input', event => updateWatermark('vertical', Math.max(0, Math.min(100, Number(event.target.value)))));
+
+function normaliseWatermarkAngle(value) {
+  let angle = Math.round(value);
+  while (angle > 180) angle -= 360;
+  while (angle < -180) angle += 360;
+  return angle;
+}
+function syncWatermarkAngleDial() {
+  const angle = normaliseWatermarkAngle(editor.watermark.angle || 0);
+  const dial = document.getElementById('watermark-angle-dial');
+  const knob = document.getElementById('watermark-angle-knob');
+  const output = document.getElementById('watermark-angle-value');
+  if (knob) {
+    const radians = (angle - 90) * Math.PI / 180;
+    knob.style.transform = `translate(${Math.cos(radians) * 15}px,${Math.sin(radians) * 15}px)`;
+  }
+  if (output) output.textContent = `${angle}°`;
+  if (dial) dial.setAttribute('aria-valuenow', String(angle));
+}
+function setWatermarkAngleFromPointer(event) {
+  const dial = document.getElementById('watermark-angle-dial');
+  const rect = dial.getBoundingClientRect();
+  const dx = event.clientX - (rect.left + rect.width / 2);
+  const dy = event.clientY - (rect.top + rect.height / 2);
+  updateWatermark('angle', normaliseWatermarkAngle(Math.atan2(dy, dx) * 180 / Math.PI + 90));
+  syncWatermarkAngleDial();
+}
+document.getElementById('watermark-angle-dial').addEventListener('pointerdown', event => {
+  event.preventDefault();
+  const dial = event.currentTarget;
+  dial.setPointerCapture(event.pointerId);
+  setWatermarkAngleFromPointer(event);
+});
+document.getElementById('watermark-angle-dial').addEventListener('pointermove', event => {
+  if (event.currentTarget.hasPointerCapture(event.pointerId)) setWatermarkAngleFromPointer(event);
+});
+document.getElementById('watermark-angle-dial').addEventListener('keydown', event => {
+  if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
+  event.preventDefault();
+  const step = event.shiftKey ? 15 : 1;
+  const direction = event.key === 'ArrowLeft' || event.key === 'ArrowDown' ? -1 : 1;
+  updateWatermark('angle', normaliseWatermarkAngle((editor.watermark.angle || 0) + direction * step));
+  syncWatermarkAngleDial();
+});
 document.getElementById('watermark-done').addEventListener('click', () => {
   setEditorMode('select');
   openFormatModal();
@@ -2939,12 +2996,25 @@ async function createEditedPdfBytes() {
       const textWidth = watermarkFont.widthOfTextAtSize(text, fontSize);
       const angle = -Number(editor.watermark.angle || 0);
       const radians = angle * Math.PI / 180;
-      const rotatedWidth = textWidth * Math.cos(radians) - fontSize * Math.sin(radians);
-      const rotatedHeight = textWidth * Math.sin(radians) + fontSize * Math.cos(radians);
+      const cos = Math.cos(radians), sin = Math.sin(radians);
+      const corners = [[0,0],[textWidth,0],[0,fontSize],[textWidth,fontSize]].map(([x,y]) => ({x:x*cos-y*sin,y:x*sin+y*cos}));
+      const minX = Math.min(...corners.map(point => point.x));
+      const maxX = Math.max(...corners.map(point => point.x));
+      const minY = Math.min(...corners.map(point => point.y));
+      const maxY = Math.max(...corners.map(point => point.y));
+      const alignment = editor.watermark.align || 'center';
+      const marginX = width * .05;
+      const targetX = alignment === 'left' ? marginX : alignment === 'right' ? width - marginX : width / 2;
+      const x = targetX - (alignment === 'left' ? minX : alignment === 'right' ? maxX : (minX + maxX) / 2);
+      const boxHeight = maxY - minY;
+      const marginY = height * .05;
+      const vertical = Math.max(0, Math.min(100, editor.watermark.vertical ?? 50));
+      const targetCentreY = marginY + boxHeight / 2 + (1 - vertical / 100) * Math.max(0, height - marginY * 2 - boxHeight);
+      const y = targetCentreY - (minY + maxY) / 2;
       const colour = hexToRgb01(editor.watermark.colour || '#111827');
       page.drawText(text, {
-        x: width / 2 - rotatedWidth / 2,
-        y: height / 2 - rotatedHeight / 2,
+        x,
+        y,
         size: fontSize,
         font: watermarkFont,
         color: PDFLib.rgb(colour.r, colour.g, colour.b),

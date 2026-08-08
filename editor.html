@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4013" />
+  <link rel="stylesheet" href="styles.css?v=4014" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -489,8 +489,9 @@
         <button type="button" class="watermark-swatch" data-watermark-colour="#ef4444" style="--watermark-colour:#ef4444" aria-label="Red"></button><button type="button" class="watermark-swatch" data-watermark-colour="#f97316" style="--watermark-colour:#f97316" aria-label="Orange"></button><button type="button" class="watermark-swatch" data-watermark-colour="#eab308" style="--watermark-colour:#eab308" aria-label="Yellow"></button><button type="button" class="watermark-swatch" data-watermark-colour="#22c55e" style="--watermark-colour:#22c55e" aria-label="Green"></button><button type="button" class="watermark-swatch" data-watermark-colour="#3b82f6" style="--watermark-colour:#3b82f6" aria-label="Blue"></button><button type="button" class="watermark-swatch" data-watermark-colour="#ec4899" style="--watermark-colour:#ec4899" aria-label="Pink"></button><button type="button" class="watermark-swatch active" data-watermark-colour="#111827" style="--watermark-colour:#111827" aria-label="Black"></button>
       </div></div>
       <label class="watermark-control watermark-custom-control"><span>Custom RGB</span><input id="watermark-custom-colour" type="color" value="#111827" aria-label="Custom watermark colour"></label>
-      <label class="watermark-control watermark-angle-control"><span>Angle</span><div><input id="watermark-angle" type="number" min="-180" max="180" step="1" value="-45"><b>°</b></div></label>
-      <div class="watermark-all-pages"><span>Apply to:</span><strong>All pages</strong></div>
+      <div class="watermark-control watermark-align-control"><span>Align</span><div class="watermark-align-buttons" role="group" aria-label="Horizontal position"><button type="button" data-watermark-align="left" title="Align left">≡</button><button type="button" class="active" data-watermark-align="center" title="Align centre">≡</button><button type="button" data-watermark-align="right" title="Align right">≡</button></div></div>
+      <label class="watermark-control watermark-vertical-control"><span>Height</span><input id="watermark-vertical" type="range" min="0" max="100" value="50" aria-label="Vertical position"><div class="watermark-height-labels"><small>Top</small><small>Bottom</small></div></label>
+      <div class="watermark-control watermark-angle-control"><span>Angle</span><div class="watermark-angle-dial" id="watermark-angle-dial" role="slider" tabindex="0" aria-label="Watermark angle" aria-valuemin="-180" aria-valuemax="180" aria-valuenow="-45"><i id="watermark-angle-knob"></i></div><output id="watermark-angle-value">-45°</output></div>
       <button class="watermark-done" id="watermark-done" type="button">Done</button>
     </div>
 
@@ -1066,6 +1067,6 @@
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
   <script src="config.js?v=390"></script>
-  <script src="script.js?v=4013"></script>
+  <script src="script.js?v=4014"></script>
 </body>
 </html>
