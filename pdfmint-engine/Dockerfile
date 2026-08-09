@@ -3,7 +3,7 @@ FROM python:3.11-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    PDFMINT_ENGINE_RELEASE=1.6.0
+    PDFMINT_ENGINE_RELEASE=1.7.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer \
@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     imagemagick \
     pstoedit \
     calibre \
+    ffmpeg \
     fonts-noto-core \
     fonts-dejavu \
     fonts-liberation \

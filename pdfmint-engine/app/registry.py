@@ -14,6 +14,7 @@ from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_
 from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_output
 from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
 from .operations.office_conversions import ROUTES as OFFICE_ROUTES, convert_office_document
+from .operations.media_conversions import ROUTES as MEDIA_ROUTES, convert_media
 
 
 @dataclass(frozen=True)
@@ -167,6 +168,7 @@ MEDIA_TYPES = {
     ".epub": "application/epub+zip", ".mobi": "application/x-mobipocket-ebook",
     ".azw3": "application/vnd.amazon.ebook", ".dwg": "image/vnd.dwg",
     ".doc": "application/msword", ".ppt": "application/vnd.ms-powerpoint",
+    ".mp3": "audio/mpeg", ".mp4": "video/mp4", ".wav": "audio/wav",
 }
 
 
@@ -229,6 +231,17 @@ def make_office_handler(operation: str):
 
 for office_operation in OFFICE_ROUTES:
     OPERATIONS[office_operation] = make_office_handler(office_operation)
+
+
+def make_media_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_media(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for media_operation in MEDIA_ROUTES:
+    OPERATIONS[media_operation] = make_media_handler(media_operation)
 
 
 def execute_operation(
