@@ -5828,7 +5828,7 @@ async function initialiseSharedEditorRoute() {
     if (routeParams.get('convert') === 'image') {
       requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
     }
-    if (routeParams.get('convert') === 'excel' || routeParams.get('convert') === 'powerpoint') {
+    if (['word', 'excel', 'powerpoint'].includes(routeParams.get('convert'))) {
       requestAnimationFrame(() => openDocumentConvertModal(routeParams.get('convert')));
     }
 
