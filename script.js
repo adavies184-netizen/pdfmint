@@ -5456,6 +5456,10 @@ async function routeFileToSharedEditor(file, options = {}) {
     params.set('export', '1');
     params.set('format', options.exportFormat);
   }
+  if (options.imageConvertFormat) {
+    params.set('convert', 'image');
+    params.set('format', options.imageConvertFormat);
+  }
 
   const query = params.toString();
   window.location.href = `editor.html${query ? `?${query}` : ''}`;
@@ -5513,12 +5517,15 @@ async function routeLandingUploadToEditor(file) {
       tool = 'crop';
     }
     const path = window.location.pathname.toLowerCase();
+    const imageConvertFormat = /(?:^|\/)pdf-to-jpg\.html$/.test(path) ? 'jpg'
+      : /(?:^|\/)pdf-to-png\.html$/.test(path) ? 'png'
+      : '';
     let managerAction = '';
     if (/(?:^|\/)rotate-pdf\.html$/.test(path)) managerAction = 'rotate';
     if (/(?:^|\/)delete-pdf-pages\.html$/.test(path)) managerAction = 'delete';
     if (/(?:^|\/)split-pdf\.html$/.test(path)) managerAction = 'split';
     if (managerAction) tool = 'manage';
-    await routeFileToSharedEditor(file, { tool, managerAction });
+    await routeFileToSharedEditor(file, { tool, managerAction, imageConvertFormat });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
     if (status) status.textContent = 'Could not open the editor. Please try again.';
@@ -5542,6 +5549,48 @@ function activateSharedEditorTool(tool) {
   if (id) requestAnimationFrame(() => document.getElementById(id)?.click());
 }
 
+function openImageConvertModal(preferredFormat = 'jpg') {
+  const modal = document.getElementById('image-convert-modal');
+  if (!modal || !editor.pages.length) return;
+  const format = preferredFormat === 'png' ? 'png' : 'jpg';
+  const radio = modal.querySelector(`input[name="image-convert-format"][value="${format}"]`);
+  if (radio) radio.checked = true;
+  modal.querySelectorAll('.image-convert-choice').forEach(choice => {
+    choice.classList.toggle('active', choice.querySelector('input')?.checked);
+  });
+  const filename = document.getElementById('image-convert-filename');
+  filename.value = String(editor.file?.name || 'document').replace(/\.pdf$/i, '');
+  document.getElementById('image-convert-extension').textContent = `.${format}`;
+  modal.hidden = false;
+}
+
+const imageConvertModal = document.getElementById('image-convert-modal');
+if (imageConvertModal) {
+  imageConvertModal.querySelectorAll('input[name="image-convert-format"]').forEach(input => {
+    input.addEventListener('change', () => {
+      imageConvertModal.querySelectorAll('.image-convert-choice').forEach(choice => {
+        choice.classList.toggle('active', choice.contains(input) && input.checked);
+      });
+      document.getElementById('image-convert-extension').textContent = `.${input.value}`;
+    });
+  });
+  imageConvertModal.querySelectorAll('[data-close-image-convert]').forEach(button => {
+    button.addEventListener('click', () => { imageConvertModal.hidden = true; });
+  });
+  document.getElementById('image-convert-download')?.addEventListener('click', () => {
+    const format = imageConvertModal.querySelector('input[name="image-convert-format"]:checked')?.value || 'jpg';
+    const exportRadio = document.querySelector(`input[name="export-format"][value="${format}"]`);
+    if (exportRadio) {
+      exportRadio.checked = true;
+      exportRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    const rawName = String(document.getElementById('image-convert-filename').value || 'document').trim();
+    document.getElementById('export-filename').value = rawName || 'document';
+    imageConvertModal.hidden = true;
+    openEmailModal();
+  });
+}
+
 async function initialiseSharedEditorRoute() {
   if (document.body.dataset.editorRoute !== 'true') return;
 
@@ -5557,6 +5606,11 @@ async function initialiseSharedEditorRoute() {
     await loadEditorPdf(file);
     document.body.classList.remove('editor-route-loading');
     activateSharedEditorTool(tool);
+
+    const routeParams = new URLSearchParams(window.location.search);
+    if (routeParams.get('convert') === 'image') {
+      requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
+    }
 
     if (new URLSearchParams(window.location.search).get('export') === '1') {
       const params = new URLSearchParams(window.location.search);
@@ -5769,6 +5823,8 @@ document.addEventListener('change', event => {
 function pdfMintLandingUploadLabel() {
   const path = window.location.pathname.toLowerCase();
 
+  if (path.endsWith('/pdf-to-jpg.html') || path.endsWith('pdf-to-jpg.html')) return 'Upload to convert';
+  if (path.endsWith('/pdf-to-png.html') || path.endsWith('pdf-to-png.html')) return 'Upload to convert';
   if (path.endsWith('/sign-pdf.html') || path.endsWith('sign-pdf.html')) return 'Upload to sign';
   if (path.endsWith('/rotate-pdf.html') || path.endsWith('rotate-pdf.html')) return 'Upload to rotate';
   if (path.endsWith('/merge-pdf.html') || path.endsWith('merge-pdf.html')) return 'Upload to merge';
