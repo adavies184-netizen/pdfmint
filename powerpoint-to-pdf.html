@@ -5,7 +5,7 @@
   <title>PowerPoint to PDF Online - Free PowerPoint to PDF Converter | PDFMint</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4700">
+  <link rel="stylesheet" href="styles.css?v=4800">
 </head><body class="seo-converter-page" data-converter-category="to-pdf">
 
   <header class="site-header">
@@ -64,4 +64,4 @@ document.querySelector('.menu-button')?.addEventListener('click',function(){cons
 document.querySelectorAll('.desktop-nav .nav-dropdown-toggle').forEach(function(toggle){toggle.addEventListener('click',function(event){event.stopPropagation();const dropdown=toggle.closest('.nav-dropdown');const opening=!dropdown.classList.contains('is-open');document.querySelectorAll('.desktop-nav .nav-dropdown.is-open').forEach(function(item){item.classList.remove('is-open');item.querySelector('.nav-dropdown-toggle')?.setAttribute('aria-expanded','false')});if(opening){dropdown.classList.add('is-open');toggle.setAttribute('aria-expanded','true')}})});
 document.addEventListener('click',function(event){if(!event.target.closest('.desktop-nav .nav-dropdown')){document.querySelectorAll('.desktop-nav .nav-dropdown.is-open').forEach(function(item){item.classList.remove('is-open');item.querySelector('.nav-dropdown-toggle')?.setAttribute('aria-expanded','false')})}});
 document.addEventListener('keydown',function(event){if(event.key==='Escape'){document.querySelectorAll('.desktop-nav .nav-dropdown.is-open').forEach(function(item){item.classList.remove('is-open');item.querySelector('.nav-dropdown-toggle')?.setAttribute('aria-expanded','false')})}});
-</script><script src="config.js?v=4700"></script><script src="to-pdf-converter.js?v=4700"></script></body></html>
+</script><script src="config.js?v=4800"></script><script src="to-pdf-converter.js?v=4800"></script></body></html>
