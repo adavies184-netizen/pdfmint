@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     pkg-config \
     libxml2-dev \
     libpcre2-dev \
-    && curl -fsSL https://ftp.gnu.org/gnu/libredwg/libredwg-0.13.4.tar.xz -o /tmp/libredwg.tar.xz \
+    && curl -fsSL --retry 3 https://ftp.gnu.org/pub/gnu/libredwg/libredwg-0.13.3.tar.xz -o /tmp/libredwg.tar.xz \
     && mkdir /tmp/libredwg \
     && tar -xJf /tmp/libredwg.tar.xz -C /tmp/libredwg --strip-components=1 \
     && cd /tmp/libredwg \
@@ -20,7 +20,7 @@ FROM python:3.11-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    PDFMINT_ENGINE_RELEASE=1.8.0
+    PDFMINT_ENGINE_RELEASE=1.8.1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer \
