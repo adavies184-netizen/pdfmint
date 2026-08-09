@@ -1,0 +1,11 @@
+PDFMint Site v5.0.0 - Archives and CAD converters
+
+- Adds direct conversion flows for DWG to DXF, DXF to DWG, RAR to ZIP,
+  ZIP to RAR and 7Z to ZIP.
+- Each page restricts the device picker to its correct source format.
+- Archive and drawing conversions use distinct themed progress stages.
+- Successful conversion opens the standard email gate, then downloads the
+  prepared file without entering the PDF editor.
+- Desktop and mobile navigation remain available on every converter page.
+
+Deploy PDFMint Engine v1.8.0 before deploying this site package.
