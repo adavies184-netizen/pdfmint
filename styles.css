@@ -268,6 +268,23 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .image-convert-dialog{box-sizing:border-box}
 .image-convert-icon.format-pptx,.image-convert-icon.format-ppt{background:#f27a2a}.image-convert-icon.format-docx{background:#3478df}.image-convert-icon.format-png,.image-convert-icon.format-jpg{background:#d93ebd}.image-convert-icon.format-txt{background:#697386}
 .image-convert-icon.format-doc{background:#3478df}.word-convert-method{margin:22px 0 0;padding:0;border:0}.word-convert-method[hidden]{display:none}.word-convert-method legend{margin-bottom:10px;color:#344054;font-size:15px;font-weight:700}.word-convert-method-choice{position:relative;display:flex;align-items:center;min-height:72px;margin-top:9px;padding:13px 48px 13px 17px;border:1px solid #dfe5e8;border-radius:13px;background:#f8faf9;cursor:pointer}.word-convert-method-choice.active{border:2px solid #21a77b;background:#effaf6;box-shadow:0 0 0 3px rgba(33,167,123,.1)}.word-convert-method-choice.disabled{cursor:not-allowed;opacity:.5}.word-convert-method-choice input{position:absolute;opacity:0}.word-convert-method-choice span{display:grid;gap:3px}.word-convert-method-choice strong{color:#17202c;font-size:15px}.word-convert-method-choice small{color:#667085;font-size:12px}.word-convert-method-choice i{position:absolute;right:18px;width:20px;height:20px;border:2px solid #a9b2bc;border-radius:50%}.word-convert-method-choice.active i{border-color:#21a77b}.word-convert-method-choice.active i:after{content:"";position:absolute;inset:4px;border-radius:50%;background:#21a77b}.word-convert-method p{margin:9px 2px 0;color:#667085;font-size:12px}@media(max-width:650px){.word-convert-method-choice{min-height:66px;padding-left:14px}.word-convert-method-choice strong{font-size:14px}}
+
+/* PDFMint v4.3.8 - mobile header containment and upload-page support details */
+html,body{max-width:100%;overflow-x:hidden}
+.upload-support-details{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin:34px 0 0;color:#7b8796;font-size:13px;line-height:1.5}
+.upload-support-details a{color:inherit}.upload-support-details a:hover{color:var(--mint-dark)}
+.upload-support-details .support-divider{color:#c0c7cf}
+@media(max-width:900px){
+  .site-header .desktop-nav,.site-header .nav-actions{display:none!important}
+  .site-header .nav-wrap{width:min(100% - 28px,1180px);gap:12px}
+  .site-header .brand{min-width:0}
+  .site-header .menu-button{display:block!important;flex:0 0 auto;margin-left:auto;padding:8px;line-height:1}
+  .site-header .mobile-menu{max-width:100vw;overflow-x:hidden}
+}
+@media(max-width:600px){
+  .site-header .brand{font-size:20px}
+  .upload-support-details{margin-top:24px;gap:5px;font-size:11px}
+}
 .export-modal-backdrop{position:absolute;inset:0;background:rgba(17,24,39,.63);backdrop-filter:blur(1px)}
 .export-modal{position:relative;z-index:1;width:min(520px,calc(100vw - 28px));max-height:calc(100vh - 28px);overflow:auto;background:#fff;border-radius:28px;box-shadow:0 28px 80px rgba(0,0,0,.28)}
 .export-modal-close{position:absolute;right:17px;top:13px;z-index:3;width:38px;height:38px;border:0;background:transparent;color:#7b8794;font:300 34px/1 Inter;cursor:pointer}

@@ -6113,6 +6113,20 @@ function applyPdfMintLandingUploadLabel() {
   }
 }
 
+function addUploadPageSupportDetails() {
+  const path = window.location.pathname.toLowerCase();
+  const isHome = path === '/' || path.endsWith('/index.html') || path.endsWith('index.html');
+  const hasPrimaryUpload = Boolean(document.querySelector('.hero #file-input, .upload-card #file-input'));
+  const heroCopy = document.querySelector('.hero-copy');
+  if (isHome || !hasPrimaryUpload || !heroCopy || heroCopy.querySelector('.upload-support-details')) return;
+
+  const details = document.createElement('div');
+  details.className = 'upload-support-details';
+  details.setAttribute('aria-label', 'PDFMint support');
+  details.innerHTML = '<a href="tel:+442079460182">+44 (0)20 7946 0182</a><span class="support-divider">|</span><span>Phone Support 24/7</span><span class="support-divider">|</span><a href="mailto:support@pdfmint.com">Email Support 24/7</a>';
+  heroCopy.appendChild(details);
+}
+
 document.addEventListener('DOMContentLoaded', initialiseSharedEditorRoute);
 
 document.querySelectorAll('input[name="export-format"]').forEach(input => {
@@ -6161,6 +6175,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   applyPdfMintLandingUploadLabel();
+  addUploadPageSupportDetails();
 });
 
 
