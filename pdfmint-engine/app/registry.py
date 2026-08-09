@@ -12,6 +12,7 @@ from .operations.compress import compress_pdf
 from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt
 from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_route
 from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_output
+from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
 
 
 @dataclass(frozen=True)
@@ -204,6 +205,17 @@ for pdf_output_format in PDF_OUTPUT_FORMATS:
     operation_name = f"pdf-to-{pdf_output_format}"
     if operation_name not in OPERATIONS:
         OPERATIONS[operation_name] = make_pdf_output_handler(pdf_output_format)
+
+
+def make_to_pdf_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_to_pdf(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, "application/pdf")
+    return handler
+
+
+for to_pdf_operation in TO_PDF_ROUTES:
+    OPERATIONS[to_pdf_operation] = make_to_pdf_handler(to_pdf_operation)
 
 
 def execute_operation(
