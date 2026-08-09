@@ -11,6 +11,7 @@ from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
 from .operations.compress import compress_pdf
 from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt
 from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_route
+from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_output
 
 
 @dataclass(frozen=True)
@@ -156,6 +157,13 @@ MEDIA_TYPES = {
     ".ico": "image/x-icon", ".dxf": "image/vnd.dxf", ".zip": "application/zip",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".bmp": "image/bmp", ".tiff": "image/tiff", ".webp": "image/webp",
+    ".svgz": "image/svg+xml", ".psd": "image/vnd.adobe.photoshop",
+    ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8",
+    ".html": "text/html; charset=utf-8", ".rtf": "application/rtf",
+    ".xls": "application/vnd.ms-excel", ".csv": "text/csv; charset=utf-8",
+    ".epub": "application/epub+zip", ".mobi": "application/x-mobipocket-ebook",
+    ".azw3": "application/vnd.amazon.ebook", ".dwg": "image/vnd.dwg",
 }
 
 
@@ -183,6 +191,19 @@ OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
 
 for image_operation in IMAGE_ROUTES:
     OPERATIONS[image_operation] = make_image_handler(image_operation)
+
+
+def make_pdf_output_handler(target: str):
+    def handler(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_pdf_output(pdf_path, workspace, base_name, target)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for pdf_output_format in PDF_OUTPUT_FORMATS:
+    operation_name = f"pdf-to-{pdf_output_format}"
+    if operation_name not in OPERATIONS:
+        OPERATIONS[operation_name] = make_pdf_output_handler(pdf_output_format)
 
 
 def execute_operation(

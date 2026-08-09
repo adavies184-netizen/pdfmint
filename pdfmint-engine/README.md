@@ -73,3 +73,11 @@ returned as a ZIP containing one JPG per page.
 Deploy this engine release before the matching v4.5 site package. After the
 deployment completes, `/v1/health` should report version `1.3.0` and include
 the image conversion operations.
+
+## Convert from PDF - v1.4
+
+Adds the output families used by the 19 Convert from PDF landing pages,
+including images, editable text and office documents, vector/CAD files and
+e-book formats. The matching site release opens the editor preview behind a
+four-format selector, except PDF to Pages which prepares a Pages-compatible
+DOCX automatically.
