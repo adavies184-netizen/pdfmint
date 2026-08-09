@@ -13,6 +13,7 @@ from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_t
 from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_route
 from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_output
 from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
+from .operations.office_conversions import ROUTES as OFFICE_ROUTES, convert_office_document
 
 
 @dataclass(frozen=True)
@@ -165,6 +166,7 @@ MEDIA_TYPES = {
     ".xls": "application/vnd.ms-excel", ".csv": "text/csv; charset=utf-8",
     ".epub": "application/epub+zip", ".mobi": "application/x-mobipocket-ebook",
     ".azw3": "application/vnd.amazon.ebook", ".dwg": "image/vnd.dwg",
+    ".doc": "application/msword", ".ppt": "application/vnd.ms-powerpoint",
 }
 
 
@@ -216,6 +218,17 @@ def make_to_pdf_handler(operation: str):
 
 for to_pdf_operation in TO_PDF_ROUTES:
     OPERATIONS[to_pdf_operation] = make_to_pdf_handler(to_pdf_operation)
+
+
+def make_office_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_office_document(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for office_operation in OFFICE_ROUTES:
+    OPERATIONS[office_operation] = make_office_handler(office_operation)
 
 
 def execute_operation(
