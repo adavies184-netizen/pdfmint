@@ -10,6 +10,7 @@ from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
 from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
 from .operations.compress import compress_pdf
 from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt
+from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_route
 
 
 @dataclass(frozen=True)
@@ -149,6 +150,22 @@ def run_ocr_txt(pdf_path: Path, workspace: Path, base_name: str) -> OperationRes
     return OperationResult(output, output.name, "text/plain; charset=utf-8")
 
 
+MEDIA_TYPES = {
+    ".jpg": "image/jpeg", ".png": "image/png", ".gif": "image/gif",
+    ".svg": "image/svg+xml", ".eps": "application/postscript",
+    ".ico": "image/x-icon", ".dxf": "image/vnd.dxf", ".zip": "application/zip",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+}
+
+
+def make_image_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output, suffix = convert_image_route(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(suffix, "application/octet-stream"))
+    return handler
+
+
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,
     "pdf-to-doc": run_pdf_to_doc,
@@ -163,6 +180,9 @@ OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "ocr-docx": run_ocr_docx,
     "ocr-txt": run_ocr_txt,
 }
+
+for image_operation in IMAGE_ROUTES:
+    OPERATIONS[image_operation] = make_image_handler(image_operation)
 
 
 def execute_operation(

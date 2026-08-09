@@ -14,13 +14,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
-from .files import create_download_copy, save_uploaded_pdf
+from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.2.2"
+ENGINE_VERSION = "1.3.0"
 
 app = FastAPI(
     title="PDFMint Engine",
@@ -95,10 +95,13 @@ async def create_job(
 
     with tempfile.TemporaryDirectory(prefix=f"pdfmint-job-{job_id.lower()}-") as temporary_name:
         workspace = Path(temporary_name)
-        pdf_path = await save_uploaded_pdf(file, workspace)
+        if operation.startswith(("pdf-to-", "compress-pdf", "ocr-")):
+            input_path = await save_uploaded_pdf(file, workspace)
+        else:
+            input_path = await save_uploaded_file(file, workspace)
 
         try:
-            result = execute_operation(operation, pdf_path, workspace, base_name)
+            result = execute_operation(operation, input_path, workspace, base_name)
         except subprocess.TimeoutExpired as exc:
             logger.exception("JOB TIMEOUT id=%s operation=%s", job_id, operation)
             raise HTTPException(

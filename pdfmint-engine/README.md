@@ -62,3 +62,14 @@ The engine exposes three OCR jobs through `POST /v1/jobs`:
 The container installs OCRmyPDF, Tesseract English data, QPDF, Ghostscript,
 Unpaper and recommended font support. Deploy the engine before the matching
 site package so the OCR health checks and operations are available.
+
+## Image conversions - v1.3
+
+The engine now exposes all 24 image-category routes used by the converter
+directory. These cover raster image formats, HEIC/AVIF, SVG/EPS, image OCR to
+DOCX/XLSX, and Word/HTML rendering to JPG. Multi-page Word or HTML input is
+returned as a ZIP containing one JPG per page.
+
+Deploy this engine release before the matching v4.5 site package. After the
+deployment completes, `/v1/health` should report version `1.3.0` and include
+the image conversion operations.
