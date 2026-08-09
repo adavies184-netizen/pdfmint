@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4331" />
+  <link rel="stylesheet" href="styles.css?v=4340" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -638,6 +638,8 @@
       <div class="image-convert-options" role="radiogroup" aria-label="Image format">
         <label class="image-convert-choice active"><input type="radio" name="image-convert-format" value="jpg" checked><span class="image-convert-icon">JPG</span><strong>JPG<small>Smaller files, ideal for sharing and photographs.</small></strong><i aria-hidden="true"></i></label>
         <label class="image-convert-choice"><input type="radio" name="image-convert-format" value="png"><span class="image-convert-icon">PNG</span><strong>PNG<small>Crisp text and graphics with lossless quality.</small></strong><i aria-hidden="true"></i></label>
+        <label class="image-convert-choice"><input type="radio" name="image-convert-format" value="webp"><span class="image-convert-icon">WEBP</span><strong>WebP<small>Modern image format with excellent compression.</small></strong><i aria-hidden="true"></i></label>
+        <label class="image-convert-choice"><input type="radio" name="image-convert-format" value="tiff"><span class="image-convert-icon">TIFF</span><strong>TIFF<small>High-quality output for printing and archiving.</small></strong><i aria-hidden="true"></i></label>
       </div>
       <label class="image-convert-filename"><span>File name</span><div><input id="image-convert-filename" type="text" autocomplete="off"><b id="image-convert-extension">.jpg</b></div></label>
       <p class="image-convert-note">Multi-page PDFs will download as one ZIP containing an image for each page.</p>
@@ -696,6 +698,8 @@
             <input type="radio" name="export-format" value="png">
             <span class="format-radio"></span><span class="format-icon image-icon">PNG</span><span class="format-name">PNG</span>
           </label>
+          <input type="radio" name="export-format" value="webp" hidden>
+          <input type="radio" name="export-format" value="tiff" hidden>
           <label class="format-choice">
             <input type="radio" name="export-format" value="txt">
             <span class="format-radio"></span><span class="format-icon txt-icon">TXT</span><span class="format-name">TXT</span>
@@ -1133,7 +1137,7 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="config.js?v=4330"></script>
-  <script src="script.js?v=4331"></script>
+  <script src="config.js?v=4340"></script>
+  <script src="script.js?v=4340"></script>
 </body>
 </html>

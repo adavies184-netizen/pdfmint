@@ -4634,6 +4634,67 @@ async function loadPdfDocumentFromBlob(blob) {
   return pdfjsLib.getDocument({ data: bytes }).promise;
 }
 
+function encodeRgbaAsTiff(imageData, width, height) {
+  const entryCount = 13;
+  const ifdOffset = 8;
+  const ifdSize = 2 + entryCount * 12 + 4;
+  const bitsOffset = ifdOffset + ifdSize;
+  const xResolutionOffset = bitsOffset + 6;
+  const yResolutionOffset = xResolutionOffset + 8;
+  const pixelOffset = yResolutionOffset + 8;
+  const pixelBytes = width * height * 3;
+  const buffer = new ArrayBuffer(pixelOffset + pixelBytes);
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+
+  bytes[0] = 0x49; bytes[1] = 0x49;
+  view.setUint16(2, 42, true);
+  view.setUint32(4, ifdOffset, true);
+  view.setUint16(ifdOffset, entryCount, true);
+
+  let entryOffset = ifdOffset + 2;
+  const entry = (tag, type, count, value) => {
+    view.setUint16(entryOffset, tag, true);
+    view.setUint16(entryOffset + 2, type, true);
+    view.setUint32(entryOffset + 4, count, true);
+    if (type === 3 && count === 1) view.setUint16(entryOffset + 8, value, true);
+    else view.setUint32(entryOffset + 8, value, true);
+    entryOffset += 12;
+  };
+
+  entry(256, 4, 1, width);
+  entry(257, 4, 1, height);
+  entry(258, 3, 3, bitsOffset);
+  entry(259, 3, 1, 1);
+  entry(262, 3, 1, 2);
+  entry(273, 4, 1, pixelOffset);
+  entry(277, 3, 1, 3);
+  entry(278, 4, 1, height);
+  entry(279, 4, 1, pixelBytes);
+  entry(282, 5, 1, xResolutionOffset);
+  entry(283, 5, 1, yResolutionOffset);
+  entry(284, 3, 1, 1);
+  entry(296, 3, 1, 2);
+  view.setUint32(entryOffset, 0, true);
+
+  view.setUint16(bitsOffset, 8, true);
+  view.setUint16(bitsOffset + 2, 8, true);
+  view.setUint16(bitsOffset + 4, 8, true);
+  view.setUint32(xResolutionOffset, 300, true);
+  view.setUint32(xResolutionOffset + 4, 1, true);
+  view.setUint32(yResolutionOffset, 300, true);
+  view.setUint32(yResolutionOffset + 4, 1, true);
+
+  const rgba = imageData.data;
+  let destination = pixelOffset;
+  for (let source = 0; source < rgba.length; source += 4) {
+    bytes[destination++] = rgba[source];
+    bytes[destination++] = rgba[source + 1];
+    bytes[destination++] = rgba[source + 2];
+  }
+  return new Blob([buffer], { type: 'image/tiff' });
+}
+
 async function renderPdfPageToImageBlob(pdf, pageNumber, format) {
   const page = await pdf.getPage(pageNumber);
   const PDF_POINTS_PER_INCH = 72;
@@ -4659,7 +4720,7 @@ async function renderPdfPageToImageBlob(pdf, pageNumber, format) {
   const renderScaleY = renderHeight / viewport.height;
   const context = canvas.getContext('2d', { alpha: format === 'png' });
 
-  if (format === 'jpg') {
+  if (format !== 'png') {
     context.save();
     context.fillStyle = '#ffffff';
     context.fillRect(0, 0, canvas.width, canvas.height);
@@ -4672,8 +4733,20 @@ async function renderPdfPageToImageBlob(pdf, pageNumber, format) {
     transform: [renderScaleX, 0, 0, renderScaleY, 0, 0]
   }).promise;
 
-  const mime = format === 'jpg' ? 'image/jpeg' : 'image/png';
-  const quality = format === 'jpg' ? 0.92 : undefined;
+  if (format === 'tiff') {
+    return encodeRgbaAsTiff(
+      context.getImageData(0, 0, canvas.width, canvas.height),
+      canvas.width,
+      canvas.height
+    );
+  }
+
+  const mime = format === 'jpg' ? 'image/jpeg'
+    : format === 'webp' ? 'image/webp'
+    : 'image/png';
+  const quality = format === 'jpg' ? 0.92
+    : format === 'webp' ? 0.9
+    : undefined;
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(blob => {
@@ -4689,7 +4762,7 @@ async function exportEditedPdfAsImages(format) {
   updateExportProgress(18, `Preparing ${format.toUpperCase()}`, 'Loading the completed PDF…');
   const pdf = await loadPdfDocumentFromBlob(pdfBlob);
   const baseName = safeExportBaseName();
-  const extension = format === 'jpg' ? 'jpg' : 'png';
+  const extension = format;
 
   if (pdf.numPages === 1) {
     updateExportProgress(35, `Rendering ${format.toUpperCase()}`, 'Rendering page 1 of 1 at high quality…');
@@ -4817,7 +4890,7 @@ async function exportEditedDocument(format) {
     return;
   }
 
-  if (format === 'jpg' || format === 'png') {
+  if (format === 'jpg' || format === 'png' || format === 'webp' || format === 'tiff') {
     await exportEditedPdfAsImages(format);
     return;
   }
@@ -5552,7 +5625,7 @@ function activateSharedEditorTool(tool) {
 function openImageConvertModal(preferredFormat = 'jpg') {
   const modal = document.getElementById('image-convert-modal');
   if (!modal || !editor.pages.length) return;
-  const format = preferredFormat === 'png' ? 'png' : 'jpg';
+  const format = ['jpg', 'png', 'webp', 'tiff'].includes(preferredFormat) ? preferredFormat : 'jpg';
   const radio = modal.querySelector(`input[name="image-convert-format"][value="${format}"]`);
   if (radio) radio.checked = true;
   modal.querySelectorAll('.image-convert-choice').forEach(choice => {
