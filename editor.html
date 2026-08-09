@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=4340" />
+  <link rel="stylesheet" href="styles.css?v=4350" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -647,6 +647,19 @@
     </section>
   </div>
 
+  <div class="image-convert-layer" id="document-convert-modal" hidden>
+    <div class="image-convert-backdrop" data-close-document-convert></div>
+    <section class="image-convert-dialog" role="dialog" aria-modal="true" aria-labelledby="document-convert-title">
+      <button class="image-convert-close" type="button" data-close-document-convert aria-label="Close">×</button>
+      <header><h2 id="document-convert-title">Convert PDF to Excel</h2><p>Choose a format and name your file.</p></header>
+      <div class="image-convert-rule"></div>
+      <div class="image-convert-options" id="document-convert-options" role="radiogroup" aria-label="Output format"></div>
+      <label class="image-convert-filename"><span>File name</span><div><input id="document-convert-filename" type="text" autocomplete="off"><b id="document-convert-extension">.xlsx</b></div></label>
+      <p class="image-convert-note" id="document-convert-note">Your converted file will download after email confirmation.</p>
+      <button class="image-convert-download" id="document-convert-download" type="button">Continue to download</button>
+    </section>
+  </div>
+
   <div class="export-modal-layer" id="format-modal" hidden>
     <div class="export-modal-backdrop"></div>
     <section class="export-modal format-modal" role="dialog" aria-modal="true" aria-labelledby="format-modal-title">
@@ -1137,7 +1150,7 @@
   </div>
 
   <input id="image-file-input" type="file" accept="image/*" hidden>
-  <script src="config.js?v=4340"></script>
-  <script src="script.js?v=4340"></script>
+  <script src="config.js?v=4350"></script>
+  <script src="script.js?v=4350"></script>
 </body>
 </html>

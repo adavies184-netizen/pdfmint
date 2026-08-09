@@ -5533,6 +5533,9 @@ async function routeFileToSharedEditor(file, options = {}) {
     params.set('convert', 'image');
     params.set('format', options.imageConvertFormat);
   }
+  if (options.documentConvertType) {
+    params.set('convert', options.documentConvertType);
+  }
 
   const query = params.toString();
   window.location.href = `editor.html${query ? `?${query}` : ''}`;
@@ -5593,12 +5596,15 @@ async function routeLandingUploadToEditor(file) {
     const imageConvertFormat = /(?:^|\/)pdf-to-jpg\.html$/.test(path) ? 'jpg'
       : /(?:^|\/)pdf-to-png\.html$/.test(path) ? 'png'
       : '';
+    const documentConvertType = /(?:^|\/)pdf-to-excel\.html$/.test(path) ? 'excel'
+      : /(?:^|\/)pdf-to-pptx\.html$/.test(path) ? 'powerpoint'
+      : '';
     let managerAction = '';
     if (/(?:^|\/)rotate-pdf\.html$/.test(path)) managerAction = 'rotate';
     if (/(?:^|\/)delete-pdf-pages\.html$/.test(path)) managerAction = 'delete';
     if (/(?:^|\/)split-pdf\.html$/.test(path)) managerAction = 'split';
     if (managerAction) tool = 'manage';
-    await routeFileToSharedEditor(file, { tool, managerAction, imageConvertFormat });
+    await routeFileToSharedEditor(file, { tool, managerAction, imageConvertFormat, documentConvertType });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
     if (status) status.textContent = 'Could not open the editor. Please try again.';
@@ -5664,6 +5670,72 @@ if (imageConvertModal) {
   });
 }
 
+const documentConversionPresets = {
+  excel: {
+      title: 'Convert PDF to Excel',
+    defaultFormat: 'xlsx',
+    formats: [
+      ['xlsx', 'XLSX', 'Editable spreadsheets for calculations and data analysis.'],
+      ['xls', 'XLS', 'Compatible with older versions of Microsoft Excel.'],
+      ['docx', 'DOCX', 'Editable Word document with reconstructed content.'],
+      ['txt', 'TXT', 'Plain text for quick reuse and data processing.']
+    ]
+  },
+  powerpoint: {
+    title: 'Convert PDF to PowerPoint',
+    defaultFormat: 'pptx',
+    formats: [
+      ['pptx', 'PPTX', 'Editable slides for modern PowerPoint.'],
+      ['ppt', 'PPT', 'Compatible with older versions of PowerPoint.'],
+      ['png', 'PNG', 'Crisp page images for slides and presentations.'],
+      ['jpg', 'JPG', 'Compact page images that are easy to share.']
+    ]
+  }
+};
+
+function openDocumentConvertModal(type) {
+  const modal = document.getElementById('document-convert-modal');
+  const preset = documentConversionPresets[type];
+  if (!modal || !preset || !editor.pages.length) return;
+  modal.dataset.conversionType = type;
+  document.getElementById('document-convert-title').textContent = preset.title;
+  document.getElementById('document-convert-options').innerHTML = preset.formats.map((format, index) => {
+    const [value, label, description] = format;
+    return `<label class="image-convert-choice${index === 0 ? ' active' : ''}"><input type="radio" name="document-convert-format" value="${value}"${index === 0 ? ' checked' : ''}><span class="image-convert-icon format-${value}">${label}</span><strong>${label}<small>${description}</small></strong><i aria-hidden="true"></i></label>`;
+  }).join('');
+  const filename = document.getElementById('document-convert-filename');
+  filename.value = String(editor.file?.name || 'document').replace(/\.pdf$/i, '');
+  document.getElementById('document-convert-extension').textContent = `.${preset.defaultFormat}`;
+  modal.querySelectorAll('input[name="document-convert-format"]').forEach(input => {
+    input.addEventListener('change', () => {
+      modal.querySelectorAll('.image-convert-choice').forEach(choice => {
+        choice.classList.toggle('active', choice.contains(input) && input.checked);
+      });
+      document.getElementById('document-convert-extension').textContent = `.${input.value}`;
+    });
+  });
+  modal.hidden = false;
+}
+
+const documentConvertModal = document.getElementById('document-convert-modal');
+if (documentConvertModal) {
+  documentConvertModal.querySelectorAll('[data-close-document-convert]').forEach(button => {
+    button.addEventListener('click', () => { documentConvertModal.hidden = true; });
+  });
+  document.getElementById('document-convert-download')?.addEventListener('click', () => {
+    const format = documentConvertModal.querySelector('input[name="document-convert-format"]:checked')?.value;
+    if (!format) return;
+    const exportRadio = document.querySelector(`input[name="export-format"][value="${format}"]`);
+    if (!exportRadio) return showAlert('That conversion format is not available.');
+    exportRadio.checked = true;
+    exportRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    const rawName = String(document.getElementById('document-convert-filename').value || 'document').trim();
+    document.getElementById('export-filename').value = rawName || 'document';
+    documentConvertModal.hidden = true;
+    openEmailModal();
+  });
+}
+
 async function initialiseSharedEditorRoute() {
   if (document.body.dataset.editorRoute !== 'true') return;
 
@@ -5683,6 +5755,9 @@ async function initialiseSharedEditorRoute() {
     const routeParams = new URLSearchParams(window.location.search);
     if (routeParams.get('convert') === 'image') {
       requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
+    }
+    if (routeParams.get('convert') === 'excel' || routeParams.get('convert') === 'powerpoint') {
+      requestAnimationFrame(() => openDocumentConvertModal(routeParams.get('convert')));
     }
 
     if (new URLSearchParams(window.location.search).get('export') === '1') {
@@ -5898,6 +5973,8 @@ function pdfMintLandingUploadLabel() {
 
   if (path.endsWith('/pdf-to-jpg.html') || path.endsWith('pdf-to-jpg.html')) return 'Upload to convert';
   if (path.endsWith('/pdf-to-png.html') || path.endsWith('pdf-to-png.html')) return 'Upload to convert';
+  if (path.endsWith('/pdf-to-excel.html') || path.endsWith('pdf-to-excel.html')) return 'Upload to convert';
+  if (path.endsWith('/pdf-to-pptx.html') || path.endsWith('pdf-to-pptx.html')) return 'Upload to convert';
   if (path.endsWith('/sign-pdf.html') || path.endsWith('sign-pdf.html')) return 'Upload to sign';
   if (path.endsWith('/rotate-pdf.html') || path.endsWith('rotate-pdf.html')) return 'Upload to rotate';
   if (path.endsWith('/merge-pdf.html') || path.endsWith('merge-pdf.html')) return 'Upload to merge';
