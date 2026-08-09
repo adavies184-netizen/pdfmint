@@ -15,6 +15,7 @@ from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_o
 from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
 from .operations.office_conversions import ROUTES as OFFICE_ROUTES, convert_office_document
 from .operations.media_conversions import ROUTES as MEDIA_ROUTES, convert_media
+from .operations.archive_cad_conversions import ROUTES as ARCHIVE_CAD_ROUTES, convert_archive_cad
 
 
 @dataclass(frozen=True)
@@ -169,6 +170,7 @@ MEDIA_TYPES = {
     ".azw3": "application/vnd.amazon.ebook", ".dwg": "image/vnd.dwg",
     ".doc": "application/msword", ".ppt": "application/vnd.ms-powerpoint",
     ".mp3": "audio/mpeg", ".mp4": "video/mp4", ".wav": "audio/wav",
+    ".rar": "application/vnd.rar", ".7z": "application/x-7z-compressed",
 }
 
 
@@ -242,6 +244,17 @@ def make_media_handler(operation: str):
 
 for media_operation in MEDIA_ROUTES:
     OPERATIONS[media_operation] = make_media_handler(media_operation)
+
+
+def make_archive_cad_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_archive_cad(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for archive_cad_operation in ARCHIVE_CAD_ROUTES:
+    OPERATIONS[archive_cad_operation] = make_archive_cad_handler(archive_cad_operation)
 
 
 def execute_operation(

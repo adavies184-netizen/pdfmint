@@ -20,7 +20,7 @@ from .settings import ALLOWED_ORIGINS
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.7.0"
+ENGINE_VERSION = "1.8.0"
 
 app = FastAPI(
     title="PDFMint Engine",
@@ -48,10 +48,12 @@ def health() -> dict:
         "ebook_convert": shutil.which("ebook-convert") is not None,
         "pstoedit": shutil.which("pstoedit") is not None,
         "ffmpeg": shutil.which("ffmpeg") is not None,
+        "7zip": shutil.which("7z") is not None,
+        "libredwg": shutil.which("dwg2dxf") is not None and shutil.which("dxf2dwg") is not None,
         "operations": sorted(OPERATIONS.keys()),
     }
     return {
-        "status": "ok" if all(checks[name] for name in ("libreoffice", "tesseract", "ocrmypdf", "ebook_convert", "pstoedit", "ffmpeg")) else "degraded",
+        "status": "ok" if all(checks[name] for name in ("libreoffice", "tesseract", "ocrmypdf", "ebook_convert", "pstoedit", "ffmpeg", "7zip", "libredwg")) else "degraded",
         "service": "pdfmint-engine",
         "version": ENGINE_VERSION,
         "checks": checks,
