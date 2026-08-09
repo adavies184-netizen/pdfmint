@@ -4605,6 +4605,16 @@ async function exportEditedPdfThroughEngine(format) {
   downloadBlob(convertedBlob, `${baseName}.${format}`);
 }
 
+async function exportEditedPdfAsOcrDocx() {
+  const baseName = safeExportBaseName();
+  updateExportProgress(8, 'Preparing OCR', 'Applying your PDF edits firstâ€¦');
+  const pdfBlob = await buildFinalEditedPdfBlob();
+  updateExportProgress(20, 'Recognising text', 'Scanned pages may take a little longer.');
+  const convertedBlob = await convertPdfThroughPdfMintEngine(pdfBlob, 'ocr-docx', baseName);
+  updateExportProgress(100, 'Download ready', `${baseName}.docx is ready.`);
+  downloadBlob(convertedBlob, `${baseName}.docx`);
+}
+
 async function buildFinalEditedPdfBlob() {
   const bytes = await createEditedPdfBytes();
   return new Blob([bytes], { type: 'application/pdf' });
@@ -4866,6 +4876,8 @@ async function exportAppliedSplitArchive() {
   downloadBlob(blob, `${baseName}-split.zip`);
 }
 
+let pendingWordOcr = false;
+
 async function exportEditedDocument(format) {
   if (format === 'pdf' && editor.splitApplied && editor.splitPoints?.length) {
     await exportAppliedSplitArchive();
@@ -4878,6 +4890,11 @@ async function exportEditedDocument(format) {
     const blob = await buildFinalEditedPdfBlob();
     updateExportProgress(100, 'Download ready', `${baseName}.pdf is ready.`);
     downloadBlob(blob, `${baseName}.pdf`);
+    return;
+  }
+
+  if (format === 'docx' && pendingWordOcr) {
+    await exportEditedPdfAsOcrDocx();
     return;
   }
 
@@ -5596,7 +5613,8 @@ async function routeLandingUploadToEditor(file) {
     const imageConvertFormat = /(?:^|\/)pdf-to-jpg\.html$/.test(path) ? 'jpg'
       : /(?:^|\/)pdf-to-png\.html$/.test(path) ? 'png'
       : '';
-    const documentConvertType = /(?:^|\/)pdf-to-excel\.html$/.test(path) ? 'excel'
+    const documentConvertType = /(?:^|\/)pdf-to-word\.html$/.test(path) ? 'word'
+      : /(?:^|\/)pdf-to-excel\.html$/.test(path) ? 'excel'
       : /(?:^|\/)pdf-to-pptx\.html$/.test(path) ? 'powerpoint'
       : '';
     let managerAction = '';
@@ -5671,8 +5689,18 @@ if (imageConvertModal) {
 }
 
 const documentConversionPresets = {
+  word: {
+    title: 'Convert PDF to Word',
+    defaultFormat: 'docx',
+    formats: [
+      ['docx', 'DOCX', 'Editable document for modern Microsoft Word.'],
+      ['doc', 'DOC', 'Compatible with older versions of Microsoft Word.'],
+      ['png', 'PNG', 'Crisp page images with lossless quality.'],
+      ['jpg', 'JPG', 'Compact page images that are easy to share.']
+    ]
+  },
   excel: {
-      title: 'Convert PDF to Excel',
+    title: 'Convert PDF to Excel',
     defaultFormat: 'xlsx',
     formats: [
       ['xlsx', 'XLSX', 'Editable spreadsheets for calculations and data analysis.'],
@@ -5706,19 +5734,60 @@ function openDocumentConvertModal(type) {
   const filename = document.getElementById('document-convert-filename');
   filename.value = String(editor.file?.name || 'document').replace(/\.pdf$/i, '');
   document.getElementById('document-convert-extension').textContent = `.${preset.defaultFormat}`;
+  const wordMethod = document.getElementById('word-convert-method');
+  if (wordMethod) {
+    wordMethod.hidden = type !== 'word';
+    const standard = wordMethod.querySelector('input[value="standard"]');
+    if (standard) standard.checked = true;
+    pendingWordOcr = false;
+    wordMethod.querySelectorAll('.word-convert-method-choice').forEach(choice => {
+      choice.classList.toggle('active', choice.querySelector('input')?.checked);
+      choice.classList.remove('disabled');
+    });
+  }
   modal.querySelectorAll('input[name="document-convert-format"]').forEach(input => {
     input.addEventListener('change', () => {
       modal.querySelectorAll('.image-convert-choice').forEach(choice => {
         choice.classList.toggle('active', choice.contains(input) && input.checked);
       });
       document.getElementById('document-convert-extension').textContent = `.${input.value}`;
+      updateWordConversionMethodAvailability(input.value);
     });
   });
+  updateWordConversionMethodAvailability(preset.defaultFormat);
   modal.hidden = false;
+}
+
+function updateWordConversionMethodAvailability(format) {
+  const method = document.getElementById('word-convert-method');
+  if (!method || method.hidden) return;
+  const ocrInput = method.querySelector('input[value="ocr"]');
+  const ocrChoice = ocrInput?.closest('.word-convert-method-choice');
+  const supportsOcr = format === 'docx';
+  if (ocrInput) ocrInput.disabled = !supportsOcr;
+  ocrChoice?.classList.toggle('disabled', !supportsOcr);
+  if (!supportsOcr && ocrInput?.checked) {
+    const standard = method.querySelector('input[value="standard"]');
+    if (standard) standard.checked = true;
+  }
+  method.querySelectorAll('.word-convert-method-choice').forEach(choice => {
+    choice.classList.toggle('active', choice.querySelector('input')?.checked);
+  });
+  const help = document.getElementById('word-convert-method-help');
+  if (help) help.textContent = supportsOcr
+    ? 'Choose OCR only for scanned PDFs or photographed pages.'
+    : 'OCR is available when DOCX is selected.';
 }
 
 const documentConvertModal = document.getElementById('document-convert-modal');
 if (documentConvertModal) {
+  documentConvertModal.querySelectorAll('input[name="word-convert-method"]').forEach(input => {
+    input.addEventListener('change', () => {
+      documentConvertModal.querySelectorAll('.word-convert-method-choice').forEach(choice => {
+        choice.classList.toggle('active', choice.contains(input) && input.checked);
+      });
+    });
+  });
   documentConvertModal.querySelectorAll('[data-close-document-convert]').forEach(button => {
     button.addEventListener('click', () => { documentConvertModal.hidden = true; });
   });
@@ -5729,6 +5798,9 @@ if (documentConvertModal) {
     if (!exportRadio) return showAlert('That conversion format is not available.');
     exportRadio.checked = true;
     exportRadio.dispatchEvent(new Event('change', { bubbles: true }));
+    pendingWordOcr = documentConvertModal.dataset.conversionType === 'word'
+      && format === 'docx'
+      && documentConvertModal.querySelector('input[name="word-convert-method"]:checked')?.value === 'ocr';
     const rawName = String(document.getElementById('document-convert-filename').value || 'document').trim();
     document.getElementById('export-filename').value = rawName || 'document';
     documentConvertModal.hidden = true;
@@ -5975,6 +6047,7 @@ function pdfMintLandingUploadLabel() {
   if (path.endsWith('/pdf-to-png.html') || path.endsWith('pdf-to-png.html')) return 'Upload to convert';
   if (path.endsWith('/pdf-to-excel.html') || path.endsWith('pdf-to-excel.html')) return 'Upload to convert';
   if (path.endsWith('/pdf-to-pptx.html') || path.endsWith('pdf-to-pptx.html')) return 'Upload to convert';
+  if (path.endsWith('/pdf-to-word.html') || path.endsWith('pdf-to-word.html')) return 'Upload to convert';
   if (path.endsWith('/sign-pdf.html') || path.endsWith('sign-pdf.html')) return 'Upload to sign';
   if (path.endsWith('/rotate-pdf.html') || path.endsWith('rotate-pdf.html')) return 'Upload to rotate';
   if (path.endsWith('/merge-pdf.html') || path.endsWith('merge-pdf.html')) return 'Upload to merge';
