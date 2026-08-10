@@ -35,3 +35,7 @@ main{width:min(1250px,calc(100% - 54px));margin:auto;padding:32px 0 70px}.welcom
 
 /* Header actions share one consistent hover shape. */
 .header-link,.account-trigger{border-radius:9px}
+
+/* Separate the account navigation into clear tool and service groups. */
+.rail-section-label{height:0;max-height:0;margin:0 15px;overflow:hidden;opacity:0;color:#929cab;font-size:10px;font-weight:500;line-height:20px;white-space:nowrap;transition:opacity .12s ease,max-height .2s ease,height .2s ease,margin .2s ease}
+.app-rail:hover .rail-section-label,.app-rail:focus-within .rail-section-label,.app-rail:has([data-dashboard-menu].active) .rail-section-label{height:20px;max-height:20px;margin:8px 15px 2px;opacity:1}
