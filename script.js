@@ -4400,9 +4400,18 @@ function preparePaymentPrototypeUi() {
   const updatePlanBenefits = planValue => {
     const benefitItems = [...document.querySelectorAll('.plan-benefits > div')];
     benefitItems.forEach((item, index) => {
+      let copy = item.querySelector('.benefit-copy');
+      if (!copy) {
+        const textNodes = [...item.childNodes].filter(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());
+        copy = document.createElement('span');
+        copy.className = 'benefit-copy';
+        copy.textContent = textNodes.map(node => node.textContent.trim()).join(' ');
+        textNodes.forEach(node => node.remove());
+        item.appendChild(copy);
+      }
       const unavailable = planValue === 'limited' && index >= benefitItems.length - 3;
       item.classList.toggle('benefit-unavailable', unavailable);
-      const icon = item.querySelector('span');
+      const icon = item.querySelector('span:not(.benefit-copy)');
       if (icon) icon.textContent = unavailable ? '×' : '✓';
     });
   };
