@@ -1,0 +1,18 @@
+PDFMint Site v5.3.0 — Account Dashboard
+
+This is a site-only release. The PDFMint Engine does not need to be redeployed.
+
+Included:
+- New responsive customer dashboard with recent files, uploads and popular tools.
+- Compact desktop navigation rail that expands on hover to reveal tool names.
+- Mobile dashboard with tool search, upload access and bottom navigation.
+- Searchable tool picker with popular tools shown first.
+- AI chat placeholder retained for a future release.
+- Account settings for personal details, password/security, language and region.
+- Payment tab showing only the original purchase card.
+- Membership tab with the full plan benefits and plain-text billing details.
+- Dedicated pause/cancellation retention page.
+- Existing desktop and mobile Log in links now open the account dashboard.
+
+Deployment:
+Upload this ZIP to the PDFMint site/static-site application only.
