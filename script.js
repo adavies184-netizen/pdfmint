@@ -4327,9 +4327,19 @@ function triggerPreparedDownload(blob, filename) {
 
 function finishMockCheckout() {
   try {
+    const cardInputs = [...document.querySelectorAll('#card-payment-panel input:not([type="checkbox"])')];
+    const cardDigits = String(cardInputs[1]?.value || '').replace(/\D/g, '');
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
     localStorage.setItem('pdfmintAccountActive', 'true');
     localStorage.setItem('pdfmintSelectedPlan', JSON.stringify(selectedAccessPlan || {}));
     localStorage.setItem('pdfmintAccountCreatedAt', new Date().toISOString());
+    localStorage.setItem('pdfmintPaymentCard', JSON.stringify({
+      name: String(cardInputs[0]?.value || '').trim(),
+      lastFour: cardDigits.slice(-4) || '2721',
+      expiry: String(cardInputs[2]?.value || '08/31').replace(/\s/g, ''),
+      timezone
+    }));
+    localStorage.setItem('pdfmintPaymentTimezone', timezone);
   } catch (error) {
     console.warn('PDFMint could not save the local account preview state.', error);
   }
