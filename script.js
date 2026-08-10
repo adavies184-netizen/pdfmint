@@ -5840,6 +5840,8 @@ function activateSharedEditorTool(tool) {
     note: 'note-tool',
     watermark: 'watermark-tool',
     crop: 'crop-tool',
+    highlight: 'text-highlight-tool',
+    stamp: 'stamp-tool',
     split: 'manage-tool',
     manage: 'manage-tool'
   };
