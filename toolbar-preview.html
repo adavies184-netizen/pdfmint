@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PDFMint Toolbar Comparison</title>
+  <link rel="stylesheet" href="styles.css?v=5115">
+  <style>
+    html,body{margin:0;background:#eaf0f6;color:#17233d;font-family:Poppins,Arial,sans-serif}
+    body{padding:24px}.comparison{display:grid;gap:24px}.mode-card{overflow:hidden;border:1px solid #dce4ea;border-radius:16px;background:#fff;box-shadow:0 8px 28px rgba(15,23,42,.10)}
+    .mode-title{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:#17233d;color:#fff}.mode-title strong{font-size:16px}.mode-title span{font-size:11px;color:#b9c6d7}
+    .preview-editor{position:relative!important;inset:auto!important;width:121.95%!important;height:242px!important;min-height:242px!important;display:grid;grid-template-rows:60px 92px 90px;min-width:1500px;zoom:.82}.preview-editor.toolbar-compact{height:206px!important;min-height:206px!important;grid-template-rows:60px 56px 90px}
+    .preview-editor .desktop-editor-header,.preview-editor .desktop-ribbon{position:relative!important}.preview-editor .desktop-ribbon{overflow:hidden!important}.preview-editor .done-check{width:18px!important;height:18px!important;fill:none!important;stroke:currentColor!important}
+    .fake-page-area{display:flex;justify-content:center;padding:18px;background:#eef4f8}.fake-page{width:620px;height:70px;background:#fff;box-shadow:0 3px 14px rgba(15,23,42,.12)}
+    @media(max-width:900px){body{padding:10px}.mode-card{overflow-x:auto}}
+  </style>
+</head>
+<body>
+  <main class="comparison">
+    <section class="mode-card">
+      <div class="mode-title"><strong>Classic</strong><span>Current spacious toolbar</span></div>
+      <div class="desktop-editor preview-editor" id="classic-preview"></div>
+    </section>
+    <section class="mode-card">
+      <div class="mode-title"><strong>Compact Pro</strong><span>Space-saving horizontal toolbar</span></div>
+      <div class="desktop-editor preview-editor toolbar-compact" id="compact-preview"></div>
+    </section>
+  </main>
+
+  <template id="toolbar-template">
+    <header class="desktop-editor-header">
+      <div class="desktop-brand"><span class="desktop-brand-mark">+</span><strong>PDF<span>Mint</span></strong></div>
+      <div class="desktop-file"><strong>Toolbar preview.pdf</strong><small>1 page · 30.34 KB</small></div>
+      <div class="desktop-actions"><button class="top-action secondary">Send to Email</button><button class="top-action primary"><span>Done</span><svg class="done-check" viewBox="0 0 24 24"><path d="m5 12.5 4.2 4.2L19 7"/></svg></button></div>
+    </header>
+    <nav class="desktop-ribbon" aria-label="PDF editing tools">
+      <button class="ribbon-tool history-tool" disabled><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 6 6"/></svg></span><span>Undo</span></button>
+      <button class="ribbon-tool history-tool" disabled><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="m15 7 5 5-5 5"/><path d="M20 12H10a6 6 0 0 0-6 6"/></svg></span><span>Redo</span></button>
+      <button class="ribbon-tool"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></svg></span><span>Add text</span></button>
+      <button class="ribbon-tool"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 5h9M9.5 5v10M6 15h7"/><path d="m14 18 5.5-5.5 2 2L16 20l-3 1z"/></svg></span><span>Edit text</span></button>
+      <button class="ribbon-tool"><span class="tool-icon watermark-tool-icon"><svg viewBox="0 0 24 24"><path d="M12 2.8c-2.2 3.2-6.1 7.4-6.1 11.3A6.1 6.1 0 0 0 12 20.2a6.1 6.1 0 0 0 6.1-6.1C18.1 10.2 14.2 6 12 2.8Z"/><path d="M9 15.2c.5 1.3 1.5 2 3 2.2"/></svg></span><span class="tool-label">Watermark</span></button>
+      <button class="ribbon-tool"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13"/><path d="M2 7h15a2 2 0 0 1 2 2v13"/></svg></span><span class="tool-label">Crop</span></button>
+      <button class="ribbon-tool"><span class="tool-icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="tool-label">Manage</span></button>
+      <button class="ribbon-tool menu-fix-sign"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="m5 18 2.2-5.8L16.8 2.6l4.6 4.6-9.6 9.6z"/><path d="M4 21c3-2.2 5.6-2.2 8-.2 2.1 1.7 4.8 1.4 8-.8"/></svg></span><span class="tool-label">Sign</span></button>
+      <button class="ribbon-tool menu-fix-draw"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="m5 16 2-5.2L16.8 1 23 7.2 13.2 17z"/><path d="M3 21h18"/></svg></span><span class="tool-label">Draw</span></button>
+      <div class="line-tool-wrap"><button class="ribbon-tool" id="line-tool"><b>／</b><span id="line-tool-label">Line</span><i class="line-tool-caret">⌄</i></button></div>
+      <button class="ribbon-tool"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v12M8 17h8"/><path d="M4 21h16"/></svg></span><span>Text highlight</span></button>
+      <button class="ribbon-tool"><span class="tool-icon"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 4 4 3-3 5 5"/></svg></span><span>Image</span></button>
+      <button class="ribbon-tool"><span class="tool-icon stamp-tool-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.2" r="3.2"/><path d="M9.2 8.2v3.9c0 1.5-.8 2.7-2.2 3.4H5.5v3h13v-3H17c-1.4-.7-2.2-1.9-2.2-3.4V8.2"/><path d="M5 21h14"/></svg></span><span>Stamp</span></button>
+      <button class="ribbon-tool"><span class="tool-icon link-tool-icon" aria-hidden="true"></span><span>Link</span></button>
+      <button class="ribbon-tool menu-fix-note"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 3.5h16v12l-5 5H4z"/><path d="M15 20.5v-5h5M7.5 8h9M7.5 11.5h7"/></svg></span><span class="tool-label">Note</span></button>
+      <button class="toolbar-density-toggle" role="switch" aria-checked="false"><span>Classic</span><i><b></b></i><span>Compact</span></button>
+    </nav>
+    <div class="fake-page-area"><div class="fake-page"></div></div>
+  </template>
+  <script>
+    const template=document.getElementById('toolbar-template');
+    document.getElementById('classic-preview').append(template.content.cloneNode(true));
+    const compact=document.getElementById('compact-preview');
+    compact.append(template.content.cloneNode(true));
+    compact.querySelector('.toolbar-density-toggle').setAttribute('aria-checked','true');
+    document.querySelectorAll('.desktop-ribbon').forEach(ribbon=>{
+      const labels=['Undo','Redo','Add text','Edit text','Sign','Image','Draw','Text highlight','Link','Note','Stamp','Watermark','Crop','Line','Manage'];
+      labels.forEach(label=>{
+        const button=[...ribbon.querySelectorAll('.ribbon-tool')].find(item=>item.textContent.trim().includes(label));
+        const item=button?.closest('.line-tool-wrap')||button;
+        if(item)ribbon.insertBefore(item,ribbon.querySelector('.toolbar-density-toggle'));
+      });
+    });
+  </script>
+</body>
+</html>

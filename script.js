@@ -4324,7 +4324,52 @@ document.querySelectorAll('.payment-method').forEach(button => {
 function openDemoPaymentNotice() {
   document.getElementById('demo-payment-modal').hidden = false;
 }
-document.getElementById('mock-pay-button').addEventListener('click', openDemoPaymentNotice);
+let pendingCheckoutBlob = null;
+let pendingCheckoutFilename = '';
+
+function triggerPreparedDownload(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+function validateMockCheckout() {
+  const consent = document.querySelector('#card-payment-panel .payment-consent input');
+  const consentLabel = consent?.closest('.payment-consent');
+  const warning = document.getElementById('payment-consent-warning');
+  const requiredFields = [...document.querySelectorAll('#card-payment-panel input:not([type="checkbox"])')];
+  let valid = true;
+
+  requiredFields.forEach(input => {
+    const empty = !String(input.value || '').trim();
+    input.classList.toggle('payment-invalid', empty);
+    if (empty) valid = false;
+  });
+
+  const consentMissing = !consent?.checked;
+  consentLabel?.classList.toggle('payment-consent-error', consentMissing);
+  if (warning) warning.hidden = !consentMissing;
+  if (consentMissing) valid = false;
+
+  return valid;
+}
+
+document.getElementById('mock-pay-button').addEventListener('click', () => {
+  if (!validateMockCheckout()) return;
+  if (pendingCheckoutBlob && pendingCheckoutFilename) {
+    triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
+    pendingCheckoutBlob = null;
+    pendingCheckoutFilename = '';
+    closePaymentPage();
+    return;
+  }
+  openDemoPaymentNotice();
+});
 document.getElementById('mock-paypal-button').addEventListener('click', openDemoPaymentNotice);
 document.getElementById('close-demo-payment').addEventListener('click', () => {
   document.getElementById('demo-payment-modal').hidden = true;
@@ -4332,6 +4377,90 @@ document.getElementById('close-demo-payment').addEventListener('click', () => {
 document.getElementById('return-to-payment').addEventListener('click', () => {
   document.getElementById('demo-payment-modal').hidden = true;
 });
+
+function preparePaymentPrototypeUi() {
+  const accessTitle = document.getElementById('access-title');
+  const paymentTitle = document.getElementById('payment-title');
+  const payButton = document.getElementById('mock-pay-button');
+  const cardPanel = document.getElementById('card-payment-panel');
+  const consent = cardPanel?.querySelector('.payment-consent input');
+  const consentCopy = cardPanel?.querySelector('.payment-consent span');
+  const orderSummary = document.querySelector('.order-summary-card');
+
+  if (accessTitle) accessTitle.textContent = 'Select a plan to download your document';
+  if (paymentTitle) paymentTitle.textContent = "You're on the last step before receiving your document";
+  if (payButton) payButton.textContent = '🔒  Pay and download document';
+
+  const annualSubtext = document.querySelector('input[name="access-plan"][value="annual"]')?.closest('.plan-option')?.querySelector('.plan-copy small');
+  if (annualSubtext) annualSubtext.textContent = 'Unlimited access';
+  const annualPrice = document.querySelector('input[name="access-plan"][value="annual"]')?.closest('.plan-option')?.querySelector('.plan-price');
+  if (annualPrice) annualPrice.innerHTML = '£24.90<span>/pm</span>';
+
+  document.querySelectorAll('.plan-benefits div').forEach(item => {
+    if (item.textContent.includes('Convert PDFs to and from common formats')) {
+      item.lastChild.textContent = ' Convert all popular file formats';
+    }
+  });
+
+  const planDisclosure = document.getElementById('plan-disclosure');
+  if (planDisclosure) {
+    planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team<br>via email at <a href="mailto:support@pdfmint.com">support@pdfmint.com</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a></p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfmint.com?subject=Free%20document%20download">click here</a>.</p>';
+    document.querySelectorAll('input[name="access-plan"]').forEach(input => input.addEventListener('change', () => {
+      planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team<br>via email at <a href="mailto:support@pdfmint.com">support@pdfmint.com</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a></p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfmint.com?subject=Free%20document%20download">click here</a>.</p>';
+    }));
+  }
+
+  if (consent) consent.checked = false;
+  if (consentCopy) {
+    consentCopy.innerHTML = 'By continuing, you agree to the <a href="terms-of-use.html" target="_blank">Terms of Use &amp; Service</a>, <a href="privacy-policy.html" target="_blank">Privacy Policy</a>, and confirm that if you do not cancel at least 24 hours before the end of the 7-day trial for £1, you will be charged £49 per 28 days until you cancel your subscription by contacting our customer support team via email at <a href="mailto:billing@pdfmint.com">billing@pdfmint.com</a> or in your account settings. Payments will be charged from the card you specified above. This charge will appear on your credit card statement as pdfmint.com.';
+  }
+
+  if (orderSummary) {
+    orderSummary.querySelector('#summary-renewal')?.remove();
+    orderSummary.querySelector('.summary-line.muted')?.remove();
+    const firstPrice = orderSummary.querySelector('.summary-line');
+    const guarantees = orderSummary.querySelector('.summary-guarantees');
+    const totalToday = orderSummary.querySelector('.summary-total');
+    if (firstPrice && guarantees) {
+      guarantees.innerHTML = '<div><span>&#10003;</span><p><strong>Unlimited edits</strong></p></div><div><span>&#10003;</span><p><strong>Unlimited downloads</strong></p></div><div><span>&#10003;</span><p><strong>Convert to any format</strong></p></div><div><span>&#10003;</span><p><strong>Sign your docs online</strong></p></div><div><span>&#10003;</span><p><strong>Create your own forms</strong></p></div>';
+      firstPrice.insertAdjacentElement('afterend', guarantees);
+      if (totalToday) guarantees.insertAdjacentElement('afterend', totalToday);
+    }
+  }
+
+  if (cardPanel && !document.getElementById('payment-consent-warning')) {
+    const warning = document.createElement('p');
+    warning.id = 'payment-consent-warning';
+    warning.className = 'payment-consent-warning';
+    warning.hidden = true;
+    warning.textContent = '⚠ You must check the box below';
+    const consentLabel = cardPanel.querySelector('.payment-consent');
+    cardPanel.insertBefore(warning, consentLabel);
+  }
+
+  if (cardPanel && !document.querySelector('.express-payment-row')) {
+    const express = document.createElement('div');
+    express.className = 'express-payment-row';
+    express.innerHTML = '<button type="button" aria-label="Google Pay">G Pay</button><button type="button" aria-label="Apple Pay">● Pay</button><div><span></span><strong>Pay with card</strong><span></span></div>';
+    cardPanel.prepend(express);
+    express.querySelectorAll('button').forEach(button => button.addEventListener('click', openDemoPaymentNotice));
+  }
+
+  cardPanel?.querySelectorAll('input').forEach(input => input.addEventListener('input', () => {
+    input.classList.remove('payment-invalid');
+    if (input.type === 'checkbox' && input.checked) {
+      input.closest('.payment-consent')?.classList.remove('payment-consent-error');
+      const warning = document.getElementById('payment-consent-warning');
+      if (warning) warning.hidden = true;
+    }
+  }));
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('preview') === 'plans') document.getElementById('access-page').hidden = false;
+  if (params.get('preview') === 'payment') document.getElementById('payment-page').hidden = false;
+}
+
+preparePaymentPrototypeUi();
 
 
 
@@ -4662,14 +4791,10 @@ function safeExportBaseName() {
 }
 
 function downloadBlob(blob, filename) {
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  link.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1500);
+  pendingCheckoutBlob = blob;
+  pendingCheckoutFilename = filename;
+  preparedExportFilename = filename;
+  openAccessPage();
 }
 
 async function loadPdfDocumentFromBlob(blob) {
