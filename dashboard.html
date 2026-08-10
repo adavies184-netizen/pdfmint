@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5300">
+  <link rel="stylesheet" href="dashboard.css?v=5320">
 </head>
 <body>
   <svg class="svg-sprite" aria-hidden="true">
@@ -34,6 +34,8 @@
     <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
     <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
   </svg>
 
   <aside class="app-rail" aria-label="Account navigation">
@@ -136,16 +138,40 @@
       <div class="account-content">
         <section class="account-panel active" data-account-panel="account">
           <header><h2>Account</h2><p>Manage your personal information and preferences.</p></header>
-          <div class="profile-card"><span>AD</span><div><b>Andrew Davies</b><small>andrew@example.com</small></div><button type="button">Edit profile</button></div>
-          <button class="setting-card" type="button"><i><svg><use href="#i-user"/></svg></i><span><b>Personal details</b><small>Manage your name and email address.</small><em>Andrew Davies · andrew@example.com</em></span><svg><use href="#i-chevron"/></svg></button>
-          <button class="setting-card" type="button"><i><svg><use href="#i-lock"/></svg></i><span><b>Password &amp; security</b><small>Keep your account safe with a strong password.</small><em>Password · ••••••••••</em></span><svg><use href="#i-chevron"/></svg></button>
-          <button class="setting-card" type="button"><i><svg><use href="#i-globe"/></svg></i><span><b>Language and region</b><small>Set your preferred language and currency.</small><em>English, GBP - British Pound (£)</em></span><svg><use href="#i-chevron"/></svg></button>
+          <div class="profile-card"><span data-profile-initials>AD</span><div><b data-profile-name>Andrew Davies</b><small data-profile-email>andrew@example.com</small></div><button type="button" data-expand="profile-editor" aria-expanded="false">Edit profile</button></div>
+          <div class="settings-expander" data-expander="profile-editor"><form class="settings-form" data-profile-form>
+            <div class="form-heading"><div><h3>Edit profile</h3><p>Update the name and email shown on your account.</p></div><button type="button" data-collapse aria-label="Close edit profile"><svg><use href="#i-close"/></svg></button></div>
+            <div class="form-grid two"><label>First name<input name="firstName" value="Andrew" autocomplete="given-name" required></label><label>Last name<input name="lastName" value="Davies" autocomplete="family-name" required></label></div>
+            <label>Email address<input name="email" type="email" value="andrew@example.com" autocomplete="email" required></label>
+            <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Save changes</button></div>
+          </form></div>
+          <button class="setting-card" type="button" data-expand="security-editor" aria-expanded="false"><i><svg><use href="#i-lock"/></svg></i><span><b>Password &amp; security</b><small>Change your password and review account security.</small><em>Password · ••••••••••</em></span><svg><use href="#i-chevron"/></svg></button>
+          <div class="settings-expander" data-expander="security-editor"><form class="settings-form" data-security-form>
+            <div class="form-heading"><div><h3>Password &amp; security</h3><p>Use at least 8 characters with a number.</p></div><button type="button" data-collapse aria-label="Close password settings"><svg><use href="#i-close"/></svg></button></div>
+            <label>Current password<input name="currentPassword" type="password" autocomplete="current-password" required></label>
+            <div class="form-grid two"><label>New password<input name="newPassword" type="password" minlength="8" autocomplete="new-password" required></label><label>Confirm new password<input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required></label></div>
+            <label class="toggle-row"><input type="checkbox" name="loginAlerts" checked><span><b>New sign-in alerts</b><small>Email me when PDFMint detects a new device.</small></span></label>
+            <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Update password</button></div>
+          </form></div>
+          <button class="setting-card" type="button" data-expand="region-editor" aria-expanded="false"><i><svg><use href="#i-globe"/></svg></i><span><b>Language, region &amp; timezone</b><small>Choose how language, prices and times appear.</small><em data-region-summary>English, GBP - British Pound (£) · Europe/London</em></span><svg><use href="#i-chevron"/></svg></button>
+          <div class="settings-expander" data-expander="region-editor"><form class="settings-form" data-region-form>
+            <div class="form-heading"><div><h3>Language, region &amp; timezone</h3><p>Your timezone is automatically detected when payment details are entered.</p></div><button type="button" data-collapse aria-label="Close language settings"><svg><use href="#i-close"/></svg></button></div>
+            <div class="form-grid two"><label>Language<select name="language"><option>English</option><option>Deutsch</option><option>Español</option><option>Français</option></select></label><label>Currency<select name="currency"><option value="GBP - British Pound (£)">GBP - British Pound (£)</option><option value="EUR - Euro (€)">EUR - Euro (€)</option><option value="USD - US Dollar ($)">USD - US Dollar ($)</option></select></label></div>
+            <label>Timezone<select name="timezone" data-timezone-select><option value="Europe/London">Europe/London (GMT/BST)</option><option value="Europe/Paris">Europe/Paris (CET)</option><option value="America/New_York">America/New_York (ET)</option><option value="America/Los_Angeles">America/Los_Angeles (PT)</option><option value="Asia/Dubai">Asia/Dubai (GST)</option><option value="Asia/Singapore">Asia/Singapore (SGT)</option><option value="Australia/Sydney">Australia/Sydney (AET)</option></select></label>
+            <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Save preferences</button></div>
+          </form></div>
           <button class="mobile-account-logout" type="button"><svg><use href="#i-logout"/></svg><span>Log out</span></button>
         </section>
 
         <section class="account-panel" data-account-panel="payment">
           <header><h2>Payment</h2><p>Manage the card used for your PDFMint purchase.</p></header>
-          <div class="payment-card"><div class="visa-mark">VISA</div><div><small>Payment card</small><b>Visa ending in 2721</b><span>Expires 08/31</span></div><button type="button">Update card</button></div>
+          <div class="payment-card"><div class="visa-mark">VISA</div><div><small>Default payment card</small><b>Visa ending in 2721</b><span>Expires 08/31 · Last used</span></div><button type="button" data-expand="payment-editor" aria-expanded="false">Update card</button></div>
+          <div class="settings-expander" data-expander="payment-editor"><div class="settings-form payment-manager">
+            <div class="form-heading"><div><h3>Payment cards</h3><p>Keep up to two cards and choose which one is used by default.</p></div><button type="button" data-collapse aria-label="Close payment settings"><svg><use href="#i-close"/></svg></button></div>
+            <div class="saved-cards" data-saved-cards><label class="saved-card"><input type="radio" name="defaultCard" value="2721" checked><span class="mini-card">VISA</span><span><b>Visa ending in 2721</b><small>Expires 08/31 · Default</small></span></label></div>
+            <button type="button" class="add-card-button" data-show-card-form>+ Add another card</button>
+            <form class="new-card-form" data-card-form hidden><label>Card number<input name="cardNumber" inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456" required></label><div class="form-grid two"><label>Expiry date<input name="expiry" inputmode="numeric" maxlength="5" placeholder="MM/YY" required></label><label>Security code<input name="cvc" inputmode="numeric" maxlength="4" placeholder="CVV" required></label></div><label>Name on card<input name="cardName" autocomplete="cc-name" required></label><p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-hide-card-form>Cancel</button><button type="submit" class="save-button">Save card</button></div></form>
+          </div></div>
           <p class="private-note"><svg><use href="#i-lock"/></svg>Only you can see and manage these payment details.</p>
         </section>
 
@@ -159,6 +185,10 @@
             <article><i><svg><use href="#i-file"/></svg></i><div><b>Use various form templates</b><p>Browse our extensive library of ready-to-use forms for business, legal, and personal use.</p></div></article>
             <article><i><svg><use href="#i-grid"/></svg></i><div><b>Add new fillable fields</b><p>Make any PDF form interactive by adding custom fields for text, dates, and checkboxes.</p></div></article>
             <article><i><svg><use href="#i-file"/></svg></i><div><b>Create your own form templates</b><p>Create custom forms and save them as templates to reuse as many times as you like.</p></div></article>
+            <article><i><svg><use href="#i-convert"/></svg></i><div><b>Unlimited file conversions</b><p>Convert PDFs, documents, images and other supported formats whenever you need.</p></div></article>
+            <article><i><svg><use href="#i-grid"/></svg></i><div><b>Organise every document</b><p>Merge, split, rotate, reorder and remove pages from one simple workspace.</p></div></article>
+            <article><i><svg><use href="#i-globe"/></svg></i><div><b>Work across all your devices</b><p>Continue your document work from desktop, tablet or mobile whenever it suits you.</p></div></article>
+            <article><i><svg><use href="#i-help"/></svg></i><div><b>Priority customer support</b><p>Get faster help with your documents, conversions, billing and PDFMint account.</p></div></article>
           </div>
           <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p>Your current plan: monthly membership for £49/month</p><p>Next payment: 17.08.2026</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
         </section>
@@ -169,6 +199,6 @@
     </section>
   </div>
 
-  <script src="dashboard.js?v=5300"></script>
+  <script src="dashboard.js?v=5320"></script>
 </body>
 </html>
