@@ -3741,6 +3741,39 @@ document.addEventListener('click',e=>{
 window.addEventListener('resize',positionLineShapeMenu);
 document.querySelector('.desktop-ribbon')?.addEventListener('scroll',positionLineShapeMenu);
 
+/* PDFMint v5.1.1 — task-first toolbar order */
+(function arrangeEditorToolbar(){
+  const ribbon=document.querySelector('.desktop-ribbon');
+  if(!ribbon)return;
+  [
+    'undo-tool','redo-tool','add-text-tool','edit-text-tool','sign-tool','image-tool',
+    'draw-tool','text-highlight-tool','link-tool','note-tool','stamp-tool',
+    'watermark-tool','crop-tool','line-tool','manage-tool','toolbar-density-toggle'
+  ].forEach(id=>{
+    const item=id==='line-tool'?document.getElementById(id)?.closest('.line-tool-wrap'):document.getElementById(id);
+    if(item)ribbon.appendChild(item);
+  });
+})();
+
+/* PDFMint v5.1.0 — persistent classic/compact toolbar switch */
+(function initialiseToolbarDensity(){
+  const editor=document.getElementById('preview-view');
+  const toggle=document.getElementById('toolbar-density-toggle');
+  if(!editor||!toggle)return;
+  let compact=false;
+  try{compact=localStorage.getItem('pdfmint-toolbar-density')==='compact'}catch(_error){}
+  function apply(){
+    editor.classList.toggle('toolbar-compact',compact);
+    toggle.setAttribute('aria-checked',String(compact));
+    toggle.title=compact?'Switch to Classic toolbar':'Switch to Compact toolbar';
+  }
+  toggle.addEventListener('click',function(){
+    compact=!compact;apply();
+    try{localStorage.setItem('pdfmint-toolbar-density',compact?'compact':'classic')}catch(_error){}
+  });
+  apply();
+})();
+
 function updateSelectedShapeProperty(fn){const s=getSelectedShape();if(s){recordHistory();fn(s);renderAnnotations()}}
 document.getElementById('line-stroke-colour').addEventListener('input',e=>{editor.shapeStroke=e.target.value;const s=getSelectedShape();if(s){s.stroke=e.target.value;renderAnnotations()}});document.getElementById('line-stroke-colour').addEventListener('change',()=>{if(getSelectedShape())recordHistory()});
 document.getElementById('line-fill-colour').addEventListener('input',e=>{editor.shapeFill=e.target.value;const s=getSelectedShape();if(s){s.fill=e.target.value;renderAnnotations()}});document.getElementById('line-fill-enabled').addEventListener('change',e=>{editor.shapeFillEnabled=e.target.checked;updateSelectedShapeProperty(s=>s.fillEnabled=e.target.checked)});

@@ -1,0 +1,10 @@
+PDFMint Site v5.1.0
+
+- Adds a persistent Classic / Compact editor-toolbar switch.
+- Keeps the existing Classic toolbar as the default.
+- Adds the Compact Pro toolbar layout without removing any tools.
+- Updates Watermark, Stamp, Link, and Note icons.
+- Corrects Line tool label and dropdown alignment.
+- Includes browser cache-busting for the editor stylesheet and script.
+
+Deployment: site application only. No PDFMint Engine deployment is required.
