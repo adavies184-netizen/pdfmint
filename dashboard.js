@@ -2,10 +2,10 @@
   const tools = [
     ['Edit PDF','Update text and content','edit-pdf.html','i-edit'],
     ['Convert files','Choose from every converter','all-converters.html','i-convert'],
-    ['Compress PDF','Reduce PDF file size','compress-pdf.html','i-compress'],
+    ['Compress PDF','Reduce PDF file size','dashboard.html?tool=compress','i-compress'],
     ['Merge PDF','Combine documents','merge-pdf.html','i-convert'],
-    ['Sign PDF','Add an electronic signature','sign-pdf.html','i-sign'],
-    ['OCR PDF','Recognise scanned text','ocr-pdf.html','i-scan'],
+    ['Sign PDF','Add an electronic signature','dashboard.html?tool=sign','i-sign'],
+    ['OCR & Scan','Recognise scanned text','dashboard.html?menu=ocr','i-scan'],
     ['Add watermark','Add text across PDF pages','add-watermark.html','i-edit'],
     ['Crop PDF','Trim page margins','crop-pdf.html','i-grid'],
     ['Split PDF','Separate document pages','split-pdf.html','i-grid'],
@@ -50,6 +50,13 @@
         ['Reorder pages','Drag pages into a new order','i-reorder','manage','reorder'],
         ['Delete pages','Remove pages you no longer need','i-delete','manage','delete']
       ]
+    },
+    ocr: {
+      title: 'OCR & Scan', copy: 'Extract text from images and scanned documents.', icon: 'i-scan',
+      tools: [
+        ['OCR','Recognise text in a scanned PDF','i-scan','ocr-flow','ocr'],
+        ['Text from image','Extract editable text from images','i-text','ocr-flow','image']
+      ]
     }
   };
   const drawer = document.querySelector('[data-tool-drawer]');
@@ -57,7 +64,10 @@
   const pickerLayer = document.querySelector('[data-document-picker]');
   const pickerInput = pickerLayer?.querySelector('[data-picker-input]');
   const progressLayer = document.querySelector('[data-dashboard-progress]');
+  const compressLayer = document.querySelector('[data-compress-options]');
+  const ocrLayer = document.querySelector('[data-ocr-options]');
   let selectedDashboardTool = null;
+  let selectedDashboardFile = null;
 
   const closeDrawer = () => {
     drawer?.classList.remove('open');
@@ -84,12 +94,26 @@
   }));
   drawer?.querySelector('[data-close-drawer]')?.addEventListener('click', closeDrawer);
 
+  const directTools = {
+    sign: ['Sign PDF','Add an electronic signature','i-sign','sign',''],
+    compress: ['Compress PDF','Reduce your PDF file size','i-compress','compress-flow','']
+  };
+  document.querySelectorAll('[data-direct-tool]').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault();
+    const tool = directTools[link.dataset.directTool];
+    if (tool) openDocumentPicker(tool);
+  }));
+
   const openDocumentPicker = (tool) => {
     selectedDashboardTool = tool;
     if (!pickerLayer) return;
+    const imageOcr = tool[3] === 'ocr-flow' && tool[4] === 'image';
     pickerLayer.querySelector('[data-picker-title]').textContent = tool[0];
-    pickerLayer.querySelector('[data-picker-copy]').textContent = tool[1] + '. Upload a new PDF or continue with a file from My Files.';
+    pickerLayer.querySelector('[data-picker-copy]').textContent = tool[1] + (imageOcr ? '. Upload a new image or continue with a scanned PDF from My Files.' : '. Upload a new PDF or continue with a file from My Files.');
     pickerLayer.querySelector('[data-picker-icon] use').setAttribute('href', `#${tool[2]}`);
+    pickerLayer.querySelector('.picker-upload b').textContent = imageOcr ? 'Upload a new image' : 'Upload a new PDF';
+    pickerLayer.querySelector('.picker-upload small').textContent = imageOcr ? 'Choose a JPG, PNG, WEBP, TIFF or BMP image' : 'Choose a PDF from your device';
+    pickerInput.accept = imageOcr ? 'image/jpeg,image/png,image/webp,image/tiff,image/bmp,.jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp' : 'application/pdf,.pdf';
     pickerLayer.hidden = false;
     document.body.style.overflow = 'hidden';
   };
@@ -137,7 +161,16 @@
   }
   async function continueToDashboardTool(file) {
     if (!file || !selectedDashboardTool) return;
+    selectedDashboardFile = file;
     closePicker(); closeDrawer();
+    if (selectedDashboardTool[3] === 'compress-flow') {
+      openCompressOptions(file);
+      return;
+    }
+    if (selectedDashboardTool[3] === 'ocr-flow') {
+      openOcrOptions(file);
+      return;
+    }
     progressLayer.hidden = false;
     progressLayer.querySelector('[data-progress-title]').textContent = `Opening ${selectedDashboardTool[0]}`;
     progressLayer.querySelector('[data-progress-copy]').textContent = 'Securely preparing your document. No email confirmation is needed.';
@@ -159,6 +192,106 @@
   }
   pickerInput?.addEventListener('change', () => { const file = pickerInput.files?.[0]; if (file) continueToDashboardTool(file); pickerInput.value = ''; });
   pickerLayer?.querySelectorAll('[data-library-file]').forEach(button => button.addEventListener('click', () => continueToDashboardTool(simplePdfFile(button.dataset.libraryFile))));
+
+  const formatBytes = bytes => {
+    if (!Number.isFinite(bytes) || bytes <= 0) return 'Ready to process';
+    if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+  const cleanBaseName = name => String(name || 'PDFMint document').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'PDFMint document';
+  const setChoiceSelection = (layerElement, selector) => {
+    layerElement?.querySelectorAll(selector).forEach(input => input.closest('label')?.classList.toggle('selected', input.checked));
+  };
+  const closeChoice = layerElement => {
+    if (layerElement) layerElement.hidden = true;
+    if (pickerLayer?.hidden && compressLayer?.hidden && ocrLayer?.hidden) document.body.style.overflow = '';
+  };
+  const openCompressOptions = file => {
+    if (!compressLayer) return;
+    compressLayer.querySelector('[data-compress-file-name]').textContent = file.name;
+    compressLayer.querySelector('[data-compress-file-size]').textContent = `${formatBytes(file.size)} PDF document`;
+    compressLayer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  };
+  const openOcrOptions = file => {
+    if (!ocrLayer) return;
+    ocrLayer.querySelector('[data-ocr-file-name]').textContent = file.name;
+    ocrLayer.querySelector('[data-ocr-file-size]').textContent = `${formatBytes(file.size)} · Ready for text recognition`;
+    ocrLayer.querySelector('[data-ocr-options-title]').textContent = selectedDashboardTool?.[4] === 'image' ? 'Text from image' : 'OCR PDF';
+    ocrLayer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  };
+  compressLayer?.querySelectorAll('input[name="dashboardCompression"]').forEach(input => input.addEventListener('change', () => setChoiceSelection(compressLayer, 'input[name="dashboardCompression"]')));
+  ocrLayer?.querySelectorAll('input[name="dashboardOcrFormat"]').forEach(input => input.addEventListener('change', () => setChoiceSelection(ocrLayer, 'input[name="dashboardOcrFormat"]')));
+  compressLayer?.querySelectorAll('[data-close-compress]').forEach(button => button.addEventListener('click', () => closeChoice(compressLayer)));
+  ocrLayer?.querySelectorAll('[data-close-ocr]').forEach(button => button.addEventListener('click', () => closeChoice(ocrLayer)));
+
+  const downloadBlob = (blob, filename) => {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = filename;
+    document.body.appendChild(link); link.click(); link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+  };
+  const runDashboardEngineJob = async ({file, operation, filename, title, copy}) => {
+    if (!file) return;
+    closeChoice(compressLayer); closeChoice(ocrLayer);
+    progressLayer.hidden = false;
+    document.body.style.overflow = 'hidden';
+    const titleElement = progressLayer.querySelector('[data-progress-title]');
+    const copyElement = progressLayer.querySelector('[data-progress-copy]');
+    const bar = progressLayer.querySelector('[data-progress-bar]');
+    const percent = progressLayer.querySelector('[data-progress-percent]');
+    titleElement.textContent = title;
+    copyElement.textContent = copy;
+    let value = 6; bar.style.width = `${value}%`; percent.textContent = `${value}%`;
+    const timer = window.setInterval(() => { value = Math.min(91, value + Math.max(1, Math.round((92 - value) / 8))); bar.style.width = `${value}%`; percent.textContent = `${value}%`; }, 320);
+    try {
+      const engineBaseUrl = String(window.PDFMINT_CONFIG?.engineBaseUrl || window.PDFMINT_CONFIG?.conversionApiBaseUrl || 'https://pdfmint-engine-5dfdx.sevalla.app').replace(/\/+$/, '');
+      const form = new FormData();
+      form.append('file', file, file.name);
+      form.append('operation', operation);
+      const response = await fetch(`${engineBaseUrl}/v1/jobs`, { method:'POST', body:form });
+      if (!response.ok) {
+        let message = `The conversion service returned ${response.status}.`;
+        try { const payload = await response.json(); message = payload.error || payload.message || message; } catch (_) {}
+        throw new Error(message);
+      }
+      const blob = await response.blob();
+      window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
+      titleElement.textContent = 'Your download is ready';
+      copyElement.textContent = 'The finished file has been downloaded. Returning to My Files…';
+      downloadBlob(blob, filename);
+      await new Promise(resolve => window.setTimeout(resolve, 850));
+      progressLayer.hidden = true; document.body.style.overflow = '';
+    } catch (error) {
+      window.clearInterval(timer);
+      titleElement.textContent = 'We could not finish that file';
+      copyElement.textContent = error?.message || 'Please try again in a moment.';
+      bar.style.width = '0'; percent.textContent = 'Try again';
+      window.setTimeout(() => { progressLayer.hidden = true; document.body.style.overflow = ''; }, 2800);
+    }
+  };
+  compressLayer?.querySelector('[data-apply-compress]')?.addEventListener('click', () => {
+    const level = compressLayer.querySelector('input[name="dashboardCompression"]:checked')?.value || 'standard';
+    runDashboardEngineJob({
+      file:selectedDashboardFile,
+      operation:`compress-pdf-${level}`,
+      filename:`${cleanBaseName(selectedDashboardFile?.name)}-compressed.pdf`,
+      title:'Compressing your PDF',
+      copy:'Optimising the document while preserving the best possible quality.'
+    });
+  });
+  ocrLayer?.querySelector('[data-apply-ocr]')?.addEventListener('click', () => {
+    const format = ocrLayer.querySelector('input[name="dashboardOcrFormat"]:checked')?.value || 'docx';
+    runDashboardEngineJob({
+      file:selectedDashboardFile,
+      operation:`ocr-${format}`,
+      filename:`${cleanBaseName(selectedDashboardFile?.name)}-ocr.${format}`,
+      title:'Recognising your text',
+      copy:'PDFMint is reading the document and preparing your editable download.'
+    });
+  });
 
   const layer = document.querySelector('[data-account-layer]');
   const openAccount = (tab = 'account') => {
@@ -314,6 +447,7 @@
 
   const params = new URLSearchParams(location.search);
   if (params.get('menu')) openDrawer(params.get('menu'));
+  if (params.get('tool') && directTools[params.get('tool')]) openDocumentPicker(directTools[params.get('tool')]);
   if (params.get('account') === 'open') openAccount(params.get('tab') || 'account');
   if (params.get('setting')) window.setTimeout(() => setExpander(`${params.get('setting')}-editor`, true), 120);
 })();

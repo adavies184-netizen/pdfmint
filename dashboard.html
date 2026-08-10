@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5335">
+  <link rel="stylesheet" href="dashboard.css?v=5336">
 </head>
 <body>
   <svg class="svg-sprite" aria-hidden="true">
@@ -57,9 +57,9 @@
       <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
       <p class="rail-section-label">PDF Tools</p>
       <a href="dashboard.html?menu=edit" data-dashboard-menu="edit" onclick="window.openDashboardMenu?.('edit')"><svg><use href="#i-edit"/></svg><span>Edit PDF</span><svg class="rail-chevron"><use href="#i-chevron"/></svg></a>
-      <a href="sign-pdf.html"><svg><use href="#i-sign"/></svg><span>Sign PDF</span></a>
-      <a href="ocr-pdf.html"><svg><use href="#i-scan"/></svg><span>OCR PDF</span></a>
-      <a href="compress-pdf.html"><svg><use href="#i-compress"/></svg><span>Compress PDF</span></a>
+      <a href="dashboard.html?tool=sign" data-direct-tool="sign"><svg><use href="#i-sign"/></svg><span>Sign PDF</span></a>
+      <a href="dashboard.html?menu=ocr" data-dashboard-menu="ocr" onclick="window.openDashboardMenu?.('ocr')"><svg><use href="#i-scan"/></svg><span>OCR &amp; Scan</span><svg class="rail-chevron"><use href="#i-chevron"/></svg></a>
+      <a href="dashboard.html?tool=compress" data-direct-tool="compress"><svg><use href="#i-compress"/></svg><span>Compress PDF</span></a>
       <a href="dashboard.html?menu=organize" data-dashboard-menu="organize" onclick="window.openDashboardMenu?.('organize')"><svg><use href="#i-grid"/></svg><span>Organize Pages</span><svg class="rail-chevron"><use href="#i-chevron"/></svg></a>
       <p class="rail-section-label">Services</p>
       <a href="all-converters.html"><svg><use href="#i-convert"/></svg><span>Convert Files</span></a>
@@ -104,10 +104,10 @@
         <div class="section-heading"><div><span>Start quickly</span><h2 id="quick-title">Popular tools</h2></div><a href="all-converters.html">View all tools</a></div>
         <div class="quick-tools">
           <a href="edit-pdf.html"><i><svg><use href="#i-edit"/></svg></i><b>Edit PDF</b><small>Update text and content</small></a>
-          <a href="compress-pdf.html"><i><svg><use href="#i-compress"/></svg></i><b>Compress PDF</b><small>Reduce document size</small></a>
+          <a href="dashboard.html?tool=compress" data-direct-tool="compress"><i><svg><use href="#i-compress"/></svg></i><b>Compress PDF</b><small>Reduce document size</small></a>
           <a href="merge-pdf.html"><i><svg><use href="#i-convert"/></svg></i><b>Merge PDF</b><small>Combine multiple files</small></a>
-          <a href="sign-pdf.html"><i><svg><use href="#i-sign"/></svg></i><b>Sign PDF</b><small>Add your signature</small></a>
-          <a href="ocr-pdf.html"><i><svg><use href="#i-scan"/></svg></i><b>OCR PDF</b><small>Recognise scanned text</small></a>
+          <a href="dashboard.html?tool=sign" data-direct-tool="sign"><i><svg><use href="#i-sign"/></svg></i><b>Sign PDF</b><small>Add your signature</small></a>
+          <a href="dashboard.html?menu=ocr" data-dashboard-menu="ocr"><i><svg><use href="#i-scan"/></svg></i><b>OCR &amp; Scan</b><small>Recognise scanned text</small></a>
         </div>
       </section>
 
@@ -148,6 +148,36 @@
 
   <div class="dashboard-progress-layer" data-dashboard-progress hidden>
     <section class="dashboard-progress-card" role="status" aria-live="polite"><span><svg><use href="#i-file"/></svg></span><h2 data-progress-title>Preparing your document</h2><p data-progress-copy>Opening your PDF in the editor…</p><div><i data-progress-bar></i></div><strong data-progress-percent>0%</strong></section>
+  </div>
+
+  <div class="dashboard-choice-layer" data-compress-options hidden>
+    <button class="choice-backdrop" type="button" data-close-compress aria-label="Close compression settings"></button>
+    <section class="dashboard-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="compress-options-title">
+      <button class="choice-close" type="button" data-close-compress aria-label="Close"><svg><use href="#i-close"/></svg></button>
+      <header><span><svg><use href="#i-compress"/></svg></span><div><small>PDFMINT COMPRESS</small><h2 id="compress-options-title">Choose compression</h2><p>Select the balance of file size and quality you need.</p></div></header>
+      <div class="choice-file"><i>PDF</i><span><b data-compress-file-name>Document.pdf</b><small data-compress-file-size>PDF document</small></span></div>
+      <div class="choice-list" data-compress-list>
+        <label><input type="radio" name="dashboardCompression" value="light"><span><b>Light compression</b><small>Highest image quality and a smaller reduction.</small></span><em>Best quality</em></label>
+        <label class="selected"><input type="radio" name="dashboardCompression" value="standard" checked><span><b>Recommended compression</b><small>A balanced result for everyday documents.</small></span><em>Recommended</em></label>
+        <label><input type="radio" name="dashboardCompression" value="high"><span><b>Strong compression</b><small>Smallest file size with lower image quality.</small></span><em>Smallest file</em></label>
+      </div>
+      <button class="choice-primary" type="button" data-apply-compress>Compress &amp; download</button>
+    </section>
+  </div>
+
+  <div class="dashboard-choice-layer" data-ocr-options hidden>
+    <button class="choice-backdrop" type="button" data-close-ocr aria-label="Close OCR settings"></button>
+    <section class="dashboard-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="ocr-options-title">
+      <button class="choice-close" type="button" data-close-ocr aria-label="Close"><svg><use href="#i-close"/></svg></button>
+      <header><span><svg><use href="#i-scan"/></svg></span><div><small>PDFMINT OCR</small><h2 id="ocr-options-title" data-ocr-options-title>OCR &amp; Scan</h2><p>Choose the format you want to download.</p></div></header>
+      <div class="choice-file"><i>FILE</i><span><b data-ocr-file-name>Document.pdf</b><small data-ocr-file-size>Ready for text recognition</small></span></div>
+      <div class="choice-list" data-ocr-list>
+        <label class="selected"><input type="radio" name="dashboardOcrFormat" value="docx" checked><span><b>Word</b><small>Editable text with document formatting.</small></span><em>.DOCX</em></label>
+        <label><input type="radio" name="dashboardOcrFormat" value="pdf"><span><b>Searchable PDF</b><small>Selectable and searchable text.</small></span><em>.PDF</em></label>
+        <label><input type="radio" name="dashboardOcrFormat" value="txt"><span><b>Plain text</b><small>Simple unformatted editable text.</small></span><em>.TXT</em></label>
+      </div>
+      <button class="choice-primary" type="button" data-apply-ocr>Apply OCR &amp; download</button>
+    </section>
   </div>
 
   <div class="account-layer" data-account-layer hidden>
@@ -236,6 +266,7 @@
     </section>
   </div>
 
-  <script src="dashboard.js?v=5333"></script>
+  <script src="config.js"></script>
+  <script src="dashboard.js?v=5336"></script>
 </body>
 </html>
