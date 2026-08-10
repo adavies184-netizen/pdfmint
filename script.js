@@ -3748,30 +3748,11 @@ document.querySelector('.desktop-ribbon')?.addEventListener('scroll',positionLin
   [
     'undo-tool','redo-tool','add-text-tool','edit-text-tool','sign-tool','image-tool',
     'draw-tool','text-highlight-tool','link-tool','note-tool','stamp-tool',
-    'watermark-tool','crop-tool','line-tool','manage-tool','toolbar-density-toggle'
+    'watermark-tool','crop-tool','line-tool','manage-tool'
   ].forEach(id=>{
     const item=id==='line-tool'?document.getElementById(id)?.closest('.line-tool-wrap'):document.getElementById(id);
     if(item)ribbon.appendChild(item);
   });
-})();
-
-/* PDFMint v5.1.0 — persistent classic/compact toolbar switch */
-(function initialiseToolbarDensity(){
-  const editor=document.getElementById('preview-view');
-  const toggle=document.getElementById('toolbar-density-toggle');
-  if(!editor||!toggle)return;
-  let compact=false;
-  try{compact=localStorage.getItem('pdfmint-toolbar-density')==='compact'}catch(_error){}
-  function apply(){
-    editor.classList.toggle('toolbar-compact',compact);
-    toggle.setAttribute('aria-checked',String(compact));
-    toggle.title=compact?'Switch to Classic toolbar':'Switch to Compact toolbar';
-  }
-  toggle.addEventListener('click',function(){
-    compact=!compact;apply();
-    try{localStorage.setItem('pdfmint-toolbar-density',compact?'compact':'classic')}catch(_error){}
-  });
-  apply();
 })();
 
 function updateSelectedShapeProperty(fn){const s=getSelectedShape();if(s){recordHistory();fn(s);renderAnnotations()}}
@@ -4260,9 +4241,8 @@ function closeAccessPage() {
 }
 
 async function openPaymentPage() {
-  closeAccessPage();
-
   const checked = document.querySelector('input[name="access-plan"]:checked');
+  if (!checked) return;
   const option = checked.closest('.plan-option');
   const planName = option.querySelector('.plan-copy strong').textContent;
   const price = Number(checked.dataset.price);
@@ -4273,13 +4253,20 @@ async function openPaymentPage() {
 
   selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
 
-  document.getElementById('summary-plan-name').textContent = planName;
-  document.getElementById('summary-plan-price').textContent = formatPounds(price);
-  document.getElementById('summary-due-today').textContent = formatPounds(price);
-  document.getElementById('summary-total').textContent = formatPounds(price);
-  document.getElementById('summary-renewal').textContent = disclosure;
-  document.getElementById('summary-filename').textContent = preparedExportFilename || editor.file.name;
+  const summaryValues = {
+    'summary-plan-name': planName,
+    'summary-plan-price': formatPounds(price),
+    'summary-due-today': formatPounds(price),
+    'summary-total': formatPounds(price),
+    'summary-renewal': disclosure,
+    'summary-filename': preparedExportFilename || editor.file?.name || 'document.pdf'
+  };
+  Object.entries(summaryValues).forEach(([id, value]) => {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  });
 
+  closeAccessPage();
   document.getElementById('payment-page').hidden = false;
   await renderCheckoutPreview('payment-preview-canvas');
 }
@@ -4402,11 +4389,33 @@ function preparePaymentPrototypeUi() {
     }
   });
 
+  const planBenefits = document.querySelector('.plan-benefits');
+  if (planBenefits && !planBenefits.querySelector('[data-benefit="form-templates"]')) {
+    const templatesBenefit = document.createElement('div');
+    templatesBenefit.dataset.benefit = 'form-templates';
+    templatesBenefit.innerHTML = '<span>✓</span> Access to ready-made form templates';
+    planBenefits.appendChild(templatesBenefit);
+  }
+
+  const updatePlanBenefits = planValue => {
+    const benefitItems = [...document.querySelectorAll('.plan-benefits > div')];
+    benefitItems.forEach((item, index) => {
+      const unavailable = planValue === 'limited' && index >= benefitItems.length - 3;
+      item.classList.toggle('benefit-unavailable', unavailable);
+      const icon = item.querySelector('span');
+      if (icon) icon.textContent = unavailable ? '×' : '✓';
+    });
+  };
+  document.querySelectorAll('input[name="access-plan"]').forEach(input => {
+    input.addEventListener('change', () => updatePlanBenefits(input.value));
+  });
+  updatePlanBenefits(document.querySelector('input[name="access-plan"]:checked')?.value || 'full');
+
   const planDisclosure = document.getElementById('plan-disclosure');
   if (planDisclosure) {
-    planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team<br>via email at <a href="mailto:support@pdfmint.com">support@pdfmint.com</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a></p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfmint.com?subject=Free%20document%20download">click here</a>.</p>';
+    planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team via email at <a href="mailto:support@pdfmint.com">support@pdfmint.com</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a>.</p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfmint.com?subject=Free%20document%20download">click here</a>.</p>';
     document.querySelectorAll('input[name="access-plan"]').forEach(input => input.addEventListener('change', () => {
-      planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team<br>via email at <a href="mailto:support@pdfmint.com">support@pdfmint.com</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a></p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfmint.com?subject=Free%20document%20download">click here</a>.</p>';
+      planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team via email at <a href="mailto:support@pdfmint.com">support@pdfmint.com</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a>.</p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfmint.com?subject=Free%20document%20download">click here</a>.</p>';
     }));
   }
 

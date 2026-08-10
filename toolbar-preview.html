@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PDFMint Toolbar Comparison</title>
+  <title>PDFMint Compact Toolbar Preview</title>
   <link rel="stylesheet" href="styles.css?v=5115">
   <style>
     html,body{margin:0;background:#eaf0f6;color:#17233d;font-family:Poppins,Arial,sans-serif}
@@ -18,11 +18,7 @@
 <body>
   <main class="comparison">
     <section class="mode-card">
-      <div class="mode-title"><strong>Classic</strong><span>Current spacious toolbar</span></div>
-      <div class="desktop-editor preview-editor" id="classic-preview"></div>
-    </section>
-    <section class="mode-card">
-      <div class="mode-title"><strong>Compact Pro</strong><span>Space-saving horizontal toolbar</span></div>
+      <div class="mode-title"><strong>PDFMint Toolbar</strong><span>Compact layout</span></div>
       <div class="desktop-editor preview-editor toolbar-compact" id="compact-preview"></div>
     </section>
   </main>
@@ -49,22 +45,19 @@
       <button class="ribbon-tool"><span class="tool-icon stamp-tool-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.2" r="3.2"/><path d="M9.2 8.2v3.9c0 1.5-.8 2.7-2.2 3.4H5.5v3h13v-3H17c-1.4-.7-2.2-1.9-2.2-3.4V8.2"/><path d="M5 21h14"/></svg></span><span>Stamp</span></button>
       <button class="ribbon-tool"><span class="tool-icon link-tool-icon" aria-hidden="true"></span><span>Link</span></button>
       <button class="ribbon-tool menu-fix-note"><span class="tool-icon"><svg viewBox="0 0 24 24"><path d="M4 3.5h16v12l-5 5H4z"/><path d="M15 20.5v-5h5M7.5 8h9M7.5 11.5h7"/></svg></span><span class="tool-label">Note</span></button>
-      <button class="toolbar-density-toggle" role="switch" aria-checked="false"><span>Classic</span><i><b></b></i><span>Compact</span></button>
     </nav>
     <div class="fake-page-area"><div class="fake-page"></div></div>
   </template>
   <script>
     const template=document.getElementById('toolbar-template');
-    document.getElementById('classic-preview').append(template.content.cloneNode(true));
     const compact=document.getElementById('compact-preview');
     compact.append(template.content.cloneNode(true));
-    compact.querySelector('.toolbar-density-toggle').setAttribute('aria-checked','true');
     document.querySelectorAll('.desktop-ribbon').forEach(ribbon=>{
       const labels=['Undo','Redo','Add text','Edit text','Sign','Image','Draw','Text highlight','Link','Note','Stamp','Watermark','Crop','Line','Manage'];
       labels.forEach(label=>{
         const button=[...ribbon.querySelectorAll('.ribbon-tool')].find(item=>item.textContent.trim().includes(label));
         const item=button?.closest('.line-tool-wrap')||button;
-        if(item)ribbon.insertBefore(item,ribbon.querySelector('.toolbar-density-toggle'));
+        if(item)ribbon.appendChild(item);
       });
     });
   </script>
