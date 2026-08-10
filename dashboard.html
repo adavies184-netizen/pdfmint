@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Manage your PDFMint documents, tools and account settings.">
+  <title>My PDFMint account</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="dashboard.css?v=5300">
+</head>
+<body>
+  <svg class="svg-sprite" aria-hidden="true">
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9H6v-9"/><path d="M9 20v-6h6v6"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="m4 20 4.5-1 10-10-3.5-3.5-10 10zM13.8 6.7l3.5 3.5"/></symbol>
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></symbol>
+    <symbol id="i-compress" viewBox="0 0 24 24"><path d="M8 3v5H3M16 3v5h5M8 21v-5H3M16 21v-5h5"/><path d="m3 8 5-5m13 5-5-5M3 16l5 5m13-5-5 5"/></symbol>
+    <symbol id="i-convert" viewBox="0 0 24 24"><path d="M4 7h13m0 0-3-3m3 3-3 3M20 17H7m0 0 3 3m-3-3 3-3"/></symbol>
+    <symbol id="i-scan" viewBox="0 0 24 24"><path d="M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4"/><rect x="7" y="7" width="10" height="10" rx="2"/></symbol>
+    <symbol id="i-sign" viewBox="0 0 24 24"><path d="M3 18c3-5 4-9 6-9 3 0-1 8 2 8 2 0 2-4 4-4s1 4 3 4h3"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M4 4h16v13H9l-5 4z"/><path d="M8 9h8M8 13h5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m16 16 5 5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V3m0 0L7 8m5-5 5 5"/><path d="M4 14v7h16v-7"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c1-5 4-7 8-7s7 2 8 7"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20M6 15h4"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.7 9a2.5 2.5 0 1 1 3.8 2.1c-1 .6-1.5 1.1-1.5 2.4M12 17h.01"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></symbol>
+    <symbol id="i-gem" viewBox="0 0 24 24"><path d="m3 8 4-5h10l4 5-9 13zM3 8h18M7 3l5 18 5-18"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2c3 3 3 17 0 20M12 2c-3 3-3 17 0 20"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M10 4H4v16h6M14 8l4 4-4 4M8 12h10"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="m9 5 7 7-7 7"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
+  </svg>
+
+  <aside class="app-rail" aria-label="Account navigation">
+    <a class="rail-brand" href="index.html" aria-label="PDFMint home"><span>P</span><b>PDFMint</b></a>
+    <nav>
+      <a class="active" href="#"><svg><use href="#i-home"/></svg><span>Home</span></a>
+      <a href="#recent-files"><svg><use href="#i-file"/></svg><span>My files</span></a>
+      <a href="edit-pdf.html"><svg><use href="#i-edit"/></svg><span>Edit PDF</span></a>
+      <a href="split-pdf.html"><svg><use href="#i-grid"/></svg><span>Organise pages</span></a>
+      <a href="compress-pdf.html"><svg><use href="#i-compress"/></svg><span>Compress PDF</span></a>
+      <a href="all-converters.html"><svg><use href="#i-convert"/></svg><span>Convert files</span></a>
+      <a href="ocr-pdf.html"><svg><use href="#i-scan"/></svg><span>OCR PDF</span></a>
+      <a href="sign-pdf.html"><svg><use href="#i-sign"/></svg><span>Sign PDF</span></a>
+      <a href="#" data-placeholder><svg><use href="#i-file"/></svg><span>Forms</span></a>
+      <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>Chat with PDF <em>AI</em></span></a>
+    </nav>
+    <button class="support-pill" type="button"><span>?</span><b>Support</b></button>
+  </aside>
+
+  <div class="dashboard-shell">
+    <header class="dashboard-header">
+      <a class="mobile-brand" href="index.html"><span>P</span><b>PDFMint</b></a>
+      <div class="tool-search" data-tool-search>
+        <svg><use href="#i-search"/></svg>
+        <input type="search" placeholder="Search tools" aria-label="Search tools" autocomplete="off">
+        <div class="tool-search-menu" hidden></div>
+      </div>
+      <a class="header-link" href="contact.html">Contact us</a>
+      <button class="account-trigger" type="button" data-open-account><svg><use href="#i-user"/></svg><span>My account</span></button>
+    </header>
+
+    <main>
+      <section class="welcome-row">
+        <div><p>YOUR PDFMINT WORKSPACE</p><h1>Good morning, Andrew</h1><span>Edit, organise and convert your documents in one place.</span></div>
+        <label class="primary-upload"><svg><use href="#i-upload"/></svg>Upload file<input type="file" hidden></label>
+      </section>
+
+      <section class="mobile-search-wrap">
+        <div class="tool-search mobile-tool-search" data-tool-search>
+          <svg><use href="#i-search"/></svg>
+          <input type="search" placeholder="Search PDFMint tools" aria-label="Search PDFMint tools" autocomplete="off">
+          <div class="tool-search-menu" hidden></div>
+        </div>
+      </section>
+
+      <section class="quick-section" aria-labelledby="quick-title">
+        <div class="section-heading"><div><span>Start quickly</span><h2 id="quick-title">Popular tools</h2></div><a href="all-converters.html">View all tools</a></div>
+        <div class="quick-tools">
+          <a href="edit-pdf.html"><i><svg><use href="#i-edit"/></svg></i><b>Edit PDF</b><small>Update text and content</small></a>
+          <a href="compress-pdf.html"><i><svg><use href="#i-compress"/></svg></i><b>Compress PDF</b><small>Reduce document size</small></a>
+          <a href="merge-pdf.html"><i><svg><use href="#i-convert"/></svg></i><b>Merge PDF</b><small>Combine multiple files</small></a>
+          <a href="sign-pdf.html"><i><svg><use href="#i-sign"/></svg></i><b>Sign PDF</b><small>Add your signature</small></a>
+          <a href="ocr-pdf.html"><i><svg><use href="#i-scan"/></svg></i><b>OCR PDF</b><small>Recognise scanned text</small></a>
+        </div>
+      </section>
+
+      <section class="files-card" id="recent-files" aria-labelledby="files-title">
+        <div class="section-heading files-heading"><div><span>Your workspace</span><h2 id="files-title">Recent files</h2></div><label class="secondary-upload"><svg><use href="#i-upload"/></svg>Upload file<input type="file" hidden></label></div>
+        <div class="file-table" role="table">
+          <div class="file-row file-head" role="row"><span>Name</span><span>Size</span><span>Last activity</span><span></span></div>
+          <div class="file-row" role="row"><span class="file-name"><i>PDF</i><b>Terms of Business.pdf</b></span><span>531 KB</span><span>Today, 10:42 AM</span><button aria-label="File options">•••</button></div>
+          <div class="file-row" role="row"><span class="file-name"><i>PDF</i><b>Signed agreement.pdf</b></span><span>284 KB</span><span>Yesterday</span><button aria-label="File options">•••</button></div>
+        </div>
+        <label class="drop-zone"><svg><use href="#i-upload"/></svg><b>Click or drag a file here to upload</b><small>PDF, Word, Excel, PowerPoint and images up to 100 MB</small><input type="file" hidden></label>
+      </section>
+
+      <section class="ai-placeholder" id="ai-chat"><span><svg><use href="#i-chat"/></svg></span><div><small>COMING SOON</small><h2>Chat with PDF</h2><p>Ask questions, find information and understand long documents faster.</p></div><button type="button" disabled>Coming soon</button></section>
+    </main>
+  </div>
+
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <a class="active" href="#"><svg><use href="#i-home"/></svg><span>Home</span></a>
+    <a href="all-converters.html"><svg><use href="#i-grid"/></svg><span>Tools</span></a>
+    <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>AI chat</span></a>
+    <button type="button" data-open-account><svg><use href="#i-user"/></svg><span>Account</span></button>
+  </nav>
+
+  <div class="account-layer" data-account-layer hidden>
+    <button class="account-backdrop" type="button" aria-label="Close account settings" data-close-account></button>
+    <section class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="account-title">
+      <header class="account-mobile-header"><button type="button" data-close-account aria-label="Back"><span>‹</span></button><h2>My account</h2><button type="button" data-close-account aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+      <aside class="account-nav">
+        <h2 id="account-title">My account</h2>
+        <button class="active" type="button" data-account-tab="account"><svg><use href="#i-user"/></svg><span>Account</span></button>
+        <button type="button" data-account-tab="payment"><svg><use href="#i-card"/></svg><span>Payment</span></button>
+        <button type="button" data-account-tab="help"><svg><use href="#i-help"/></svg><span>Help centre</span></button>
+        <button type="button" data-account-tab="notifications"><svg><use href="#i-bell"/></svg><span>Notifications</span></button>
+        <button type="button" data-account-tab="membership"><svg><use href="#i-gem"/></svg><span>Membership</span></button>
+        <button class="logout-button" type="button"><svg><use href="#i-logout"/></svg><span>Log out</span></button>
+      </aside>
+      <nav class="account-mobile-tabs" aria-label="Account sections">
+        <button class="active" type="button" data-account-tab="account"><svg><use href="#i-user"/></svg><span>Account</span></button>
+        <button type="button" data-account-tab="payment"><svg><use href="#i-card"/></svg><span>Payment</span></button>
+        <button type="button" data-account-tab="membership"><svg><use href="#i-gem"/></svg><span>Membership</span></button>
+        <button type="button" data-account-tab="help"><svg><use href="#i-help"/></svg><span>Help</span></button>
+        <button type="button" data-account-tab="notifications"><svg><use href="#i-bell"/></svg><span>Alerts</span></button>
+      </nav>
+      <button class="dialog-close" type="button" data-close-account aria-label="Close"><svg><use href="#i-close"/></svg></button>
+
+      <div class="account-content">
+        <section class="account-panel active" data-account-panel="account">
+          <header><h2>Account</h2><p>Manage your personal information and preferences.</p></header>
+          <div class="profile-card"><span>AD</span><div><b>Andrew Davies</b><small>andrew@example.com</small></div><button type="button">Edit profile</button></div>
+          <button class="setting-card" type="button"><i><svg><use href="#i-user"/></svg></i><span><b>Personal details</b><small>Manage your name and email address.</small><em>Andrew Davies · andrew@example.com</em></span><svg><use href="#i-chevron"/></svg></button>
+          <button class="setting-card" type="button"><i><svg><use href="#i-lock"/></svg></i><span><b>Password &amp; security</b><small>Keep your account safe with a strong password.</small><em>Password · ••••••••••</em></span><svg><use href="#i-chevron"/></svg></button>
+          <button class="setting-card" type="button"><i><svg><use href="#i-globe"/></svg></i><span><b>Language and region</b><small>Set your preferred language and currency.</small><em>English, GBP - British Pound (£)</em></span><svg><use href="#i-chevron"/></svg></button>
+          <button class="mobile-account-logout" type="button"><svg><use href="#i-logout"/></svg><span>Log out</span></button>
+        </section>
+
+        <section class="account-panel" data-account-panel="payment">
+          <header><h2>Payment</h2><p>Manage the card used for your PDFMint purchase.</p></header>
+          <div class="payment-card"><div class="visa-mark">VISA</div><div><small>Payment card</small><b>Visa ending in 2721</b><span>Expires 08/31</span></div><button type="button">Update card</button></div>
+          <p class="private-note"><svg><use href="#i-lock"/></svg>Only you can see and manage these payment details.</p>
+        </section>
+
+        <section class="account-panel membership-panel" data-account-panel="membership">
+          <header><h2>Membership</h2><p>Manage your subscription plan.</p></header>
+          <div class="membership-benefits"><div class="benefit-title"><h3>Your current subscription plan includes:</h3><span>Active</span></div>
+            <article><i><svg><use href="#i-edit"/></svg></i><div><b>Fill in, edit &amp; save your PDFs</b><p>Edit any PDF right in your browser, make changes, and download your final version in seconds.</p></div></article>
+            <article><i><svg><use href="#i-chat"/></svg></i><div><b>Comment, highlight &amp; underline the text</b><p>Make key information stand out by adding notes, highlighting essentials, and marking up text.</p></div></article>
+            <article><i><svg><use href="#i-file"/></svg></i><div><b>Access your docs from anywhere</b><p>Store your documents securely in the cloud to view or edit them from your phone, tablet, or desktop.</p></div></article>
+            <article><i><svg><use href="#i-sign"/></svg></i><div><b>Sign your docs online</b><p>Skip the printer and add an electronic signature to any document in seconds.</p></div></article>
+            <article><i><svg><use href="#i-file"/></svg></i><div><b>Use various form templates</b><p>Browse our extensive library of ready-to-use forms for business, legal, and personal use.</p></div></article>
+            <article><i><svg><use href="#i-grid"/></svg></i><div><b>Add new fillable fields</b><p>Make any PDF form interactive by adding custom fields for text, dates, and checkboxes.</p></div></article>
+            <article><i><svg><use href="#i-file"/></svg></i><div><b>Create your own form templates</b><p>Create custom forms and save them as templates to reuse as many times as you like.</p></div></article>
+          </div>
+          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p>Your current plan: monthly membership for £49/month</p><p>Next payment: 17.08.2026</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
+        </section>
+
+        <section class="account-panel" data-account-panel="help"><header><h2>Help centre</h2><p>Find answers or contact our support team.</p></header><div class="simple-card"><h3>How can we help?</h3><p>Visit our support centre or contact PDFMint for assistance with documents, payments or your account.</p><a href="contact.html">Contact support</a></div></section>
+        <section class="account-panel" data-account-panel="notifications"><header><h2>Notification settings</h2><p>Choose the emails you would like to receive.</p></header><div class="notification-list"><label><input type="checkbox" checked><span><b>Promotions &amp; offers</b><small>Stay updated on PDFMint offers.</small></span></label><label><input type="checkbox" checked><span><b>Product &amp; feature updates</b><small>Be the first to know about improvements.</small></span></label><label><input type="checkbox" checked><span><b>Tips, use cases &amp; education</b><small>Learn how to get the most from PDFMint.</small></span></label><label><input type="checkbox"><span><b>Unsubscribe from all</b><small>Essential account and billing messages will still be sent.</small></span></label></div></section>
+      </div>
+    </section>
+  </div>
+
+  <script src="dashboard.js?v=5300"></script>
+</body>
+</html>
