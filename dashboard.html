@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5320">
+  <link rel="stylesheet" href="dashboard.css?v=5334">
 </head>
 <body>
   <svg class="svg-sprite" aria-hidden="true">
@@ -36,23 +36,40 @@
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m5 5 14 14M19 5 5 19"/></symbol>
     <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
     <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-text" viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></symbol>
+    <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 2.8c-2.2 3.2-6.1 7.4-6.1 11.3A6.1 6.1 0 0 0 12 20.2a6.1 6.1 0 0 0 6.1-6.1C18.1 10.2 14.2 6 12 2.8Z"/><path d="M9 15.2c.5 1.3 1.5 2 3 2.2"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8" cy="9" r="1.5"/><path d="m4 18 5-5 4 4 3-3 5 5"/></symbol>
+    <symbol id="i-crop" viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13M2 7h15a2 2 0 0 1 2 2v13"/></symbol>
+    <symbol id="i-highlight" viewBox="0 0 24 24"><path d="M5 5h14M12 5v12M8 17h8M4 21h16"/></symbol>
+    <symbol id="i-stamp" viewBox="0 0 24 24"><circle cx="12" cy="5" r="3"/><path d="M9 8v4c0 2-1 3-3 4v3h12v-3c-2-1-3-2-3-4V8M5 22h14"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="m9.5 14.5 5-5M7.2 17.8l-1 1a3.5 3.5 0 0 1-5-5l4.6-4.6a3.5 3.5 0 0 1 5 0M16.8 6.2l1-1a3.5 3.5 0 1 1 5 5l-4.6 4.6a3.5 3.5 0 0 1-5 0"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M4 3h16v14l-4 4H4zM16 21v-4h4M8 8h8M8 12h6"/></symbol>
+    <symbol id="i-merge" viewBox="0 0 24 24"><path d="M7 3v5c0 4 5 3 5 7v6M17 3v5c0 4-5 3-5 7"/><path d="m9 18 3 3 3-3"/></symbol>
+    <symbol id="i-split" viewBox="0 0 24 24"><path d="M12 3v6c0 4-5 3-5 7v5M12 9c0 4 5 3 5 7v5"/><path d="m4 18 3 3 3-3m4 0 3 3 3-3"/></symbol>
+    <symbol id="i-rotate" viewBox="0 0 24 24"><path d="M20 6v6h-6"/><path d="M19 12a8 8 0 1 1-2.3-5.7L20 9"/></symbol>
+    <symbol id="i-reorder" viewBox="0 0 24 24"><path d="M8 4 5 1 2 4M5 1v8M16 20l3 3 3-3M19 23v-8"/><rect x="9" y="4" width="11" height="6" rx="1"/><rect x="4" y="14" width="11" height="6" rx="1"/></symbol>
+    <symbol id="i-delete" viewBox="0 0 24 24"><path d="M4 7h16M9 7V4h6v3M7 7l1 14h8l1-14M10 11v6M14 11v6"/></symbol>
   </svg>
 
   <aside class="app-rail" aria-label="Account navigation">
     <a class="rail-brand" href="index.html" aria-label="PDFMint home"><span>P</span><b>PDFMint</b></a>
     <nav>
-      <a class="active" href="#"><svg><use href="#i-home"/></svg><span>Home</span></a>
-      <a href="#recent-files"><svg><use href="#i-file"/></svg><span>My files</span></a>
-      <a href="edit-pdf.html"><svg><use href="#i-edit"/></svg><span>Edit PDF</span></a>
-      <a href="split-pdf.html"><svg><use href="#i-grid"/></svg><span>Organise pages</span></a>
-      <a href="compress-pdf.html"><svg><use href="#i-compress"/></svg><span>Compress PDF</span></a>
-      <a href="all-converters.html"><svg><use href="#i-convert"/></svg><span>Convert files</span></a>
-      <a href="ocr-pdf.html"><svg><use href="#i-scan"/></svg><span>OCR PDF</span></a>
+      <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
+      <a href="dashboard.html?menu=edit" data-dashboard-menu="edit" onclick="window.openDashboardMenu?.('edit')"><svg><use href="#i-edit"/></svg><span>Edit PDF</span><svg class="rail-chevron"><use href="#i-chevron"/></svg></a>
       <a href="sign-pdf.html"><svg><use href="#i-sign"/></svg><span>Sign PDF</span></a>
+      <a href="ocr-pdf.html"><svg><use href="#i-scan"/></svg><span>OCR PDF</span></a>
+      <a href="compress-pdf.html"><svg><use href="#i-compress"/></svg><span>Compress PDF</span></a>
+      <a href="all-converters.html"><svg><use href="#i-convert"/></svg><span>Convert Files</span></a>
+      <a href="dashboard.html?menu=organize" data-dashboard-menu="organize" onclick="window.openDashboardMenu?.('organize')"><svg><use href="#i-grid"/></svg><span>Organize Pages</span><svg class="rail-chevron"><use href="#i-chevron"/></svg></a>
       <a href="#" data-placeholder><svg><use href="#i-file"/></svg><span>Forms</span></a>
       <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>Chat with PDF <em>AI</em></span></a>
     </nav>
     <button class="support-pill" type="button"><span>?</span><b>Support</b></button>
+  </aside>
+
+  <aside class="tool-drawer" data-tool-drawer aria-label="PDF tool menu" aria-hidden="true">
+    <header><span class="drawer-icon"><svg><use href="#i-edit"/></svg></span><div><h2 data-drawer-title>Edit PDF</h2><p data-drawer-copy>Choose the change you want to make.</p></div><button type="button" data-close-drawer aria-label="Close tool menu"><svg><use href="#i-close"/></svg></button></header>
+    <div class="drawer-tools" data-drawer-tools></div>
   </aside>
 
   <div class="dashboard-shell">
@@ -107,11 +124,29 @@
   </div>
 
   <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
-    <a class="active" href="#"><svg><use href="#i-home"/></svg><span>Home</span></a>
+    <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
     <a href="all-converters.html"><svg><use href="#i-grid"/></svg><span>Tools</span></a>
     <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>AI chat</span></a>
     <button type="button" data-open-account><svg><use href="#i-user"/></svg><span>Account</span></button>
   </nav>
+
+  <div class="document-picker-layer" data-document-picker hidden>
+    <button class="picker-backdrop" type="button" data-close-picker aria-label="Close document picker"></button>
+    <section class="document-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
+      <button class="picker-close" type="button" data-close-picker aria-label="Close"><svg><use href="#i-close"/></svg></button>
+      <header><span><svg data-picker-icon><use href="#i-edit"/></svg></span><div><small>OPEN WITH PDFMINT</small><h2 id="picker-title" data-picker-title>Edit PDF</h2><p data-picker-copy>Upload a new PDF or continue with a file from My Files.</p></div></header>
+      <label class="picker-upload"><svg><use href="#i-upload"/></svg><span><b>Upload a new PDF</b><small>Choose a PDF from your device</small></span><em>Browse</em><input data-picker-input type="file" accept="application/pdf,.pdf" hidden></label>
+      <div class="picker-divider"><span>or choose from My Files</span></div>
+      <div class="picker-files">
+        <button type="button" data-library-file="Terms of Business.pdf"><i>PDF</i><span><b>Terms of Business.pdf</b><small>531 KB · Edited today</small></span><svg><use href="#i-chevron"/></svg></button>
+        <button type="button" data-library-file="Signed agreement.pdf"><i>PDF</i><span><b>Signed agreement.pdf</b><small>284 KB · Edited yesterday</small></span><svg><use href="#i-chevron"/></svg></button>
+      </div>
+    </section>
+  </div>
+
+  <div class="dashboard-progress-layer" data-dashboard-progress hidden>
+    <section class="dashboard-progress-card" role="status" aria-live="polite"><span><svg><use href="#i-file"/></svg></span><h2 data-progress-title>Preparing your document</h2><p data-progress-copy>Opening your PDF in the editor…</p><div><i data-progress-bar></i></div><strong data-progress-percent>0%</strong></section>
+  </div>
 
   <div class="account-layer" data-account-layer hidden>
     <button class="account-backdrop" type="button" aria-label="Close account settings" data-close-account></button>
@@ -199,6 +234,6 @@
     </section>
   </div>
 
-  <script src="dashboard.js?v=5320"></script>
+  <script src="dashboard.js?v=5333"></script>
 </body>
 </html>

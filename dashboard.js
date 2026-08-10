@@ -26,6 +26,140 @@
     document.addEventListener('pointerdown', e => { if (!search.contains(e.target)) menu.hidden = true; });
   });
 
+  const dashboardMenus = {
+    edit: {
+      title: 'Edit PDF', copy: 'Choose the change you want to make.', icon: 'i-edit',
+      tools: [
+        ['Add text','Insert new text anywhere','i-text','text',''],
+        ['Edit text','Modify existing PDF text','i-edit','edit',''],
+        ['Add watermark','Brand or protect every page','i-water','watermark',''],
+        ['Text highlight','Mark important passages','i-highlight','highlight',''],
+        ['Add image','Place an image on the PDF','i-image','image',''],
+        ['Crop pages','Trim page margins','i-crop','crop',''],
+        ['Add stamp','Insert a stamp on any page','i-stamp','stamp',''],
+        ['Add hyperlink','Insert a clickable link','i-link','link',''],
+        ['Add note','Leave a note or comment','i-note','note','']
+      ]
+    },
+    organize: {
+      title: 'Organize Pages', copy: 'Arrange and restructure your PDF pages.', icon: 'i-grid',
+      tools: [
+        ['Merge PDFs','Combine files into one document','i-merge','manage','merge'],
+        ['Split PDF','Divide one PDF into separate files','i-split','manage','split'],
+        ['Rotate pages','Change page orientation','i-rotate','manage','rotate'],
+        ['Reorder pages','Drag pages into a new order','i-reorder','manage','reorder'],
+        ['Delete pages','Remove pages you no longer need','i-delete','manage','delete']
+      ]
+    }
+  };
+  const drawer = document.querySelector('[data-tool-drawer]');
+  const drawerTools = drawer?.querySelector('[data-drawer-tools]');
+  const pickerLayer = document.querySelector('[data-document-picker]');
+  const pickerInput = pickerLayer?.querySelector('[data-picker-input]');
+  const progressLayer = document.querySelector('[data-dashboard-progress]');
+  let selectedDashboardTool = null;
+
+  const closeDrawer = () => {
+    drawer?.classList.remove('open');
+    drawer?.setAttribute('aria-hidden','true');
+    document.querySelectorAll('[data-dashboard-menu]').forEach(button => button.classList.remove('active'));
+  };
+  const openDrawer = (name) => {
+    const menu = dashboardMenus[name];
+    if (!drawer || !menu) return;
+    const trigger = document.querySelector(`[data-dashboard-menu="${name}"]`);
+    document.querySelectorAll('[data-dashboard-menu]').forEach(button => button.classList.toggle('active', button === trigger));
+    drawer.querySelector('[data-drawer-title]').textContent = menu.title;
+    drawer.querySelector('[data-drawer-copy]').textContent = menu.copy;
+    drawer.querySelector('.drawer-icon use').setAttribute('href', `#${menu.icon}`);
+    drawerTools.innerHTML = menu.tools.map((tool,index) => `<button class="drawer-tool" type="button" data-drawer-tool="${name}-${index}"><i><svg><use href="#${tool[2]}"></use></svg></i><span><b>${tool[0]}</b><small>${tool[1]}</small></span><svg><use href="#i-chevron"></use></svg></button>`).join('');
+    drawerTools.querySelectorAll('[data-drawer-tool]').forEach((button,index) => button.addEventListener('click', () => openDocumentPicker(menu.tools[index])));
+    drawer.classList.add('open');
+    drawer.setAttribute('aria-hidden','false');
+  };
+  window.openDashboardMenu = openDrawer;
+  document.querySelectorAll('[data-dashboard-menu]').forEach(button => button.addEventListener('click', event => {
+    event.preventDefault();
+    openDrawer(button.dataset.dashboardMenu);
+  }));
+  drawer?.querySelector('[data-close-drawer]')?.addEventListener('click', closeDrawer);
+
+  const openDocumentPicker = (tool) => {
+    selectedDashboardTool = tool;
+    if (!pickerLayer) return;
+    pickerLayer.querySelector('[data-picker-title]').textContent = tool[0];
+    pickerLayer.querySelector('[data-picker-copy]').textContent = tool[1] + '. Upload a new PDF or continue with a file from My Files.';
+    pickerLayer.querySelector('[data-picker-icon] use').setAttribute('href', `#${tool[2]}`);
+    pickerLayer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  };
+  const closePicker = () => { if (pickerLayer) pickerLayer.hidden = true; document.body.style.overflow = ''; };
+  pickerLayer?.querySelectorAll('[data-close-picker]').forEach(button => button.addEventListener('click', closePicker));
+
+  function simplePdfFile(name) {
+    const safeName = String(name || 'PDFMint document.pdf').replace(/[^\x20-\x7e]/g,'');
+    const text = `PDFMint file: ${safeName}`.replace(/[()\\]/g, value => `\\${value}`);
+    const objects = [
+      '<< /Type /Catalog /Pages 2 0 R >>',
+      '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>',
+      `<< /Length ${38 + text.length} >>\nstream\nBT /F1 18 Tf 72 700 Td (${text}) Tj ET\nendstream`,
+      '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>'
+    ];
+    let pdf = '%PDF-1.4\n';
+    const offsets = [0];
+    objects.forEach((object,index) => { offsets.push(pdf.length); pdf += `${index + 1} 0 obj\n${object}\nendobj\n`; });
+    const xref = pdf.length;
+    pdf += `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    offsets.slice(1).forEach(offset => { pdf += `${String(offset).padStart(10,'0')} 00000 n \n`; });
+    pdf += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+    return new File([new TextEncoder().encode(pdf)], safeName, { type:'application/pdf', lastModified:Date.now() });
+  }
+
+  function openDashboardTransferDb() {
+    return new Promise((resolve,reject) => {
+      const request = indexedDB.open('pdfmint-editor-transfer',1);
+      request.onupgradeneeded = () => { if (!request.result.objectStoreNames.contains('uploads')) request.result.createObjectStore('uploads'); };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  async function storeDashboardPdf(file) {
+    const db = await openDashboardTransferDb();
+    const bytes = await file.arrayBuffer();
+    await new Promise((resolve,reject) => {
+      const transaction = db.transaction('uploads','readwrite');
+      transaction.objectStore('uploads').put({name:file.name,type:file.type || 'application/pdf',lastModified:file.lastModified || Date.now(),bytes},'pending-pdf');
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+  async function continueToDashboardTool(file) {
+    if (!file || !selectedDashboardTool) return;
+    closePicker(); closeDrawer();
+    progressLayer.hidden = false;
+    progressLayer.querySelector('[data-progress-title]').textContent = `Opening ${selectedDashboardTool[0]}`;
+    progressLayer.querySelector('[data-progress-copy]').textContent = 'Securely preparing your document. No email confirmation is needed.';
+    const bar = progressLayer.querySelector('[data-progress-bar]');
+    const percent = progressLayer.querySelector('[data-progress-percent]');
+    let value = 8; bar.style.width = `${value}%`; percent.textContent = `${value}%`;
+    const timer = window.setInterval(() => { value = Math.min(92,value + Math.ceil(Math.random() * 12)); bar.style.width = `${value}%`; percent.textContent = `${value}%`; },150);
+    try {
+      await storeDashboardPdf(file);
+      await new Promise(resolve => window.setTimeout(resolve,650));
+      window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
+      await new Promise(resolve => window.setTimeout(resolve,250));
+      const params = new URLSearchParams({tool:selectedDashboardTool[3]});
+      if (selectedDashboardTool[4]) params.set('action',selectedDashboardTool[4]);
+      window.location.href = `editor.html?${params}`;
+    } catch (error) {
+      window.clearInterval(timer); console.error(error); progressLayer.hidden = true; document.body.style.overflow = '';
+    }
+  }
+  pickerInput?.addEventListener('change', () => { const file = pickerInput.files?.[0]; if (file) continueToDashboardTool(file); pickerInput.value = ''; });
+  pickerLayer?.querySelectorAll('[data-library-file]').forEach(button => button.addEventListener('click', () => continueToDashboardTool(simplePdfFile(button.dataset.libraryFile))));
+
   const layer = document.querySelector('[data-account-layer]');
   const openAccount = (tab = 'account') => {
     layer.hidden = false;
@@ -179,6 +313,7 @@
   } catch (_) {}
 
   const params = new URLSearchParams(location.search);
+  if (params.get('menu')) openDrawer(params.get('menu'));
   if (params.get('account') === 'open') openAccount(params.get('tab') || 'account');
   if (params.get('setting')) window.setTimeout(() => setExpander(`${params.get('setting')}-editor`, true), 120);
 })();
