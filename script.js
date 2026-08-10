@@ -4325,6 +4325,21 @@ function triggerPreparedDownload(blob, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
+function finishMockCheckout() {
+  try {
+    localStorage.setItem('pdfmintAccountActive', 'true');
+    localStorage.setItem('pdfmintSelectedPlan', JSON.stringify(selectedAccessPlan || {}));
+    localStorage.setItem('pdfmintAccountCreatedAt', new Date().toISOString());
+  } catch (error) {
+    console.warn('PDFMint could not save the local account preview state.', error);
+  }
+
+  // Give the browser time to accept the download before replacing the editor.
+  window.setTimeout(() => {
+    window.location.assign('dashboard.html?welcome=1');
+  }, 350);
+}
+
 function validateMockCheckout() {
   const consent = document.querySelector('#card-payment-panel .payment-consent input');
   const consentLabel = consent?.closest('.payment-consent');
@@ -4352,7 +4367,7 @@ document.getElementById('mock-pay-button').addEventListener('click', () => {
     triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
     pendingCheckoutBlob = null;
     pendingCheckoutFilename = '';
-    closePaymentPage();
+    finishMockCheckout();
     return;
   }
   openDemoPaymentNotice();
