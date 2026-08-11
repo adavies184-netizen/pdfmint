@@ -126,6 +126,7 @@
   function simplePdfFile(name) {
     const safeName = String(name || 'PDFMint document.pdf').replace(/[^\x20-\x7e]/g,'');
     const text = `PDFMint file: ${safeName}`.replace(/[()\\]/g, value => `\\${value}`);
+    const pagePaint = `q ${width} 0 0 ${height} 0 0 cm /Im0 Do Q`;
     const objects = [
       '<< /Type /Catalog /Pages 2 0 R >>',
       '<< /Type /Pages /Kids [3 0 R] /Count 1 >>',
@@ -162,6 +163,66 @@
     });
     db.close();
   }
+
+  function joinBinaryParts(parts) {
+    const length = parts.reduce((total, part) => total + part.length, 0);
+    const output = new Uint8Array(length);
+    let offset = 0;
+    parts.forEach(part => { output.set(part, offset); offset += part.length; });
+    return output;
+  }
+
+  async function imageFileToSinglePagePdf(file) {
+    const bitmap = await createImageBitmap(file);
+    const maxSide = 2200;
+    const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+    const width = Math.max(1, Math.round(bitmap.width * scale));
+    const height = Math.max(1, Math.round(bitmap.height * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const context = canvas.getContext('2d', { alpha:false });
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, width, height);
+    context.drawImage(bitmap, 0, 0, width, height);
+    bitmap.close?.();
+    const jpeg = await new Promise((resolve,reject) => canvas.toBlob(blob => blob ? resolve(blob) : reject(new Error('Unable to prepare this image.')), 'image/jpeg', .92));
+    const imageBytes = new Uint8Array(await jpeg.arrayBuffer());
+    const encode = value => new TextEncoder().encode(value);
+    const pagePaint = `q ${width} 0 0 ${height} 0 0 cm /Im0 Do Q`;
+    const objects = [
+      encode('<< /Type /Catalog /Pages 2 0 R >>'),
+      encode('<< /Type /Pages /Kids [3 0 R] /Count 1 >>'),
+      encode(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${width} ${height}] /Resources << /XObject << /Im0 4 0 R >> >> /Contents 5 0 R >>`),
+      joinBinaryParts([encode(`<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageBytes.length} >>\nstream\n`), imageBytes, encode('\nendstream')]),
+      encode(`<< /Length ${encode(pagePaint).length} >>\nstream\n${pagePaint}\nendstream`)
+    ];
+    const parts = [encode('%PDF-1.4\n%PDFMint\n')];
+    const offsets = [0];
+    let byteOffset = parts[0].length;
+    objects.forEach((object,index) => {
+      const prefix = encode(`${index + 1} 0 obj\n`);
+      const suffix = encode('\nendobj\n');
+      offsets.push(byteOffset);
+      parts.push(prefix, object, suffix);
+      byteOffset += prefix.length + object.length + suffix.length;
+    });
+    const xrefOffset = byteOffset;
+    let xref = `xref\n0 ${objects.length + 1}\n0000000000 65535 f \n`;
+    offsets.slice(1).forEach(offset => { xref += `${String(offset).padStart(10,'0')} 00000 n \n`; });
+    xref += `trailer\n<< /Size ${objects.length + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF`;
+    parts.push(encode(xref));
+    const pdfName = `${String(file.name || 'image').replace(/\.[^.]+$/, '')}.pdf`;
+    return new File([joinBinaryParts(parts)], pdfName, { type:'application/pdf', lastModified:Date.now() });
+  }
+
+  async function ensureEditorCompatibleFile(file) {
+    if (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || '')) return file;
+    if ((file.type || '').startsWith('image/') || /\.(png|jpe?g|webp|gif|bmp)$/i.test(file.name || '')) {
+      return imageFileToSinglePagePdf(file);
+    }
+    throw new Error('This editor tool currently supports saved PDF and image files.');
+  }
   async function continueToDashboardTool(file) {
     if (!file || !selectedDashboardTool) return;
     selectedDashboardFile = file;
@@ -188,7 +249,8 @@
     let value = 8; bar.style.width = `${value}%`; percent.textContent = `${value}%`;
     const timer = window.setInterval(() => { value = Math.min(92,value + Math.ceil(Math.random() * 12)); bar.style.width = `${value}%`; percent.textContent = `${value}%`; },150);
     try {
-      await storeDashboardPdf(file);
+      const editorFile = await ensureEditorCompatibleFile(file);
+      await storeDashboardPdf(editorFile);
       await new Promise(resolve => window.setTimeout(resolve,650));
       window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
       await new Promise(resolve => window.setTimeout(resolve,250));
