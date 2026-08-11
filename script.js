@@ -5277,8 +5277,7 @@ function showOAuthSetupMessage(provider) {
   error.hidden = false;
 }
 
-document.getElementById('continue-google').addEventListener('click', openAccessPage);
-document.getElementById('continue-apple').addEventListener('click', openAccessPage);
+document.getElementById('continue-google')?.addEventListener('click', openAccessPage);
 
 
 const heroInput = document.getElementById('file-input');

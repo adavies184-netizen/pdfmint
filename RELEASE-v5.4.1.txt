@@ -1,0 +1,9 @@
+PDFMint Site v5.4.1 - Google-only authentication
+
+- Removed Apple account sign-in from the login page and all upload/download email prompts.
+- Kept Google sign-in as the sole social login option.
+- Expanded the Google button to the full authentication card width.
+- Added GOOGLE-BREVO-SETUP.md with Google branding, custom auth-domain and Brevo transactional-email setup guidance.
+- Apple Pay remains available only as a checkout presentation option; it is unrelated to Apple account sign-in.
+
+Deployment: site app only. No PDFMint Engine deployment is required.
