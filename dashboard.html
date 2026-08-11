@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css?v=5381">
 </head>
-<body>
+<body data-require-auth>
   <svg class="svg-sprite" aria-hidden="true">
     <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 11 9-8 9 8v9H6v-9"/><path d="M9 20v-6h6v6"/></symbol>
     <symbol id="i-file" viewBox="0 0 24 24"><path d="M6 2h8l4 4v16H6z"/><path d="M14 2v5h5M9 12h6M9 16h6"/></symbol>
@@ -278,7 +278,9 @@
     </section>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="dashboard.js?v=5381"></script>
+  <script src="auth.js?v=5400"></script>
+  <script src="dashboard.js?v=5400"></script>
 </body>
 </html>

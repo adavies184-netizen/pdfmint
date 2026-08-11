@@ -1,4 +1,12 @@
-(() => {
+(async () => {
+  const accountAuth = window.PDFMintAuth;
+  if (!accountAuth) {
+    location.replace('/login.html');
+    return;
+  }
+  await accountAuth.ready;
+  const authenticatedUser = await accountAuth.requireUser();
+  if (!authenticatedUser) return;
   const tools = [
     ['Edit PDF','Update text and content','edit-pdf.html','i-edit'],
     ['Convert files','Convert documents, images, audio and more','dashboard.html?tool=convert','i-convert'],
@@ -282,7 +290,12 @@
     });
   }
   async function saveDashboardFile(blob, filename) {
-    if (!blob || !window.indexedDB) return;
+    if (!blob) return;
+    if (window.PDFMintAuth?.isSignedIn?.()) {
+      await window.PDFMintAuth.saveDocument(blob, filename || blob.name, 'dashboard');
+      return;
+    }
+    if (!window.indexedDB) return;
     const db = await openDashboardFilesDb();
     const bytes = await blob.arrayBuffer();
     const record = {
@@ -302,6 +315,16 @@
     db.close();
   }
   async function getDashboardFiles() {
+    if (window.PDFMintAuth?.isSignedIn?.()) {
+      const records = await window.PDFMintAuth.listDocuments();
+      return records.map(record => ({
+        ...record,
+        remote: true,
+        type: record.mime_type,
+        size: Number(record.byte_size || 0),
+        lastModified: new Date(record.updated_at || record.created_at).getTime()
+      }));
+    }
     if (!window.indexedDB) return [];
     const db = await openDashboardFilesDb();
     const records = await new Promise((resolve,reject) => {
@@ -312,7 +335,9 @@
     db.close();
     return records.sort((a,b) => b.lastModified - a.lastModified);
   }
-  const recordToFile = record => new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
+  const recordToFile = async record => record.remote
+    ? window.PDFMintAuth.downloadDocument(record)
+    : new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
   async function refreshDashboardFiles() {
     const records = await getDashboardFiles();
     const recent = document.querySelector('[data-recent-files]');
@@ -335,7 +360,7 @@
       button.dataset.storedFile = record.id;
       button.innerHTML = `<i>${String(record.name).split('.').pop().slice(0,4).toUpperCase()}</i><span><b></b><small>${formatBytes(record.size)} · Saved in My Files</small></span><svg><use href="#i-chevron"></use></svg>`;
       button.querySelector('b').textContent = record.name;
-      button.addEventListener('click', () => continueToDashboardTool(recordToFile(record)));
+      button.addEventListener('click', async () => continueToDashboardTool(await recordToFile(record)));
       pickerFiles?.prepend(button);
     });
   }
@@ -551,7 +576,7 @@
   }));
 
   const profileForm = layer.querySelector('[data-profile-form]');
-  profileForm?.addEventListener('submit', event => {
+  profileForm?.addEventListener('submit', async event => {
     event.preventDefault();
     if (!profileForm.reportValidity()) return;
     const data = new FormData(profileForm);
@@ -559,16 +584,27 @@
     const last = String(data.get('lastName')).trim();
     const email = String(data.get('email')).trim();
     const fullName = `${first} ${last}`.trim();
-    layer.querySelector('[data-profile-name]').textContent = fullName;
-    layer.querySelector('[data-profile-email]').textContent = email;
-    layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase();
-    profileForm.querySelector('.form-message').textContent = 'Profile updated.';
-    try { localStorage.setItem('pdfmintProfile', JSON.stringify({ first, last, email })); } catch (_) {}
-    window.setTimeout(() => setExpander('profile-editor', false), 650);
+    const profileMessage = profileForm.querySelector('.form-message');
+    const submit = profileForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    profileMessage.classList.remove('error');
+    profileMessage.textContent = 'Saving your profile…';
+    try {
+      await accountAuth.updateProfile({ firstName:first, lastName:last, email });
+      layer.querySelector('[data-profile-name]').textContent = fullName;
+      layer.querySelector('[data-profile-email]').textContent = email;
+      layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase();
+      profileMessage.textContent = email !== authenticatedUser.email ? 'Profile saved. Confirm the email sent to your new address.' : 'Profile updated.';
+      updateDashboardGreeting(first, null);
+      window.setTimeout(() => setExpander('profile-editor', false), 850);
+    } catch (error) {
+      profileMessage.classList.add('error');
+      profileMessage.textContent = accountAuth.messageFor(error);
+    } finally { submit.disabled = false; }
   });
 
   const securityForm = layer.querySelector('[data-security-form]');
-  securityForm?.addEventListener('submit', event => {
+  securityForm?.addEventListener('submit', async event => {
     event.preventDefault();
     const message = securityForm.querySelector('.form-message');
     const next = securityForm.elements.newPassword.value;
@@ -576,27 +612,43 @@
     if (!securityForm.reportValidity()) return;
     if (!/\d/.test(next)) { message.textContent = 'Add at least one number to your new password.'; message.classList.add('error'); return; }
     if (next !== confirm) { message.textContent = 'The new passwords do not match.'; message.classList.add('error'); return; }
-    message.classList.remove('error'); message.textContent = 'Password updated securely.';
-    securityForm.reset(); securityForm.elements.loginAlerts.checked = true;
-    window.setTimeout(() => setExpander('security-editor', false), 700);
+    const submit = securityForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    message.classList.remove('error'); message.textContent = 'Updating your password…';
+    try {
+      await accountAuth.changePassword(securityForm.elements.currentPassword.value, next);
+      message.textContent = 'Password updated securely.';
+      securityForm.reset(); securityForm.elements.loginAlerts.checked = true;
+      window.setTimeout(() => setExpander('security-editor', false), 800);
+    } catch (error) {
+      message.classList.add('error'); message.textContent = accountAuth.messageFor(error);
+    } finally { submit.disabled = false; }
   });
 
   const regionForm = layer.querySelector('[data-region-form]');
   const timezoneSelect = layer.querySelector('[data-timezone-select]');
   const detectedTimezone = (() => { try { return Intl.DateTimeFormat().resolvedOptions().timeZone; } catch (_) { return 'Europe/London'; } })();
   let savedTimezone = detectedTimezone;
-  try { savedTimezone = localStorage.getItem('pdfmintPaymentTimezone') || detectedTimezone; } catch (_) {}
   if (timezoneSelect && [...timezoneSelect.options].some(option => option.value === savedTimezone)) timezoneSelect.value = savedTimezone;
-  regionForm?.addEventListener('submit', event => {
+  regionForm?.addEventListener('submit', async event => {
     event.preventDefault();
     const data = new FormData(regionForm);
     const language = String(data.get('language'));
     const currency = String(data.get('currency'));
     const timezone = String(data.get('timezone'));
-    layer.querySelector('[data-region-summary]').textContent = `${language}, ${currency} · ${timezone}`;
-    regionForm.querySelector('.form-message').textContent = 'Language and regional preferences saved.';
-    try { localStorage.setItem('pdfmintRegion', JSON.stringify({ language, currency, timezone })); } catch (_) {}
-    window.setTimeout(() => setExpander('region-editor', false), 650);
+    const regionMessage = regionForm.querySelector('.form-message');
+    const submit = regionForm.querySelector('button[type="submit"]');
+    submit.disabled = true;
+    regionMessage.classList.remove('error'); regionMessage.textContent = 'Saving preferences…';
+    try {
+      await accountAuth.updatePreferences({ language, currency, timezone });
+      layer.querySelector('[data-region-summary]').textContent = `${language}, ${currency} · ${timezone}`;
+      regionMessage.textContent = 'Language and regional preferences saved.';
+      updateDashboardGreeting(null, timezone);
+      window.setTimeout(() => setExpander('region-editor', false), 750);
+    } catch (error) {
+      regionMessage.classList.add('error'); regionMessage.textContent = accountAuth.messageFor(error);
+    } finally { submit.disabled = false; }
   });
 
   const cardForm = layer.querySelector('[data-card-form]');
@@ -640,15 +692,6 @@
   });
 
   try {
-    const savedProfile = JSON.parse(localStorage.getItem('pdfmintProfile') || 'null');
-    if (savedProfile) {
-      profileForm.elements.firstName.value = savedProfile.first || '';
-      profileForm.elements.lastName.value = savedProfile.last || '';
-      profileForm.elements.email.value = savedProfile.email || '';
-      layer.querySelector('[data-profile-name]').textContent = `${savedProfile.first || ''} ${savedProfile.last || ''}`.trim();
-      layer.querySelector('[data-profile-email]').textContent = savedProfile.email || '';
-      layer.querySelector('[data-profile-initials]').textContent = `${savedProfile.first?.[0] || ''}${savedProfile.last?.[0] || ''}`.toUpperCase();
-    }
     const paymentCard = JSON.parse(localStorage.getItem('pdfmintPaymentCard') || 'null');
     if (paymentCard?.lastFour) {
       const topCard = layer.querySelector('.payment-card');
@@ -661,21 +704,39 @@
     }
   } catch (_) {}
 
-  const updateDashboardGreeting = () => {
-    let firstName = 'Andrew';
-    let timezone = 'Europe/London';
-    try {
-      const profile = JSON.parse(localStorage.getItem('pdfmintProfile') || 'null');
-      firstName = profile?.first || firstName;
-      timezone = localStorage.getItem('pdfmintPaymentTimezone') || JSON.parse(localStorage.getItem('pdfmintRegion') || 'null')?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
-    } catch (_) {}
+  let accountFirstName = authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0] || 'there';
+  let accountTimezone = detectedTimezone;
+  const updateDashboardGreeting = (firstNameOverride, timezoneOverride) => {
+    if (firstNameOverride) accountFirstName = firstNameOverride;
+    if (timezoneOverride) accountTimezone = timezoneOverride;
     let hour = new Date().getHours();
-    try { hour = Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:timezone}).format(new Date())); } catch (_) {}
+    try { hour = Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:accountTimezone}).format(new Date())); } catch (_) {}
     const period = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
     const greeting = document.querySelector('[data-dashboard-greeting]');
-    if (greeting) greeting.textContent = `Good ${period}, ${firstName}`;
+    if (greeting) greeting.textContent = `Good ${period}, ${accountFirstName}`;
   };
+  try {
+    const profile = await accountAuth.loadProfile();
+    if (profile) {
+      const first = profile.first_name || accountFirstName;
+      const last = profile.last_name || '';
+      const email = profile.email || authenticatedUser.email || '';
+      accountFirstName = first;
+      accountTimezone = profile.timezone || detectedTimezone;
+      profileForm.elements.firstName.value = first;
+      profileForm.elements.lastName.value = last;
+      profileForm.elements.email.value = email;
+      layer.querySelector('[data-profile-name]').textContent = `${first} ${last}`.trim() || email;
+      layer.querySelector('[data-profile-email]').textContent = email;
+      layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase() || email.slice(0,2).toUpperCase();
+      if (profile.language) regionForm.elements.language.value = profile.language;
+      if (profile.currency) regionForm.elements.currency.value = profile.currency;
+      if (timezoneSelect && [...timezoneSelect.options].some(option => option.value === accountTimezone)) timezoneSelect.value = accountTimezone;
+      layer.querySelector('[data-region-summary]').textContent = `${profile.language || 'English'}, ${profile.currency || 'GBP - British Pound (£)'} · ${accountTimezone}`;
+    }
+  } catch (error) { console.warn('PDFMint could not load the account profile.', error); }
   updateDashboardGreeting();
+  document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => accountAuth.signOut()));
   refreshDashboardFiles().catch(error => console.warn('PDFMint could not load My Files.', error));
 
   const params = new URLSearchParams(location.search);
