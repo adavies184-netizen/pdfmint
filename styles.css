@@ -2108,7 +2108,8 @@ html,body{max-width:100%;overflow-x:hidden}
 @media(max-width:900px){.toolbar-density-toggle span{display:none}.toolbar-density-toggle{padding:5px 8px;margin-left:3px}.toolbar-compact .ribbon-tool,.toolbar-compact .menu-fix-sign,.toolbar-compact .menu-fix-draw,.toolbar-compact .menu-fix-note{min-width:58px!important;padding:4px!important}.toolbar-compact .ribbon-tool .tool-label,.toolbar-compact .ribbon-tool>span:last-child,.toolbar-compact .menu-fix-sign .tool-label,.toolbar-compact .menu-fix-draw .tool-label,.toolbar-compact .menu-fix-note .tool-label{font-size:9px!important}}
 
 /* Payment wall ribbon: shorter label at a slightly smaller size. */
-.recommended-ribbon{font-size:7px}
+.recommended-ribbon{font-size:10px!important;line-height:14px!important;display:grid!important;place-items:center!important;padding:4px 0!important}
+.payment-consent{font-size:10px!important}
 
 /* Keep all payment-wall disclosure paragraphs visually consistent. */
 .plan-disclosure p,.plan-disclosure p:nth-child(2){font-size:11px}

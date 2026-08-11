@@ -3282,6 +3282,51 @@ document.getElementById('text-align-right').addEventListener('click', () => {
 
 let preparedExportBytes = null;
 let preparedExportFilename = '';
+let pendingDashboardFileSave = Promise.resolve();
+
+function isDashboardEditorSession() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    return localStorage.getItem('pdfmintAccountActive') === 'true' &&
+      (params.has('tool') || params.has('action') || params.get('source') === 'dashboard');
+  } catch (_) {
+    return false;
+  }
+}
+
+function saveFileToDashboard(blob, filename) {
+  if (!isDashboardEditorSession() || !window.indexedDB) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open('pdfmint-dashboard-files', 1);
+    request.onupgradeneeded = () => {
+      if (!request.result.objectStoreNames.contains('files')) {
+        request.result.createObjectStore('files', { keyPath: 'id' });
+      }
+    };
+    request.onerror = () => reject(request.error);
+    request.onsuccess = async () => {
+      const db = request.result;
+      try {
+        const bytes = await blob.arrayBuffer();
+        const record = {
+          id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+          name: filename,
+          type: blob.type || 'application/octet-stream',
+          size: blob.size,
+          lastModified: Date.now(),
+          bytes
+        };
+        const transaction = db.transaction('files', 'readwrite');
+        transaction.objectStore('files').put(record);
+        transaction.oncomplete = () => { db.close(); resolve(); };
+        transaction.onerror = () => { db.close(); reject(transaction.error); };
+      } catch (error) {
+        db.close();
+        reject(error);
+      }
+    };
+  }).catch(error => console.warn('PDFMint could not add the finished file to My Files.', error));
+}
 
 function openFormatModal() {
   if (!editor.pages.length) return;
@@ -4189,6 +4234,14 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
   button.textContent = 'Preparing…';
 
   try {
+    if (isDashboardEditorSession()) {
+      const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
+      closeFormatModal();
+      await exportEditedDocument(format);
+      await pendingDashboardFileSave;
+      window.location.assign('dashboard.html?updated=1');
+      return;
+    }
     preparedExportBytes = await createEditedPdfBytes();
     openEmailModal();
   } catch (error) {
@@ -4354,7 +4407,8 @@ function validateMockCheckout() {
   const consent = document.querySelector('#card-payment-panel .payment-consent input');
   const consentLabel = consent?.closest('.payment-consent');
   const warning = document.getElementById('payment-consent-warning');
-  const requiredFields = [...document.querySelectorAll('#card-payment-panel input:not([type="checkbox"])')];
+  const requiredFields = [...document.querySelectorAll('#card-payment-panel input:not([type="checkbox"])')]
+    .filter(input => input.dataset.paymentField !== 'billingPostcode');
   let valid = true;
 
   requiredFields.forEach(input => {
@@ -4371,7 +4425,8 @@ function validateMockCheckout() {
   return valid;
 }
 
-document.getElementById('mock-pay-button').addEventListener('click', () => {
+document.getElementById('mock-pay-button').addEventListener('click', async () => {
+  await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   if (!validateMockCheckout()) return;
   if (pendingCheckoutBlob && pendingCheckoutFilename) {
     triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
@@ -4398,6 +4453,29 @@ function preparePaymentPrototypeUi() {
   const consent = cardPanel?.querySelector('.payment-consent input');
   const consentCopy = cardPanel?.querySelector('.payment-consent span');
   const orderSummary = document.querySelector('.order-summary-card');
+
+  document.querySelectorAll('.recommended-ribbon').forEach(ribbon => {
+    ribbon.textContent = 'Top Choice';
+  });
+  document.querySelectorAll('.secure-payment-note').forEach(note => {
+    note.textContent = 'Secure, encrypted payment processing.';
+  });
+
+  const paymentInputs = [...(cardPanel?.querySelectorAll('input:not([type="checkbox"])') || [])];
+  const paymentFieldConfig = [
+    ['cardholderName', 'cc-name'],
+    ['cardNumber', 'cc-number'],
+    ['cardExpiry', 'cc-exp'],
+    ['cardCvc', 'cc-csc'],
+    ['billingPostcode', 'postal-code']
+  ];
+  paymentInputs.forEach((input, index) => {
+    const config = paymentFieldConfig[index];
+    if (!config) return;
+    input.name = config[0];
+    input.autocomplete = config[1];
+    input.setAttribute('data-payment-field', config[0]);
+  });
 
   if (accessTitle) accessTitle.textContent = 'Select a plan to download your document';
   if (paymentTitle) paymentTitle.textContent = "You're on the last step before receiving your document";
@@ -4834,6 +4912,18 @@ function safeExportBaseName() {
 }
 
 function downloadBlob(blob, filename) {
+  if (isDashboardEditorSession()) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1500);
+    pendingDashboardFileSave = saveFileToDashboard(blob, filename);
+    return;
+  }
   pendingCheckoutBlob = blob;
   pendingCheckoutFilename = filename;
   preparedExportFilename = filename;
