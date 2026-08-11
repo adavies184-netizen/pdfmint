@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Manage your PDFMint documents, tools and account settings.">
-  <title>My PDFMint account</title>
+  <meta name="description" content="Manage your PDFBreeze documents, tools and account settings.">
+  <title>My PDFBreeze account</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -52,7 +52,7 @@
   </svg>
 
   <aside class="app-rail" aria-label="Account navigation">
-    <a class="rail-brand" href="index.html" aria-label="PDFMint home"><span>P</span><b>PDFMint</b></a>
+    <a class="rail-brand" href="index.html" aria-label="PDFBreeze home"><span>P</span><b>PDFBreeze</b></a>
     <nav>
       <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
       <p class="rail-section-label">PDF Tools</p>
@@ -76,7 +76,7 @@
 
   <div class="dashboard-shell">
     <header class="dashboard-header">
-      <a class="mobile-brand" href="index.html"><span>P</span><b>PDFMint</b></a>
+      <a class="mobile-brand" href="index.html"><span>P</span><b>PDFBreeze</b></a>
       <div class="tool-search" data-tool-search>
         <svg><use href="#i-search"/></svg>
         <input type="search" placeholder="Search tools" aria-label="Search tools" autocomplete="off">
@@ -88,14 +88,14 @@
 
     <main>
       <section class="welcome-row">
-        <div><p>YOUR PDFMINT WORKSPACE</p><h1 data-dashboard-greeting>Welcome back, Andrew</h1><span>Edit, organise and convert your documents in one place.</span></div>
+        <div><p>YOUR PDFBREEZE WORKSPACE</p><h1 data-dashboard-greeting>Welcome back, Andrew</h1><span>Edit, organise and convert your documents in one place.</span></div>
         <label class="primary-upload"><svg><use href="#i-upload"/></svg>Upload file<input type="file" hidden></label>
       </section>
 
       <section class="mobile-search-wrap">
         <div class="tool-search mobile-tool-search" data-tool-search>
           <svg><use href="#i-search"/></svg>
-          <input type="search" placeholder="Search PDFMint tools" aria-label="Search PDFMint tools" autocomplete="off">
+          <input type="search" placeholder="Search PDFBreeze tools" aria-label="Search PDFBreeze tools" autocomplete="off">
           <div class="tool-search-menu" hidden></div>
         </div>
       </section>
@@ -136,7 +136,7 @@
     <button class="picker-backdrop" type="button" data-close-picker aria-label="Close document picker"></button>
     <section class="document-picker" role="dialog" aria-modal="true" aria-labelledby="picker-title">
       <button class="picker-close" type="button" data-close-picker aria-label="Close"><svg><use href="#i-close"/></svg></button>
-      <header><span><svg data-picker-icon><use href="#i-edit"/></svg></span><div><small>OPEN WITH PDFMINT</small><h2 id="picker-title" data-picker-title>Edit PDF</h2><p data-picker-copy>Upload a new PDF or continue with a file from My Files.</p></div></header>
+      <header><span><svg data-picker-icon><use href="#i-edit"/></svg></span><div><small>OPEN WITH PDFBREEZE</small><h2 id="picker-title" data-picker-title>Edit PDF</h2><p data-picker-copy>Upload a new PDF or continue with a file from My Files.</p></div></header>
       <label class="picker-upload"><svg><use href="#i-upload"/></svg><span><b>Upload a new PDF</b><small>Choose a PDF from your device</small></span><em>Browse</em><input data-picker-input type="file" accept="application/pdf,.pdf" hidden></label>
       <div class="picker-divider"><span>or choose from My Files</span></div>
       <div class="picker-files" data-picker-files>
@@ -154,7 +154,7 @@
     <button class="choice-backdrop" type="button" data-close-compress aria-label="Close compression settings"></button>
     <section class="dashboard-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="compress-options-title">
       <button class="choice-close" type="button" data-close-compress aria-label="Close"><svg><use href="#i-close"/></svg></button>
-      <header><span><svg><use href="#i-compress"/></svg></span><div><small>PDFMINT COMPRESS</small><h2 id="compress-options-title">Choose compression</h2><p>Select the balance of file size and quality you need.</p></div></header>
+      <header><span><svg><use href="#i-compress"/></svg></span><div><small>PDFBREEZE COMPRESS</small><h2 id="compress-options-title">Choose compression</h2><p>Select the balance of file size and quality you need.</p></div></header>
       <div class="choice-file"><i>PDF</i><span><b data-compress-file-name>Document.pdf</b><small data-compress-file-size>PDF document</small></span></div>
       <div class="choice-list" data-compress-list>
         <label><input type="radio" name="dashboardCompression" value="light"><span><b>Light compression</b><small>Highest image quality and a smaller reduction.</small></span><em>Best quality</em></label>
@@ -169,7 +169,7 @@
     <button class="choice-backdrop" type="button" data-close-ocr aria-label="Close OCR settings"></button>
     <section class="dashboard-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="ocr-options-title">
       <button class="choice-close" type="button" data-close-ocr aria-label="Close"><svg><use href="#i-close"/></svg></button>
-      <header><span><svg><use href="#i-scan"/></svg></span><div><small>PDFMINT OCR</small><h2 id="ocr-options-title" data-ocr-options-title>OCR &amp; Scan</h2><p>Choose the format you want to download.</p></div></header>
+      <header><span><svg><use href="#i-scan"/></svg></span><div><small>PDFBREEZE OCR</small><h2 id="ocr-options-title" data-ocr-options-title>OCR &amp; Scan</h2><p>Choose the format you want to download.</p></div></header>
       <div class="choice-file"><i>FILE</i><span><b data-ocr-file-name>Document.pdf</b><small data-ocr-file-size>Ready for text recognition</small></span></div>
       <div class="choice-list" data-ocr-list>
         <label class="selected"><input type="radio" name="dashboardOcrFormat" value="docx" checked><span><b>Word</b><small>Editable text with document formatting.</small></span><em>.DOCX</em></label>
@@ -184,7 +184,7 @@
     <button class="choice-backdrop" type="button" data-close-convert aria-label="Close converter"></button>
     <section class="dashboard-choice-dialog converter-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="convert-options-title">
       <button class="choice-close" type="button" data-close-convert aria-label="Close"><svg><use href="#i-close"/></svg></button>
-      <header><span><svg><use href="#i-convert"/></svg></span><div><small>PDFMINT CONVERTER</small><h2 id="convert-options-title">Convert your file</h2><p>Choose one of the formats supported for this file.</p></div></header>
+      <header><span><svg><use href="#i-convert"/></svg></span><div><small>PDFBREEZE CONVERTER</small><h2 id="convert-options-title">Convert your file</h2><p>Choose one of the formats supported for this file.</p></div></header>
       <div class="choice-file"><i>FILE</i><span><b data-convert-file-name>Document</b><small data-convert-file-size>Ready to convert</small></span></div>
       <label class="converter-search"><svg><use href="#i-search"/></svg><input type="search" data-convert-search placeholder="Search output formats" autocomplete="off"></label>
       <div class="converter-target-grid" data-converter-targets></div>
@@ -229,7 +229,7 @@
             <div class="form-heading"><div><h3>Password &amp; security</h3><p>Use at least 8 characters with a number.</p></div><button type="button" data-collapse aria-label="Close password settings"><svg><use href="#i-close"/></svg></button></div>
             <label>Current password<input name="currentPassword" type="password" autocomplete="current-password" required></label>
             <div class="form-grid two"><label>New password<input name="newPassword" type="password" minlength="8" autocomplete="new-password" required></label><label>Confirm new password<input name="confirmPassword" type="password" minlength="8" autocomplete="new-password" required></label></div>
-            <label class="toggle-row"><input type="checkbox" name="loginAlerts" checked><span><b>New sign-in alerts</b><small>Email me when PDFMint detects a new device.</small></span></label>
+            <label class="toggle-row"><input type="checkbox" name="loginAlerts" checked><span><b>New sign-in alerts</b><small>Email me when PDFBreeze detects a new device.</small></span></label>
             <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Update password</button></div>
           </form></div>
           <button class="setting-card" type="button" data-expand="region-editor" aria-expanded="false"><i><svg><use href="#i-globe"/></svg></i><span><b>Language, region &amp; timezone</b><small>Choose how language, prices and times appear.</small><em data-region-summary>English, GBP - British Pound (£) · Europe/London</em></span><svg><use href="#i-chevron"/></svg></button>
@@ -243,7 +243,7 @@
         </section>
 
         <section class="account-panel" data-account-panel="payment">
-          <header><h2>Payment</h2><p>Manage the card used for your PDFMint purchase.</p></header>
+          <header><h2>Payment</h2><p>Manage the card used for your PDFBreeze purchase.</p></header>
           <div class="payment-card"><div class="visa-mark">VISA</div><div><small>Default payment card</small><b>Visa ending in 2721</b><span>Expires 08/31 · Last used</span></div><button type="button" data-expand="payment-editor" aria-expanded="false">Update card</button></div>
           <div class="settings-expander" data-expander="payment-editor"><div class="settings-form payment-manager">
             <div class="form-heading"><div><h3>Payment cards</h3><p>Keep up to two cards and choose which one is used by default.</p></div><button type="button" data-collapse aria-label="Close payment settings"><svg><use href="#i-close"/></svg></button></div>
@@ -267,13 +267,13 @@
             <article><i><svg><use href="#i-convert"/></svg></i><div><b>Unlimited file conversions</b><p>Convert PDFs, documents, images and other supported formats whenever you need.</p></div></article>
             <article><i><svg><use href="#i-grid"/></svg></i><div><b>Organise every document</b><p>Merge, split, rotate, reorder and remove pages from one simple workspace.</p></div></article>
             <article><i><svg><use href="#i-globe"/></svg></i><div><b>Work across all your devices</b><p>Continue your document work from desktop, tablet or mobile whenever it suits you.</p></div></article>
-            <article><i><svg><use href="#i-help"/></svg></i><div><b>Priority customer support</b><p>Get faster help with your documents, conversions, billing and PDFMint account.</p></div></article>
+            <article><i><svg><use href="#i-help"/></svg></i><div><b>Priority customer support</b><p>Get faster help with your documents, conversions, billing and PDFBreeze account.</p></div></article>
           </div>
           <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p>Your current plan: monthly membership for £49/month</p><p>Next payment: 17.08.2026</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
         </section>
 
-        <section class="account-panel" data-account-panel="help"><header><h2>Help centre</h2><p>Find answers or contact our support team.</p></header><div class="simple-card"><h3>How can we help?</h3><p>Visit our support centre or contact PDFMint for assistance with documents, payments or your account.</p><a href="contact.html">Contact support</a></div></section>
-        <section class="account-panel" data-account-panel="notifications"><header><h2>Notification settings</h2><p>Choose the emails you would like to receive.</p></header><div class="notification-list"><label><input type="checkbox" checked><span><b>Promotions &amp; offers</b><small>Stay updated on PDFMint offers.</small></span></label><label><input type="checkbox" checked><span><b>Product &amp; feature updates</b><small>Be the first to know about improvements.</small></span></label><label><input type="checkbox" checked><span><b>Tips, use cases &amp; education</b><small>Learn how to get the most from PDFMint.</small></span></label><label><input type="checkbox"><span><b>Unsubscribe from all</b><small>Essential account and billing messages will still be sent.</small></span></label></div></section>
+        <section class="account-panel" data-account-panel="help"><header><h2>Help centre</h2><p>Find answers or contact our support team.</p></header><div class="simple-card"><h3>How can we help?</h3><p>Visit our support centre or contact PDFBreeze for assistance with documents, payments or your account.</p><a href="contact.html">Contact support</a></div></section>
+        <section class="account-panel" data-account-panel="notifications"><header><h2>Notification settings</h2><p>Choose the emails you would like to receive.</p></header><div class="notification-list"><label><input type="checkbox" checked><span><b>Promotions &amp; offers</b><small>Stay updated on PDFBreeze offers.</small></span></label><label><input type="checkbox" checked><span><b>Product &amp; feature updates</b><small>Be the first to know about improvements.</small></span></label><label><input type="checkbox" checked><span><b>Tips, use cases &amp; education</b><small>Learn how to get the most from PDFBreeze.</small></span></label><label><input type="checkbox"><span><b>Unsubscribe from all</b><small>Essential account and billing messages will still be sent.</small></span></label></div></section>
       </div>
     </section>
   </div>

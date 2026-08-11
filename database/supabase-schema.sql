@@ -1,4 +1,4 @@
--- PDFMint account foundation for Supabase Postgres.
+-- PDFBreeze account foundation for Supabase Postgres.
 -- Run once in the Supabase SQL editor. Safe public clients are restricted by RLS.
 
 create extension if not exists pgcrypto;

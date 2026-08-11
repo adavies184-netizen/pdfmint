@@ -23,7 +23,7 @@ logger = logging.getLogger("pdfmint.engine")
 ENGINE_VERSION = "1.8.1"
 
 app = FastAPI(
-    title="PDFMint Engine",
+    title="PDFBreeze Engine",
     version=ENGINE_VERSION,
     docs_url="/docs",
     redoc_url=None,

@@ -1,4 +1,4 @@
-# PDFMint Engine v1.8.1
+# PDFBreeze Engine v1.8.1
 
 Corrects the GNU LibreDWG source archive used by the Docker build. The earlier
 v1.8.0 Dockerfile requested an unpublished `0.13.4` release archive and failed

@@ -27,7 +27,7 @@
     return raw;
   };
   const ensureClient = () => {
-    if (!client) throw new Error('PDFMint account services have not been configured yet.');
+    if (!client) throw new Error('PDFBreeze account services have not been configured yet.');
     return client;
   };
 
@@ -164,16 +164,16 @@
     return data;
   }
 
-  const safeFileName = (name) => String(name || 'PDFMint-file')
+  const safeFileName = (name) => String(name || 'PDFBreeze-file')
     .replace(/[^a-zA-Z0-9._-]+/g, '-')
-    .replace(/^-+|-+$/g, '') || 'PDFMint-file';
+    .replace(/^-+|-+$/g, '') || 'PDFBreeze-file';
 
   async function saveDocument(file, name, sourceTool = '') {
     const api = ensureClient();
     const user = await getUser();
     if (!user) throw new Error('Your session has expired. Please sign in again.');
     const id = crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-    const filename = name || file?.name || 'PDFMint-file';
+    const filename = name || file?.name || 'PDFBreeze-file';
     const storagePath = `${user.id}/${id}/${safeFileName(filename)}`;
     const { error: uploadError } = await api.storage.from('user-documents').upload(storagePath, file, {
       contentType: file?.type || 'application/octet-stream',

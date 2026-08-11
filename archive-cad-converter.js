@@ -23,7 +23,7 @@
   let preparedBlob = null, preparedName = '', timer = null;
   const progress = document.createElement('div');
   progress.className = 'converter-progress'; progress.hidden = true;
-  progress.innerHTML = '<div class="converter-progress-row"><strong>Uploading your file</strong><span>0%</span></div><div class="converter-progress-track"><i></i></div><small>Please keep this page open while PDFMint prepares your file.</small>';
+  progress.innerHTML = '<div class="converter-progress-row"><strong>Uploading your file</strong><span>0%</span></div><div class="converter-progress-track"><i></i></div><small>Please keep this page open while PDFBreeze prepares your file.</small>';
   card.appendChild(progress);
   const bar = progress.querySelector('i'), percentage = progress.querySelector('span');
 
@@ -66,7 +66,7 @@
   async function convert(file) {
     if (!accepted(file)) { status.textContent = 'Please choose a ' + definition.accept.join(' or ') + ' file.'; return; }
     const engine = ((window.PDFMINT_CONFIG && window.PDFMINT_CONFIG.engineBaseUrl) || '').replace(/\/$/, '');
-    if (!engine) { status.textContent = 'The PDFMint Engine URL has not been configured.'; return; }
+    if (!engine) { status.textContent = 'The PDFBreeze Engine URL has not been configured.'; return; }
     preparedBlob = null; preparedName = ''; button.disabled = true; status.textContent = file.name; startProgress();
     try {
       const body = new FormData(); body.append('file', file); body.append('operation', route);

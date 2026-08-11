@@ -132,8 +132,8 @@
   pickerLayer?.querySelectorAll('[data-close-picker]').forEach(button => button.addEventListener('click', closePicker));
 
   function simplePdfFile(name) {
-    const safeName = String(name || 'PDFMint document.pdf').replace(/[^\x20-\x7e]/g,'');
-    const text = `PDFMint file: ${safeName}`.replace(/[()\\]/g, value => `\\${value}`);
+    const safeName = String(name || 'PDFBreeze document.pdf').replace(/[^\x20-\x7e]/g,'');
+    const text = `PDFBreeze file: ${safeName}`.replace(/[()\\]/g, value => `\\${value}`);
     const pagePaint = `q ${width} 0 0 ${height} 0 0 cm /Im0 Do Q`;
     const objects = [
       '<< /Type /Catalog /Pages 2 0 R >>',
@@ -205,7 +205,7 @@
       joinBinaryParts([encode(`<< /Type /XObject /Subtype /Image /Width ${width} /Height ${height} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${imageBytes.length} >>\nstream\n`), imageBytes, encode('\nendstream')]),
       encode(`<< /Length ${encode(pagePaint).length} >>\nstream\n${pagePaint}\nendstream`)
     ];
-    const parts = [encode('%PDF-1.4\n%PDFMint\n')];
+    const parts = [encode('%PDF-1.4\n%PDFBreeze\n')];
     const offsets = [0];
     let byteOffset = parts[0].length;
     objects.forEach((object,index) => {
@@ -277,7 +277,7 @@
     if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
-  const cleanBaseName = name => String(name || 'PDFMint document').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'PDFMint document';
+  const cleanBaseName = name => String(name || 'PDFBreeze document').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'PDFBreeze document';
 
   function openDashboardFilesDb() {
     return new Promise((resolve,reject) => {
@@ -300,7 +300,7 @@
     const bytes = await blob.arrayBuffer();
     const record = {
       id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
-      name: filename || blob.name || 'PDFMint file',
+      name: filename || blob.name || 'PDFBreeze file',
       type: blob.type || 'application/octet-stream',
       size: blob.size,
       lastModified: Date.now(),
@@ -374,7 +374,7 @@
         for (const file of files) await saveDashboardFile(file, file.name);
         await refreshDashboardFiles();
       } catch (error) {
-        console.warn('PDFMint could not add the uploaded file to My Files.', error);
+        console.warn('PDFBreeze could not add the uploaded file to My Files.', error);
       }
     });
   });
@@ -519,7 +519,7 @@
       operation:`ocr-${format}`,
       filename:`${cleanBaseName(selectedDashboardFile?.name)}-ocr.${format}`,
       title:'Recognising your text',
-      copy:'PDFMint is reading the document and preparing your editable download.'
+      copy:'PDFBreeze is reading the document and preparing your editable download.'
     });
   });
   convertLayer?.querySelector('[data-apply-convert]')?.addEventListener('click', () => {
@@ -530,7 +530,7 @@
       operation,
       filename:`${cleanBaseName(selectedDashboardFile?.name)}.${extension}`,
       title:`Converting to ${label}`,
-      copy:'PDFMint is securely preparing the new file.'
+      copy:'PDFBreeze is securely preparing the new file.'
     });
   });
 
@@ -734,10 +734,10 @@
       if (timezoneSelect && [...timezoneSelect.options].some(option => option.value === accountTimezone)) timezoneSelect.value = accountTimezone;
       layer.querySelector('[data-region-summary]').textContent = `${profile.language || 'English'}, ${profile.currency || 'GBP - British Pound (£)'} · ${accountTimezone}`;
     }
-  } catch (error) { console.warn('PDFMint could not load the account profile.', error); }
+  } catch (error) { console.warn('PDFBreeze could not load the account profile.', error); }
   updateDashboardGreeting();
   document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => accountAuth.signOut()));
-  refreshDashboardFiles().catch(error => console.warn('PDFMint could not load My Files.', error));
+  refreshDashboardFiles().catch(error => console.warn('PDFBreeze could not load My Files.', error));
 
   const params = new URLSearchParams(location.search);
   if (params.get('menu')) openDrawer(params.get('menu'));

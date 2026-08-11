@@ -110,7 +110,7 @@
       clearInterval(progressTimer);
       $('#compression-progress-modal').hidden = true;
       $('#compression-options-modal').hidden = false;
-      alert(error?.message || 'PDFMint could not compress this PDF.');
+      alert(error?.message || 'PDFBreeze could not compress this PDF.');
     } finally {
       btn.disabled = false;
       btn.textContent = 'Compress PDF';
