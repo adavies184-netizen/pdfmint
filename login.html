@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Sign in to your secure PDFMint workspace.">
+  <title>Sign in to PDFMint</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="auth.css?v=5400">
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <a class="auth-brand" href="index.html" aria-label="PDFMint home"><span>P</span><b>PDF<span>Mint</span></b></a>
+    <section class="auth-card" aria-labelledby="auth-title">
+      <div class="auth-copy"><p class="eyebrow">YOUR PDFMINT WORKSPACE</p><h1 id="auth-title">Welcome back</h1><p id="auth-subtitle">Sign in to access your files and tools.</p></div>
+      <div class="auth-tabs" role="tablist"><button type="button" class="active" data-auth-mode="signin">Sign in</button><button type="button" data-auth-mode="signup">Create account</button></div>
+      <div class="oauth-grid">
+        <button type="button" class="oauth-button" data-oauth="google"><strong>G</strong><span>Continue with Google</span></button>
+        <button type="button" class="oauth-button" data-oauth="apple"><strong class="apple-mark">●</strong><span>Continue with Apple</span></button>
+      </div>
+      <div class="auth-divider"><span>or continue with email</span></div>
+      <form class="auth-form" data-auth-form>
+        <div class="name-row" data-signup-only hidden><label>First name<input name="firstName" autocomplete="given-name"></label><label>Last name<input name="lastName" autocomplete="family-name"></label></div>
+        <label>Email address<input name="email" type="email" autocomplete="email" required></label>
+        <label>Password<span class="label-row"><small data-password-help>At least 8 characters</small><button type="button" data-show-reset>Forgot password?</button></span><input name="password" type="password" minlength="8" autocomplete="current-password" required></label>
+        <p class="auth-message" data-auth-message aria-live="polite"></p>
+        <button class="primary-auth-button" type="submit"><span data-submit-label>Sign in securely</span><span aria-hidden="true">›</span></button>
+      </form>
+      <form class="auth-form reset-form" data-reset-form hidden>
+        <button class="back-link" type="button" data-hide-reset>‹ Back to sign in</button>
+        <h2>Reset your password</h2><p>We will email you a secure reset link.</p>
+        <label>Email address<input name="email" type="email" autocomplete="email" required></label>
+        <p class="auth-message" data-reset-message aria-live="polite"></p>
+        <button class="primary-auth-button" type="submit"><span>Send reset link</span><span aria-hidden="true">›</span></button>
+      </form>
+      <p class="auth-legal">By continuing, you agree to PDFMint's <a href="terms.html">Terms</a> and <a href="privacy.html">Privacy Policy</a>.</p>
+    </section>
+    <p class="auth-security">Secure account sessions · Your files remain private</p>
+  </main>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="auth.js?v=5400"></script>
+  <script src="login.js?v=5400"></script>
+</body>
+</html>

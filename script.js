@@ -3287,7 +3287,7 @@ let pendingDashboardFileSave = Promise.resolve();
 function isDashboardEditorSession() {
   try {
     const params = new URLSearchParams(window.location.search);
-    return localStorage.getItem('pdfmintAccountActive') === 'true' &&
+    return Boolean(window.PDFMintAuth?.isSignedIn?.()) &&
       (params.has('tool') || params.has('action') || params.get('source') === 'dashboard');
   } catch (_) {
     return false;
@@ -3295,7 +3295,13 @@ function isDashboardEditorSession() {
 }
 
 function saveFileToDashboard(blob, filename) {
-  if (!isDashboardEditorSession() || !window.indexedDB) return Promise.resolve();
+  if (!isDashboardEditorSession()) return Promise.resolve();
+  if (window.PDFMintAuth?.saveDocument) {
+    const params = new URLSearchParams(window.location.search);
+    return window.PDFMintAuth.saveDocument(blob, filename, params.get('tool') || params.get('action') || 'editor')
+      .catch(error => console.warn('PDFMint could not add the finished file to My Files.', error));
+  }
+  if (!window.indexedDB) return Promise.resolve();
   return new Promise((resolve, reject) => {
     const request = indexedDB.open('pdfmint-dashboard-files', 1);
     request.onupgradeneeded = () => {
@@ -4383,7 +4389,6 @@ function finishMockCheckout() {
     const cardInputs = [...document.querySelectorAll('#card-payment-panel input:not([type="checkbox"])')];
     const cardDigits = String(cardInputs[1]?.value || '').replace(/\D/g, '');
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';
-    localStorage.setItem('pdfmintAccountActive', 'true');
     localStorage.setItem('pdfmintSelectedPlan', JSON.stringify(selectedAccessPlan || {}));
     localStorage.setItem('pdfmintAccountCreatedAt', new Date().toISOString());
     localStorage.setItem('pdfmintPaymentCard', JSON.stringify({
@@ -4399,7 +4404,13 @@ function finishMockCheckout() {
 
   // Give the browser time to accept the download before replacing the editor.
   window.setTimeout(() => {
-    window.location.assign('dashboard.html?welcome=1');
+    if (window.PDFMintAuth?.isSignedIn?.()) {
+      window.location.assign('dashboard.html?welcome=1');
+      return;
+    }
+    const email = sessionStorage.getItem('pdfmintPendingEmail') || '';
+    const target = `login.html?mode=signup&returnTo=${encodeURIComponent('/dashboard.html?welcome=1')}${email ? `&email=${encodeURIComponent(email)}` : ''}`;
+    window.location.assign(target);
   }, 350);
 }
 
@@ -5226,6 +5237,7 @@ document.getElementById('final-download').addEventListener('click', async () => 
   }
 
   if (error) error.hidden = true;
+  sessionStorage.setItem('pdfmintPendingEmail', email);
 
   const button = document.getElementById('final-download');
   const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
