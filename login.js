@@ -39,7 +39,7 @@
     button.disabled = true;
     setMessage(message, mode === 'signup' ? 'Creating your secure workspace…' : 'Signing you in…');
     try {
-      if (!auth.configured) throw new Error('PDFMint account services have not been configured yet.');
+      if (!auth.configured) throw new Error('PDFBreeze account services have not been configured yet.');
       if (mode === 'signup') {
         const result = await auth.signUp({ email: form.elements.email.value.trim(), password: form.elements.password.value, firstName: form.elements.firstName.value.trim(), lastName: form.elements.lastName.value.trim() });
         if (!result.session) { setMessage(message, 'Check your inbox to confirm your email, then return here to sign in.'); return; }

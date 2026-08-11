@@ -1,4 +1,4 @@
-PDFMint Site v5.0.0 - Archives and CAD converters
+PDFBreeze Site v5.0.0 - Archives and CAD converters
 
 - Adds direct conversion flows for DWG to DXF, DXF to DWG, RAR to ZIP,
   ZIP to RAR and 7Z to ZIP.
@@ -8,4 +8,4 @@ PDFMint Site v5.0.0 - Archives and CAD converters
   prepared file without entering the PDF editor.
 - Desktop and mobile navigation remain available on every converter page.
 
-Deploy PDFMint Engine v1.8.0 before deploying this site package.
+Deploy PDFBreeze Engine v1.8.0 before deploying this site package.

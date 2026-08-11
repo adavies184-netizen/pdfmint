@@ -1,4 +1,4 @@
-PDFMint v3.4.1 — Note Tool
+PDFBreeze v3.4.1 — Note Tool
 
 - Click Note, then click anywhere on the PDF to place a sticky note.
 - The yellow note opens immediately for typing.
@@ -9,18 +9,18 @@ PDFMint v3.4.1 — Note Tool
 - Note creation and text changes are included in undo/redo.
 - Exported PDFs contain standard PDF text annotations with a PushPin icon where supported.
 
-PDFMint v3.4.2 fix:
+PDFBreeze v3.4.2 fix:
 - Enabled pointer events on the annotation layer while Note mode is active.
 - Clicking the PDF preview now reaches the note-placement handler.
 
-PDFMint v3.4.3:
+PDFBreeze v3.4.3:
 - Collapsed note pins can now be repositioned by clicking, holding and dragging.
 - A movement threshold prevents normal clicks from accidentally becoming drags.
 - Clicking without dragging still opens the note.
 - Pin movement is included in undo/redo.
 
 
-PDFMint v3.5.0 — PDF Editor landing pages
+PDFBreeze v3.5.0 — PDF Editor landing pages
 
 - Edit PDF: edit-pdf.html
 - Sign PDF: sign-pdf.html
@@ -38,7 +38,7 @@ PDFMint v3.5.0 — PDF Editor landing pages
 All desktop dropdown, mobile dropdown and footer links have been connected.
 
 
-PDFMint v3.5.1 — PDF Converter landing pages
+PDFBreeze v3.5.1 — PDF Converter landing pages
 
 - PDF to Word: pdf-to-word.html
 - PDF to PPTX: pdf-to-pptx.html
@@ -54,7 +54,7 @@ PDFMint v3.5.1 — PDF Converter landing pages
 All desktop dropdown, mobile dropdown, homepage converter cards and footer links have been connected.
 
 
-PDFMint v3.6.0 — Shared editor routing
+PDFBreeze v3.6.0 — Shared editor routing
 
 - Every SEO landing page remains unique.
 - Uploading from any landing page stores the PDF temporarily in IndexedDB.
@@ -72,7 +72,7 @@ Examples:
 Only one editor implementation now needs to be maintained.
 
 
-PDFMint v3.7.0 — PDF, JPG, PNG and TXT export
+PDFBreeze v3.7.0 — PDF, JPG, PNG and TXT export
 
 Available formats:
 - PDF: downloads the completed edited PDF.
@@ -83,7 +83,7 @@ Available formats:
 All conversions start from the final edited PDF, so placed text, signatures, images, drawings, highlights and other flattened visual changes are present in JPG and PNG exports.
 
 
-PDFMint v3.7.1 — Local JSZip and 300 DPI image export
+PDFBreeze v3.7.1 — Local JSZip and 300 DPI image export
 
 Changes:
 - JSZip is now bundled locally at vendor/jszip.min.js.
@@ -93,7 +93,7 @@ Changes:
 - Standard A4 and Letter pages export at approximately 2480 × 3508 pixels and 2550 × 3300 pixels respectively.
 
 
-PDFMint v3.7.2 — Image export library fix
+PDFBreeze v3.7.2 — Image export library fix
 
 Root cause:
 - JSZip was stored as a separate local script.
@@ -102,11 +102,11 @@ Root cause:
 Fix:
 - JSZip is now embedded directly at the beginning of script.js.
 - There is no separate vendor script request.
-- Multi-page JPG and PNG exports can always access the packaging library once PDFMint's main script has loaded.
+- Multi-page JPG and PNG exports can always access the packaging library once PDFBreeze's main script has loaded.
 - The 300 DPI image rendering remains unchanged.
 
 
-PDFMint v3.8.0 — Self-hosted DOCX/DOC conversion
+PDFBreeze v3.8.0 — Self-hosted DOCX/DOC conversion
 
 Frontend:
 - DOCX and DOC are enabled.
@@ -124,7 +124,7 @@ Backend:
 Deployment is required before DOCX/DOC can work on the public website.
 
 
-PDFMint v3.9.0 — PDFMint Engine
+PDFBreeze v3.9.0 — PDFBreeze Engine
 
 - Replaced the one-purpose conversion server with one extensible engine.
 - Frontend checks /v1/health before uploading.

@@ -1,10 +1,10 @@
-# PDFMint repository structure
+# PDFBreeze repository structure
 
-Extract this ZIP and upload its contents to the root of the PDFMint GitHub
+Extract this ZIP and upload its contents to the root of the PDFBreeze GitHub
 repository.
 
 ```text
-PDFMint repository
+PDFBreeze repository
 ├── index.html
 ├── editor.html
 ├── script.js
@@ -45,19 +45,19 @@ Set the Sevalla engine environment variable:
 WEB_CONCURRENCY=1
 ```
 
-Redeploy only the PDFMint Engine application. The normal PDFMint website does
+Redeploy only the PDFBreeze Engine application. The normal PDFBreeze website does
 not need redeploying for this engine-only update.
 
 
 ## v3.9.3 DOC export fallback
 
 This is an engine-only update. Replace the existing `pdfmint-engine` folder in
-GitHub and redeploy only the PDFMint Engine application.
+GitHub and redeploy only the PDFBreeze Engine application.
 
-The normal PDFMint website does not need redeploying.
+The normal PDFBreeze website does not need redeploying.
 
 
-## PDFMint v3.9.4 — Word export loading bar
+## PDFBreeze v3.9.4 — Word export loading bar
 
 Website update:
 - DOCX displays an initial 6-second estimate.
@@ -66,10 +66,10 @@ Website update:
 - The timer and loading animation stop immediately when the download is ready.
 - DOC and DOCX show distinct conversion-stage messages.
 
-The PDFMint Engine does not need redeploying for this version.
+The PDFBreeze Engine does not need redeploying for this version.
 
 
-## PDFMint v3.9.5 — simplified Word progress
+## PDFBreeze v3.9.5 — simplified Word progress
 
 Customer-facing changes:
 - One clean loading bar.
@@ -80,22 +80,22 @@ Customer-facing changes:
 - Near completion, the message changes to “Nearly ready…”.
 - The bar stops below 100% until the actual download response is received.
 
-This is a website-only update. The PDFMint Engine does not need redeploying.
+This is a website-only update. The PDFBreeze Engine does not need redeploying.
 
 
-## PDFMint v3.9.6 — Contact page
+## PDFBreeze v3.9.6 — Contact page
 - Added `contact.html`.
 - Added Contact Us to the Company footer links across the site.
-- Added a fully responsive PDFMint-styled contact form.
+- Added a fully responsive PDFBreeze-styled contact form.
 - Current form validates inputs and shows a success state in the browser.
 - No email backend is wired in this version.
 
 
-## PDFMint v3.9.7 — XLSX / XLS conversion
+## PDFBreeze v3.9.7 — XLSX / XLS conversion
 
 - Enabled XLSX and XLS in the editor download format selector.
-- Added `pdf-to-xlsx` to PDFMint Engine.
-- Added `pdf-to-xls` to PDFMint Engine.
+- Added `pdf-to-xlsx` to PDFBreeze Engine.
+- Added `pdf-to-xls` to PDFBreeze Engine.
 - XLSX uses PyMuPDF + openpyxl for fast, basic row/column extraction.
 - XLS uses XLSX output + LibreOffice Calc conversion.
 - Each PDF page becomes a worksheet.
@@ -105,7 +105,7 @@ This is a website-only update. The PDFMint Engine does not need redeploying.
 This release changes BOTH the website and `pdfmint-engine`; deploy both.
 
 
-## PDFMint v3.9.8 — XLSX/XLS selector fix
+## PDFBreeze v3.9.8 — XLSX/XLS selector fix
 
 - Correctly enabled the XLSX and XLS options in the Done/export popup.
 - Removed the disabled/“SOON” state for both formats.
@@ -114,25 +114,25 @@ This release changes BOTH the website and `pdfmint-engine`; deploy both.
   - `pdf-to-xls`
 - Backend engine code from v3.9.7 is unchanged.
 
-Deploy the normal PDFMint website again.
+Deploy the normal PDFBreeze website again.
 The engine only needs redeploying if v3.9.7 engine changes were not already deployed.
 
 
-## PDFMint v4.0.1 — PPT/PPTX from stable v3.9.8
+## PDFBreeze v4.0.1 — PPT/PPTX from stable v3.9.8
 
 Built directly from the user-confirmed stable v3.9.8 baseline.
 
 - Existing PDF/DOC/DOCX/JPG/PNG/TXT/XLS/XLSX logic left intact.
-- PPTX enabled and routed through PDFMint Engine.
-- PPT enabled and routed through PDFMint Engine.
+- PPTX enabled and routed through PDFBreeze Engine.
+- PPT enabled and routed through PDFBreeze Engine.
 - PDF → PPTX uses PyMuPDF + python-pptx.
 - PDF → PPT uses generated PPTX + LibreOffice Impress.
 - config.js points to the live Sevalla engine URL.
 
-Deploy BOTH the normal PDFMint application and pdfmint-engine.
+Deploy BOTH the normal PDFBreeze application and pdfmint-engine.
 
 
-## PDFMint v4.0.2 — PPT silent retry + lower memory
+## PDFBreeze v4.0.2 — PPT silent retry + lower memory
 
 Reliability changes:
 - Legacy PPT gets one silent retry after ~2.2 seconds for transient 503/timeouts.
@@ -147,11 +147,11 @@ PPT memory reductions:
 - LibreOffice uses a smaller Java heap hint and disables synchronous printer detection.
 
 This patch changes BOTH:
-1. normal PDFMint frontend
+1. normal PDFBreeze frontend
 2. pdfmint-engine
 
 
-## PDFMint v4.0.3 — landing CTA + editor tool routing
+## PDFBreeze v4.0.3 — landing CTA + editor tool routing
 
 - Edit PDF: Add Text is pre-selected.
 - Sign PDF: “Upload to sign”; Sign pre-selected.
@@ -168,10 +168,10 @@ This patch changes BOTH:
 Routing now explicitly supports `data-landing-tool="none"` and opens editor.html
 without a tool query, so the editor toolbar remains unselected.
 
-Frontend-only update. PDFMint Engine unchanged.
+Frontend-only update. PDFBreeze Engine unchanged.
 
 
-## PDFMint v4.0.4 — shared upload CTA + footer cleanup
+## PDFBreeze v4.0.4 — shared upload CTA + footer cleanup
 
 - Fixed the shared landing-page upload button so the actual visible CTA now changes per page:
   - Sign PDF → Upload to sign
@@ -184,25 +184,25 @@ Frontend-only update. PDFMint Engine unchanged.
 - Removed the company postal address from the footer across the site.
 - Footer contact details are now limited to:
   - Northstar Ridge Limited
-  - support@pdfmint.com
+  - support@pdfbreeze.net
 
-Frontend-only update. PDFMint Engine unchanged.
+Frontend-only update. PDFBreeze Engine unchanged.
 
 
-## PDFMint v4.0.5 — footer repair, OCR CTA, header order
+## PDFBreeze v4.0.5 — footer repair, OCR CTA, header order
 
 - Rebuilt the footer with valid markup.
 - Removed duplicate Contact Us.
-- Footer company contact now shows only Northstar Ridge Limited and support@pdfmint.com.
+- Footer company contact now shows only Northstar Ridge Limited and support@pdfbreeze.net.
 - Removed postal address.
 - OCR upload button now says “Upload PDF for OCR”.
 - Header order is now PDF Editor, PDF Converter, Forms.
 - Mobile menu order matches desktop.
 
-Frontend-only update. PDFMint Engine unchanged.
+Frontend-only update. PDFBreeze Engine unchanged.
 
 
-## PDFMint v4.0.6 — header dropdown isolation fix
+## PDFBreeze v4.0.6 — header dropdown isolation fix
 
 - Kept menu order: PDF Editor → PDF Converter → Forms.
 - Added clear spacing between Editor and Converter triggers.
@@ -214,7 +214,7 @@ Frontend-only update. PDFMint Engine unchanged.
 Frontend-only update.
 
 
-## PDFMint v4.0.7 — header hover-state fix
+## PDFBreeze v4.0.7 — header hover-state fix
 
 - Desktop PDF Editor and PDF Converter hover states are now isolated.
 - Hovering one dropdown only highlights that dropdown.
@@ -225,7 +225,7 @@ Frontend-only update.
 Frontend-only update.
 
 
-## PDFMint v4.0.8 — upload picker restored
+## PDFBreeze v4.0.8 — upload picker restored
 
 Root cause fixed:
 - The shared upload-label text helper was using `textContent` on the entire upload `<label>`.
@@ -239,10 +239,10 @@ Fix:
 - Homepage/Edit PDF behavior remains unchanged.
 - Header/footer/routing/conversions are unchanged.
 
-Frontend-only update. PDFMint Engine unchanged.
+Frontend-only update. PDFBreeze Engine unchanged.
 
 
-## PDFMint v4.0.9 — Compress PDF workflow
+## PDFBreeze v4.0.9 — Compress PDF workflow
 
 New Compress PDF experience:
 - Upload PDF → compression options modal.
@@ -250,24 +250,24 @@ New Compress PDF experience:
 - Standard: ~20% smaller + estimated output size; selected by default and marked Recommended.
 - High: ~40% smaller + estimated output size.
 - Estimates are calculated from the uploaded file size and clearly presented as estimates.
-- Compression uses Ghostscript in PDFMint Engine:
+- Compression uses Ghostscript in PDFBreeze Engine:
   - Light → /printer
   - Standard → /ebook
   - High → /screen
-- If a PDF is already optimised and Ghostscript produces a larger file, PDFMint retains the original PDF instead.
-- A PDFMint-themed progress modal appears during compression.
+- If a PDF is already optimised and Ghostscript produces a larger file, PDFBreeze retains the original PDF instead.
+- A PDFBreeze-themed progress modal appears during compression.
 - Completion briefly shows the real before/after size and actual percentage reduction.
 - The compressed file is then loaded into the shared editor and the existing export popup opens automatically.
 - PDF is selected by default in the export popup; all other existing export formats remain available.
 
 This release changes BOTH:
-1. normal PDFMint frontend
+1. normal PDFBreeze frontend
 2. pdfmint-engine
 
 Ghostscript was already present in the engine Docker image, so no new system dependency was required.
 
 
-## PDFMint v4.0.10 — Compress CTA + header hover fix
+## PDFBreeze v4.0.10 — Compress CTA + header hover fix
 
 Compression:
 - Fixed the Compress PDF CTA event binding.
@@ -275,8 +275,8 @@ Compression:
   initialisation order cannot leave the CTA inactive.
 - Clicking Compress PDF immediately changes the CTA to “Starting…” and opens
   the progress modal before the engine request begins.
-- Progress initially displays “Connecting to PDFMint Engine…”.
-- Any startup/network error now produces a visible PDFMint error instead of an
+- Progress initially displays “Connecting to PDFBreeze Engine…”.
+- Any startup/network error now produces a visible PDFBreeze error instead of an
   apparently dead button.
 
 Header:
@@ -290,7 +290,7 @@ The v4.0.9 engine already contains the required compression operations, so
 the engine does NOT need to be redeployed again if v4.0.9 engine is live.
 
 
-## PDFMint v4.0.11 — working Compress PDF + Compress Image flows
+## PDFBreeze v4.0.11 — working Compress PDF + Compress Image flows
 
 Key reliability change:
 - Removed compression CTA control from the huge shared script.

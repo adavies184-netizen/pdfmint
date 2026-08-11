@@ -1,4 +1,4 @@
-PDFMint real-account launch setup
+PDFBreeze real-account launch setup
 =================================
 
 1. Create a Supabase project in the London/EU region you want to use.
@@ -6,7 +6,7 @@ PDFMint real-account launch setup
 3. In Project Settings > API, copy the Project URL and publishable/anon key into config.js.
    Never place the service-role key in this site package.
 4. In Authentication > URL Configuration:
-   - Site URL: your production PDFMint site URL
+   - Site URL: your production PDFBreeze site URL
    - Redirect URL: https://YOUR-SITE/auth-callback.html
    - Redirect URL: https://YOUR-SITE/reset-password.html
 5. In Authentication > Providers, enable Google and Apple and enter their client credentials.

@@ -1,4 +1,4 @@
-PDFMint Site v5.1.0
+PDFBreeze Site v5.1.0
 
 - Adds a persistent Classic / Compact editor-toolbar switch.
 - Keeps the existing Classic toolbar as the default.
@@ -7,4 +7,4 @@ PDFMint Site v5.1.0
 - Corrects Line tool label and dropdown alignment.
 - Includes browser cache-busting for the editor stylesheet and script.
 
-Deployment: site application only. No PDFMint Engine deployment is required.
+Deployment: site application only. No PDFBreeze Engine deployment is required.

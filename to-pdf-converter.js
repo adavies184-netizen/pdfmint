@@ -96,7 +96,7 @@
   async function convert(file) {
     if (!accepted(file)) { status.textContent = 'Please choose a supported file for this converter.'; return; }
     const engine = ((window.PDFMINT_CONFIG && window.PDFMINT_CONFIG.engineBaseUrl) || '').replace(/\/$/, '');
-    if (!engine) { status.textContent = 'The PDFMint Engine URL has not been configured.'; return; }
+    if (!engine) { status.textContent = 'The PDFBreeze Engine URL has not been configured.'; return; }
     preparedBlob = null;
     preparedName = '';
     button.disabled = true;

@@ -1,6 +1,6 @@
-PDFMint Site v5.3.0 — Account Dashboard
+PDFBreeze Site v5.3.0 — Account Dashboard
 
-This is a site-only release. The PDFMint Engine does not need to be redeployed.
+This is a site-only release. The PDFBreeze Engine does not need to be redeployed.
 
 Included:
 - New responsive customer dashboard with recent files, uploads and popular tools.
@@ -15,4 +15,4 @@ Included:
 - Existing desktop and mobile Log in links now open the account dashboard.
 
 Deployment:
-Upload this ZIP to the PDFMint site/static-site application only.
+Upload this ZIP to the PDFBreeze site/static-site application only.
