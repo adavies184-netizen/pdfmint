@@ -1,7 +1,7 @@
 (() => {
   const tools = [
     ['Edit PDF','Update text and content','edit-pdf.html','i-edit'],
-    ['Convert files','Choose from every converter','all-converters.html','i-convert'],
+    ['Convert files','Convert documents, images, audio and more','dashboard.html?tool=convert','i-convert'],
     ['Compress PDF','Reduce PDF file size','dashboard.html?tool=compress','i-compress'],
     ['Merge PDF','Combine documents','merge-pdf.html','i-convert'],
     ['Sign PDF','Add an electronic signature','dashboard.html?tool=sign','i-sign'],
@@ -66,6 +66,7 @@
   const progressLayer = document.querySelector('[data-dashboard-progress]');
   const compressLayer = document.querySelector('[data-compress-options]');
   const ocrLayer = document.querySelector('[data-ocr-options]');
+  const convertLayer = document.querySelector('[data-convert-options]');
   let selectedDashboardTool = null;
   let selectedDashboardFile = null;
 
@@ -96,7 +97,8 @@
 
   const directTools = {
     sign: ['Sign PDF','Add an electronic signature','i-sign','sign',''],
-    compress: ['Compress PDF','Reduce your PDF file size','i-compress','compress-flow','']
+    compress: ['Compress PDF','Reduce your PDF file size','i-compress','compress-flow',''],
+    convert: ['Convert Files','Convert documents, images, audio and more','i-convert','convert-flow','']
   };
   document.querySelectorAll('[data-direct-tool]').forEach(link => link.addEventListener('click', event => {
     event.preventDefault();
@@ -108,12 +110,13 @@
     selectedDashboardTool = tool;
     if (!pickerLayer) return;
     const imageOcr = tool[3] === 'ocr-flow' && tool[4] === 'image';
+    const convertFlow = tool[3] === 'convert-flow';
     pickerLayer.querySelector('[data-picker-title]').textContent = tool[0];
-    pickerLayer.querySelector('[data-picker-copy]').textContent = tool[1] + (imageOcr ? '. Upload a new image or continue with a scanned PDF from My Files.' : '. Upload a new PDF or continue with a file from My Files.');
+    pickerLayer.querySelector('[data-picker-copy]').textContent = convertFlow ? 'Upload a new file or choose one already saved in My Files.' : tool[1] + (imageOcr ? '. Upload a new image or continue with a scanned PDF from My Files.' : '. Upload a new PDF or continue with a file from My Files.');
     pickerLayer.querySelector('[data-picker-icon] use').setAttribute('href', `#${tool[2]}`);
-    pickerLayer.querySelector('.picker-upload b').textContent = imageOcr ? 'Upload a new image' : 'Upload a new PDF';
-    pickerLayer.querySelector('.picker-upload small').textContent = imageOcr ? 'Choose a JPG, PNG, WEBP, TIFF or BMP image' : 'Choose a PDF from your device';
-    pickerInput.accept = imageOcr ? 'image/jpeg,image/png,image/webp,image/tiff,image/bmp,.jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp' : 'application/pdf,.pdf';
+    pickerLayer.querySelector('.picker-upload b').textContent = convertFlow ? 'Upload a file to convert' : imageOcr ? 'Upload a new image' : 'Upload a new PDF';
+    pickerLayer.querySelector('.picker-upload small').textContent = convertFlow ? 'PDF, Office, image, audio, video and archive files' : imageOcr ? 'Choose a JPG, PNG, WEBP, TIFF or BMP image' : 'Choose a PDF from your device';
+    pickerInput.accept = convertFlow ? '.pdf,.doc,.docx,.csv,.xlsx,.xls,.ppt,.pptx,.jpg,.jpeg,.png,.webp,.heic,.avif,.tif,.tiff,.gif,.svg,.eps,.mp3,.wav,.m4a,.mp4,.mov,.zip,.rar,.7z,.dwg,.dxf' : imageOcr ? 'image/jpeg,image/png,image/webp,image/tiff,image/bmp,.jpg,.jpeg,.png,.webp,.tif,.tiff,.bmp' : 'application/pdf,.pdf';
     pickerLayer.hidden = false;
     document.body.style.overflow = 'hidden';
   };
@@ -162,6 +165,8 @@
   async function continueToDashboardTool(file) {
     if (!file || !selectedDashboardTool) return;
     selectedDashboardFile = file;
+    await saveDashboardFile(file, file.name);
+    await refreshDashboardFiles();
     closePicker(); closeDrawer();
     if (selectedDashboardTool[3] === 'compress-flow') {
       openCompressOptions(file);
@@ -169,6 +174,10 @@
     }
     if (selectedDashboardTool[3] === 'ocr-flow') {
       openOcrOptions(file);
+      return;
+    }
+    if (selectedDashboardTool[3] === 'convert-flow') {
+      openConvertOptions(file);
       return;
     }
     progressLayer.hidden = false;
@@ -199,12 +208,142 @@
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
   const cleanBaseName = name => String(name || 'PDFMint document').replace(/\.[^.]+$/, '').replace(/[\\/:*?"<>|]+/g, '-').trim() || 'PDFMint document';
+
+  function openDashboardFilesDb() {
+    return new Promise((resolve,reject) => {
+      const request = indexedDB.open('pdfmint-dashboard-files',1);
+      request.onupgradeneeded = () => {
+        if (!request.result.objectStoreNames.contains('files')) request.result.createObjectStore('files',{keyPath:'id'});
+      };
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+  }
+  async function saveDashboardFile(blob, filename) {
+    if (!blob || !window.indexedDB) return;
+    const db = await openDashboardFilesDb();
+    const bytes = await blob.arrayBuffer();
+    const record = {
+      id: crypto.randomUUID ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`,
+      name: filename || blob.name || 'PDFMint file',
+      type: blob.type || 'application/octet-stream',
+      size: blob.size,
+      lastModified: Date.now(),
+      bytes
+    };
+    await new Promise((resolve,reject) => {
+      const transaction = db.transaction('files','readwrite');
+      transaction.objectStore('files').put(record);
+      transaction.oncomplete = resolve;
+      transaction.onerror = () => reject(transaction.error);
+    });
+    db.close();
+  }
+  async function getDashboardFiles() {
+    if (!window.indexedDB) return [];
+    const db = await openDashboardFilesDb();
+    const records = await new Promise((resolve,reject) => {
+      const request = db.transaction('files','readonly').objectStore('files').getAll();
+      request.onsuccess = () => resolve(request.result || []);
+      request.onerror = () => reject(request.error);
+    });
+    db.close();
+    return records.sort((a,b) => b.lastModified - a.lastModified);
+  }
+  const recordToFile = record => new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
+  async function refreshDashboardFiles() {
+    const records = await getDashboardFiles();
+    const recent = document.querySelector('[data-recent-files]');
+    recent?.querySelectorAll('.dynamic-file-row').forEach(row => row.remove());
+    const head = recent?.querySelector('.file-head');
+    records.slice(0,12).reverse().forEach(record => {
+      const extension = String(record.name).split('.').pop().slice(0,4).toUpperCase();
+      const row = document.createElement('div');
+      row.className = 'file-row dynamic-file-row';
+      row.setAttribute('role','row');
+      row.innerHTML = `<span class="file-name"><i>${extension}</i><b></b></span><span>${formatBytes(record.size)}</span><span>${new Date(record.lastModified).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</span><button aria-label="File options">•••</button>`;
+      row.querySelector('b').textContent = record.name;
+      head?.insertAdjacentElement('afterend',row);
+    });
+    const pickerFiles = document.querySelector('[data-picker-files]');
+    pickerFiles?.querySelectorAll('[data-stored-file]').forEach(button => button.remove());
+    records.slice(0,8).reverse().forEach(record => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.dataset.storedFile = record.id;
+      button.innerHTML = `<i>${String(record.name).split('.').pop().slice(0,4).toUpperCase()}</i><span><b></b><small>${formatBytes(record.size)} · Saved in My Files</small></span><svg><use href="#i-chevron"></use></svg>`;
+      button.querySelector('b').textContent = record.name;
+      button.addEventListener('click', () => continueToDashboardTool(recordToFile(record)));
+      pickerFiles?.prepend(button);
+    });
+  }
+
+  document.querySelectorAll('.primary-upload input,.secondary-upload input,.drop-zone input').forEach(input => {
+    input.addEventListener('change', async () => {
+      const files = [...(input.files || [])];
+      input.value = '';
+      if (!files.length) return;
+      try {
+        for (const file of files) await saveDashboardFile(file, file.name);
+        await refreshDashboardFiles();
+      } catch (error) {
+        console.warn('PDFMint could not add the uploaded file to My Files.', error);
+      }
+    });
+  });
+
+  const converterTargetsByExtension = {
+    pdf: [['Word','docx','pdf-to-docx'],['PowerPoint','pptx','pdf-to-pptx'],['Excel','xlsx','pdf-to-xlsx'],['JPG','jpg','pdf-to-jpg'],['PNG','png','pdf-to-png'],['WEBP','webp','pdf-to-webp'],['TIFF','tiff','pdf-to-tiff'],['Text','txt','pdf-to-txt'],['HTML','html','pdf-to-html'],['EPUB','epub','pdf-to-epub'],['SVG','svg','pdf-to-svg']],
+    jpg: [['PNG','png','jpg-to-png'],['PDF','pdf','image-to-pdf'],['GIF','gif','image-to-gif'],['SVG','svg','image-to-svg'],['Word','docx','image-to-word'],['Excel','xlsx','image-to-excel']],
+    jpeg: [['PNG','png','jpeg-to-png'],['EPS','eps','jpeg-to-eps'],['PDF','pdf','image-to-pdf'],['GIF','gif','image-to-gif']],
+    png: [['JPG','jpg','png-to-jpg'],['PDF','pdf','image-to-pdf'],['GIF','gif','image-to-gif'],['SVG','svg','image-to-svg'],['ICO','ico','png-to-ico'],['EPS','eps','png-to-eps']],
+    webp: [['JPG','jpg','webp-to-jpg'],['PDF','pdf','image-to-pdf'],['PNG','png','image-to-png']],
+    heic: [['JPG','jpg','heic-to-jpg'],['PNG','png','heic-to-png'],['PDF','pdf','heic-to-pdf']],
+    avif: [['JPG','jpg','avif-to-jpg']],
+    svg: [['PNG','png','svg-to-png'],['PDF','pdf','svg-to-pdf'],['DXF','dxf','svg-to-dxf']],
+    eps: [['SVG','svg','eps-to-svg']],
+    csv: [['Excel','xlsx','csv-to-excel'],['PDF','pdf','csv-to-pdf']],
+    xlsx: [['CSV','csv','xlsx-to-csv']],
+    docx: [['DOC','doc','docx-to-doc'],['JPG','jpg','docx-to-jpg']],
+    doc: [['JPG','jpg','doc-to-jpg']],
+    pptx: [['PPT','ppt','pptx-to-ppt'],['PDF','pdf','powerpoint-to-pdf']],
+    ppt: [['PDF','pdf','ppt-to-pdf']],
+    mp4: [['MP3','mp3','mp4-to-mp3'],['GIF','gif','mp4-to-gif']],
+    mov: [['MP4','mp4','mov-to-mp4'],['MP3','mp3','mov-to-mp3']],
+    mp3: [['WAV','wav','mp3-to-wav']], wav: [['MP3','mp3','wav-to-mp3']], m4a: [['MP3','mp3','m4a-to-mp3']],
+    rar: [['ZIP','zip','rar-to-zip']], '7z': [['ZIP','zip','7z-to-zip']], zip: [['RAR','rar','zip-to-rar']],
+    dwg: [['DXF','dxf','dwg-to-dxf'],['PDF','pdf','dwg-to-pdf']], dxf: [['DWG','dwg','dxf-to-dwg'],['PDF','pdf','dxf-to-pdf']]
+  };
+  let selectedConversionTarget = null;
+  const renderConvertTargets = query => {
+    const extension = String(selectedDashboardFile?.name || '').split('.').pop().toLowerCase();
+    const targets = (converterTargetsByExtension[extension] || []).filter(target => !query || target.join(' ').toLowerCase().includes(query.toLowerCase()));
+    const grid = convertLayer?.querySelector('[data-converter-targets]');
+    if (!grid) return;
+    grid.innerHTML = targets.length ? targets.map((target,index) => `<button type="button" data-converter-target="${index}"><i>${target[1].toUpperCase()}</i><span><b>${target[0]}</b><small>Convert to .${target[1]}</small></span><em>Choose</em></button>`).join('') : '<p class="converter-empty">No compatible output formats were found for this file.</p>';
+    grid.querySelectorAll('[data-converter-target]').forEach((button,index) => button.addEventListener('click', () => {
+      selectedConversionTarget = targets[index];
+      grid.querySelectorAll('button').forEach(item => item.classList.toggle('selected',item === button));
+      convertLayer.querySelector('[data-apply-convert]').disabled = false;
+    }));
+  };
+  const openConvertOptions = file => {
+    if (!convertLayer) return;
+    selectedConversionTarget = null;
+    convertLayer.querySelector('[data-convert-file-name]').textContent = file.name;
+    convertLayer.querySelector('[data-convert-file-size]').textContent = `${formatBytes(file.size)} · Ready to convert`;
+    convertLayer.querySelector('[data-apply-convert]').disabled = true;
+    convertLayer.querySelector('[data-convert-search]').value = '';
+    renderConvertTargets('');
+    convertLayer.hidden = false;
+    document.body.style.overflow = 'hidden';
+  };
   const setChoiceSelection = (layerElement, selector) => {
     layerElement?.querySelectorAll(selector).forEach(input => input.closest('label')?.classList.toggle('selected', input.checked));
   };
   const closeChoice = layerElement => {
     if (layerElement) layerElement.hidden = true;
-    if (pickerLayer?.hidden && compressLayer?.hidden && ocrLayer?.hidden) document.body.style.overflow = '';
+    if (pickerLayer?.hidden && compressLayer?.hidden && ocrLayer?.hidden && convertLayer?.hidden) document.body.style.overflow = '';
   };
   const openCompressOptions = file => {
     if (!compressLayer) return;
@@ -225,6 +364,8 @@
   ocrLayer?.querySelectorAll('input[name="dashboardOcrFormat"]').forEach(input => input.addEventListener('change', () => setChoiceSelection(ocrLayer, 'input[name="dashboardOcrFormat"]')));
   compressLayer?.querySelectorAll('[data-close-compress]').forEach(button => button.addEventListener('click', () => closeChoice(compressLayer)));
   ocrLayer?.querySelectorAll('[data-close-ocr]').forEach(button => button.addEventListener('click', () => closeChoice(ocrLayer)));
+  convertLayer?.querySelectorAll('[data-close-convert]').forEach(button => button.addEventListener('click', () => closeChoice(convertLayer)));
+  convertLayer?.querySelector('[data-convert-search]')?.addEventListener('input', event => renderConvertTargets(event.target.value.trim()));
 
   const downloadBlob = (blob, filename) => {
     const url = URL.createObjectURL(blob);
@@ -235,7 +376,7 @@
   };
   const runDashboardEngineJob = async ({file, operation, filename, title, copy}) => {
     if (!file) return;
-    closeChoice(compressLayer); closeChoice(ocrLayer);
+    closeChoice(compressLayer); closeChoice(ocrLayer); closeChoice(convertLayer);
     progressLayer.hidden = false;
     document.body.style.overflow = 'hidden';
     const titleElement = progressLayer.querySelector('[data-progress-title]');
@@ -258,6 +399,8 @@
         throw new Error(message);
       }
       const blob = await response.blob();
+      await saveDashboardFile(blob, filename);
+      await refreshDashboardFiles();
       window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
       titleElement.textContent = 'Your download is ready';
       copyElement.textContent = 'The finished file has been downloaded. Returning to My Files…';
@@ -290,6 +433,17 @@
       filename:`${cleanBaseName(selectedDashboardFile?.name)}-ocr.${format}`,
       title:'Recognising your text',
       copy:'PDFMint is reading the document and preparing your editable download.'
+    });
+  });
+  convertLayer?.querySelector('[data-apply-convert]')?.addEventListener('click', () => {
+    if (!selectedConversionTarget) return;
+    const [label, extension, operation] = selectedConversionTarget;
+    runDashboardEngineJob({
+      file:selectedDashboardFile,
+      operation,
+      filename:`${cleanBaseName(selectedDashboardFile?.name)}.${extension}`,
+      title:`Converting to ${label}`,
+      copy:'PDFMint is securely preparing the new file.'
     });
   });
 
@@ -444,6 +598,23 @@
       savedCard.querySelector('small').textContent = `Expires ${paymentCard.expiry || '08/31'} · Default`;
     }
   } catch (_) {}
+
+  const updateDashboardGreeting = () => {
+    let firstName = 'Andrew';
+    let timezone = 'Europe/London';
+    try {
+      const profile = JSON.parse(localStorage.getItem('pdfmintProfile') || 'null');
+      firstName = profile?.first || firstName;
+      timezone = localStorage.getItem('pdfmintPaymentTimezone') || JSON.parse(localStorage.getItem('pdfmintRegion') || 'null')?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || timezone;
+    } catch (_) {}
+    let hour = new Date().getHours();
+    try { hour = Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:timezone}).format(new Date())); } catch (_) {}
+    const period = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
+    const greeting = document.querySelector('[data-dashboard-greeting]');
+    if (greeting) greeting.textContent = `Good ${period}, ${firstName}`;
+  };
+  updateDashboardGreeting();
+  refreshDashboardFiles().catch(error => console.warn('PDFMint could not load My Files.', error));
 
   const params = new URLSearchParams(location.search);
   if (params.get('menu')) openDrawer(params.get('menu'));

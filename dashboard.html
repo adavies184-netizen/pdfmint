@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5336">
+  <link rel="stylesheet" href="dashboard.css?v=5340">
 </head>
 <body>
   <svg class="svg-sprite" aria-hidden="true">
@@ -62,7 +62,7 @@
       <a href="dashboard.html?tool=compress" data-direct-tool="compress"><svg><use href="#i-compress"/></svg><span>Compress PDF</span></a>
       <a href="dashboard.html?menu=organize" data-dashboard-menu="organize" onclick="window.openDashboardMenu?.('organize')"><svg><use href="#i-grid"/></svg><span>Organize Pages</span><svg class="rail-chevron"><use href="#i-chevron"/></svg></a>
       <p class="rail-section-label">Services</p>
-      <a href="all-converters.html"><svg><use href="#i-convert"/></svg><span>Convert Files</span></a>
+      <a href="dashboard.html?tool=convert" data-direct-tool="convert"><svg><use href="#i-convert"/></svg><span>Convert Files</span></a>
       <a href="#" data-placeholder><svg><use href="#i-file"/></svg><span>Forms</span></a>
       <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>Chat with PDF <em>AI</em></span></a>
     </nav>
@@ -88,7 +88,7 @@
 
     <main>
       <section class="welcome-row">
-        <div><p>YOUR PDFMINT WORKSPACE</p><h1>Good morning, Andrew</h1><span>Edit, organise and convert your documents in one place.</span></div>
+        <div><p>YOUR PDFMINT WORKSPACE</p><h1 data-dashboard-greeting>Welcome back, Andrew</h1><span>Edit, organise and convert your documents in one place.</span></div>
         <label class="primary-upload"><svg><use href="#i-upload"/></svg>Upload file<input type="file" hidden></label>
       </section>
 
@@ -101,9 +101,9 @@
       </section>
 
       <section class="quick-section" aria-labelledby="quick-title">
-        <div class="section-heading"><div><span>Start quickly</span><h2 id="quick-title">Popular tools</h2></div><a href="all-converters.html">View all tools</a></div>
+        <div class="section-heading"><div><span>Start quickly</span><h2 id="quick-title">Popular tools</h2></div><a href="dashboard.html?tool=convert" data-direct-tool="convert">View all tools</a></div>
         <div class="quick-tools">
-          <a href="edit-pdf.html"><i><svg><use href="#i-edit"/></svg></i><b>Edit PDF</b><small>Update text and content</small></a>
+          <a href="dashboard.html?menu=edit" data-dashboard-menu="edit"><i><svg><use href="#i-edit"/></svg></i><b>Edit PDF</b><small>Update text and content</small></a>
           <a href="dashboard.html?tool=compress" data-direct-tool="compress"><i><svg><use href="#i-compress"/></svg></i><b>Compress PDF</b><small>Reduce document size</small></a>
           <a href="merge-pdf.html"><i><svg><use href="#i-convert"/></svg></i><b>Merge PDF</b><small>Combine multiple files</small></a>
           <a href="dashboard.html?tool=sign" data-direct-tool="sign"><i><svg><use href="#i-sign"/></svg></i><b>Sign PDF</b><small>Add your signature</small></a>
@@ -113,7 +113,7 @@
 
       <section class="files-card" id="recent-files" aria-labelledby="files-title">
         <div class="section-heading files-heading"><div><span>Your workspace</span><h2 id="files-title">Recent files</h2></div><label class="secondary-upload"><svg><use href="#i-upload"/></svg>Upload file<input type="file" hidden></label></div>
-        <div class="file-table" role="table">
+        <div class="file-table" role="table" data-recent-files>
           <div class="file-row file-head" role="row"><span>Name</span><span>Size</span><span>Last activity</span><span></span></div>
           <div class="file-row" role="row"><span class="file-name"><i>PDF</i><b>Terms of Business.pdf</b></span><span>531 KB</span><span>Today, 10:42 AM</span><button aria-label="File options">•••</button></div>
           <div class="file-row" role="row"><span class="file-name"><i>PDF</i><b>Signed agreement.pdf</b></span><span>284 KB</span><span>Yesterday</span><button aria-label="File options">•••</button></div>
@@ -127,7 +127,7 @@
 
   <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
     <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
-    <a href="all-converters.html"><svg><use href="#i-grid"/></svg><span>Tools</span></a>
+    <a href="dashboard.html?tool=convert" data-direct-tool="convert"><svg><use href="#i-grid"/></svg><span>Tools</span></a>
     <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>AI chat</span></a>
     <button type="button" data-open-account><svg><use href="#i-user"/></svg><span>Account</span></button>
   </nav>
@@ -139,7 +139,7 @@
       <header><span><svg data-picker-icon><use href="#i-edit"/></svg></span><div><small>OPEN WITH PDFMINT</small><h2 id="picker-title" data-picker-title>Edit PDF</h2><p data-picker-copy>Upload a new PDF or continue with a file from My Files.</p></div></header>
       <label class="picker-upload"><svg><use href="#i-upload"/></svg><span><b>Upload a new PDF</b><small>Choose a PDF from your device</small></span><em>Browse</em><input data-picker-input type="file" accept="application/pdf,.pdf" hidden></label>
       <div class="picker-divider"><span>or choose from My Files</span></div>
-      <div class="picker-files">
+      <div class="picker-files" data-picker-files>
         <button type="button" data-library-file="Terms of Business.pdf"><i>PDF</i><span><b>Terms of Business.pdf</b><small>531 KB · Edited today</small></span><svg><use href="#i-chevron"/></svg></button>
         <button type="button" data-library-file="Signed agreement.pdf"><i>PDF</i><span><b>Signed agreement.pdf</b><small>284 KB · Edited yesterday</small></span><svg><use href="#i-chevron"/></svg></button>
       </div>
@@ -177,6 +177,18 @@
         <label><input type="radio" name="dashboardOcrFormat" value="txt"><span><b>Plain text</b><small>Simple unformatted editable text.</small></span><em>.TXT</em></label>
       </div>
       <button class="choice-primary" type="button" data-apply-ocr>Apply OCR &amp; download</button>
+    </section>
+  </div>
+
+  <div class="dashboard-choice-layer" data-convert-options hidden>
+    <button class="choice-backdrop" type="button" data-close-convert aria-label="Close converter"></button>
+    <section class="dashboard-choice-dialog converter-choice-dialog" role="dialog" aria-modal="true" aria-labelledby="convert-options-title">
+      <button class="choice-close" type="button" data-close-convert aria-label="Close"><svg><use href="#i-close"/></svg></button>
+      <header><span><svg><use href="#i-convert"/></svg></span><div><small>PDFMINT CONVERTER</small><h2 id="convert-options-title">Convert your file</h2><p>Choose one of the formats supported for this file.</p></div></header>
+      <div class="choice-file"><i>FILE</i><span><b data-convert-file-name>Document</b><small data-convert-file-size>Ready to convert</small></span></div>
+      <label class="converter-search"><svg><use href="#i-search"/></svg><input type="search" data-convert-search placeholder="Search output formats" autocomplete="off"></label>
+      <div class="converter-target-grid" data-converter-targets></div>
+      <button class="choice-primary" type="button" data-apply-convert disabled>Convert &amp; download</button>
     </section>
   </div>
 
@@ -267,6 +279,6 @@
   </div>
 
   <script src="config.js"></script>
-  <script src="dashboard.js?v=5336"></script>
+  <script src="dashboard.js?v=5340"></script>
 </body>
 </html>
