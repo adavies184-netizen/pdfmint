@@ -318,7 +318,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .export-button{height:57px;border:0;border-radius:10px;font:800 16px Inter;cursor:pointer}.export-button.secondary{background:#f2f3f4;color:#363636}.export-button.primary{background:#21b887;color:#fff}
 .email-modal{width:min(650px,calc(100vw - 28px))}
 .email-modal-content{padding:54px 62px 40px}.email-modal-content h2{text-align:center;font-size:31px;margin:0 0 28px;color:#171717}
-.social-login-button{width:100%;height:66px;margin-bottom:16px;border:1px solid #d9dde2;border-radius:11px;background:#fff;font:600 20px Inter;color:#222;cursor:pointer}.social-login-button:hover{background:#fafafa}.google-mark{display:inline-grid;place-items:center;margin-right:15px;font:800 24px Inter;color:#4285f4}
+.social-login-button{width:100%;height:66px;margin-bottom:16px;border:1px solid #d9dde2;border-radius:11px;background:#fff;font:600 20px Inter;color:#222;cursor:pointer}.social-login-button:hover{background:#fafafa}.google-mark{display:inline-block;width:22px;height:22px;margin-right:15px;vertical-align:-5px;font-size:0;color:transparent;background:url("assets/google-g.svg") center/contain no-repeat}
 .email-divider{display:flex;align-items:center;gap:20px;margin:23px 0}.email-divider:before,.email-divider:after{content:"";height:1px;flex:1;background:#e2e5e9}.email-divider span{font-size:14px;color:#c3c7cc;font-weight:700}
 .email-field{display:grid;gap:8px}.email-field span{font-size:16px;color:#333}.email-field input{height:58px;border:1px solid #cfd5dc;border-radius:10px;padding:0 14px;font:400 18px Inter;outline:0}.email-field input.invalid{border-color:#df5146;box-shadow:0 0 0 2px rgba(223,81,70,.13)}
 .email-error{margin:8px 0 0;color:#c33d33;font-size:14px}
