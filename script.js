@@ -3249,8 +3249,32 @@ function isDashboardEditorSession() {
   try {
     const params = new URLSearchParams(window.location.search);
     return Boolean(window.PDFMintAuth?.isSignedIn?.()) &&
-      (params.has('tool') || params.has('action') || params.get('source') === 'dashboard');
+      params.get('source') === 'dashboard';
   } catch (_) {
+    return false;
+  }
+}
+
+async function hasUnlimitedPaidAccess() {
+  try {
+    const auth = window.PDFMintAuth;
+    const user = await auth?.getUser?.();
+    if (!user || !auth?.client) return false;
+    const {data, error} = await auth.client
+      .from('subscriptions')
+      .select('plan_code,status,trial_ends_at')
+      .eq('user_id', user.id)
+      .in('status', ['trialing', 'active']);
+    if (error) throw error;
+    const now = Date.now();
+    return (data || []).some(subscription => {
+      if (subscription.plan_code === 'unlimited_trial' || subscription.plan_code === 'annual') return true;
+      return subscription.plan_code === 'document_trial' &&
+        subscription.status === 'active' &&
+        (!subscription.trial_ends_at || Date.parse(subscription.trial_ends_at) <= now);
+    });
+  } catch (error) {
+    console.warn('PDFBreeze could not verify membership access.', error);
     return false;
   }
 }
@@ -4201,7 +4225,7 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
   button.textContent = 'Preparing…';
 
   try {
-    if (isDashboardEditorSession()) {
+    if (await hasUnlimitedPaidAccess()) {
       const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
       closeFormatModal();
       await exportEditedDocument(format);
