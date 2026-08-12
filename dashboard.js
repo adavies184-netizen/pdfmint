@@ -5,7 +5,26 @@
     return;
   }
   await accountAuth.ready;
-  const authenticatedUser = await accountAuth.requireUser();
+  const signedInUser = await accountAuth.getUser();
+  let checkoutAccess = null;
+  try {
+    const storedAccess = JSON.parse(sessionStorage.getItem('pdfmintCheckoutAccess') || 'null');
+    const isRecentCheckout =
+      storedAccess?.completedAt &&
+      Date.now() - Number(storedAccess.completedAt) < 12 * 60 * 60 * 1000;
+    if (isRecentCheckout) checkoutAccess = storedAccess;
+    else sessionStorage.removeItem('pdfmintCheckoutAccess');
+  } catch (_) {
+    sessionStorage.removeItem('pdfmintCheckoutAccess');
+  }
+  if (!signedInUser && !checkoutAccess) {
+    await accountAuth.requireUser();
+    return;
+  }
+  const authenticatedUser = signedInUser || {
+    email: checkoutAccess.email || '',
+    user_metadata: {}
+  };
   if (!authenticatedUser) return;
   const tools = [
     ['Edit PDF','Update text and content','edit-pdf.html','i-edit'],
@@ -706,6 +725,12 @@
 
   let accountFirstName = authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0] || 'there';
   let accountTimezone = detectedTimezone;
+  if (checkoutAccess?.email) {
+    profileForm.elements.email.value = checkoutAccess.email;
+    layer.querySelector('[data-profile-name]').textContent = checkoutAccess.email;
+    layer.querySelector('[data-profile-email]').textContent = checkoutAccess.email;
+    layer.querySelector('[data-profile-initials]').textContent = checkoutAccess.email.slice(0, 2).toUpperCase();
+  }
   const updateDashboardGreeting = (firstNameOverride, timezoneOverride) => {
     if (firstNameOverride) accountFirstName = firstNameOverride;
     if (timezoneOverride) accountTimezone = timezoneOverride;
@@ -736,7 +761,10 @@
     }
   } catch (error) { console.warn('PDFBreeze could not load the account profile.', error); }
   updateDashboardGreeting();
-  document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => accountAuth.signOut()));
+  document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => {
+    sessionStorage.removeItem('pdfmintCheckoutAccess');
+    accountAuth.signOut();
+  }));
   refreshDashboardFiles().catch(error => console.warn('PDFBreeze could not load My Files.', error));
 
   const params = new URLSearchParams(location.search);
