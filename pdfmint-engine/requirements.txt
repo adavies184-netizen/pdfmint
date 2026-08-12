@@ -13,3 +13,5 @@ Pillow==11.3.0
 pillow-heif==1.1.0
 pytesseract==0.3.13
 Markdown==3.8.2
+httpx==0.28.1
+stripe==15.3.1

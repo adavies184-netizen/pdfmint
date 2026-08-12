@@ -9,7 +9,7 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
@@ -17,10 +17,11 @@ from starlette.background import BackgroundTask
 from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
+from .billing import CheckoutRequest, create_checkout, stripe_webhook
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.8.1"
+ENGINE_VERSION = "1.9.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -73,6 +74,16 @@ def capabilities() -> dict:
             "watermark-pdf",
         ],
     }
+
+
+@app.post("/v1/billing/checkout")
+async def billing_checkout(payload: CheckoutRequest, authorization: str | None = Header(default=None)):
+    return await create_checkout(payload, authorization)
+
+
+@app.post("/v1/billing/stripe-webhook")
+async def billing_stripe_webhook(request: Request, stripe_signature: str | None = Header(default=None, alias="Stripe-Signature")):
+    return await stripe_webhook(request, stripe_signature)
 
 
 @app.post("/v1/jobs")
