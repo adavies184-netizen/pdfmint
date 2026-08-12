@@ -24,45 +24,6 @@ tabs.forEach(tab => tab.addEventListener('click', () => {
 }));
 
 
-document.querySelectorAll('.nav-dropdown-toggle').forEach(toggle => {
-  toggle.addEventListener('click', event => {
-    event.stopPropagation();
-    const dropdown = toggle.closest('.nav-dropdown');
-    const willOpen = !dropdown.classList.contains('open');
-
-    document.querySelectorAll('.nav-dropdown.open').forEach(item => {
-      item.classList.remove('open');
-      const button = item.querySelector('.nav-dropdown-toggle');
-      if (button) button.setAttribute('aria-expanded', 'false');
-    });
-
-    if (willOpen) {
-      dropdown.classList.add('open');
-      toggle.setAttribute('aria-expanded', 'true');
-    }
-  });
-});
-
-document.addEventListener('click', event => {
-  if (!event.target.closest('.nav-dropdown')) {
-    document.querySelectorAll('.nav-dropdown.open').forEach(item => {
-      item.classList.remove('open');
-      const button = item.querySelector('.nav-dropdown-toggle');
-      if (button) button.setAttribute('aria-expanded', 'false');
-    });
-  }
-});
-
-document.addEventListener('keydown', event => {
-  if (event.key === 'Escape') {
-    document.querySelectorAll('.nav-dropdown.open').forEach(item => {
-      item.classList.remove('open');
-      const button = item.querySelector('.nav-dropdown-toggle');
-      if (button) button.setAttribute('aria-expanded', 'false');
-    });
-  }
-});
-
 const menuButton = document.querySelector('.menu-button');
 const mobileMenu = document.querySelector('.mobile-menu');
 if (menuButton && mobileMenu) {
@@ -2870,7 +2831,7 @@ function updateWatermark(property, value) {
   editor.watermark[property] = value;
   renderAnnotations();
 }
-document.getElementById('watermark-tool').addEventListener('click', () => {
+document.getElementById('watermark-tool')?.addEventListener('click', () => {
   if (!editor.watermark.applied) {
     recordHistory();
     editor.watermark.applied = true;
@@ -2878,13 +2839,13 @@ document.getElementById('watermark-tool').addEventListener('click', () => {
   syncWatermarkControls();
   setEditorMode('watermark');
 });
-document.getElementById('watermark-text').addEventListener('input', event => updateWatermark('text', event.target.value));
-document.getElementById('watermark-size').addEventListener('input', event => {
+document.getElementById('watermark-text')?.addEventListener('input', event => updateWatermark('text', event.target.value));
+document.getElementById('watermark-size')?.addEventListener('input', event => {
   const value = Math.max(0, Math.min(100, Number(event.target.value)));
   document.getElementById('watermark-size-value').textContent = `${value}%`;
   updateWatermark('size', value);
 });
-document.getElementById('watermark-opacity').addEventListener('input', event => {
+document.getElementById('watermark-opacity')?.addEventListener('input', event => {
   const value = Math.max(0, Math.min(100, Number(event.target.value)));
   document.getElementById('watermark-opacity-value').textContent = `${value}%`;
   updateWatermark('opacity', value);
@@ -2895,7 +2856,7 @@ document.querySelectorAll('[data-watermark-colour]').forEach(button => button.ad
   document.querySelectorAll('[data-watermark-colour]').forEach(item => item.classList.toggle('active', item === button));
   updateWatermark('colour', colour);
 }));
-document.getElementById('watermark-custom-colour').addEventListener('input', event => {
+document.getElementById('watermark-custom-colour')?.addEventListener('input', event => {
   document.querySelectorAll('[data-watermark-colour]').forEach(item => item.classList.remove('active'));
   updateWatermark('colour', event.target.value);
 });
@@ -2903,7 +2864,7 @@ document.querySelectorAll('[data-watermark-align]').forEach(button => button.add
   document.querySelectorAll('[data-watermark-align]').forEach(item => item.classList.toggle('active', item === button));
   updateWatermark('align', button.dataset.watermarkAlign);
 }));
-document.getElementById('watermark-vertical').addEventListener('input', event => updateWatermark('vertical', Math.max(0, Math.min(100, Number(event.target.value)))));
+document.getElementById('watermark-vertical')?.addEventListener('input', event => updateWatermark('vertical', Math.max(0, Math.min(100, Number(event.target.value)))));
 
 function normaliseWatermarkAngle(value) {
   let angle = Math.round(value);
@@ -2931,16 +2892,16 @@ function setWatermarkAngleFromPointer(event) {
   updateWatermark('angle', normaliseWatermarkAngle(Math.atan2(dy, dx) * 180 / Math.PI + 90));
   syncWatermarkAngleDial();
 }
-document.getElementById('watermark-angle-dial').addEventListener('pointerdown', event => {
+document.getElementById('watermark-angle-dial')?.addEventListener('pointerdown', event => {
   event.preventDefault();
   const dial = event.currentTarget;
   dial.setPointerCapture(event.pointerId);
   setWatermarkAngleFromPointer(event);
 });
-document.getElementById('watermark-angle-dial').addEventListener('pointermove', event => {
+document.getElementById('watermark-angle-dial')?.addEventListener('pointermove', event => {
   if (event.currentTarget.hasPointerCapture(event.pointerId)) setWatermarkAngleFromPointer(event);
 });
-document.getElementById('watermark-angle-dial').addEventListener('keydown', event => {
+document.getElementById('watermark-angle-dial')?.addEventListener('keydown', event => {
   if (!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)) return;
   event.preventDefault();
   const step = event.shiftKey ? 15 : 1;
@@ -2948,7 +2909,7 @@ document.getElementById('watermark-angle-dial').addEventListener('keydown', even
   updateWatermark('angle', normaliseWatermarkAngle((editor.watermark.angle || 0) + direction * step));
   syncWatermarkAngleDial();
 });
-document.getElementById('watermark-done').addEventListener('click', () => {
+document.getElementById('watermark-done')?.addEventListener('click', () => {
   setEditorMode('select');
   openFormatModal();
 });
@@ -3100,7 +3061,7 @@ document.getElementById('split-apply')?.addEventListener('click', () => {
   showAlert(`Split applied. ${files} files will be created when you export as PDF.`);
 });
 
-document.getElementById('crop-tool').addEventListener('click', () => {
+document.getElementById('crop-tool')?.addEventListener('click', () => {
   editor.cropDraft = null;
   document.getElementById('crop-specific-page').max = Math.max(1, editor.pages.length);
   setEditorMode('crop');
@@ -3109,11 +3070,11 @@ document.querySelectorAll('input[name="crop-scope"]').forEach(input => input.add
   editor.cropScope = event.target.value;
   document.getElementById('crop-specific-page').disabled = editor.cropScope !== 'specific';
 }));
-document.getElementById('crop-cancel').addEventListener('click', () => {
+document.getElementById('crop-cancel')?.addEventListener('click', () => {
   editor.cropDraft = null;
   setEditorMode('select');
 });
-document.getElementById('crop-apply').addEventListener('click', () => {
+document.getElementById('crop-apply')?.addEventListener('click', () => {
   if (!editor.cropDraft) return;
   const modal = document.getElementById('crop-confirm-modal');
   if (modal) modal.hidden = false;
@@ -5283,20 +5244,6 @@ document.getElementById('continue-google')?.addEventListener('click', openAccess
 const heroInput = document.getElementById('file-input');
 const heroCard = document.getElementById('upload-card');
 const heroStatus = document.getElementById('file-status');
-heroInput.addEventListener('change', event => {
-  if (
-    document.body.dataset.compressFlow === 'true' ||
-    document.body.dataset.compressImageFlow === 'true' ||
-    document.body.dataset.mergeFlow === 'true' ||
-    document.body.dataset.ocrFlow === 'true'
-  ) return;
-  const file = event.target.files[0];
-  if (file) {
-    heroStatus.textContent = `${file.name} selected — opening editor…`;
-    loadEditorPdf(file);
-  }
-  event.target.value = '';
-});
 ['dragenter','dragover'].forEach(name => heroCard.addEventListener(name, event => {
   event.preventDefault(); heroCard.classList.add('dragover');
 }));
@@ -6323,27 +6270,6 @@ if (document.body.dataset.ocrFlow === 'true') {
   }, true);
 }
 
-document.addEventListener('change', event => {
-  const input = event.target;
-  if (
-    document.body.dataset.editorRoute !== 'true' &&
-    document.body.dataset.compressFlow !== 'true' &&
-    document.body.dataset.compressImageFlow !== 'true' &&
-    document.body.dataset.mergeFlow !== 'true' &&
-    document.body.dataset.ocrFlow !== 'true' &&
-    input instanceof HTMLInputElement &&
-    input.id === 'file-input' &&
-    input.type === 'file'
-  ) {
-    const file = input.files?.[0];
-    if (!file) return;
-    event.preventDefault();
-    event.stopImmediatePropagation();
-    routeLandingUploadToEditor(file);
-  }
-}, true);
-
-
 function pdfMintLandingUploadLabel() {
   const path = window.location.pathname.toLowerCase();
 
@@ -6480,6 +6406,23 @@ document.addEventListener('DOMContentLoaded', () => {
 document.addEventListener('DOMContentLoaded', () => {
   applyPdfMintLandingUploadLabel();
   addUploadPageSupportDetails();
+
+  const input = document.getElementById('file-input');
+  const usesDedicatedUploadFlow =
+    document.body.dataset.editorRoute === 'true' ||
+    document.body.dataset.compressFlow === 'true' ||
+    document.body.dataset.compressImageFlow === 'true' ||
+    document.body.dataset.mergeFlow === 'true' ||
+    document.body.dataset.ocrFlow === 'true';
+
+  if (input && !usesDedicatedUploadFlow) {
+    input.addEventListener('change', event => {
+      const file = event.currentTarget.files?.[0];
+      if (!file) return;
+      routeLandingUploadToEditor(file);
+      event.currentTarget.value = '';
+    });
+  }
 });
 
 
@@ -6517,5 +6460,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (toggle) toggle.setAttribute('aria-expanded', 'false');
       });
     }
+  });
+
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    dropdowns.forEach(dropdown => {
+      dropdown.classList.remove('is-open');
+      const toggle = dropdown.querySelector('.nav-dropdown-toggle');
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    });
   });
 });
