@@ -4313,7 +4313,13 @@ async function openPaymentPage() {
   closeAccessPage();
   document.getElementById('payment-page').hidden = false;
   await renderCheckoutPreview('payment-preview-canvas');
-  await prepareStripePaymentElement();
+  try {
+    await prepareStripePaymentElement();
+  } catch (error) {
+    showStripeError(error.message || 'Secure payment could not be loaded.');
+    const payButton = document.getElementById('mock-pay-button');
+    if (payButton) payButton.disabled = true;
+  }
 }
 
 function closePaymentPage() {
@@ -4406,6 +4412,16 @@ async function prepareStripePaymentElement() {
   const config = window.PDFMINT_CONFIG?.stripe;
   if (!panel || !config?.publishableKey) throw new Error('Stripe checkout is not configured.');
 
+  [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
+    .forEach(element => element.hidden = true);
+  let mount = document.getElementById('stripe-payment-element');
+  if (!mount) {
+    mount = document.createElement('div');
+    mount.id = 'stripe-payment-element';
+    mount.textContent = 'Loading secure payment…';
+    panel.prepend(mount);
+  }
+
   const session = await window.PDFMintAuth?.getSession?.();
   if (!session?.access_token) {
     const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
@@ -4416,15 +4432,6 @@ async function prepareStripePaymentElement() {
   const plan = stripePlanCode();
   if (stripeElements && stripeElementPlan === plan) return;
   await loadStripeLibrary();
-
-  let mount = document.getElementById('stripe-payment-element');
-  if (!mount) {
-    mount = document.createElement('div');
-    mount.id = 'stripe-payment-element';
-    panel.prepend(mount);
-  }
-  [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
-    .forEach(element => element.hidden = true);
 
   const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
     method: 'POST',
