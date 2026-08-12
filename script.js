@@ -4370,8 +4370,11 @@ function finishMockCheckout() {
       return;
     }
     const email = sessionStorage.getItem('pdfmintPendingEmail') || '';
-    const target = `login.html?mode=signup&returnTo=${encodeURIComponent('/dashboard.html?welcome=1')}${email ? `&email=${encodeURIComponent(email)}` : ''}`;
-    window.location.assign(target);
+    sessionStorage.setItem('pdfmintCheckoutAccess', JSON.stringify({
+      email,
+      completedAt: Date.now()
+    }));
+    window.location.assign('dashboard.html?welcome=1');
   }, 350);
 }
 
