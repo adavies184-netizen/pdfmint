@@ -4224,7 +4224,7 @@ let selectedAccessPlan = {
   value: 'full',
   name: '7-day full access',
   price: 1.00,
-  disclosure: 'Renews at £24.90 every four weeks after seven days unless cancelled beforehand.'
+  disclosure: 'Renews at £49.99 every four weeks after seven days unless cancelled beforehand.'
 };
 
 function formatPounds(value) {
@@ -4268,8 +4268,8 @@ async function openPaymentPage() {
   const price = Number(checked.dataset.price);
 
   let disclosure = 'One-time access with no automatic renewal.';
-  if (checked.value === 'full') disclosure = 'Renews at £24.90 every four weeks after seven days unless cancelled beforehand.';
-  if (checked.value === 'annual') disclosure = 'Billed £24.90 monthly until cancelled.';
+  if (checked.value === 'limited' || checked.value === 'full') disclosure = 'Renews at £49.99 every four weeks after seven days unless cancelled beforehand.';
+  if (checked.value === 'annual') disclosure = 'Billed £299.99 annually until cancelled.';
 
   selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
 
@@ -4289,6 +4289,7 @@ async function openPaymentPage() {
   closeAccessPage();
   document.getElementById('payment-page').hidden = false;
   await renderCheckoutPreview('payment-preview-canvas');
+  await prepareStripePaymentElement();
 }
 
 function closePaymentPage() {
@@ -4303,11 +4304,11 @@ document.querySelectorAll('input[name="access-plan"]').forEach(input => {
 
     const disclosure = document.getElementById('plan-disclosure');
     if (event.currentTarget.value === 'limited') {
-      disclosure.textContent = 'Seven-day limited access costs £0.50 today and applies to this document only. No automatic renewal.';
+      disclosure.textContent = 'Seven-day access to this document costs £0.50 today, then renews at £49.99 every four weeks unless cancelled.';
     } else if (event.currentTarget.value === 'annual') {
-      disclosure.textContent = 'Annual access is billed at £24.90 per month until cancelled.';
+      disclosure.textContent = 'Annual unlimited access is charged at £299.99 today and every year until cancelled.';
     } else {
-      disclosure.textContent = 'Seven-day full access costs £1 today. Unless cancelled, it renews at £24.90 every four weeks after the trial. Cancel at any time before renewal.';
+      disclosure.textContent = 'Seven-day unlimited access costs £1 today. Unless cancelled, it renews at £49.99 every four weeks after the trial.';
     }
   });
 });
@@ -4333,6 +4334,102 @@ function openDemoPaymentNotice() {
 }
 let pendingCheckoutBlob = null;
 let pendingCheckoutFilename = '';
+let stripeClient = null;
+let stripeElements = null;
+let stripeIntentType = null;
+let stripeElementPlan = null;
+const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
+
+function loadStripeLibrary() {
+  if (window.Stripe) return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const existing = document.querySelector('script[data-pdfbreeze-stripe]');
+    if (existing) {
+      existing.addEventListener('load', resolve, {once: true});
+      existing.addEventListener('error', reject, {once: true});
+      return;
+    }
+    const script = document.createElement('script');
+    script.src = 'https://js.stripe.com/v3/';
+    script.async = true;
+    script.dataset.pdfbreezeStripe = 'true';
+    script.addEventListener('load', resolve, {once: true});
+    script.addEventListener('error', () => reject(new Error('Stripe could not load.')), {once: true});
+    document.head.appendChild(script);
+  });
+}
+
+function stripePlanCode() {
+  if (selectedAccessPlan.value === 'limited') return 'document_trial';
+  if (selectedAccessPlan.value === 'annual') return 'annual';
+  return 'unlimited_trial';
+}
+
+function showStripeError(message) {
+  let error = document.getElementById('stripe-payment-error');
+  if (!error) {
+    error = document.createElement('p');
+    error.id = 'stripe-payment-error';
+    error.className = 'payment-consent-warning';
+    document.getElementById('stripe-payment-element')?.insertAdjacentElement('afterend', error);
+  }
+  error.textContent = message || '';
+  error.hidden = !message;
+}
+
+async function prepareStripePaymentElement() {
+  const panel = document.getElementById('card-payment-panel');
+  const config = window.PDFMINT_CONFIG?.stripe;
+  if (!panel || !config?.publishableKey) throw new Error('Stripe checkout is not configured.');
+
+  const session = await window.PDFMintAuth?.getSession?.();
+  if (!session?.access_token) {
+    const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
+    window.location.assign(`login.html?mode=signup&returnTo=${returnTo}`);
+    return;
+  }
+
+  const plan = stripePlanCode();
+  if (stripeElements && stripeElementPlan === plan) return;
+  await loadStripeLibrary();
+
+  let mount = document.getElementById('stripe-payment-element');
+  if (!mount) {
+    mount = document.createElement('div');
+    mount.id = 'stripe-payment-element';
+    panel.prepend(mount);
+  }
+  [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
+    .forEach(element => element.hidden = true);
+
+  const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${session.access_token}`
+    },
+    body: JSON.stringify({
+      plan,
+      document_key: plan === 'document_trial' ? stripeCheckoutDocumentKey : null
+    })
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.detail || 'PDFBreeze could not start secure checkout.');
+
+  mount.replaceChildren();
+  stripeClient = window.Stripe(config.publishableKey);
+  stripeIntentType = result.intent_type;
+  stripeElements = stripeClient.elements({
+    clientSecret: result.client_secret,
+    appearance: {
+      theme: 'stripe',
+      variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
+    }
+  });
+  stripeElements.create('payment', {layout: 'tabs'}).mount('#stripe-payment-element');
+  stripeElementPlan = plan;
+  showStripeError('');
+}
 
 function triggerPreparedDownload(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -4402,15 +4499,35 @@ function validateMockCheckout() {
 
 document.getElementById('mock-pay-button').addEventListener('click', async () => {
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  if (!validateMockCheckout()) return;
-  if (pendingCheckoutBlob && pendingCheckoutFilename) {
-    triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
-    pendingCheckoutBlob = null;
-    pendingCheckoutFilename = '';
-    finishMockCheckout();
+  const consent = document.querySelector('#card-payment-panel .payment-consent input');
+  const warning = document.getElementById('payment-consent-warning');
+  if (!consent?.checked) {
+    if (warning) warning.hidden = false;
     return;
   }
-  openDemoPaymentNotice();
+  try {
+    if (!stripeElements) await prepareStripePaymentElement();
+    const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
+    const {error} = await confirmation({
+      elements: stripeElements,
+      confirmParams: {return_url: `${location.origin}/dashboard.html?payment=complete`},
+      redirect: 'if_required'
+    });
+    if (error) {
+      showStripeError(error.message || 'Payment could not be completed.');
+      return;
+    }
+    if (pendingCheckoutBlob && pendingCheckoutFilename) {
+      triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
+      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, pendingCheckoutFilename, 'paid-download')
+        .catch(saveError => console.warn('PDFBreeze could not save the paid document.', saveError));
+      pendingCheckoutBlob = null;
+      pendingCheckoutFilename = '';
+    }
+    window.setTimeout(() => window.location.assign('dashboard.html?payment=complete'), 350);
+  } catch (error) {
+    showStripeError(error.message || 'Payment could not be completed.');
+  }
 });
 document.getElementById('mock-paypal-button').addEventListener('click', openDemoPaymentNotice);
 document.getElementById('close-demo-payment').addEventListener('click', () => {
@@ -4456,10 +4573,12 @@ function preparePaymentPrototypeUi() {
   if (paymentTitle) paymentTitle.textContent = "You're on the last step before receiving your document";
   if (payButton) payButton.textContent = '🔒  Pay and download document';
 
-  const annualSubtext = document.querySelector('input[name="access-plan"][value="annual"]')?.closest('.plan-option')?.querySelector('.plan-copy small');
-  if (annualSubtext) annualSubtext.textContent = 'Unlimited access';
-  const annualPrice = document.querySelector('input[name="access-plan"][value="annual"]')?.closest('.plan-option')?.querySelector('.plan-price');
-  if (annualPrice) annualPrice.innerHTML = '£24.90<span>/pm</span>';
+  const annualInput = document.querySelector('input[name="access-plan"][value="annual"]');
+  if (annualInput) annualInput.dataset.price = '299.99';
+  const annualSubtext = annualInput?.closest('.plan-option')?.querySelector('.plan-copy small');
+  if (annualSubtext) annualSubtext.textContent = 'Unlimited access · billed £299.99 yearly';
+  const annualPrice = annualInput?.closest('.plan-option')?.querySelector('.plan-price');
+  if (annualPrice) annualPrice.innerHTML = '£25.00<span>/month equivalent</span>';
 
   document.querySelectorAll('.plan-benefits div').forEach(item => {
     if (item.textContent.includes('Convert PDFs to and from common formats')) {
