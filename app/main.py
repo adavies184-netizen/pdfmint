@@ -9,21 +9,22 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
-from .files import create_download_copy, save_uploaded_pdf
+from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
+from .billing import CheckoutRequest, create_checkout, stripe_webhook
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.2.2"
+ENGINE_VERSION = "1.9.0"
 
 app = FastAPI(
-    title="PDFMint Engine",
+    title="PDFBreeze Engine",
     version=ENGINE_VERSION,
     docs_url="/docs",
     redoc_url=None,
@@ -45,10 +46,15 @@ def health() -> dict:
         "libreoffice": shutil.which("soffice") is not None,
         "tesseract": shutil.which("tesseract") is not None,
         "ocrmypdf": shutil.which("ocrmypdf") is not None,
+        "ebook_convert": shutil.which("ebook-convert") is not None,
+        "pstoedit": shutil.which("pstoedit") is not None,
+        "ffmpeg": shutil.which("ffmpeg") is not None,
+        "7zip": shutil.which("7z") is not None,
+        "libredwg": shutil.which("dwg2dxf") is not None and shutil.which("dxf2dwg") is not None,
         "operations": sorted(OPERATIONS.keys()),
     }
     return {
-        "status": "ok" if checks["libreoffice"] and checks["tesseract"] and checks["ocrmypdf"] else "degraded",
+        "status": "ok" if all(checks[name] for name in ("libreoffice", "tesseract", "ocrmypdf", "ebook_convert", "pstoedit", "ffmpeg", "7zip", "libredwg")) else "degraded",
         "service": "pdfmint-engine",
         "version": ENGINE_VERSION,
         "checks": checks,
@@ -68,6 +74,16 @@ def capabilities() -> dict:
             "watermark-pdf",
         ],
     }
+
+
+@app.post("/v1/billing/checkout")
+async def billing_checkout(payload: CheckoutRequest, authorization: str | None = Header(default=None)):
+    return await create_checkout(payload, authorization)
+
+
+@app.post("/v1/billing/stripe-webhook")
+async def billing_stripe_webhook(request: Request, stripe_signature: str | None = Header(default=None, alias="Stripe-Signature")):
+    return await stripe_webhook(request, stripe_signature)
 
 
 @app.post("/v1/jobs")
@@ -95,10 +111,13 @@ async def create_job(
 
     with tempfile.TemporaryDirectory(prefix=f"pdfmint-job-{job_id.lower()}-") as temporary_name:
         workspace = Path(temporary_name)
-        pdf_path = await save_uploaded_pdf(file, workspace)
+        if operation.startswith(("pdf-to-", "compress-pdf", "ocr-")):
+            input_path = await save_uploaded_pdf(file, workspace)
+        else:
+            input_path = await save_uploaded_file(file, workspace)
 
         try:
-            result = execute_operation(operation, pdf_path, workspace, base_name)
+            result = execute_operation(operation, input_path, workspace, base_name)
         except subprocess.TimeoutExpired as exc:
             logger.exception("JOB TIMEOUT id=%s operation=%s", job_id, operation)
             raise HTTPException(

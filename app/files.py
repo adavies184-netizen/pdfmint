@@ -32,6 +32,26 @@ async def save_uploaded_pdf(upload: UploadFile, directory: Path) -> Path:
     return destination
 
 
+async def save_uploaded_file(upload: UploadFile, directory: Path) -> Path:
+    """Save a converter upload while preserving its safe extension."""
+    original = Path(upload.filename or "upload.bin").name
+    destination = directory / f"input{Path(original).suffix.lower()}"
+    total = 0
+    with destination.open("wb") as output:
+        while chunk := await upload.read(1024 * 1024):
+            total += len(chunk)
+            if total > MAX_UPLOAD_BYTES:
+                raise HTTPException(
+                    status_code=413,
+                    detail=f"File exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit."
+                )
+            output.write(chunk)
+    await upload.close()
+    if not total:
+        raise HTTPException(status_code=415, detail="The uploaded file is empty.")
+    return destination
+
+
 def create_download_copy(source: Path, filename: str) -> tuple[Path, Path]:
     persistent_dir = Path(tempfile.mkdtemp(prefix="pdfmint-download-"))
     destination = persistent_dir / filename

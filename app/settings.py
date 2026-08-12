@@ -13,3 +13,27 @@ ALLOWED_ORIGINS = [
     ).split(",")
     if value.strip()
 ]
+
+STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
+STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
+SUPABASE_URL = os.getenv("SUPABASE_URL", "https://xbljndoecxppmchujysw.supabase.co").rstrip("/")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+
+STRIPE_PRICES = {
+    "document_trial": {
+        "initial": os.getenv("STRIPE_PRICE_DOCUMENT_TRIAL_GBP", "price_1U3fRnJAG10RJqJq6EEF89De"),
+        "recurring": os.getenv("STRIPE_PRICE_MEMBERSHIP_4WEEK_GBP", "price_1U3fLOJAG10RJqJq0wxaDdFQ"),
+        "trial_days": 7,
+    },
+    "unlimited_trial": {
+        "initial": os.getenv("STRIPE_PRICE_UNLIMITED_TRIAL_GBP", "price_1U3fOfJAG10RJqJq3QzBl76x"),
+        "recurring": os.getenv("STRIPE_PRICE_MEMBERSHIP_4WEEK_GBP", "price_1U3fLOJAG10RJqJq0wxaDdFQ"),
+        "trial_days": 7,
+    },
+    "annual": {
+        "initial": None,
+        "recurring": os.getenv("STRIPE_PRICE_ANNUAL_GBP", "price_1U3fPdJAG10RJqJq8i6gW9cb"),
+        "trial_days": 0,
+    },
+}

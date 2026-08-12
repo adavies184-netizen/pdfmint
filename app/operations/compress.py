@@ -7,7 +7,7 @@ from pathlib import Path
 
 from ..settings import JOB_TIMEOUT_SECONDS
 
-logger = logging.getLogger("pdfmint.compress")
+logger = logging.getLogger("pdfbreeze.netpress")
 
 
 PRESETS = {

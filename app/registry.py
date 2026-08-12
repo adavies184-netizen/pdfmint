@@ -10,6 +10,12 @@ from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
 from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
 from .operations.compress import compress_pdf
 from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt
+from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_route
+from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_output
+from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
+from .operations.office_conversions import ROUTES as OFFICE_ROUTES, convert_office_document
+from .operations.media_conversions import ROUTES as MEDIA_ROUTES, convert_media
+from .operations.archive_cad_conversions import ROUTES as ARCHIVE_CAD_ROUTES, convert_archive_cad
 
 
 @dataclass(frozen=True)
@@ -149,6 +155,32 @@ def run_ocr_txt(pdf_path: Path, workspace: Path, base_name: str) -> OperationRes
     return OperationResult(output, output.name, "text/plain; charset=utf-8")
 
 
+MEDIA_TYPES = {
+    ".jpg": "image/jpeg", ".png": "image/png", ".gif": "image/gif",
+    ".svg": "image/svg+xml", ".eps": "application/postscript",
+    ".ico": "image/x-icon", ".dxf": "image/vnd.dxf", ".zip": "application/zip",
+    ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    ".bmp": "image/bmp", ".tiff": "image/tiff", ".webp": "image/webp",
+    ".svgz": "image/svg+xml", ".psd": "image/vnd.adobe.photoshop",
+    ".txt": "text/plain; charset=utf-8", ".md": "text/markdown; charset=utf-8",
+    ".html": "text/html; charset=utf-8", ".rtf": "application/rtf",
+    ".xls": "application/vnd.ms-excel", ".csv": "text/csv; charset=utf-8",
+    ".epub": "application/epub+zip", ".mobi": "application/x-mobipocket-ebook",
+    ".azw3": "application/vnd.amazon.ebook", ".dwg": "image/vnd.dwg",
+    ".doc": "application/msword", ".ppt": "application/vnd.ms-powerpoint",
+    ".mp3": "audio/mpeg", ".mp4": "video/mp4", ".wav": "audio/wav",
+    ".rar": "application/vnd.rar", ".7z": "application/x-7z-compressed",
+}
+
+
+def make_image_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output, suffix = convert_image_route(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(suffix, "application/octet-stream"))
+    return handler
+
+
 OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "pdf-to-docx": run_pdf_to_docx,
     "pdf-to-doc": run_pdf_to_doc,
@@ -163,6 +195,66 @@ OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "ocr-docx": run_ocr_docx,
     "ocr-txt": run_ocr_txt,
 }
+
+for image_operation in IMAGE_ROUTES:
+    OPERATIONS[image_operation] = make_image_handler(image_operation)
+
+
+def make_pdf_output_handler(target: str):
+    def handler(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_pdf_output(pdf_path, workspace, base_name, target)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for pdf_output_format in PDF_OUTPUT_FORMATS:
+    operation_name = f"pdf-to-{pdf_output_format}"
+    if operation_name not in OPERATIONS:
+        OPERATIONS[operation_name] = make_pdf_output_handler(pdf_output_format)
+
+
+def make_to_pdf_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_to_pdf(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, "application/pdf")
+    return handler
+
+
+for to_pdf_operation in TO_PDF_ROUTES:
+    OPERATIONS[to_pdf_operation] = make_to_pdf_handler(to_pdf_operation)
+
+
+def make_office_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_office_document(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for office_operation in OFFICE_ROUTES:
+    OPERATIONS[office_operation] = make_office_handler(office_operation)
+
+
+def make_media_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_media(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for media_operation in MEDIA_ROUTES:
+    OPERATIONS[media_operation] = make_media_handler(media_operation)
+
+
+def make_archive_cad_handler(operation: str):
+    def handler(input_path: Path, workspace: Path, base_name: str) -> OperationResult:
+        output = convert_archive_cad(operation, input_path, workspace, base_name)
+        return OperationResult(output, output.name, MEDIA_TYPES.get(output.suffix.lower(), "application/octet-stream"))
+    return handler
+
+
+for archive_cad_operation in ARCHIVE_CAD_ROUTES:
+    OPERATIONS[archive_cad_operation] = make_archive_cad_handler(archive_cad_operation)
 
 
 def execute_operation(
