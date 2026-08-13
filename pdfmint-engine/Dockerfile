@@ -20,7 +20,7 @@ FROM python:3.11-slim-bookworm
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     DEBIAN_FRONTEND=noninteractive \
-    PDFMINT_ENGINE_RELEASE=1.10.0
+    PDFMINT_ENGINE_RELEASE=1.11.0
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libreoffice-writer \

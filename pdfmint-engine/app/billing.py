@@ -154,13 +154,13 @@ def _iso_from_unix(value: int | None) -> str | None:
     return datetime.fromtimestamp(value, tz=timezone.utc).isoformat()
 
 
-async def _upsert_subscription(subscription: dict[str, Any]) -> None:
+async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
     if not SUPABASE_SERVICE_ROLE_KEY:
         raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is missing")
     metadata = subscription.get("metadata") or {}
     user_id = metadata.get("supabase_user_id")
     if not user_id:
-        return
+        return None
 
     record = {
         "user_id": user_id,
@@ -179,7 +179,7 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> None:
         "apikey": SUPABASE_SERVICE_ROLE_KEY,
         "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
         "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=minimal",
+        "Prefer": "resolution=merge-duplicates,return=representation",
     }
     async with httpx.AsyncClient(timeout=10) as client:
         response = await client.post(
@@ -191,6 +191,34 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> None:
         raise RuntimeError(
             f"Supabase subscription sync failed ({response.status_code}): {response.text[:500]}"
         )
+    rows = response.json()
+    subscription_id = rows[0]["id"] if rows else None
+    document_key = metadata.get("document_key")
+    trial_end = subscription.get("trial_end")
+    if (
+        subscription_id
+        and metadata.get("plan_code") == "document_trial"
+        and document_key
+        and trial_end
+    ):
+        entitlement = {
+            "user_id": user_id,
+            "subscription_id": subscription_id,
+            "checkout_document_key": document_key,
+            "ends_at": _iso_from_unix(trial_end),
+        }
+        async with httpx.AsyncClient(timeout=10) as client:
+            entitlement_response = await client.post(
+                f"{SUPABASE_URL}/rest/v1/document_trial_entitlements?on_conflict=subscription_id",
+                headers={**headers, "Prefer": "resolution=merge-duplicates,return=minimal"},
+                json=entitlement,
+            )
+        if entitlement_response.is_error:
+            raise RuntimeError(
+                "Supabase document entitlement sync failed "
+                f"({entitlement_response.status_code}): {entitlement_response.text[:500]}"
+            )
+    return subscription_id
 
 
 async def stripe_webhook(request: Request, stripe_signature: str | None = Header(default=None)) -> dict[str, bool]:
