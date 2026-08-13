@@ -4615,6 +4615,8 @@ function validateMockCheckout() {
 }
 
 document.getElementById('mock-pay-button').addEventListener('click', async () => {
+  const payButton = document.getElementById('mock-pay-button');
+  const originalButtonText = payButton.textContent;
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const consent = document.querySelector('#card-payment-panel .payment-consent input');
   const warning = document.getElementById('payment-consent-warning');
@@ -4622,6 +4624,9 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     if (warning) warning.hidden = false;
     return;
   }
+  payButton.disabled = true;
+  payButton.classList.add('is-processing');
+  payButton.textContent = 'Processing payment...';
   try {
     if (!stripeElements) await prepareStripePaymentElement();
     const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
@@ -4632,9 +4637,13 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     });
     if (error) {
       showStripeError(error.message || 'Payment could not be completed.');
+      payButton.disabled = false;
+      payButton.classList.remove('is-processing');
+      payButton.textContent = originalButtonText;
       return;
     }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
+      payButton.textContent = 'Preparing your download...';
       triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
       const paidSource = selectedAccessPlan?.value === 'limited'
         ? `document-trial:${stripeCheckoutDocumentKey}`
@@ -4644,10 +4653,14 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
       pendingCheckoutBlob = null;
       pendingCheckoutFilename = '';
     }
+    payButton.textContent = 'Opening your dashboard...';
     await sendGeneratedPasswordWelcomeEmail();
     window.setTimeout(() => window.location.assign('dashboard.html?payment=complete'), 350);
   } catch (error) {
     showStripeError(error.message || 'Payment could not be completed.');
+    payButton.disabled = false;
+    payButton.classList.remove('is-processing');
+    payButton.textContent = originalButtonText;
   }
 });
 document.getElementById('mock-paypal-button').addEventListener('click', openDemoPaymentNotice);

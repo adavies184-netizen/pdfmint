@@ -1,0 +1,4 @@
+PDFBreeze v5.6.11
+
+- Adds a visible spinner and staged progress messages while payment completes.
+- Shows download preparation and dashboard navigation states.
