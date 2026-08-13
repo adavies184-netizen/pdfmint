@@ -22,7 +22,7 @@ from .admin import ProviderSelectionRequest, admin_overview, select_payment_prov
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.15.0"
+ENGINE_VERSION = "1.15.1"
 
 app = FastAPI(
     title="PDFBreeze Engine",

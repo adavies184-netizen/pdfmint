@@ -118,7 +118,7 @@ async def admin_overview(authorization: str | None = Header(default=None)) -> di
             "plan": subscription.get("plan_code"),
             "provider": subscription.get("provider"),
             "status": subscription.get("status", "no_plan"),
-            "next_payment": subscription.get("current_period_ends_at"),
+            "next_payment": subscription.get("trial_ends_at") if subscription.get("status") == "trialing" else subscription.get("current_period_ends_at"),
             "trial_ends_at": subscription.get("trial_ends_at"),
             "provider_subscription_id": subscription.get("provider_subscription_id"),
         })
