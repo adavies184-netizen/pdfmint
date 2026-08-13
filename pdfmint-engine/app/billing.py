@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime, timezone
 from typing import Any
 
@@ -170,7 +171,10 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> None:
             headers=headers,
             json=record,
         )
-    response.raise_for_status()
+    if response.is_error:
+        raise RuntimeError(
+            f"Supabase subscription sync failed ({response.status_code}): {response.text[:500]}"
+        )
 
 
 async def stripe_webhook(request: Request, stripe_signature: str | None = Header(default=None)) -> dict[str, bool]:
@@ -180,7 +184,8 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         raise HTTPException(status_code=400, detail="Missing Stripe signature.")
     payload = await request.body()
     try:
-        event = stripe.Webhook.construct_event(payload, stripe_signature, STRIPE_WEBHOOK_SECRET)
+        stripe.Webhook.construct_event(payload, stripe_signature, STRIPE_WEBHOOK_SECRET)
+        event = json.loads(payload)
     except (ValueError, stripe.SignatureVerificationError) as exc:
         raise HTTPException(status_code=400, detail="Invalid Stripe webhook.") from exc
 
@@ -189,11 +194,5 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         "customer.subscription.updated",
         "customer.subscription.deleted",
     }:
-        subscription_object = event["data"]["object"]
-        subscription = (
-            subscription_object.to_dict_recursive()
-            if hasattr(subscription_object, "to_dict_recursive")
-            else dict(subscription_object)
-        )
-        await _upsert_subscription(subscription)
+        await _upsert_subscription(event["data"]["object"])
     return {"received": True}
