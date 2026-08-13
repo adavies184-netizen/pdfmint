@@ -3282,6 +3282,26 @@ async function hasUnlimitedPaidAccess() {
   }
 }
 
+async function hasCurrentDocumentTrialAccess() {
+  try {
+    const auth = window.PDFMintAuth;
+    const user = await auth?.getUser?.();
+    if (!user || !auth?.client || !stripeCheckoutDocumentKey) return false;
+    const {data, error} = await auth.client
+      .from('document_trial_entitlements')
+      .select('ends_at')
+      .eq('user_id', user.id)
+      .eq('checkout_document_key', stripeCheckoutDocumentKey)
+      .gt('ends_at', new Date().toISOString())
+      .limit(1);
+    if (error) throw error;
+    return Boolean(data?.length);
+  } catch (error) {
+    console.warn('PDFBreeze could not verify document access.', error);
+    return false;
+  }
+}
+
 function saveFileToDashboard(blob, filename) {
   if (!isDashboardEditorSession()) return Promise.resolve();
   if (window.PDFMintAuth?.saveDocument) {
@@ -4228,7 +4248,7 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
   button.textContent = 'Preparing…';
 
   try {
-    if (await hasUnlimitedPaidAccess()) {
+    if (await hasUnlimitedPaidAccess() || await hasCurrentDocumentTrialAccess()) {
       const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
       closeFormatModal();
       await exportEditedDocument(format);
@@ -4374,7 +4394,8 @@ let stripeClient = null;
 let stripeElements = null;
 let stripeIntentType = null;
 let stripeElementPlan = null;
-const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
+const stripeCheckoutDocumentKey = new URLSearchParams(window.location.search).get('documentKey') ||
+  crypto.randomUUID?.() || `document-${Date.now()}`;
 
 function loadStripeLibrary() {
   if (window.Stripe) return Promise.resolve();
@@ -4575,7 +4596,10 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
       triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
-      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, pendingCheckoutFilename, 'paid-download')
+      const paidSource = selectedAccessPlan?.value === 'limited'
+        ? `document-trial:${stripeCheckoutDocumentKey}`
+        : 'paid-download';
+      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, pendingCheckoutFilename, paidSource)
         .catch(saveError => console.warn('PDFBreeze could not save the paid document.', saveError));
       pendingCheckoutBlob = null;
       pendingCheckoutFilename = '';

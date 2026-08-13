@@ -1,0 +1,6 @@
+PDFBreeze v5.6.7
+
+- Enforces the 50p document trial against the exact purchased document.
+- Reopening the purchased document from My Files preserves its entitlement.
+- Opening a different document does not inherit the earlier document's access.
+- Adds the matching Supabase entitlement sync in engine v1.11.0.
