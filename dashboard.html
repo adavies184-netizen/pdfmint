@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
@@ -138,14 +138,14 @@
       <label class="picker-upload"><svg><use href="#i-upload"/></svg><span><b>Upload a new PDF</b><small>Choose a PDF from your device</small></span><em>Browse</em><input data-picker-input type="file" accept="application/pdf,.pdf" hidden></label>
       <div class="picker-divider"><span>or choose from My Files</span></div>
       <div class="picker-files" data-picker-files>
-        <button type="button" data-library-file="Terms of Business.pdf"><i>PDF</i><span><b>Terms of Business.pdf</b><small>531 KB · Edited today</small></span><svg><use href="#i-chevron"/></svg></button>
-        <button type="button" data-library-file="Signed agreement.pdf"><i>PDF</i><span><b>Signed agreement.pdf</b><small>284 KB · Edited yesterday</small></span><svg><use href="#i-chevron"/></svg></button>
+        <button type="button" data-library-file="Terms of Business.pdf"><i>PDF</i><span><b>Terms of Business.pdf</b><small>531 KB Â· Edited today</small></span><svg><use href="#i-chevron"/></svg></button>
+        <button type="button" data-library-file="Signed agreement.pdf"><i>PDF</i><span><b>Signed agreement.pdf</b><small>284 KB Â· Edited yesterday</small></span><svg><use href="#i-chevron"/></svg></button>
       </div>
     </section>
   </div>
 
   <div class="dashboard-progress-layer" data-dashboard-progress hidden>
-    <section class="dashboard-progress-card" role="status" aria-live="polite"><span><svg><use href="#i-file"/></svg></span><h2 data-progress-title>Preparing your document</h2><p data-progress-copy>Opening your PDF in the editor…</p><div><i data-progress-bar></i></div><strong data-progress-percent>0%</strong></section>
+    <section class="dashboard-progress-card" role="status" aria-live="polite"><span><svg><use href="#i-file"/></svg></span><h2 data-progress-title>Preparing your document</h2><p data-progress-copy>Opening your PDF in the editorâ€¦</p><div><i data-progress-bar></i></div><strong data-progress-percent>0%</strong></section>
   </div>
 
   <div class="dashboard-choice-layer" data-compress-options hidden>
@@ -193,7 +193,7 @@
   <div class="account-layer" data-account-layer hidden>
     <button class="account-backdrop" type="button" aria-label="Close account settings" data-close-account></button>
     <section class="account-dialog" role="dialog" aria-modal="true" aria-labelledby="account-title">
-      <header class="account-mobile-header"><button type="button" data-close-account aria-label="Back"><span>‹</span></button><h2>My account</h2><button type="button" data-close-account aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
+      <header class="account-mobile-header"><button type="button" data-close-account aria-label="Back"><span>â€¹</span></button><h2>My account</h2><button type="button" data-close-account aria-label="Close"><svg><use href="#i-close"/></svg></button></header>
       <aside class="account-nav">
         <h2 id="account-title">My account</h2>
         <button class="active" type="button" data-account-tab="account"><svg><use href="#i-user"/></svg><span>Account</span></button>
@@ -222,7 +222,7 @@
             <label>Email address<input name="email" type="email" value="andrew@example.com" autocomplete="email" required></label>
             <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Save changes</button></div>
           </form></div>
-          <button class="setting-card" type="button" data-expand="security-editor" aria-expanded="false"><i><svg><use href="#i-lock"/></svg></i><span><b>Password &amp; security</b><small>Change your password and review account security.</small><em>Password · ••••••••••</em></span><svg><use href="#i-chevron"/></svg></button>
+          <button class="setting-card" type="button" data-expand="security-editor" aria-expanded="false"><i><svg><use href="#i-lock"/></svg></i><span><b>Password &amp; security</b><small>Change your password and review account security.</small><em>Password Â· â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢</em></span><svg><use href="#i-chevron"/></svg></button>
           <div class="settings-expander" data-expander="security-editor"><form class="settings-form" data-security-form>
             <div class="form-heading"><div><h3>Password &amp; security</h3><p>Use at least 8 characters with a number.</p></div><button type="button" data-collapse aria-label="Close password settings"><svg><use href="#i-close"/></svg></button></div>
             <label>Current password<input name="currentPassword" type="password" autocomplete="current-password" required></label>
@@ -230,10 +230,10 @@
             <label class="toggle-row"><input type="checkbox" name="loginAlerts" checked><span><b>New sign-in alerts</b><small>Email me when PDFBreeze detects a new device.</small></span></label>
             <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Update password</button></div>
           </form></div>
-          <button class="setting-card" type="button" data-expand="region-editor" aria-expanded="false"><i><svg><use href="#i-globe"/></svg></i><span><b>Language, region &amp; timezone</b><small>Choose how language, prices and times appear.</small><em data-region-summary>English, GBP - British Pound (£) · Europe/London</em></span><svg><use href="#i-chevron"/></svg></button>
+          <button class="setting-card" type="button" data-expand="region-editor" aria-expanded="false"><i><svg><use href="#i-globe"/></svg></i><span><b>Language, region &amp; timezone</b><small>Choose how language, prices and times appear.</small><em data-region-summary>English, GBP - British Pound (Â£) Â· Europe/London</em></span><svg><use href="#i-chevron"/></svg></button>
           <div class="settings-expander" data-expander="region-editor"><form class="settings-form" data-region-form>
             <div class="form-heading"><div><h3>Language, region &amp; timezone</h3><p>Your timezone is automatically detected when payment details are entered.</p></div><button type="button" data-collapse aria-label="Close language settings"><svg><use href="#i-close"/></svg></button></div>
-            <div class="form-grid two"><label>Language<select name="language"><option>English</option><option>Deutsch</option><option>Español</option><option>Français</option></select></label><label>Currency<select name="currency"><option value="GBP - British Pound (£)">GBP - British Pound (£)</option><option value="EUR - Euro (€)">EUR - Euro (€)</option><option value="USD - US Dollar ($)">USD - US Dollar ($)</option></select></label></div>
+            <div class="form-grid two"><label>Language<select name="language"><option>English</option><option>Deutsch</option><option>EspaÃ±ol</option><option>FranÃ§ais</option></select></label><label>Currency<select name="currency"><option value="GBP - British Pound (Â£)">GBP - British Pound (Â£)</option><option value="EUR - Euro (â‚¬)">EUR - Euro (â‚¬)</option><option value="USD - US Dollar ($)">USD - US Dollar ($)</option></select></label></div>
             <label>Timezone<select name="timezone" data-timezone-select><option value="Europe/London">Europe/London (GMT/BST)</option><option value="Europe/Paris">Europe/Paris (CET)</option><option value="America/New_York">America/New_York (ET)</option><option value="America/Los_Angeles">America/Los_Angeles (PT)</option><option value="Asia/Dubai">Asia/Dubai (GST)</option><option value="Asia/Singapore">Asia/Singapore (SGT)</option><option value="Australia/Sydney">Australia/Sydney (AET)</option></select></label>
             <p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-collapse>Cancel</button><button type="submit" class="save-button">Save preferences</button></div>
           </form></div>
@@ -242,10 +242,10 @@
 
         <section class="account-panel" data-account-panel="payment">
           <header><h2>Payment</h2><p>Manage the card used for your PDFBreeze purchase.</p></header>
-          <div class="payment-card"><div class="visa-mark">VISA</div><div><small>Default payment card</small><b>Visa ending in 2721</b><span>Expires 08/31 · Last used</span></div><button type="button" data-expand="payment-editor" aria-expanded="false">Update card</button></div>
+          <div class="payment-card"><div class="visa-mark">VISA</div><div><small>Default payment card</small><b>Visa ending in 2721</b><span>Expires 08/31 Â· Last used</span></div><button type="button" data-expand="payment-editor" aria-expanded="false">Update card</button></div>
           <div class="settings-expander" data-expander="payment-editor"><div class="settings-form payment-manager">
             <div class="form-heading"><div><h3>Payment cards</h3><p>Keep up to two cards and choose which one is used by default.</p></div><button type="button" data-collapse aria-label="Close payment settings"><svg><use href="#i-close"/></svg></button></div>
-            <div class="saved-cards" data-saved-cards><label class="saved-card"><input type="radio" name="defaultCard" value="2721" checked><span class="mini-card">VISA</span><span><b>Visa ending in 2721</b><small>Expires 08/31 · Default</small></span></label></div>
+            <div class="saved-cards" data-saved-cards><label class="saved-card"><input type="radio" name="defaultCard" value="2721" checked><span class="mini-card">VISA</span><span><b>Visa ending in 2721</b><small>Expires 08/31 Â· Default</small></span></label></div>
             <button type="button" class="add-card-button" data-show-card-form>+ Add another card</button>
             <form class="new-card-form" data-card-form hidden><label>Card number<input name="cardNumber" inputmode="numeric" maxlength="19" placeholder="1234 5678 9012 3456" required></label><div class="form-grid two"><label>Expiry date<input name="expiry" inputmode="numeric" maxlength="5" placeholder="MM/YY" required></label><label>Security code<input name="cvc" inputmode="numeric" maxlength="4" placeholder="CVV" required></label></div><label>Name on card<input name="cardName" autocomplete="cc-name" required></label><p class="form-message" aria-live="polite"></p><div class="form-actions"><button type="button" class="text-button" data-hide-card-form>Cancel</button><button type="submit" class="save-button">Save card</button></div></form>
           </div></div>
@@ -267,7 +267,7 @@
             <article><i><svg><use href="#i-globe"/></svg></i><div><b>Work across all your devices</b><p>Continue your document work from desktop, tablet or mobile whenever it suits you.</p></div></article>
             <article><i><svg><use href="#i-help"/></svg></i><div><b>Priority customer support</b><p>Get faster help with your documents, conversions, billing and PDFBreeze account.</p></div></article>
           </div>
-          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p data-membership-plan>Your current plan: loading…</p><p data-membership-renewal>Next payment: loading…</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
+          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p data-membership-plan>Your current plan: loadingâ€¦</p><p data-membership-renewal>Next payment: loadingâ€¦</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
         </section>
 
         <section class="account-panel" data-account-panel="help"><header><h2>Help centre</h2><p>Find answers or contact our support team.</p></header><div class="simple-card"><h3>How can we help?</h3><p>Visit our support centre or contact PDFBreeze for assistance with documents, payments or your account.</p><a href="contact.html">Contact support</a></div></section>
@@ -279,6 +279,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-  <script src="dashboard.js?v=5566"></script>
+  <script src="dashboard.js?v=5567"></script>
 </body>
 </html>

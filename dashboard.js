@@ -324,6 +324,7 @@
       await new Promise(resolve => window.setTimeout(resolve,250));
       const params = new URLSearchParams({tool:selectedDashboardTool[3]});
       if (selectedDashboardTool[4]) params.set('action',selectedDashboardTool[4]);
+      if (options.entitlementKey) params.set('documentKey', options.entitlementKey);
       window.location.href = `editor.html?${params}`;
     } catch (error) {
       window.clearInterval(timer); console.error(error); progressLayer.hidden = true; document.body.style.overflow = '';
@@ -400,8 +401,11 @@
     : new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
 
   async function openStoredRecord(record, tool) {
+    const entitlementKey = String(record.source_tool || '').startsWith('document-trial:')
+      ? String(record.source_tool).slice('document-trial:'.length)
+      : '';
     selectedDashboardTool = tool;
-    await continueToDashboardTool(await recordToFile(record), {skipSave:true});
+    await continueToDashboardTool(await recordToFile(record), {skipSave:true, entitlementKey});
   }
 
   async function downloadStoredRecord(record) {
