@@ -189,5 +189,11 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         "customer.subscription.updated",
         "customer.subscription.deleted",
     }:
-        await _upsert_subscription(dict(event["data"]["object"]))
+        subscription_object = event["data"]["object"]
+        subscription = (
+            subscription_object.to_dict_recursive()
+            if hasattr(subscription_object, "to_dict_recursive")
+            else dict(subscription_object)
+        )
+        await _upsert_subscription(subscription)
     return {"received": True}
