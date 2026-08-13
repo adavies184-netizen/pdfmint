@@ -28,7 +28,7 @@
     [data-support-layer] .support-intake form>button,[data-support-layer] .support-compose>button{height:46px!important;border:0!important;border-radius:10px!important;background:#20b98b!important;color:#fff!important;font-size:12px!important;font-weight:700!important}
     [data-support-layer] .support-chat{height:100%!important;display:flex!important;flex-direction:column!important}[data-support-layer] .support-messages{flex:1!important;overflow:auto!important;padding:20px 18px 10px!important;display:flex!important;flex-direction:column!important;gap:10px!important}
     [data-support-layer] .support-message{max-width:85%!important;padding:11px 13px!important;border-radius:15px!important;font-size:11px!important;line-height:1.55!important}[data-support-layer] .support-message.bot{align-self:flex-start!important;background:#fff!important;border:1px solid #e4e9ee!important}[data-support-layer] .support-message.user{align-self:flex-end!important;background:#dff7ee!important}
-    [data-support-layer] .support-suggestions{padding:4px 18px 10px!important;display:flex!important;gap:7px!important;overflow-x:auto!important}[data-support-layer] .support-suggestions button{flex:0 0 auto!important;padding:7px 10px!important;border:1px solid #bde7da!important;border-radius:999px!important;background:#fff!important;color:#087858!important;font-size:9px!important}
+    [data-support-layer] .support-suggestions{padding:4px 18px 10px!important;display:grid!important;grid-template-columns:1fr!important;gap:7px!important;overflow:visible!important}[data-support-layer] .support-suggestions button{width:100%!important;padding:9px 12px!important;border:1px solid #bde7da!important;border-radius:999px!important;background:#fff!important;color:#087858!important;font-size:9px!important;text-align:left!important}
     [data-support-layer] .support-compose{padding:12px 14px 8px!important;border-top:1px solid #e5eaee!important;background:#fff!important;display:grid!important;grid-template-columns:1fr 68px!important;gap:8px!important}[data-support-layer] .support-compose textarea{box-sizing:border-box!important;width:100%!important;padding:11px 12px!important;border:1px solid #d9e1e7!important;border-radius:10px!important;resize:none!important}[data-support-layer] .support-compose>button{height:40px!important}
     [data-support-layer] .support-disclaimer{padding:0 14px 10px!important;background:#fff!important;color:#9aa3af!important;text-align:center!important;font-size:8px!important}
     .support-pill{box-sizing:border-box!important;width:100%!important;max-width:208px!important;overflow:hidden!important}.support-pill b{min-width:0!important;font-size:11px!important;white-space:nowrap!important}.support-pill small{font-size:8px!important}
@@ -108,6 +108,7 @@
         <div class="tool-search-menu" hidden></div>
       </div>
       <a class="header-link" href="contact.html">Contact us</a>
+      <button class="mobile-menu-trigger" type="button" data-mobile-menu-open aria-label="Open tools menu" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
       <button class="account-trigger" type="button" data-open-account><svg><use href="#i-user"/></svg><span>My account</span></button>
     </header>
 
@@ -149,6 +150,8 @@
       <section class="ai-placeholder" id="ai-chat"><span><svg><use href="#i-chat"/></svg></span><div><small>COMING SOON</small><h2>Chat with PDF</h2><p>Ask questions, find information and understand long documents faster.</p></div><button type="button" disabled>Coming soon</button></section>
     </main>
   </div>
+
+  <button class="mobile-rail-backdrop" type="button" data-mobile-menu-close aria-label="Close tools menu" hidden></button>
 
   <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
     <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
@@ -340,5 +343,30 @@
   <script src="auth.js?v=5580"></script>
   <script src="dashboard.js?v=5541"></script>
   <script src="support-bot.js?v=5623"></script>
+  <script>
+    (() => {
+      const rail = document.querySelector('.app-rail');
+      const openButton = document.querySelector('[data-mobile-menu-open]');
+      const backdrop = document.querySelector('[data-mobile-menu-close]');
+      if (!rail || !openButton || !backdrop) return;
+      const closeMenu = () => {
+        rail.classList.remove('mobile-open');
+        backdrop.hidden = true;
+        openButton.setAttribute('aria-expanded','false');
+        document.body.classList.remove('mobile-menu-active');
+      };
+      const openMenu = () => {
+        rail.classList.add('mobile-open');
+        backdrop.hidden = false;
+        openButton.setAttribute('aria-expanded','true');
+        document.body.classList.add('mobile-menu-active');
+      };
+      openButton.addEventListener('click', () => rail.classList.contains('mobile-open') ? closeMenu() : openMenu());
+      backdrop.addEventListener('click', closeMenu);
+      rail.querySelectorAll('a').forEach(link => link.addEventListener('click', closeMenu));
+      rail.querySelector('.support-pill')?.addEventListener('click', closeMenu);
+      window.addEventListener('resize', () => { if (innerWidth > 680) closeMenu(); });
+    })();
+  </script>
 </body>
 </html>
