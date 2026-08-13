@@ -1,0 +1,4 @@
+PDFBreeze v5.6.10
+
+- Removes Stripe's duplicate saved-card mandate from the embedded card form.
+- Retains PDFBreeze's existing checkout consent checkbox and recurring-payment disclosure.

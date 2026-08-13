@@ -4507,7 +4507,10 @@ async function prepareStripePaymentElement() {
       variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
     }
   });
-  const paymentElement = stripeElements.create('payment', {layout: 'tabs'});
+  const paymentElement = stripeElements.create('payment', {
+    layout: 'tabs',
+    terms: {card: 'never'}
+  });
   paymentElement.on('ready', () => {
     panel.classList.remove('stripe-loading', 'stripe-failed');
     panel.classList.add('stripe-ready');
