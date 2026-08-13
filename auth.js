@@ -45,10 +45,25 @@
     return { session: currentSession, user: currentUser, configured: true };
   })().catch(error => ({ session: null, user: null, configured, error }));
 
+  const updateAccountLinks = (user) => {
+    document.querySelectorAll('header a[href^="login.html"], .mobile-menu a[href^="login.html"]').forEach(link => {
+      if (user) {
+        link.href = 'dashboard.html';
+        link.textContent = 'My account';
+        link.setAttribute('aria-label', 'Open my PDFBreeze account');
+      } else {
+        link.style.visibility = '';
+      }
+    });
+    document.documentElement.classList.add('auth-ready');
+  };
+  ready.then(({ user }) => updateAccountLinks(user));
+
   if (client) {
     client.auth.onAuthStateChange((event, session) => {
       currentSession = session;
       currentUser = session?.user || null;
+      updateAccountLinks(currentUser);
       window.dispatchEvent(new CustomEvent('pdfmint-auth-change', { detail: { event, session, user: currentUser } }));
     });
   }

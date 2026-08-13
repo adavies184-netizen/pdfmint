@@ -2,3 +2,4 @@
 [hidden] {
   display: none !important;
 }
+body.auth-checking .auth-shell{visibility:hidden}
