@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 from html import escape
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import httpx
@@ -33,6 +33,10 @@ class WelcomeEmailRequest(BaseModel):
     temporary_password: str = Field(min_length=12, max_length=128)
     plan_name: str = Field(min_length=1, max_length=100)
     amount: str = Field(min_length=1, max_length=30)
+
+
+class ManageSubscriptionRequest(BaseModel):
+    action: str = Field(pattern="^(cancel|pause)$")
 
 
 def _require_server_configuration() -> None:
@@ -225,6 +229,52 @@ async def send_welcome_email(
     return {"sent": True}
 
 
+async def manage_subscription(
+    payload: ManageSubscriptionRequest,
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    user = await authenticated_user(authorization)
+    stripe.api_key = STRIPE_SECRET_KEY
+    try:
+        customers = stripe.Customer.search(
+            query=f"metadata['supabase_user_id']:'{user['id']}'", limit=1
+        )
+        if not customers.data:
+            raise HTTPException(status_code=404, detail="No PDFBreeze membership was found.")
+        subscriptions = stripe.Subscription.list(
+            customer=customers.data[0].id, status="all", limit=20
+        )
+        subscription = next((
+            item for item in subscriptions.auto_paging_iter()
+            if item.status in {"trialing", "active", "past_due", "unpaid", "paused"}
+        ), None)
+        if not subscription:
+            raise HTTPException(status_code=404, detail="No active PDFBreeze membership was found.")
+
+        if payload.action == "cancel":
+            subscription = stripe.Subscription.modify(
+                subscription.id, cancel_at_period_end=True, pause_collection=""
+            )
+            effective_at = getattr(subscription, "trial_end", None) or getattr(subscription, "current_period_end", None)
+        else:
+            resumes_at = int((datetime.now(timezone.utc) + timedelta(days=30)).timestamp())
+            subscription = stripe.Subscription.modify(
+                subscription.id,
+                cancel_at_period_end=False,
+                pause_collection={"behavior": "void", "resumes_at": resumes_at},
+            )
+            effective_at = resumes_at
+    except HTTPException:
+        raise
+    except stripe.StripeError as exc:
+        stripe_error = getattr(exc, "error", None)
+        message = getattr(exc, "user_message", None) or getattr(stripe_error, "message", None) or str(exc)
+        raise HTTPException(status_code=400, detail=message or "Stripe could not update the membership.") from exc
+
+    await _upsert_subscription(dict(subscription))
+    return {"updated": True, "action": payload.action, "effective_at": _iso_from_unix(effective_at)}
+
+
 def _iso_from_unix(value: int | None) -> str | None:
     if not value:
         return None
@@ -239,6 +289,8 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
     if not user_id:
         return None
 
+    pause_collection = subscription.get("pause_collection") or {}
+    pause_ends_at = pause_collection.get("resumes_at")
     record = {
         "user_id": user_id,
         "provider": "stripe",
@@ -246,9 +298,9 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
         "provider_subscription_id": subscription["id"],
         "plan_code": metadata.get("plan_code", "unlimited_trial"),
         "currency": metadata.get("currency", "gbp"),
-        "status": subscription.get("status", "incomplete"),
+        "status": "paused" if pause_ends_at else subscription.get("status", "incomplete"),
         "trial_ends_at": _iso_from_unix(subscription.get("trial_end")),
-        "current_period_ends_at": _iso_from_unix(subscription.get("current_period_end")),
+        "current_period_ends_at": _iso_from_unix(pause_ends_at or subscription.get("current_period_end")),
         "cancel_at_period_end": bool(subscription.get("cancel_at_period_end")),
         "cancelled_at": _iso_from_unix(subscription.get("canceled_at")),
     }

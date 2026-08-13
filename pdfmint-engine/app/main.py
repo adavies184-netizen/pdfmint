@@ -17,11 +17,11 @@ from starlette.background import BackgroundTask
 from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
-from .billing import CheckoutRequest, WelcomeEmailRequest, create_checkout, send_welcome_email, stripe_webhook
+from .billing import ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, send_welcome_email, stripe_webhook
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.12.2"
+ENGINE_VERSION = "1.13.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -89,6 +89,11 @@ async def billing_stripe_webhook(request: Request, stripe_signature: str | None 
 @app.post("/v1/billing/welcome-email")
 async def billing_welcome_email(payload: WelcomeEmailRequest, authorization: str | None = Header(default=None)):
     return await send_welcome_email(payload, authorization)
+
+
+@app.post("/v1/billing/manage-subscription")
+async def billing_manage_subscription(payload: ManageSubscriptionRequest, authorization: str | None = Header(default=None)):
+    return await manage_subscription(payload, authorization)
 
 
 @app.post("/v1/jobs")
