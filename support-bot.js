@@ -50,10 +50,7 @@
       suggestions.appendChild(button);
     });
   };
-  const open = async () => {
-    const auth = window.PDFMintAuth;
-    const user = auth ? await auth.getUser().catch(() => null) : null;
-    if (!user) return;
+  const open = () => {
     layer.hidden = false;
     document.body.style.overflow = 'hidden';
   };
