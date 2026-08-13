@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5618">
+  <link rel="stylesheet" href="dashboard.css?v=5621">
 </head>
 <body data-require-auth>
   <svg class="svg-sprite" aria-hidden="true">
@@ -84,6 +84,7 @@
       </div>
       <a class="header-link" href="contact.html">Contact us</a>
       <button class="account-trigger" type="button" data-open-account><svg><use href="#i-user"/></svg><span>My account</span></button>
+      <button class="mobile-menu-trigger" type="button" data-mobile-menu aria-label="Open navigation" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
     </header>
 
     <main>
@@ -123,12 +124,7 @@
     </main>
   </div>
 
-  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
-    <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
-    <a href="dashboard.html?tool=convert" data-direct-tool="convert"><svg><use href="#i-grid"/></svg><span>Tools</span></a>
-    <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>AI chat</span></a>
-    <button type="button" data-open-account><svg><use href="#i-user"/></svg><span>Account</span></button>
-  </nav>
+  <button class="mobile-nav-backdrop" type="button" data-close-mobile-menu aria-label="Close navigation" hidden></button>
 
   <div class="document-picker-layer" data-document-picker hidden>
     <button class="picker-backdrop" type="button" data-close-picker aria-label="Close document picker"></button>
@@ -279,6 +275,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5613"></script>
-  <script src="dashboard.js?v=5616"></script>
+  <script src="dashboard.js?v=5621"></script>
 </body>
 </html>

@@ -26,6 +26,23 @@
     user_metadata: {}
   };
   if (!authenticatedUser) return;
+  const mobileRail = document.querySelector('.app-rail');
+  const mobileMenuButton = document.querySelector('[data-mobile-menu]');
+  const mobileMenuBackdrop = document.querySelector('[data-close-mobile-menu]');
+  const closeMobileMenu = () => {
+    mobileRail?.classList.remove('mobile-open');
+    mobileMenuButton?.setAttribute('aria-expanded','false');
+    if (mobileMenuBackdrop) mobileMenuBackdrop.hidden = true;
+  };
+  mobileMenuButton?.addEventListener('click', () => {
+    const open = !mobileRail?.classList.contains('mobile-open');
+    mobileRail?.classList.toggle('mobile-open', open);
+    mobileMenuButton.setAttribute('aria-expanded', String(open));
+    if (mobileMenuBackdrop) mobileMenuBackdrop.hidden = !open;
+  });
+  mobileMenuBackdrop?.addEventListener('click', closeMobileMenu);
+  mobileRail?.addEventListener('click', event => { if (event.target.closest('a')) closeMobileMenu(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMobileMenu(); });
   let liveMembership = null;
 
   async function loadLiveMembership() {

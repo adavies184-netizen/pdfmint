@@ -13,6 +13,13 @@
     document.querySelectorAll('[data-admin-view]').forEach(button => button.classList.toggle('active', button.dataset.adminView === name));
   };
   document.addEventListener('click', event => { const target = event.target.closest('[data-admin-view]'); if (target) showView(target.dataset.adminView); });
+  const adminSidebar = document.querySelector('.admin-sidebar');
+  const adminMenuTrigger = document.getElementById('admin-menu-trigger');
+  const adminMenuBackdrop = document.getElementById('admin-menu-backdrop');
+  const closeAdminMenu = () => { adminSidebar.classList.remove('mobile-open'); adminMenuBackdrop.hidden = true; };
+  adminMenuTrigger.onclick = () => { adminSidebar.classList.add('mobile-open'); adminMenuBackdrop.hidden = false; };
+  adminMenuBackdrop.onclick = closeAdminMenu;
+  adminSidebar.addEventListener('click', event => { if (event.target.closest('button,a')) closeAdminMenu(); });
 
   async function requireAdminMfa() {
     const assurance = await api.auth.mfa.getAuthenticatorAssuranceLevel();
@@ -46,6 +53,23 @@
     });
   }
 
+  async function enrollBackupAuthenticator() {
+    const enrolled = await api.auth.mfa.enroll({factorType:'totp', friendlyName:`PDFBreeze Admin backup ${Date.now()}`});
+    if (enrolled.error) throw enrolled.error;
+    const factor = enrolled.data;
+    document.getElementById('admin-mfa-copy').textContent = 'Scan this backup code on a separate device or authenticator, then enter its six-digit code.';
+    const image = document.createElement('img'); image.src = enrolled.data.totp.qr_code; image.alt = 'Backup authenticator QR code';
+    document.getElementById('admin-mfa-qr').replaceChildren(image);
+    document.getElementById('admin-mfa-code').value = '';
+    document.getElementById('admin-mfa-error').textContent = '';
+    document.getElementById('admin-mfa').hidden = false;
+    document.getElementById('admin-mfa-submit').onclick = async () => {
+      const result = await api.auth.mfa.challengeAndVerify({factorId:factor.id, code:document.getElementById('admin-mfa-code').value.trim()});
+      if (result.error) { document.getElementById('admin-mfa-error').textContent = 'That code was not accepted. Please try again.'; return; }
+      document.getElementById('admin-mfa').hidden = true; alert('Backup authenticator added successfully.');
+    };
+  }
+
   function renderMemberDetail(member, data) {
     const evidence = data.consents.find(item => item.user_id === member.id);
     const payments = data.payments.filter(item => item.user_id === member.id);
@@ -60,6 +84,7 @@
     const user = await auth.requireUser({returnTo:'/admin.html'});
     if (!user) return;
     await requireAdminMfa();
+    document.getElementById('admin-add-factor').onclick = () => enrollBackupAuthenticator().catch(error => alert(error.message || 'The backup authenticator could not be added.'));
     const session = await auth.getSession();
     const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/overview`, {headers:{Authorization:`Bearer ${session.access_token}`}});
     const data = await response.json().catch(() => ({}));
