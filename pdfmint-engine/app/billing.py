@@ -93,6 +93,20 @@ async def create_checkout(
             metadata={"supabase_user_id": user["id"]},
         )
 
+        existing_subscriptions = stripe.Subscription.list(
+            customer=customer.id,
+            status="all",
+            limit=20,
+        )
+        for existing in existing_subscriptions.auto_paging_iter():
+            if existing.status in {"trialing", "active", "past_due", "unpaid", "paused"}:
+                raise HTTPException(
+                    status_code=409,
+                    detail="This account already has a PDFBreeze membership.",
+                )
+            if existing.status == "incomplete":
+                stripe.Subscription.delete(existing.id)
+
         subscription_args: dict[str, Any] = {
             "customer": customer.id,
             "items": [{"price": plan["recurring"]}],
@@ -110,6 +124,8 @@ async def create_checkout(
             subscription_args["add_invoice_items"] = [{"price": plan["initial"]}]
 
         subscription = stripe.Subscription.create(**subscription_args)
+    except HTTPException:
+        raise
     except stripe.StripeError as exc:
         stripe_error = getattr(exc, "error", None)
         message = (

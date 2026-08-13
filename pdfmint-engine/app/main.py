@@ -21,7 +21,7 @@ from .billing import CheckoutRequest, create_checkout, stripe_webhook
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.9.4"
+ENGINE_VERSION = "1.10.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
