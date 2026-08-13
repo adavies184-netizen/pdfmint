@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from html import escape
 from datetime import datetime, timedelta, timezone
 from typing import Any
@@ -37,6 +38,11 @@ class WelcomeEmailRequest(BaseModel):
 
 class ManageSubscriptionRequest(BaseModel):
     action: str = Field(pattern="^(cancel|pause|switch_annual)$")
+
+
+class ConsentEvidenceRequest(BaseModel):
+    subscription_id: str = Field(min_length=5, max_length=100)
+    disclosure_version: str = Field(default="checkout-gbp-v1", max_length=50)
 
 
 def _require_server_configuration() -> None:
@@ -161,6 +167,90 @@ async def create_checkout(
         "client_secret": client_secret,
         "status": subscription.status,
     }
+
+
+def _consent_terms(plan_code: str) -> dict[str, Any]:
+    if plan_code == "annual":
+        return {
+            "amount_today": 29999,
+            "renewal_amount": 29999,
+            "renewal_interval": "365 days",
+            "trial_days": 0,
+            "disclosure": "Annual unlimited membership. £299.99 is charged today and renews every 365 days until cancelled.",
+        }
+    initial = 50 if plan_code == "document_trial" else 100
+    return {
+        "amount_today": initial,
+        "renewal_amount": 4999,
+        "renewal_interval": "28 days",
+        "trial_days": 7,
+        "disclosure": (
+            f"A £{initial / 100:.2f} seven-day trial starts today. Unless cancelled at least 24 hours "
+            "before the trial ends, £49.99 is charged every 28 days until cancelled."
+        ),
+    }
+
+
+async def record_consent_evidence(
+    payload: ConsentEvidenceRequest,
+    request: Request,
+    authorization: str | None = Header(default=None),
+) -> dict[str, Any]:
+    user = await authenticated_user(authorization)
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        raise HTTPException(status_code=503, detail="Consent evidence storage is not configured.")
+    stripe.api_key = STRIPE_SECRET_KEY
+    try:
+        subscription = stripe.Subscription.retrieve(payload.subscription_id)
+    except stripe.StripeError as exc:
+        raise HTTPException(status_code=400, detail="The membership could not be verified.") from exc
+    metadata = getattr(subscription, "metadata", None) or {}
+    if metadata.get("supabase_user_id") != user.get("id"):
+        raise HTTPException(status_code=403, detail="This membership does not belong to this account.")
+
+    plan_code = metadata.get("plan_code", "unlimited_trial")
+    terms = _consent_terms(plan_code)
+    forwarded = request.headers.get("x-forwarded-for", "")
+    client_ip = forwarded.split(",", 1)[0].strip() or (request.client.host if request.client else None)
+    record = {
+        "user_id": user["id"],
+        "provider": "stripe",
+        "provider_subscription_id": payload.subscription_id,
+        "plan_code": plan_code,
+        "accepted": True,
+        "accepted_at": datetime.now(timezone.utc).isoformat(),
+        "disclosure_version": payload.disclosure_version,
+        "disclosure_text": terms["disclosure"],
+        "terms_url": "https://pdfbreeze.net/terms-of-use.html",
+        "privacy_url": "https://pdfbreeze.net/privacy-policy.html",
+        "amount_today": terms["amount_today"],
+        "renewal_amount": terms["renewal_amount"],
+        "renewal_interval": terms["renewal_interval"],
+        "trial_days": terms["trial_days"],
+        "ip_address": client_ip,
+        "user_agent": request.headers.get("user-agent", "")[:1000],
+        "checkout_origin": request.headers.get("origin", "")[:250],
+        "payment_confirmed": False,
+    }
+    record["evidence_hash"] = hashlib.sha256(
+        json.dumps(record, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    headers = {
+        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=representation",
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/billing_consents?on_conflict=provider,provider_subscription_id",
+            headers=headers,
+            json=record,
+        )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="PDFBreeze could not securely record consent.")
+    rows = response.json()
+    return {"recorded": True, "evidence_id": rows[0]["id"] if rows else None}
 
 
 async def send_welcome_email(
@@ -387,5 +477,18 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         "customer.subscription.updated",
         "customer.subscription.deleted",
     }:
-        await _upsert_subscription(event["data"]["object"])
+        subscription = event["data"]["object"]
+        await _upsert_subscription(subscription)
+        if subscription.get("status") in {"trialing", "active"} and SUPABASE_SERVICE_ROLE_KEY:
+            async with httpx.AsyncClient(timeout=10) as client:
+                await client.patch(
+                    f"{SUPABASE_URL}/rest/v1/billing_consents",
+                    headers={
+                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                        "Content-Type": "application/json",
+                    },
+                    params={"provider": "eq.stripe", "provider_subscription_id": f"eq.{subscription['id']}"},
+                    json={"payment_confirmed": True, "confirmed_at": datetime.now(timezone.utc).isoformat()},
+                )
     return {"received": True}

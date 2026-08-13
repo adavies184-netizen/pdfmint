@@ -17,12 +17,12 @@ from starlette.background import BackgroundTask
 from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
-from .billing import ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, send_welcome_email, stripe_webhook
-from .admin import admin_overview
+from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
+from .admin import ProviderSelectionRequest, admin_overview, select_payment_provider
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.14.1"
+ENGINE_VERSION = "1.15.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -97,9 +97,19 @@ async def billing_manage_subscription(payload: ManageSubscriptionRequest, author
     return await manage_subscription(payload, authorization)
 
 
+@app.post("/v1/billing/consent-evidence")
+async def billing_consent_evidence(payload: ConsentEvidenceRequest, request: Request, authorization: str | None = Header(default=None)):
+    return await record_consent_evidence(payload, request, authorization)
+
+
 @app.get("/v1/admin/overview")
 async def admin_dashboard_overview(authorization: str | None = Header(default=None)):
     return await admin_overview(authorization)
+
+
+@app.post("/v1/admin/payment-provider")
+async def admin_payment_provider(payload: ProviderSelectionRequest, authorization: str | None = Header(default=None)):
+    return await select_payment_provider(payload, authorization)
 
 
 @app.post("/v1/jobs")
