@@ -4257,7 +4257,9 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
       return;
     }
     preparedExportBytes = await createEditedPdfBytes();
-    openEmailModal();
+    closeFormatModal();
+    const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
+    await exportEditedDocument(selectedFormat);
   } catch (error) {
     showAlert('PDFBreeze could not prepare this PDF.');
   } finally {
@@ -4319,6 +4321,29 @@ async function openPaymentPage() {
   if (checked.value === 'annual') disclosure = 'Billed £299.99 annually until cancelled.';
 
   selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
+
+  const session = await window.PDFMintAuth?.getSession?.();
+  if (!session?.access_token) {
+    if (!pendingCheckoutBlob || !pendingCheckoutFilename) {
+      showAlert('PDFBreeze could not preserve this document for checkout. Please try again.');
+      return;
+    }
+    const checkoutFile = new File([pendingCheckoutBlob], pendingCheckoutFilename, {
+      type: pendingCheckoutBlob.type || 'application/pdf',
+      lastModified: Date.now()
+    });
+    await storePdfForSharedEditor(checkoutFile);
+    sessionStorage.setItem('pdfmintPendingCheckoutFilename', pendingCheckoutFilename);
+    const returnParams = new URLSearchParams({
+      checkout: '1',
+      plan: checked.value,
+      documentKey: stripeCheckoutDocumentKey
+    });
+    const returnTo = `editor.html?${returnParams}`;
+    sessionStorage.setItem('pdfmintAuthReturnTo', returnTo);
+    window.location.assign(`login.html?mode=signup&returnTo=${encodeURIComponent(returnTo)}`);
+    return;
+  }
 
   const summaryValues = {
     'summary-plan-name': planName,
@@ -4458,11 +4483,7 @@ async function prepareStripePaymentElement() {
   mount.innerHTML = '<div class="stripe-payment-loader" role="status"><span aria-hidden="true"></span><strong>Preparing your secure payment</strong><small>This should only take a moment.</small></div>';
 
   const session = await window.PDFMintAuth?.getSession?.();
-  if (!session?.access_token) {
-    const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
-    window.location.assign(`login.html?mode=signup&returnTo=${returnTo}`);
-    return;
-  }
+  if (!session?.access_token) throw new Error('Please sign in to continue securely.');
 
   const plan = stripePlanCode();
   if (stripeElements && stripeElementPlan === plan) {
@@ -5064,7 +5085,7 @@ async function exportEditedPdfThroughEngine(format) {
 
 async function exportEditedPdfAsOcrDocx() {
   const baseName = safeExportBaseName();
-  updateExportProgress(8, 'Preparing OCR', 'Applying your PDF edits firstâ€¦');
+  updateExportProgress(8, 'Preparing OCR', 'Applying your PDF edits first…');
   const pdfBlob = await buildFinalEditedPdfBlob();
   updateExportProgress(20, 'Recognising text', 'Scanned pages may take a little longer.');
   const convertedBlob = await convertPdfThroughPdfMintEngine(pdfBlob, 'ocr-docx', baseName);
@@ -6281,6 +6302,21 @@ async function initialiseSharedEditorRoute() {
     activateSharedEditorTool(tool);
 
     const routeParams = new URLSearchParams(window.location.search);
+    if (routeParams.get('checkout') === '1') {
+      const requestedPlan = routeParams.get('plan') || 'full';
+      const planInput = document.querySelector(`input[name="access-plan"][value="${CSS.escape(requestedPlan)}"]`)
+        || document.querySelector('input[name="access-plan"][value="full"]');
+      if (planInput) {
+        planInput.checked = true;
+        planInput.dispatchEvent(new Event('change', {bubbles: true}));
+      }
+      pendingCheckoutBlob = new Blob([await file.arrayBuffer()], {type: file.type || 'application/pdf'});
+      pendingCheckoutFilename = sessionStorage.getItem('pdfmintPendingCheckoutFilename') || file.name;
+      preparedExportFilename = pendingCheckoutFilename;
+      sessionStorage.removeItem('pdfmintPendingCheckoutFilename');
+      requestAnimationFrame(() => openPaymentPage());
+      return;
+    }
     if (routeParams.get('convert') === 'image') {
       requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
     }

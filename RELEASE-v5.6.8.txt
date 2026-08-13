@@ -1,0 +1,7 @@
+PDFBreeze v5.6.8
+
+- Removes the duplicate email request before plan selection.
+- Sends new customers from plan selection to one account-creation step.
+- Returns signed-up customers directly to their selected secure checkout.
+- Preserves the finished document and its document-only entitlement key through authentication.
+- Restores correct UTF-8 symbols, including pound signs and interface icons.
