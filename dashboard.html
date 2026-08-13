@@ -256,7 +256,7 @@
 
         <section class="account-panel membership-panel" data-account-panel="membership">
           <header><h2>Membership</h2><p>Manage your subscription plan.</p></header>
-          <div class="membership-benefits"><div class="benefit-title"><h3>Your current subscription plan includes:</h3><span>Active</span></div>
+          <div class="membership-benefits"><div class="benefit-title"><h3>Your current subscription plan includes:</h3><span data-membership-status>Loading</span></div>
             <article><i><svg><use href="#i-edit"/></svg></i><div><b>Fill in, edit &amp; save your PDFs</b><p>Edit any PDF right in your browser, make changes, and download your final version in seconds.</p></div></article>
             <article><i><svg><use href="#i-chat"/></svg></i><div><b>Comment, highlight &amp; underline the text</b><p>Make key information stand out by adding notes, highlighting essentials, and marking up text.</p></div></article>
             <article><i><svg><use href="#i-file"/></svg></i><div><b>Access your docs from anywhere</b><p>Store your documents securely in the cloud to view or edit them from your phone, tablet, or desktop.</p></div></article>
@@ -269,7 +269,7 @@
             <article><i><svg><use href="#i-globe"/></svg></i><div><b>Work across all your devices</b><p>Continue your document work from desktop, tablet or mobile whenever it suits you.</p></div></article>
             <article><i><svg><use href="#i-help"/></svg></i><div><b>Priority customer support</b><p>Get faster help with your documents, conversions, billing and PDFBreeze account.</p></div></article>
           </div>
-          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p>Your current plan: monthly membership for £49/month</p><p>Next payment: 17.08.2026</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
+          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p data-membership-plan>Your current plan: loading…</p><p data-membership-renewal>Next payment: loading…</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
         </section>
 
         <section class="account-panel" data-account-panel="help"><header><h2>Help centre</h2><p>Find answers or contact our support team.</p></header><div class="simple-card"><h3>How can we help?</h3><p>Visit our support centre or contact PDFBreeze for assistance with documents, payments or your account.</p><a href="contact.html">Contact support</a></div></section>
@@ -281,6 +281,6 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-  <script src="dashboard.js?v=5541"></script>
+  <script src="dashboard.js?v=5565"></script>
 </body>
 </html>

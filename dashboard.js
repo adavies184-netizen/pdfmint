@@ -26,6 +26,45 @@
     user_metadata: {}
   };
   if (!authenticatedUser) return;
+
+  async function loadLiveMembership() {
+    if (!signedInUser || !accountAuth.client) return;
+    const {data, error} = await accountAuth.client
+      .from('subscriptions')
+      .select('plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,updated_at')
+      .eq('user_id', signedInUser.id)
+      .order('updated_at', {ascending:false})
+      .limit(1);
+    if (error) throw error;
+    const membership = data?.[0];
+    const statusElement = document.querySelector('[data-membership-status]');
+    const planElement = document.querySelector('[data-membership-plan]');
+    const renewalElement = document.querySelector('[data-membership-renewal]');
+    if (!membership) {
+      if (statusElement) statusElement.textContent = 'No active plan';
+      if (planElement) planElement.textContent = 'Your current plan: none';
+      if (renewalElement) renewalElement.textContent = 'Choose a plan when you next download a document.';
+      return;
+    }
+    const names = {
+      document_trial: '7-day single-document access',
+      unlimited_trial: '7-day unlimited access',
+      annual: 'Annual unlimited membership'
+    };
+    const displayStatus = membership.status === 'trialing' ? 'Trial active' :
+      membership.status === 'active' ? 'Active' : membership.status.replaceAll('_', ' ');
+    const dateValue = membership.trial_ends_at || membership.current_period_ends_at;
+    const formattedDate = dateValue ? new Intl.DateTimeFormat('en-GB', {
+      day:'numeric', month:'long', year:'numeric'
+    }).format(new Date(dateValue)) : null;
+    if (statusElement) statusElement.textContent = displayStatus;
+    if (planElement) planElement.textContent = `Your current plan: ${names[membership.plan_code] || membership.plan_code}`;
+    if (renewalElement) renewalElement.textContent = membership.cancel_at_period_end
+      ? `Access ends: ${formattedDate || 'at the end of the billing period'}`
+      : membership.status === 'trialing'
+        ? `Trial ends: ${formattedDate || 'after seven days'}; then £49.99 every four weeks`
+        : `Next billing date: ${formattedDate || 'shown by your payment provider'}`;
+  }
   const tools = [
     ['Edit PDF','Update text and content','edit-pdf.html','i-edit'],
     ['Convert files','Convert documents, images, audio and more','dashboard.html?tool=convert','i-convert'],
@@ -761,6 +800,7 @@
     }
   } catch (error) { console.warn('PDFBreeze could not load the account profile.', error); }
   updateDashboardGreeting();
+  loadLiveMembership().catch(error => console.warn('PDFBreeze could not load membership details.', error));
   document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => {
     sessionStorage.removeItem('pdfmintCheckoutAccess');
     accountAuth.signOut();
