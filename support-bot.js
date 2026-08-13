@@ -24,16 +24,38 @@
   ];
 
   const addMessage = (content, role) => {
+    const row = document.createElement('div');
+    row.className = `support-message-row ${role}`;
+    if (role === 'bot') {
+      const avatar = document.createElement('span');
+      avatar.className = 'support-bot-avatar';
+      avatar.innerHTML = '<span class="support-bot-face"><i></i><i></i><b></b></span>';
+      row.appendChild(avatar);
+    }
     const bubble = document.createElement('div');
     bubble.className = `support-message ${role}`;
     bubble.innerHTML = content;
-    messages.appendChild(bubble);
+    row.appendChild(bubble);
+    messages.appendChild(row);
     messages.scrollTop = messages.scrollHeight;
+  };
+  const showTyping = () => {
+    const row = document.createElement('div');
+    row.className = 'support-message-row bot support-typing-row';
+    row.innerHTML = '<span class="support-bot-avatar"><span class="support-bot-face"><i></i><i></i><b></b></span></span><div class="support-message bot support-typing" aria-label="PDFBreeze Support is typing"><span></span><span></span><span></span></div>';
+    messages.appendChild(row);
+    messages.scrollTop = messages.scrollHeight;
+    return row;
   };
   const answer = (question) => {
     const normalised = question.toLowerCase();
     const match = answers.find(item => item.terms.some(term => normalised.includes(term)));
-    window.setTimeout(() => addMessage(match?.html || 'I do not have an approved answer for that yet. Please use <a href="contact.html">Contact support</a> and the PDFBreeze team will help you.', 'bot'), 280);
+    const typing = showTyping();
+    const delay = Math.min(850, Math.max(420, question.length * 16));
+    window.setTimeout(() => {
+      typing.remove();
+      addMessage(match?.html || 'I do not have an approved answer for that yet. Please use <a href="contact.html">Contact support</a> and the PDFBreeze team will help you.', 'bot');
+    }, delay);
   };
   const ask = (question) => {
     const clean = question.trim();
@@ -66,7 +88,11 @@
       return;
     }
     intake.hidden = true; chat.hidden = false;
-    addMessage(`Hi ${name.split(/\s+/)[0]}, I’m the PDFBreeze support assistant. Ask me about your files, tools, account, trial or membership.`, 'bot');
+    const typing = showTyping();
+    window.setTimeout(() => {
+      typing.remove();
+      addMessage(`Hi ${name.split(/\s+/)[0]}, I’m the PDFBreeze support assistant. Ask me about your files, tools, account, trial or membership.`, 'bot');
+    }, 520);
     renderSuggestions();
   });
   compose.addEventListener('submit', event => {
