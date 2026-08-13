@@ -3244,6 +3244,7 @@ document.getElementById('text-align-right').addEventListener('click', () => {
 let preparedExportBytes = null;
 let preparedExportFilename = '';
 let pendingDashboardFileSave = Promise.resolve();
+let verifiedUnlimitedAccess = false;
 
 function isDashboardEditorSession() {
   try {
@@ -3267,12 +3268,14 @@ async function hasUnlimitedPaidAccess() {
       .in('status', ['trialing', 'active']);
     if (error) throw error;
     const now = Date.now();
-    return (data || []).some(subscription => {
+    const hasAccess = (data || []).some(subscription => {
       if (subscription.plan_code === 'unlimited_trial' || subscription.plan_code === 'annual') return true;
       return subscription.plan_code === 'document_trial' &&
         subscription.status === 'active' &&
         (!subscription.trial_ends_at || Date.parse(subscription.trial_ends_at) <= now);
     });
+    verifiedUnlimitedAccess = hasAccess;
+    return hasAccess;
   } catch (error) {
     console.warn('PDFBreeze could not verify membership access.', error);
     return false;
@@ -5059,7 +5062,7 @@ function safeExportBaseName() {
 }
 
 function downloadBlob(blob, filename) {
-  if (isDashboardEditorSession()) {
+  if (isDashboardEditorSession() || verifiedUnlimitedAccess) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -5068,7 +5071,10 @@ function downloadBlob(blob, filename) {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1500);
-    pendingDashboardFileSave = saveFileToDashboard(blob, filename);
+    pendingDashboardFileSave = isDashboardEditorSession()
+      ? saveFileToDashboard(blob, filename)
+      : window.PDFMintAuth?.saveDocument?.(blob, filename, 'member-download')
+        .catch(error => console.warn('PDFBreeze could not add the finished file to My Files.', error)) || Promise.resolve();
     return;
   }
   pendingCheckoutBlob = blob;
