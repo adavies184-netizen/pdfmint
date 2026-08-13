@@ -10,6 +10,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="dashboard.css?v=5623">
   <link rel="stylesheet" href="pdfbreeze-support-v1.css">
+  <link rel="stylesheet" href="pdfbreeze-mobile-menu-v2.css">
+  <link rel="stylesheet" href="pdfbreeze-support-polish-v1.css">
   <style>
     /* Inline fallback: keeps Support usable even when a static host serves stale CSS. */
     [data-support-layer][hidden],[data-support-intake][hidden],[data-support-chat][hidden]{display:none!important}
@@ -310,7 +312,7 @@
     <button class="support-backdrop" type="button" data-close-support aria-label="Close support"></button>
     <section class="support-panel" role="dialog" aria-modal="true" aria-labelledby="support-title">
       <header class="support-header">
-        <span class="support-logo">P</span><div><h2 id="support-title">PDFBreeze Support</h2><small data-support-status>Online · Instant answers</small></div>
+        <span class="support-logo"><span class="support-bot-face"><i></i><i></i><b></b></span></span><div><h2 id="support-title">PDFBreeze Support</h2><small data-support-status>Online · Instant answers</small></div>
         <button type="button" data-close-support aria-label="Close support"><svg><use href="#i-close"/></svg></button>
       </header>
       <div class="support-body">
@@ -342,7 +344,7 @@
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
   <script src="dashboard.js?v=5541"></script>
-  <script src="support-bot.js?v=5623"></script>
+  <script src="support-bot.js?v=5628"></script>
   <script>
     (() => {
       const rail = document.querySelector('.app-rail');

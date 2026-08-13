@@ -1,0 +1,23 @@
+/* Mobile member navigation. This file deliberately has a unique cache key. */
+.mobile-menu-trigger,.mobile-rail-backdrop{display:none!important}
+
+@media(max-width:680px){
+  .dashboard-header{display:flex!important;align-items:center!important}
+  .dashboard-header .mobile-brand{margin-right:auto!important}
+  .dashboard-header .header-link{display:none!important}
+  .dashboard-header .mobile-menu-trigger{display:grid!important;order:3!important;width:40px!important;height:40px!important;flex:0 0 40px!important;margin:0!important;padding:0!important;border:0!important;border-radius:9px!important;background:#f7f9fa!important;color:#526076!important;place-items:center!important;cursor:pointer!important}
+  .dashboard-header .mobile-menu-trigger svg{width:20px!important;height:20px!important}
+  .dashboard-header .account-trigger{order:4!important;width:40px!important;height:40px!important;flex:0 0 40px!important;margin:0!important;padding:0!important;border-radius:9px!important;background:#f7f9fa!important;justify-content:center!important}
+
+  .app-rail.mobile-open{display:flex!important;position:fixed!important;z-index:1001!important;inset:0 auto 0 0!important;width:min(286px,82vw)!important;height:100vh!important;padding:18px 14px!important;background:#fff!important;overflow-y:auto!important;overflow-x:hidden!important;box-shadow:18px 0 50px rgba(15,31,51,.22)!important}
+  .app-rail.mobile-open .rail-brand b,
+  .app-rail.mobile-open nav span,
+  .app-rail.mobile-open .support-pill b,
+  .app-rail.mobile-open nav .rail-chevron{opacity:1!important}
+  .app-rail.mobile-open nav{width:100%!important}
+  .app-rail.mobile-open nav a,
+  .app-rail.mobile-open nav button{width:100%!important;padding-left:14px!important}
+  .app-rail.mobile-open .support-pill{width:100%!important;max-width:none!important;flex-shrink:0!important}
+  .mobile-rail-backdrop:not([hidden]){display:block!important;position:fixed!important;z-index:1000!important;inset:0!important;border:0!important;background:rgba(20,30,42,.52)!important}
+  body.mobile-menu-active{overflow:hidden!important}
+}
