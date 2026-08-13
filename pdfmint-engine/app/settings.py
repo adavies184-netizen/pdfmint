@@ -26,6 +26,11 @@ SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
 BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
 BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "no-reply@pdfbreeze.net").strip()
 BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "PDFBreeze").strip()
+ADMIN_EMAILS = {
+    email.strip().lower()
+    for email in os.getenv("ADMIN_EMAILS", "a.davies184@gmail.com").split(",")
+    if email.strip()
+}
 
 STRIPE_PRICES = {
     "document_trial": {

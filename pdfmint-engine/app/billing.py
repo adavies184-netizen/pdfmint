@@ -36,7 +36,7 @@ class WelcomeEmailRequest(BaseModel):
 
 
 class ManageSubscriptionRequest(BaseModel):
-    action: str = Field(pattern="^(cancel|pause)$")
+    action: str = Field(pattern="^(cancel|pause|switch_annual)$")
 
 
 def _require_server_configuration() -> None:
@@ -256,7 +256,7 @@ async def manage_subscription(
                 subscription.id, cancel_at_period_end=True
             )
             effective_at = getattr(subscription, "trial_end", None) or getattr(subscription, "current_period_end", None)
-        else:
+        elif payload.action == "pause":
             resumes_at = int((datetime.now(timezone.utc) + timedelta(days=30)).timestamp())
             subscription = stripe.Subscription.modify(
                 subscription.id,
@@ -264,6 +264,22 @@ async def manage_subscription(
                 pause_collection={"behavior": "void", "resumes_at": resumes_at},
             )
             effective_at = resumes_at
+        else:
+            subscription_items = subscription.get("items")
+            item_data = getattr(subscription_items, "data", None) or []
+            if not item_data:
+                raise HTTPException(status_code=400, detail="Stripe could not find the current membership price.")
+            subscription = stripe.Subscription.modify(
+                subscription.id,
+                items=[{"id": item_data[0].id, "price": STRIPE_PRICES["annual"]["recurring"]}],
+                billing_cycle_anchor="now",
+                proration_behavior="none",
+                payment_behavior="error_if_incomplete",
+                cancel_at_period_end=False,
+                pause_collection="",
+                metadata={"plan_code": "annual"},
+            )
+            effective_at = getattr(subscription, "current_period_end", None)
     except HTTPException:
         raise
     except stripe.StripeError as exc:
