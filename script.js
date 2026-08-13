@@ -4316,6 +4316,9 @@ async function openPaymentPage() {
   try {
     await prepareStripePaymentElement();
   } catch (error) {
+    const paymentPanel = document.getElementById('card-payment-panel');
+    paymentPanel?.classList.remove('stripe-loading', 'stripe-ready');
+    paymentPanel?.classList.add('stripe-failed');
     showStripeError(error.message || 'Secure payment could not be loaded.');
     const payButton = document.getElementById('mock-pay-button');
     if (payButton) payButton.disabled = true;
@@ -4412,6 +4415,11 @@ async function prepareStripePaymentElement() {
   const config = window.PDFMINT_CONFIG?.stripe;
   if (!panel || !config?.publishableKey) throw new Error('Stripe checkout is not configured.');
 
+  panel.classList.remove('stripe-ready', 'stripe-failed');
+  panel.classList.add('stripe-loading');
+  const payButton = document.getElementById('mock-pay-button');
+  if (payButton) payButton.disabled = true;
+
   [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
     .forEach(element => {
       element.hidden = true;
@@ -4421,9 +4429,9 @@ async function prepareStripePaymentElement() {
   if (!mount) {
     mount = document.createElement('div');
     mount.id = 'stripe-payment-element';
-    mount.textContent = 'Loading secure payment…';
     panel.prepend(mount);
   }
+  mount.innerHTML = '<div class="stripe-payment-loader" role="status"><span aria-hidden="true"></span><strong>Preparing your secure payment</strong><small>This should only take a moment.</small></div>';
 
   const session = await window.PDFMintAuth?.getSession?.();
   if (!session?.access_token) {
@@ -4433,7 +4441,12 @@ async function prepareStripePaymentElement() {
   }
 
   const plan = stripePlanCode();
-  if (stripeElements && stripeElementPlan === plan) return;
+  if (stripeElements && stripeElementPlan === plan) {
+    panel.classList.remove('stripe-loading');
+    panel.classList.add('stripe-ready');
+    if (payButton) payButton.disabled = false;
+    return;
+  }
   await loadStripeLibrary();
 
   const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
@@ -4460,7 +4473,13 @@ async function prepareStripePaymentElement() {
       variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
     }
   });
-  stripeElements.create('payment', {layout: 'tabs'}).mount('#stripe-payment-element');
+  const paymentElement = stripeElements.create('payment', {layout: 'tabs'});
+  paymentElement.on('ready', () => {
+    panel.classList.remove('stripe-loading', 'stripe-failed');
+    panel.classList.add('stripe-ready');
+    if (payButton) payButton.disabled = false;
+  });
+  paymentElement.mount('#stripe-payment-element');
   stripeElementPlan = plan;
   showStripeError('');
 }
