@@ -3244,7 +3244,6 @@ document.getElementById('text-align-right').addEventListener('click', () => {
 let preparedExportBytes = null;
 let preparedExportFilename = '';
 let pendingDashboardFileSave = Promise.resolve();
-let verifiedUnlimitedAccess = false;
 
 function isDashboardEditorSession() {
   try {
@@ -3263,37 +3262,19 @@ async function hasUnlimitedPaidAccess() {
     if (!user || !auth?.client) return false;
     const {data, error} = await auth.client
       .from('subscriptions')
-      .select('plan_code,status')
+      .select('plan_code,status,trial_ends_at')
       .eq('user_id', user.id)
       .in('status', ['trialing', 'active']);
     if (error) throw error;
-    const hasAccess = (data || []).some(subscription =>
-      subscription.plan_code === 'unlimited_trial' || subscription.plan_code === 'annual'
-    );
-    verifiedUnlimitedAccess = hasAccess;
-    return hasAccess;
+    const now = Date.now();
+    return (data || []).some(subscription => {
+      if (subscription.plan_code === 'unlimited_trial' || subscription.plan_code === 'annual') return true;
+      return subscription.plan_code === 'document_trial' &&
+        subscription.status === 'active' &&
+        (!subscription.trial_ends_at || Date.parse(subscription.trial_ends_at) <= now);
+    });
   } catch (error) {
     console.warn('PDFBreeze could not verify membership access.', error);
-    return false;
-  }
-}
-
-async function hasCurrentDocumentTrialAccess() {
-  try {
-    const auth = window.PDFMintAuth;
-    const user = await auth?.getUser?.();
-    if (!user || !auth?.client || !stripeCheckoutDocumentKey) return false;
-    const {data, error} = await auth.client
-      .from('document_trial_entitlements')
-      .select('ends_at')
-      .eq('user_id', user.id)
-      .eq('checkout_document_key', stripeCheckoutDocumentKey)
-      .gt('ends_at', new Date().toISOString())
-      .limit(1);
-    if (error) throw error;
-    return Boolean(data?.length);
-  } catch (error) {
-    console.warn('PDFBreeze could not verify document access.', error);
     return false;
   }
 }
@@ -4244,7 +4225,7 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
   button.textContent = 'Preparing…';
 
   try {
-    if (await hasUnlimitedPaidAccess() || await hasCurrentDocumentTrialAccess()) {
+    if (await hasUnlimitedPaidAccess()) {
       const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
       closeFormatModal();
       await exportEditedDocument(format);
@@ -4316,18 +4297,6 @@ async function openPaymentPage() {
 
   selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
 
-  const session = await window.PDFMintAuth?.getSession?.();
-  if (!session?.access_token) {
-    closeAccessPage();
-    openEmailModal();
-    const error = document.getElementById('email-error');
-    if (error) {
-      error.textContent = 'Enter your email once to create your secure PDFBreeze account.';
-      error.hidden = false;
-    }
-    return;
-  }
-
   const summaryValues = {
     'summary-plan-name': planName,
     'summary-plan-price': formatPounds(price),
@@ -4347,9 +4316,6 @@ async function openPaymentPage() {
   try {
     await prepareStripePaymentElement();
   } catch (error) {
-    const paymentPanel = document.getElementById('card-payment-panel');
-    paymentPanel?.classList.remove('stripe-loading', 'stripe-ready');
-    paymentPanel?.classList.add('stripe-failed');
     showStripeError(error.message || 'Secure payment could not be loaded.');
     const payButton = document.getElementById('mock-pay-button');
     if (payButton) payButton.disabled = true;
@@ -4402,9 +4368,7 @@ let stripeClient = null;
 let stripeElements = null;
 let stripeIntentType = null;
 let stripeElementPlan = null;
-let stripeSubscriptionId = null;
-const stripeCheckoutDocumentKey = new URLSearchParams(window.location.search).get('documentKey') ||
-  crypto.randomUUID?.() || `document-${Date.now()}`;
+const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
 
 function loadStripeLibrary() {
   if (window.Stripe) return Promise.resolve();
@@ -4448,11 +4412,6 @@ async function prepareStripePaymentElement() {
   const config = window.PDFMINT_CONFIG?.stripe;
   if (!panel || !config?.publishableKey) throw new Error('Stripe checkout is not configured.');
 
-  panel.classList.remove('stripe-ready', 'stripe-failed');
-  panel.classList.add('stripe-loading');
-  const payButton = document.getElementById('mock-pay-button');
-  if (payButton) payButton.disabled = true;
-
   [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
     .forEach(element => {
       element.hidden = true;
@@ -4462,20 +4421,19 @@ async function prepareStripePaymentElement() {
   if (!mount) {
     mount = document.createElement('div');
     mount.id = 'stripe-payment-element';
+    mount.textContent = 'Loading secure payment…';
     panel.prepend(mount);
   }
-  mount.innerHTML = '<div class="stripe-payment-loader" role="status"><span aria-hidden="true"></span><strong>Preparing your secure payment</strong><small>This should only take a moment.</small></div>';
 
   const session = await window.PDFMintAuth?.getSession?.();
-  if (!session?.access_token) throw new Error('Please sign in to continue securely.');
-
-  const plan = stripePlanCode();
-  if (stripeElements && stripeElementPlan === plan) {
-    panel.classList.remove('stripe-loading');
-    panel.classList.add('stripe-ready');
-    if (payButton) payButton.disabled = false;
+  if (!session?.access_token) {
+    const returnTo = encodeURIComponent(`${location.pathname}${location.search}`);
+    window.location.assign(`login.html?mode=signup&returnTo=${returnTo}`);
     return;
   }
+
+  const plan = stripePlanCode();
+  if (stripeElements && stripeElementPlan === plan) return;
   await loadStripeLibrary();
 
   const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
@@ -4495,7 +4453,6 @@ async function prepareStripePaymentElement() {
   mount.replaceChildren();
   stripeClient = window.Stripe(config.publishableKey);
   stripeIntentType = result.intent_type;
-  stripeSubscriptionId = result.subscription_id;
   stripeElements = stripeClient.elements({
     clientSecret: result.client_secret,
     appearance: {
@@ -4503,16 +4460,7 @@ async function prepareStripePaymentElement() {
       variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
     }
   });
-  const paymentElement = stripeElements.create('payment', {
-    layout: 'tabs',
-    terms: {card: 'never'}
-  });
-  paymentElement.on('ready', () => {
-    panel.classList.remove('stripe-loading', 'stripe-failed');
-    panel.classList.add('stripe-ready');
-    if (payButton) payButton.disabled = false;
-  });
-  paymentElement.mount('#stripe-payment-element');
+  stripeElements.create('payment', {layout: 'tabs'}).mount('#stripe-payment-element');
   stripeElementPlan = plan;
   showStripeError('');
 }
@@ -4526,33 +4474,6 @@ function triggerPreparedDownload(blob, filename) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
-}
-
-async function sendGeneratedPasswordWelcomeEmail() {
-  const temporaryPassword = sessionStorage.getItem('pdfbreezeGeneratedPassword');
-  if (!temporaryPassword || !stripeSubscriptionId) return;
-  try {
-    const session = await window.PDFMintAuth?.getSession?.();
-    if (!session?.access_token) return;
-    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/welcome-email`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${session.access_token}`
-      },
-      body: JSON.stringify({
-        subscription_id: stripeSubscriptionId,
-        temporary_password: temporaryPassword,
-        plan_name: selectedAccessPlan.name,
-        amount: formatPounds(selectedAccessPlan.price)
-      })
-    });
-    if (!response.ok) throw new Error('Welcome email could not be sent.');
-  } catch (error) {
-    console.warn('PDFBreeze welcome email delivery failed.', error);
-  } finally {
-    sessionStorage.removeItem('pdfbreezeGeneratedPassword');
-  }
 }
 
 function finishMockCheckout() {
@@ -4611,8 +4532,6 @@ function validateMockCheckout() {
 }
 
 document.getElementById('mock-pay-button').addEventListener('click', async () => {
-  const payButton = document.getElementById('mock-pay-button');
-  const originalButtonText = payButton.textContent;
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const consent = document.querySelector('#card-payment-panel .payment-consent input');
   const warning = document.getElementById('payment-consent-warning');
@@ -4620,18 +4539,8 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     if (warning) warning.hidden = false;
     return;
   }
-  payButton.disabled = true;
-  payButton.classList.add('is-processing');
-  payButton.textContent = 'Processing payment...';
   try {
     if (!stripeElements) await prepareStripePaymentElement();
-    const session = await window.PDFMintAuth?.getSession?.();
-    const evidenceResponse = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/consent-evidence`, {
-      method: 'POST',
-      headers: {'Content-Type':'application/json','Authorization':`Bearer ${session?.access_token || ''}`},
-      body: JSON.stringify({subscription_id: stripeSubscriptionId, disclosure_version: 'checkout-gbp-v1'})
-    });
-    if (!evidenceResponse.ok) throw new Error('PDFBreeze could not securely record your acceptance. Please try again.');
     const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
     const {error} = await confirmation({
       elements: stripeElements,
@@ -4640,30 +4549,18 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     });
     if (error) {
       showStripeError(error.message || 'Payment could not be completed.');
-      payButton.disabled = false;
-      payButton.classList.remove('is-processing');
-      payButton.textContent = originalButtonText;
       return;
     }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
-      payButton.textContent = 'Preparing your download...';
       triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
-      const paidSource = selectedAccessPlan?.value === 'limited'
-        ? `document-trial:${stripeCheckoutDocumentKey}`
-        : 'paid-download';
-      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, pendingCheckoutFilename, paidSource)
+      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, pendingCheckoutFilename, 'paid-download')
         .catch(saveError => console.warn('PDFBreeze could not save the paid document.', saveError));
       pendingCheckoutBlob = null;
       pendingCheckoutFilename = '';
     }
-    payButton.textContent = 'Opening your dashboard...';
-    await sendGeneratedPasswordWelcomeEmail();
     window.setTimeout(() => window.location.assign('dashboard.html?payment=complete'), 350);
   } catch (error) {
     showStripeError(error.message || 'Payment could not be completed.');
-    payButton.disabled = false;
-    payButton.classList.remove('is-processing');
-    payButton.textContent = originalButtonText;
   }
 });
 document.getElementById('mock-paypal-button').addEventListener('click', openDemoPaymentNotice);
@@ -5121,7 +5018,7 @@ async function exportEditedPdfThroughEngine(format) {
 
 async function exportEditedPdfAsOcrDocx() {
   const baseName = safeExportBaseName();
-  updateExportProgress(8, 'Preparing OCR', 'Applying your PDF edits first…');
+  updateExportProgress(8, 'Preparing OCR', 'Applying your PDF edits firstâ€¦');
   const pdfBlob = await buildFinalEditedPdfBlob();
   updateExportProgress(20, 'Recognising text', 'Scanned pages may take a little longer.');
   const convertedBlob = await convertPdfThroughPdfMintEngine(pdfBlob, 'ocr-docx', baseName);
@@ -5143,7 +5040,7 @@ function safeExportBaseName() {
 }
 
 function downloadBlob(blob, filename) {
-  if (isDashboardEditorSession() || verifiedUnlimitedAccess) {
+  if (isDashboardEditorSession()) {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
@@ -5152,10 +5049,7 @@ function downloadBlob(blob, filename) {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1500);
-    pendingDashboardFileSave = isDashboardEditorSession()
-      ? saveFileToDashboard(blob, filename)
-      : window.PDFMintAuth?.saveDocument?.(blob, filename, 'member-download')
-        .catch(error => console.warn('PDFBreeze could not add the finished file to My Files.', error)) || Promise.resolve();
+    pendingDashboardFileSave = saveFileToDashboard(blob, filename);
     return;
   }
   pendingCheckoutBlob = blob;
@@ -5460,41 +5354,13 @@ document.getElementById('final-download').addEventListener('click', async () => 
   }
 
   if (error) error.hidden = true;
+  sessionStorage.setItem('pdfmintPendingEmail', email);
 
   const button = document.getElementById('final-download');
   const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
   const originalText = button.textContent;
 
   button.disabled = true;
-  button.textContent = 'Creating your account...';
-
-  try {
-    let session = await window.PDFMintAuth?.getSession?.();
-    if (!session?.access_token) {
-      const password = generateAccountPassword();
-      const signup = await window.PDFMintAuth?.signUp?.({
-        email,
-        password,
-        firstName: '',
-        lastName: ''
-      });
-      session = signup?.session || await window.PDFMintAuth?.getSession?.();
-      if (!session?.access_token) {
-        throw new Error('This email may already have an account. Select Log in below, or use another email.');
-      }
-      sessionStorage.setItem('pdfbreezeGeneratedPassword', password);
-    }
-    sessionStorage.setItem('pdfmintPendingEmail', email);
-  } catch (accountError) {
-    if (error) {
-      error.textContent = accountError?.message || 'PDFBreeze could not create your account.';
-      error.hidden = false;
-    }
-    button.disabled = false;
-    button.textContent = originalText;
-    return;
-  }
-
   resetExportProgress();
   startExportCountdown(selectedFormat);
   updateExportProgress(2, 'Starting export', `Preparing ${selectedFormat.toUpperCase()}…`);
@@ -5522,57 +5388,13 @@ document.getElementById('download-email').addEventListener('input', event => {
   document.getElementById('email-error').hidden = true;
 });
 
-function generateAccountPassword() {
-  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%';
-  const random = new Uint32Array(18);
-  crypto.getRandomValues(random);
-  return Array.from(random, value => alphabet[value % alphabet.length]).join('');
-}
-
 function showOAuthSetupMessage(provider) {
   const error = document.getElementById('email-error');
   error.textContent = `${provider} sign-in requires the ${provider} OAuth connection. Email download is available now.`;
   error.hidden = false;
 }
 
-async function preserveCheckoutForAuthentication() {
-  const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
-  const checkoutFile = new File(
-    [preparedExportBytes || await createEditedPdfBytes()],
-    preparedExportFilename || editor.file?.name || 'document.pdf',
-    {type: 'application/pdf', lastModified: Date.now()}
-  );
-  await storePdfForSharedEditor(checkoutFile);
-  const returnTo = `editor.html?resumeAccess=1&format=${encodeURIComponent(selectedFormat)}&documentKey=${encodeURIComponent(stripeCheckoutDocumentKey)}`;
-  sessionStorage.setItem('pdfmintAuthReturnTo', returnTo);
-  return returnTo;
-}
-
-document.getElementById('continue-google')?.addEventListener('click', async () => {
-  try {
-    await preserveCheckoutForAuthentication();
-    await window.PDFMintAuth?.signInWithOAuth?.('google');
-  } catch (oauthError) {
-    const error = document.getElementById('email-error');
-    if (error) {
-      error.textContent = oauthError?.message || 'Google sign-in could not be started.';
-      error.hidden = false;
-    }
-  }
-});
-
-document.querySelector('#email-modal .text-link-button')?.addEventListener('click', async () => {
-  try {
-    const returnTo = await preserveCheckoutForAuthentication();
-    window.location.assign(`login.html?returnTo=${encodeURIComponent(returnTo)}`);
-  } catch (error) {
-    const message = document.getElementById('email-error');
-    if (message) {
-      message.textContent = error?.message || 'PDFBreeze could not preserve this document for sign in.';
-      message.hidden = false;
-    }
-  }
-});
+document.getElementById('continue-google')?.addEventListener('click', openAccessPage);
 
 
 const heroInput = document.getElementById('file-input');
@@ -6410,21 +6232,6 @@ async function initialiseSharedEditorRoute() {
     activateSharedEditorTool(tool);
 
     const routeParams = new URLSearchParams(window.location.search);
-    if (routeParams.get('resumeAccess') === '1') {
-      preparedExportFilename = file.name;
-      preparedExportBytes = new Uint8Array(await file.arrayBuffer());
-      const preferredFormat = routeParams.get('format') || 'pdf';
-      const preferredRadio = document.querySelector(`input[name="export-format"][value="${CSS.escape(preferredFormat)}"]`);
-      if (preferredRadio) preferredRadio.checked = true;
-      requestAnimationFrame(async () => {
-        try {
-          await exportEditedDocument(preferredFormat);
-        } catch (error) {
-          showAlert(error?.message || 'PDFBreeze could not continue to checkout.');
-        }
-      });
-      return;
-    }
     if (routeParams.get('convert') === 'image') {
       requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
     }
