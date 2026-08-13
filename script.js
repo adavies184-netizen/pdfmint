@@ -3263,17 +3263,13 @@ async function hasUnlimitedPaidAccess() {
     if (!user || !auth?.client) return false;
     const {data, error} = await auth.client
       .from('subscriptions')
-      .select('plan_code,status,trial_ends_at')
+      .select('plan_code,status')
       .eq('user_id', user.id)
       .in('status', ['trialing', 'active']);
     if (error) throw error;
-    const now = Date.now();
-    const hasAccess = (data || []).some(subscription => {
-      if (subscription.plan_code === 'unlimited_trial' || subscription.plan_code === 'annual') return true;
-      return subscription.plan_code === 'document_trial' &&
-        subscription.status === 'active' &&
-        (!subscription.trial_ends_at || Date.parse(subscription.trial_ends_at) <= now);
-    });
+    const hasAccess = (data || []).some(subscription =>
+      subscription.plan_code === 'unlimited_trial' || subscription.plan_code === 'annual'
+    );
     verifiedUnlimitedAccess = hasAccess;
     return hasAccess;
   } catch (error) {
