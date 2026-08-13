@@ -265,19 +265,24 @@ async def manage_subscription(
             )
             effective_at = resumes_at
         else:
-            subscription_items = subscription.get("items")
-            item_data = getattr(subscription_items, "data", None) or []
+            subscription_items = subscription["items"]
+            item_data = subscription_items["data"]
             if not item_data:
                 raise HTTPException(status_code=400, detail="Stripe could not find the current membership price.")
+            annual_update: dict[str, Any] = {
+                "items": [{"id": item_data[0]["id"], "price": STRIPE_PRICES["annual"]["recurring"]}],
+                "billing_cycle_anchor": "now",
+                "proration_behavior": "none",
+                "payment_behavior": "error_if_incomplete",
+                "cancel_at_period_end": False,
+                "pause_collection": "",
+                "metadata": {"plan_code": "annual"},
+            }
+            if subscription["status"] == "trialing":
+                annual_update["trial_end"] = "now"
             subscription = stripe.Subscription.modify(
                 subscription.id,
-                items=[{"id": item_data[0].id, "price": STRIPE_PRICES["annual"]["recurring"]}],
-                billing_cycle_anchor="now",
-                proration_behavior="none",
-                payment_behavior="error_if_incomplete",
-                cancel_at_period_end=False,
-                pause_collection="",
-                metadata={"plan_code": "annual"},
+                **annual_update,
             )
             effective_at = getattr(subscription, "current_period_end", None)
     except HTTPException:

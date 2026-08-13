@@ -22,7 +22,7 @@ from .admin import admin_overview
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.14.0"
+ENGINE_VERSION = "1.14.1"
 
 app = FastAPI(
     title="PDFBreeze Engine",
