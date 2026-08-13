@@ -52,14 +52,17 @@
       annual: 'Annual unlimited membership'
     };
     const displayStatus = membership.status === 'trialing' ? 'Trial active' :
-      membership.status === 'active' ? 'Active' : membership.status.replaceAll('_', ' ');
+      membership.status === 'active' ? 'Active' :
+      membership.status === 'paused' ? 'Paused' : membership.status.replaceAll('_', ' ');
     const dateValue = membership.trial_ends_at || membership.current_period_ends_at;
     const formattedDate = dateValue ? new Intl.DateTimeFormat('en-GB', {
       day:'numeric', month:'long', year:'numeric'
     }).format(new Date(dateValue)) : null;
     if (statusElement) statusElement.textContent = displayStatus;
     if (planElement) planElement.textContent = `Your current plan: ${names[membership.plan_code] || membership.plan_code}`;
-    if (renewalElement) renewalElement.textContent = membership.cancel_at_period_end
+    if (renewalElement) renewalElement.textContent = membership.status === 'paused'
+      ? `Billing resumes: ${formattedDate || 'one month from the pause date'}`
+      : membership.cancel_at_period_end
       ? `Access ends: ${formattedDate || 'at the end of the billing period'}`
       : membership.status === 'trialing'
         ? `Trial ends: ${formattedDate || 'after seven days'}; then £49.99 every four weeks`
