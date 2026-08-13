@@ -4257,9 +4257,7 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
       return;
     }
     preparedExportBytes = await createEditedPdfBytes();
-    closeFormatModal();
-    const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
-    await exportEditedDocument(selectedFormat);
+    openEmailModal();
   } catch (error) {
     showAlert('PDFBreeze could not prepare this PDF.');
   } finally {
@@ -4324,24 +4322,13 @@ async function openPaymentPage() {
 
   const session = await window.PDFMintAuth?.getSession?.();
   if (!session?.access_token) {
-    if (!pendingCheckoutBlob || !pendingCheckoutFilename) {
-      showAlert('PDFBreeze could not preserve this document for checkout. Please try again.');
-      return;
+    closeAccessPage();
+    openEmailModal();
+    const error = document.getElementById('email-error');
+    if (error) {
+      error.textContent = 'Enter your email once to create your secure PDFBreeze account.';
+      error.hidden = false;
     }
-    const checkoutFile = new File([pendingCheckoutBlob], pendingCheckoutFilename, {
-      type: pendingCheckoutBlob.type || 'application/pdf',
-      lastModified: Date.now()
-    });
-    await storePdfForSharedEditor(checkoutFile);
-    sessionStorage.setItem('pdfmintPendingCheckoutFilename', pendingCheckoutFilename);
-    const returnParams = new URLSearchParams({
-      checkout: '1',
-      plan: checked.value,
-      documentKey: stripeCheckoutDocumentKey
-    });
-    const returnTo = `editor.html?${returnParams}`;
-    sessionStorage.setItem('pdfmintAuthReturnTo', returnTo);
-    window.location.assign(`login.html?mode=signup&returnTo=${encodeURIComponent(returnTo)}`);
     return;
   }
 
@@ -4419,6 +4406,7 @@ let stripeClient = null;
 let stripeElements = null;
 let stripeIntentType = null;
 let stripeElementPlan = null;
+let stripeSubscriptionId = null;
 const stripeCheckoutDocumentKey = new URLSearchParams(window.location.search).get('documentKey') ||
   crypto.randomUUID?.() || `document-${Date.now()}`;
 
@@ -4511,6 +4499,7 @@ async function prepareStripePaymentElement() {
   mount.replaceChildren();
   stripeClient = window.Stripe(config.publishableKey);
   stripeIntentType = result.intent_type;
+  stripeSubscriptionId = result.subscription_id;
   stripeElements = stripeClient.elements({
     clientSecret: result.client_secret,
     appearance: {
@@ -4538,6 +4527,33 @@ function triggerPreparedDownload(blob, filename) {
   link.click();
   link.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1500);
+}
+
+async function sendGeneratedPasswordWelcomeEmail() {
+  const temporaryPassword = sessionStorage.getItem('pdfbreezeGeneratedPassword');
+  if (!temporaryPassword || !stripeSubscriptionId) return;
+  try {
+    const session = await window.PDFMintAuth?.getSession?.();
+    if (!session?.access_token) return;
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/welcome-email`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${session.access_token}`
+      },
+      body: JSON.stringify({
+        subscription_id: stripeSubscriptionId,
+        temporary_password: temporaryPassword,
+        plan_name: selectedAccessPlan.name,
+        amount: formatPounds(selectedAccessPlan.price)
+      })
+    });
+    if (!response.ok) throw new Error('Welcome email could not be sent.');
+  } catch (error) {
+    console.warn('PDFBreeze welcome email delivery failed.', error);
+  } finally {
+    sessionStorage.removeItem('pdfbreezeGeneratedPassword');
+  }
 }
 
 function finishMockCheckout() {
@@ -4625,6 +4641,7 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
       pendingCheckoutBlob = null;
       pendingCheckoutFilename = '';
     }
+    await sendGeneratedPasswordWelcomeEmail();
     window.setTimeout(() => window.location.assign('dashboard.html?payment=complete'), 350);
   } catch (error) {
     showStripeError(error.message || 'Payment could not be completed.');
@@ -5424,13 +5441,41 @@ document.getElementById('final-download').addEventListener('click', async () => 
   }
 
   if (error) error.hidden = true;
-  sessionStorage.setItem('pdfmintPendingEmail', email);
 
   const button = document.getElementById('final-download');
   const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
   const originalText = button.textContent;
 
   button.disabled = true;
+  button.textContent = 'Creating your account...';
+
+  try {
+    let session = await window.PDFMintAuth?.getSession?.();
+    if (!session?.access_token) {
+      const password = generateAccountPassword();
+      const signup = await window.PDFMintAuth?.signUp?.({
+        email,
+        password,
+        firstName: '',
+        lastName: ''
+      });
+      session = signup?.session || await window.PDFMintAuth?.getSession?.();
+      if (!session?.access_token) {
+        throw new Error('This email may already have an account. Select Log in below, or use another email.');
+      }
+      sessionStorage.setItem('pdfbreezeGeneratedPassword', password);
+    }
+    sessionStorage.setItem('pdfmintPendingEmail', email);
+  } catch (accountError) {
+    if (error) {
+      error.textContent = accountError?.message || 'PDFBreeze could not create your account.';
+      error.hidden = false;
+    }
+    button.disabled = false;
+    button.textContent = originalText;
+    return;
+  }
+
   resetExportProgress();
   startExportCountdown(selectedFormat);
   updateExportProgress(2, 'Starting export', `Preparing ${selectedFormat.toUpperCase()}…`);
@@ -5458,13 +5503,57 @@ document.getElementById('download-email').addEventListener('input', event => {
   document.getElementById('email-error').hidden = true;
 });
 
+function generateAccountPassword() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@$%';
+  const random = new Uint32Array(18);
+  crypto.getRandomValues(random);
+  return Array.from(random, value => alphabet[value % alphabet.length]).join('');
+}
+
 function showOAuthSetupMessage(provider) {
   const error = document.getElementById('email-error');
   error.textContent = `${provider} sign-in requires the ${provider} OAuth connection. Email download is available now.`;
   error.hidden = false;
 }
 
-document.getElementById('continue-google')?.addEventListener('click', openAccessPage);
+async function preserveCheckoutForAuthentication() {
+  const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
+  const checkoutFile = new File(
+    [preparedExportBytes || await createEditedPdfBytes()],
+    preparedExportFilename || editor.file?.name || 'document.pdf',
+    {type: 'application/pdf', lastModified: Date.now()}
+  );
+  await storePdfForSharedEditor(checkoutFile);
+  const returnTo = `editor.html?resumeAccess=1&format=${encodeURIComponent(selectedFormat)}&documentKey=${encodeURIComponent(stripeCheckoutDocumentKey)}`;
+  sessionStorage.setItem('pdfmintAuthReturnTo', returnTo);
+  return returnTo;
+}
+
+document.getElementById('continue-google')?.addEventListener('click', async () => {
+  try {
+    await preserveCheckoutForAuthentication();
+    await window.PDFMintAuth?.signInWithOAuth?.('google');
+  } catch (oauthError) {
+    const error = document.getElementById('email-error');
+    if (error) {
+      error.textContent = oauthError?.message || 'Google sign-in could not be started.';
+      error.hidden = false;
+    }
+  }
+});
+
+document.querySelector('#email-modal .text-link-button')?.addEventListener('click', async () => {
+  try {
+    const returnTo = await preserveCheckoutForAuthentication();
+    window.location.assign(`login.html?returnTo=${encodeURIComponent(returnTo)}`);
+  } catch (error) {
+    const message = document.getElementById('email-error');
+    if (message) {
+      message.textContent = error?.message || 'PDFBreeze could not preserve this document for sign in.';
+      message.hidden = false;
+    }
+  }
+});
 
 
 const heroInput = document.getElementById('file-input');
@@ -6302,19 +6391,19 @@ async function initialiseSharedEditorRoute() {
     activateSharedEditorTool(tool);
 
     const routeParams = new URLSearchParams(window.location.search);
-    if (routeParams.get('checkout') === '1') {
-      const requestedPlan = routeParams.get('plan') || 'full';
-      const planInput = document.querySelector(`input[name="access-plan"][value="${CSS.escape(requestedPlan)}"]`)
-        || document.querySelector('input[name="access-plan"][value="full"]');
-      if (planInput) {
-        planInput.checked = true;
-        planInput.dispatchEvent(new Event('change', {bubbles: true}));
-      }
-      pendingCheckoutBlob = new Blob([await file.arrayBuffer()], {type: file.type || 'application/pdf'});
-      pendingCheckoutFilename = sessionStorage.getItem('pdfmintPendingCheckoutFilename') || file.name;
-      preparedExportFilename = pendingCheckoutFilename;
-      sessionStorage.removeItem('pdfmintPendingCheckoutFilename');
-      requestAnimationFrame(() => openPaymentPage());
+    if (routeParams.get('resumeAccess') === '1') {
+      preparedExportFilename = file.name;
+      preparedExportBytes = new Uint8Array(await file.arrayBuffer());
+      const preferredFormat = routeParams.get('format') || 'pdf';
+      const preferredRadio = document.querySelector(`input[name="export-format"][value="${CSS.escape(preferredFormat)}"]`);
+      if (preferredRadio) preferredRadio.checked = true;
+      requestAnimationFrame(async () => {
+        try {
+          await exportEditedDocument(preferredFormat);
+        } catch (error) {
+          showAlert(error?.message || 'PDFBreeze could not continue to checkout.');
+        }
+      });
       return;
     }
     if (routeParams.get('convert') === 'image') {

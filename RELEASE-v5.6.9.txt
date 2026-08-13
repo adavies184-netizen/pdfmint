@@ -1,0 +1,9 @@
+PDFBreeze v5.6.9
+
+- Restores the compact email prompt immediately after the user chooses a download format.
+- Creates and signs in a new email account silently with a strong generated password.
+- Removes the second full account-creation page from the new-customer checkout journey.
+- Sends the generated password in the welcome email after successful payment.
+- Preserves the edited document through Google sign-in and resumes at plan selection.
+- Retains safe handling for existing email accounts by directing them to Log in.
+- Replaces v5.6.8, which must not be deployed.
