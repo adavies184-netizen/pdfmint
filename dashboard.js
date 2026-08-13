@@ -26,71 +26,6 @@
     user_metadata: {}
   };
   if (!authenticatedUser) return;
-  const mobileRail = document.querySelector('.app-rail');
-  const mobileMenuButton = document.querySelector('[data-mobile-menu]');
-  const mobileMenuBackdrop = document.querySelector('[data-close-mobile-menu]');
-  const closeMobileMenu = () => {
-    mobileRail?.classList.remove('mobile-open');
-    mobileMenuButton?.setAttribute('aria-expanded','false');
-    if (mobileMenuBackdrop) mobileMenuBackdrop.hidden = true;
-  };
-  mobileMenuButton?.addEventListener('click', () => {
-    const open = !mobileRail?.classList.contains('mobile-open');
-    mobileRail?.classList.toggle('mobile-open', open);
-    mobileMenuButton.setAttribute('aria-expanded', String(open));
-    if (mobileMenuBackdrop) mobileMenuBackdrop.hidden = !open;
-  });
-  mobileMenuBackdrop?.addEventListener('click', closeMobileMenu);
-  mobileRail?.addEventListener('click', event => { if (event.target.closest('a')) closeMobileMenu(); });
-  document.addEventListener('keydown', event => { if (event.key === 'Escape') closeMobileMenu(); });
-  let liveMembership = null;
-
-  async function loadLiveMembership() {
-    if (!signedInUser || !accountAuth.client) return;
-    const {data, error} = await accountAuth.client
-      .from('subscriptions')
-      .select('plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,updated_at')
-      .eq('user_id', signedInUser.id)
-      .order('updated_at', {ascending:false})
-      .limit(1);
-    if (error) throw error;
-    const membership = data?.[0];
-    liveMembership = membership || null;
-    const statusElement = document.querySelector('[data-membership-status]');
-    const planElement = document.querySelector('[data-membership-plan]');
-    const renewalElement = document.querySelector('[data-membership-renewal]');
-    if (!membership) {
-      if (statusElement) statusElement.textContent = 'No active plan';
-      if (planElement) planElement.textContent = 'Your current plan: none';
-      if (renewalElement) renewalElement.textContent = 'Choose a plan when you next download a document.';
-      return;
-    }
-    const names = {
-      document_trial: '7-day single-document access',
-      unlimited_trial: '7-day unlimited access',
-      annual: 'Annual unlimited membership'
-    };
-    const displayStatus = membership.status === 'trialing' ? 'Trial active' :
-      membership.status === 'active' ? 'Active' :
-      membership.status === 'paused' ? 'Paused' : membership.status.replaceAll('_', ' ');
-    const dateValue = membership.status === 'paused'
-      ? membership.current_period_ends_at
-      : membership.trial_ends_at || membership.current_period_ends_at;
-    const formattedDate = dateValue ? new Intl.DateTimeFormat('en-GB', {
-      day:'numeric', month:'long', year:'numeric'
-    }).format(new Date(dateValue)) : null;
-    if (statusElement) statusElement.textContent = displayStatus;
-    if (planElement) planElement.textContent = `Your current plan: ${names[membership.plan_code] || membership.plan_code}`;
-    const switchAnnual = document.querySelector('[data-switch-annual]');
-    if (switchAnnual) switchAnnual.hidden = membership.plan_code === 'annual';
-    if (renewalElement) renewalElement.textContent = membership.status === 'paused'
-      ? `Billing resumes: ${formattedDate || 'one month from the pause date'}`
-      : membership.cancel_at_period_end
-      ? `Access ends: ${formattedDate || 'at the end of the billing period'}`
-      : membership.status === 'trialing'
-        ? `Trial ends: ${formattedDate || 'after seven days'}; then £49.99 every four weeks`
-        : `Next billing date: ${formattedDate || 'shown by your payment provider'}`;
-  }
   const tools = [
     ['Edit PDF','Update text and content','edit-pdf.html','i-edit'],
     ['Convert files','Convert documents, images, audio and more','dashboard.html?tool=convert','i-convert'],
@@ -315,13 +250,11 @@
     }
     throw new Error('This editor tool currently supports saved PDF and image files.');
   }
-  async function continueToDashboardTool(file, options = {}) {
+  async function continueToDashboardTool(file) {
     if (!file || !selectedDashboardTool) return;
     selectedDashboardFile = file;
-    if (!options.skipSave) {
-      await saveDashboardFile(file, file.name);
-      await refreshDashboardFiles();
-    }
+    await saveDashboardFile(file, file.name);
+    await refreshDashboardFiles();
     closePicker(); closeDrawer();
     if (selectedDashboardTool[3] === 'compress-flow') {
       openCompressOptions(file);
@@ -350,7 +283,6 @@
       await new Promise(resolve => window.setTimeout(resolve,250));
       const params = new URLSearchParams({tool:selectedDashboardTool[3]});
       if (selectedDashboardTool[4]) params.set('action',selectedDashboardTool[4]);
-      if (options.entitlementKey) params.set('documentKey', options.entitlementKey);
       window.location.href = `editor.html?${params}`;
     } catch (error) {
       window.clearInterval(timer); console.error(error); progressLayer.hidden = true; document.body.style.overflow = '';
@@ -425,29 +357,6 @@
   const recordToFile = async record => record.remote
     ? window.PDFMintAuth.downloadDocument(record)
     : new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
-
-  async function openStoredRecord(record, tool) {
-    const entitlementKey = String(record.source_tool || '').startsWith('document-trial:')
-      ? String(record.source_tool).slice('document-trial:'.length)
-      : '';
-    selectedDashboardTool = tool;
-    await continueToDashboardTool(await recordToFile(record), {skipSave:true, entitlementKey});
-  }
-
-  async function downloadStoredRecord(record) {
-    const file = await recordToFile(record);
-    downloadBlob(file, record.name);
-  }
-
-  function closeFileMenus(except = null) {
-    document.querySelectorAll('.file-action-menu.open').forEach(menu => {
-      if (menu !== except) menu.classList.remove('open');
-    });
-  }
-
-  document.addEventListener('pointerdown', event => {
-    if (!event.target.closest('.file-actions')) closeFileMenus();
-  });
   async function refreshDashboardFiles() {
     const records = await getDashboardFiles();
     const recent = document.querySelector('[data-recent-files]');
@@ -458,30 +367,8 @@
       const row = document.createElement('div');
       row.className = 'file-row dynamic-file-row';
       row.setAttribute('role','row');
-      row.innerHTML = `<span class="file-name"><i>${extension}</i><b></b></span><span>${formatBytes(record.size)}</span><span>${new Date(record.lastModified).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</span><span class="file-actions"><button class="file-quick-action" type="button" data-file-edit aria-label="Edit document"><svg><use href="#i-edit"></use></svg></button><button class="file-quick-action" type="button" data-file-download aria-label="Download document"><svg><use href="#i-upload"></use></svg></button><button class="file-more-action" type="button" data-file-more aria-label="More document actions">•••</button><span class="file-action-menu" role="menu"><button type="button" data-file-tool="sign"><svg><use href="#i-sign"></use></svg>Sign document</button><button type="button" data-file-tool="edit"><svg><use href="#i-edit"></use></svg>Edit document</button><button type="button" data-file-tool="convert"><svg><use href="#i-convert"></use></svg>Convert to…</button><button type="button" data-file-tool="compress"><svg><use href="#i-compress"></use></svg>Compress</button><button type="button" data-file-tool="ocr"><svg><use href="#i-scan"></use></svg>OCR &amp; scan</button><i></i><button type="button" data-file-tool="download"><svg><use href="#i-upload"></use></svg>Download</button><button type="button" data-file-tool="organize"><svg><use href="#i-grid"></use></svg>Organise pages</button></span></span>`;
+      row.innerHTML = `<span class="file-name"><i>${extension}</i><b></b></span><span>${formatBytes(record.size)}</span><span>${new Date(record.lastModified).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</span><button aria-label="File options">•••</button>`;
       row.querySelector('b').textContent = record.name;
-      row.querySelector('[data-file-edit]').addEventListener('click', () => openStoredRecord(record, ['Edit PDF','Update text and content','i-edit','edit','']));
-      row.querySelector('[data-file-download]').addEventListener('click', () => downloadStoredRecord(record));
-      const menu = row.querySelector('.file-action-menu');
-      row.querySelector('[data-file-more]').addEventListener('click', event => {
-        event.stopPropagation();
-        const opening = !menu.classList.contains('open');
-        closeFileMenus(menu);
-        menu.classList.toggle('open', opening);
-      });
-      const fileTools = {
-        sign: ['Sign PDF','Add an electronic signature','i-sign','sign',''],
-        edit: ['Edit PDF','Update text and content','i-edit','edit',''],
-        convert: ['Convert Files','Convert documents, images, audio and more','i-convert','convert-flow',''],
-        compress: ['Compress PDF','Reduce your PDF file size','i-compress','compress-flow',''],
-        ocr: ['OCR & Scan','Recognise text in a scanned PDF','i-scan','ocr-flow','ocr'],
-        organize: ['Organize Pages','Arrange and restructure your PDF pages','i-grid','manage','reorder']
-      };
-      menu.querySelectorAll('[data-file-tool]').forEach(button => button.addEventListener('click', async () => {
-        menu.classList.remove('open');
-        if (button.dataset.fileTool === 'download') await downloadStoredRecord(record);
-        else await openStoredRecord(record, fileTools[button.dataset.fileTool]);
-      }));
       head?.insertAdjacentElement('afterend',row);
     });
     const pickerFiles = document.querySelector('[data-picker-files]');
@@ -723,7 +610,9 @@
     profileMessage.textContent = 'Saving your profile…';
     try {
       await accountAuth.updateProfile({ firstName:first, lastName:last, email });
-      setProfileIdentity(first, last, email);
+      layer.querySelector('[data-profile-name]').textContent = fullName;
+      layer.querySelector('[data-profile-email]').textContent = email;
+      layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase();
       profileMessage.textContent = email !== authenticatedUser.email ? 'Profile saved. Confirm the email sent to your new address.' : 'Profile updated.';
       updateDashboardGreeting(first, null);
       window.setTimeout(() => setExpander('profile-editor', false), 850);
@@ -834,29 +723,13 @@
     }
   } catch (_) {}
 
-  const cleanAccountName = value => {
-    const name = String(value || '').trim();
-    return name.toLowerCase() === 'there' ? '' : name;
-  };
-  const setProfileIdentity = (firstName, lastName, email) => {
-    const first = cleanAccountName(firstName);
-    const last = cleanAccountName(lastName);
-    const fullName = `${first} ${last}`.trim();
-    const nameElement = layer.querySelector('[data-profile-name]');
-    nameElement.textContent = fullName;
-    nameElement.hidden = !fullName;
-    layer.querySelector('[data-profile-email]').textContent = email;
-    layer.querySelector('[data-profile-initials]').textContent = fullName
-      ? `${first[0] || ''}${last[0] || ''}`.toUpperCase()
-      : String(email || 'P').slice(0, 1).toUpperCase();
-  };
-  let accountFirstName = cleanAccountName(
-    authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0]
-  );
+  let accountFirstName = authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0] || 'there';
   let accountTimezone = detectedTimezone;
   if (checkoutAccess?.email) {
     profileForm.elements.email.value = checkoutAccess.email;
-    setProfileIdentity('', '', checkoutAccess.email);
+    layer.querySelector('[data-profile-name]').textContent = checkoutAccess.email;
+    layer.querySelector('[data-profile-email]').textContent = checkoutAccess.email;
+    layer.querySelector('[data-profile-initials]').textContent = checkoutAccess.email.slice(0, 2).toUpperCase();
   }
   const updateDashboardGreeting = (firstNameOverride, timezoneOverride) => {
     if (firstNameOverride) accountFirstName = firstNameOverride;
@@ -865,55 +738,29 @@
     try { hour = Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:accountTimezone}).format(new Date())); } catch (_) {}
     const period = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
     const greeting = document.querySelector('[data-dashboard-greeting]');
-    if (greeting) greeting.textContent = accountFirstName ? `Good ${period}, ${accountFirstName}` : `Good ${period}`;
+    if (greeting) greeting.textContent = `Good ${period}, ${accountFirstName}`;
   };
   try {
     const profile = await accountAuth.loadProfile();
     if (profile) {
-      const first = cleanAccountName(profile.first_name) || accountFirstName;
-      const last = cleanAccountName(profile.last_name);
+      const first = profile.first_name || accountFirstName;
+      const last = profile.last_name || '';
       const email = profile.email || authenticatedUser.email || '';
       accountFirstName = first;
       accountTimezone = profile.timezone || detectedTimezone;
       profileForm.elements.firstName.value = first;
       profileForm.elements.lastName.value = last;
       profileForm.elements.email.value = email;
-      setProfileIdentity(first, last, email);
+      layer.querySelector('[data-profile-name]').textContent = `${first} ${last}`.trim() || email;
+      layer.querySelector('[data-profile-email]').textContent = email;
+      layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase() || email.slice(0,2).toUpperCase();
       if (profile.language) regionForm.elements.language.value = profile.language;
       if (profile.currency) regionForm.elements.currency.value = profile.currency;
       if (timezoneSelect && [...timezoneSelect.options].some(option => option.value === accountTimezone)) timezoneSelect.value = accountTimezone;
       layer.querySelector('[data-region-summary]').textContent = `${profile.language || 'English'}, ${profile.currency || 'GBP - British Pound (£)'} · ${accountTimezone}`;
     }
   } catch (error) { console.warn('PDFBreeze could not load the account profile.', error); }
-  const switchAnnualButton = document.querySelector('[data-switch-annual]');
-  switchAnnualButton?.addEventListener('click', async () => {
-    if (!liveMembership || liveMembership.plan_code === 'annual') return;
-    if (!window.confirm('Switch to Annual membership? £299.99 will be charged now and the plan will renew every 365 days until cancelled.')) return;
-    const message = document.querySelector('[data-membership-message]');
-    switchAnnualButton.disabled = true;
-    message?.classList.remove('error');
-    if (message) message.textContent = 'Switching your membership…';
-    try {
-      const session = await accountAuth.getSession();
-      if (!session?.access_token) throw new Error('Your sign-in session has expired. Please sign in again.');
-      const endpoint = `${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/, '')}/v1/billing/manage-subscription`;
-      const response = await fetch(endpoint, {
-        method:'POST',
-        headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`},
-        body:JSON.stringify({action:'switch_annual'})
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.detail || 'PDFBreeze could not switch your membership.');
-      if (message) message.textContent = 'Annual membership activated.';
-      window.setTimeout(() => location.reload(), 900);
-    } catch (error) {
-      message?.classList.add('error');
-      if (message) message.textContent = error.message || 'PDFBreeze could not switch your membership.';
-      switchAnnualButton.disabled = false;
-    }
-  });
   updateDashboardGreeting();
-  loadLiveMembership().catch(error => console.warn('PDFBreeze could not load membership details.', error));
   document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => {
     sessionStorage.removeItem('pdfmintCheckoutAccess');
     accountAuth.signOut();

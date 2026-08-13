@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5621">
+  <link rel="stylesheet" href="dashboard.css?v=5381">
 </head>
 <body data-require-auth>
   <svg class="svg-sprite" aria-hidden="true">
@@ -66,7 +66,7 @@
       <a href="#" data-placeholder><svg><use href="#i-file"/></svg><span>Forms</span></a>
       <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>Chat with PDF <em>AI</em></span></a>
     </nav>
-    <button class="support-pill" type="button"><span>?</span><b>Support</b></button>
+    <button class="support-pill" type="button" aria-label="Chat with PDFBreeze Support"><span><svg><use href="#i-chat"/></svg></span><b>Chat with Support<small><i></i>Online</small></b></button>
   </aside>
 
   <aside class="tool-drawer" data-tool-drawer aria-label="PDF tool menu" aria-hidden="true">
@@ -84,7 +84,6 @@
       </div>
       <a class="header-link" href="contact.html">Contact us</a>
       <button class="account-trigger" type="button" data-open-account><svg><use href="#i-user"/></svg><span>My account</span></button>
-      <button class="mobile-menu-trigger" type="button" data-mobile-menu aria-label="Open navigation" aria-expanded="false"><svg><use href="#i-menu"/></svg></button>
     </header>
 
     <main>
@@ -115,7 +114,9 @@
       <section class="files-card" id="recent-files" aria-labelledby="files-title">
         <div class="section-heading files-heading"><div><span>Your workspace</span><h2 id="files-title">Recent files</h2></div><label class="secondary-upload"><svg><use href="#i-upload"/></svg>Upload file<input type="file" hidden></label></div>
         <div class="file-table" role="table" data-recent-files>
-          <div class="file-row file-head" role="row"><span>Name</span><span>Size</span><span>Last activity</span><span>Actions</span></div>
+          <div class="file-row file-head" role="row"><span>Name</span><span>Size</span><span>Last activity</span><span></span></div>
+          <div class="file-row" role="row"><span class="file-name"><i>PDF</i><b>Terms of Business.pdf</b></span><span>531 KB</span><span>Today, 10:42 AM</span><button aria-label="File options">•••</button></div>
+          <div class="file-row" role="row"><span class="file-name"><i>PDF</i><b>Signed agreement.pdf</b></span><span>284 KB</span><span>Yesterday</span><button aria-label="File options">•••</button></div>
         </div>
         <label class="drop-zone"><svg><use href="#i-upload"/></svg><b>Click or drag a file here to upload</b><small>PDF, Word, Excel, PowerPoint and images up to 100 MB</small><input type="file" hidden></label>
       </section>
@@ -124,7 +125,12 @@
     </main>
   </div>
 
-  <button class="mobile-nav-backdrop" type="button" data-close-mobile-menu aria-label="Close navigation" hidden></button>
+  <nav class="mobile-bottom-nav" aria-label="Mobile navigation">
+    <a class="active" href="dashboard.html"><svg><use href="#i-file"/></svg><span>My Files</span></a>
+    <a href="dashboard.html?tool=convert" data-direct-tool="convert"><svg><use href="#i-grid"/></svg><span>Tools</span></a>
+    <a href="#ai-chat"><svg><use href="#i-chat"/></svg><span>AI chat</span></a>
+    <button type="button" data-open-account><svg><use href="#i-user"/></svg><span>Account</span></button>
+  </nav>
 
   <div class="document-picker-layer" data-document-picker hidden>
     <button class="picker-backdrop" type="button" data-close-picker aria-label="Close document picker"></button>
@@ -250,7 +256,7 @@
 
         <section class="account-panel membership-panel" data-account-panel="membership">
           <header><h2>Membership</h2><p>Manage your subscription plan.</p></header>
-          <div class="membership-benefits"><div class="benefit-title"><h3>Your current subscription plan includes:</h3><span data-membership-status>Loading</span></div>
+          <div class="membership-benefits"><div class="benefit-title"><h3>Your current subscription plan includes:</h3><span>Active</span></div>
             <article><i><svg><use href="#i-edit"/></svg></i><div><b>Fill in, edit &amp; save your PDFs</b><p>Edit any PDF right in your browser, make changes, and download your final version in seconds.</p></div></article>
             <article><i><svg><use href="#i-chat"/></svg></i><div><b>Comment, highlight &amp; underline the text</b><p>Make key information stand out by adding notes, highlighting essentials, and marking up text.</p></div></article>
             <article><i><svg><use href="#i-file"/></svg></i><div><b>Access your docs from anywhere</b><p>Store your documents securely in the cloud to view or edit them from your phone, tablet, or desktop.</p></div></article>
@@ -263,7 +269,7 @@
             <article><i><svg><use href="#i-globe"/></svg></i><div><b>Work across all your devices</b><p>Continue your document work from desktop, tablet or mobile whenever it suits you.</p></div></article>
             <article><i><svg><use href="#i-help"/></svg></i><div><b>Priority customer support</b><p>Get faster help with your documents, conversions, billing and PDFBreeze account.</p></div></article>
           </div>
-          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p data-membership-plan>Your current plan: loading…</p><p data-membership-renewal>Next payment: loading…</p><p class="form-message" data-membership-message></p><div><a href="cancel-subscription.html">Cancel plan</a><button type="button" class="plan-link" data-switch-annual hidden>Switch to Annual plan</button></div></div>
+          <div class="plan-settings"><h3>Plan &amp; Billing settings</h3><p>Only you can see and manage these details.</p><p>Your current plan: monthly membership for £49/month</p><p>Next payment: 17.08.2026</p><div><a href="cancel-subscription.html">Cancel plan</a><a href="#">Switch to Annual plan</a></div></div>
         </section>
 
         <section class="account-panel" data-account-panel="help"><header><h2>Help centre</h2><p>Find answers or contact our support team.</p></header><div class="simple-card"><h3>How can we help?</h3><p>Visit our support centre or contact PDFBreeze for assistance with documents, payments or your account.</p><a href="contact.html">Contact support</a></div></section>
@@ -272,9 +278,42 @@
     </section>
   </div>
 
+  <div class="support-layer" data-support-layer hidden>
+    <button class="support-backdrop" type="button" data-close-support aria-label="Close support"></button>
+    <section class="support-panel" role="dialog" aria-modal="true" aria-labelledby="support-title">
+      <header class="support-header">
+        <span class="support-logo">P</span><div><h2 id="support-title">PDFBreeze Support</h2><small data-support-status>Online · Instant answers</small></div>
+        <button type="button" data-close-support aria-label="Close support"><svg><use href="#i-close"/></svg></button>
+      </header>
+      <div class="support-body">
+        <section class="support-intake" data-support-intake>
+          <div class="support-welcome-icon"><svg><use href="#i-chat"/></svg></div>
+          <h3>Hello! How can we help?</h3>
+          <p>Before we begin, please provide your name and email address.</p>
+          <form data-support-intake-form>
+            <label>Name<input name="name" autocomplete="name" required></label>
+            <label>Email address<input name="email" type="email" autocomplete="email" required></label>
+            <p class="support-form-error" data-support-intake-error aria-live="polite"></p>
+            <button type="submit">Start conversation</button>
+          </form>
+        </section>
+        <section class="support-chat" data-support-chat hidden>
+          <div class="support-messages" data-support-messages aria-live="polite"></div>
+          <div class="support-suggestions" data-support-suggestions></div>
+          <form class="support-compose" data-support-compose>
+            <label><span class="sr-only">Ask a question</span><textarea name="message" rows="1" placeholder="Type your question…" required></textarea></label>
+            <button type="submit" aria-label="Send question">Send</button>
+          </form>
+          <small class="support-disclaimer">Automated PDFBreeze help · Do not share passwords or card details.</small>
+        </section>
+      </div>
+    </section>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
-  <script src="auth.js?v=5613"></script>
-  <script src="dashboard.js?v=5621"></script>
+  <script src="auth.js?v=5580"></script>
+  <script src="dashboard.js?v=5541"></script>
+  <script src="support-bot.js?v=1"></script>
 </body>
 </html>
