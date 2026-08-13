@@ -5,14 +5,18 @@ import os
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(100 * 1024 * 1024)))
 JOB_TIMEOUT_SECONDS = int(os.getenv("JOB_TIMEOUT_SECONDS", "180"))
 
-ALLOWED_ORIGINS = [
-    value.strip()
-    for value in os.getenv(
-        "ALLOWED_ORIGINS",
-        "http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000"
-    ).split(",")
-    if value.strip()
-]
+ALLOWED_ORIGINS = sorted({
+    "https://pdfbreeze.net",
+    "https://www.pdfbreeze.net",
+    "http://localhost:5500",
+    "http://127.0.0.1:5500",
+    "http://localhost:3000",
+    *{
+        value.strip().rstrip("/")
+        for value in os.getenv("ALLOWED_ORIGINS", "").split(",")
+        if value.strip()
+    },
+})
 
 STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY", "").strip()
 STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
