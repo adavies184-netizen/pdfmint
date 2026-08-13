@@ -23,6 +23,9 @@ STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET", "").strip()
 SUPABASE_URL = os.getenv("SUPABASE_URL", "https://xbljndoecxppmchujysw.supabase.co").rstrip("/")
 SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY", "").strip()
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+BREVO_API_KEY = os.getenv("BREVO_API_KEY", "").strip()
+BREVO_SENDER_EMAIL = os.getenv("BREVO_SENDER_EMAIL", "no-reply@pdfbreeze.net").strip()
+BREVO_SENDER_NAME = os.getenv("BREVO_SENDER_NAME", "PDFBreeze").strip()
 
 STRIPE_PRICES = {
     "document_trial": {

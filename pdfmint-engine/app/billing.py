@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from html import escape
 from datetime import datetime, timezone
 from typing import Any
 
@@ -10,6 +11,9 @@ from fastapi import Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
 from .settings import (
+    BREVO_API_KEY,
+    BREVO_SENDER_EMAIL,
+    BREVO_SENDER_NAME,
     STRIPE_PRICES,
     STRIPE_SECRET_KEY,
     STRIPE_WEBHOOK_SECRET,
@@ -22,6 +26,13 @@ from .settings import (
 class CheckoutRequest(BaseModel):
     plan: str
     document_key: str | None = Field(default=None, max_length=200)
+
+
+class WelcomeEmailRequest(BaseModel):
+    subscription_id: str = Field(min_length=5, max_length=100)
+    temporary_password: str = Field(min_length=12, max_length=128)
+    plan_name: str = Field(min_length=1, max_length=100)
+    amount: str = Field(min_length=1, max_length=30)
 
 
 def _require_server_configuration() -> None:
@@ -146,6 +157,71 @@ async def create_checkout(
         "client_secret": client_secret,
         "status": subscription.status,
     }
+
+
+async def send_welcome_email(
+    payload: WelcomeEmailRequest,
+    authorization: str | None = Header(default=None),
+) -> dict[str, bool]:
+    user = await authenticated_user(authorization)
+    if not BREVO_API_KEY:
+        raise HTTPException(status_code=503, detail="Welcome email delivery is not configured.")
+
+    stripe.api_key = STRIPE_SECRET_KEY
+    try:
+        subscription = stripe.Subscription.retrieve(payload.subscription_id)
+    except stripe.StripeError as exc:
+        raise HTTPException(status_code=400, detail="The paid membership could not be verified.") from exc
+
+    metadata = getattr(subscription, "metadata", {}) or {}
+    if metadata.get("supabase_user_id") != user.get("id"):
+        raise HTTPException(status_code=403, detail="This membership does not belong to this account.")
+    if getattr(subscription, "status", None) not in {"trialing", "active"}:
+        raise HTTPException(status_code=409, detail="The membership is not active yet.")
+
+    email = user.get("email")
+    if not email:
+        raise HTTPException(status_code=400, detail="The account does not have an email address.")
+
+    safe_email = escape(email)
+    safe_password = escape(payload.temporary_password)
+    safe_plan = escape(payload.plan_name)
+    safe_amount = escape(payload.amount)
+    html_content = f"""<!doctype html>
+<html><body style="margin:0;background:#eefaf7;font-family:Arial,sans-serif;color:#10213f">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:32px 16px">
+<table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;background:#fff;border-radius:20px;overflow:hidden">
+<tr><td style="padding:34px 42px">
+<div style="font-size:29px;font-weight:800;margin-bottom:28px"><span style="color:#10213f">PDF</span><span style="color:#21b887">Breeze</span></div>
+<h1 style="font-size:34px;line-height:1.15;margin:0 0 16px">Welcome to PDFBreeze!</h1>
+<p style="font-size:17px;line-height:1.55;margin:0 0 16px">Your account and membership are ready.</p>
+<p style="font-size:17px;line-height:1.55;margin:0 0 8px">Use this generated password to sign in:</p>
+<div style="font-size:28px;font-weight:800;letter-spacing:1px;padding:15px 18px;background:#f3f7f6;border-radius:10px;margin-bottom:24px">{safe_password}</div>
+<a href="https://pdfbreeze.net/login.html" style="display:block;text-align:center;background:#21b887;color:#fff;text-decoration:none;font-size:18px;font-weight:700;padding:15px;border-radius:10px">Sign in</a>
+<div style="margin-top:26px;padding:20px;background:#f6f8f8;border-radius:12px;font-size:15px;line-height:1.7">
+<strong>Membership details</strong><br>User: {safe_email}<br>Plan: {safe_plan}<br>Paid today: {safe_amount}<br>Order appears as: pdfbreeze.net
+</div>
+<p style="font-size:13px;line-height:1.5;color:#687386;margin:24px 0 0">For security, you can change this password from your account settings after signing in.</p>
+</td></tr></table></td></tr></table></body></html>"""
+
+    async with httpx.AsyncClient(timeout=15) as client:
+        response = await client.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key": BREVO_API_KEY,
+                "accept": "application/json",
+                "content-type": "application/json",
+            },
+            json={
+                "sender": {"name": BREVO_SENDER_NAME, "email": BREVO_SENDER_EMAIL},
+                "to": [{"email": email}],
+                "subject": "Welcome to PDFBreeze - your account details",
+                "htmlContent": html_content,
+            },
+        )
+    if response.status_code != 201:
+        raise HTTPException(status_code=502, detail="Brevo could not send the welcome email.")
+    return {"sent": True}
 
 
 def _iso_from_unix(value: int | None) -> str | None:
