@@ -4413,7 +4413,10 @@ async function prepareStripePaymentElement() {
   if (!panel || !config?.publishableKey) throw new Error('Stripe checkout is not configured.');
 
   [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
-    .forEach(element => element.hidden = true);
+    .forEach(element => {
+      element.hidden = true;
+      element.style.setProperty('display', 'none', 'important');
+    });
   let mount = document.getElementById('stripe-payment-element');
   if (!mount) {
     mount = document.createElement('div');
