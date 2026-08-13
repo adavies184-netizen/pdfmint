@@ -174,8 +174,8 @@ async def send_welcome_email(
         raise HTTPException(status_code=400, detail="The paid membership could not be verified.") from exc
 
     stripe_metadata = getattr(subscription, "metadata", None)
-    metadata = stripe_metadata.to_dict_recursive() if stripe_metadata else {}
-    if metadata.get("supabase_user_id") != user.get("id"):
+    metadata_user_id = getattr(stripe_metadata, "supabase_user_id", None) if stripe_metadata else None
+    if metadata_user_id != user.get("id"):
         raise HTTPException(status_code=403, detail="This membership does not belong to this account.")
     if getattr(subscription, "status", None) not in {"trialing", "active"}:
         raise HTTPException(status_code=409, detail="The membership is not active yet.")

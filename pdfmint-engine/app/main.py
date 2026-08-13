@@ -21,7 +21,7 @@ from .billing import CheckoutRequest, WelcomeEmailRequest, create_checkout, send
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.12.1"
+ENGINE_VERSION = "1.12.2"
 
 app = FastAPI(
     title="PDFBreeze Engine",
