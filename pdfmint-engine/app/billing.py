@@ -48,6 +48,11 @@ async def authenticated_user(authorization: str | None) -> dict[str, Any]:
 
 def _intent_details(subscription: Any) -> tuple[str | None, str | None]:
     invoice = getattr(subscription, "latest_invoice", None)
+    confirmation_secret = getattr(invoice, "confirmation_secret", None) if invoice else None
+    if confirmation_secret and getattr(confirmation_secret, "client_secret", None):
+        return "payment", confirmation_secret.client_secret
+
+    # Compatibility with Stripe API versions older than 2025-03-31.basil.
     payment_intent = getattr(invoice, "payment_intent", None) if invoice else None
     if payment_intent and getattr(payment_intent, "client_secret", None):
         return "payment", payment_intent.client_secret
@@ -93,7 +98,7 @@ async def create_checkout(
             "payment_behavior": "default_incomplete",
             "payment_settings": {"save_default_payment_method": "on_subscription"},
             "metadata": metadata,
-            "expand": ["latest_invoice.payment_intent", "pending_setup_intent"],
+            "expand": ["latest_invoice.confirmation_secret", "pending_setup_intent"],
         }
         if plan["trial_days"]:
             subscription_args["trial_period_days"] = plan["trial_days"]
@@ -105,7 +110,13 @@ async def create_checkout(
 
         subscription = stripe.Subscription.create(**subscription_args)
     except stripe.StripeError as exc:
-        message = getattr(exc, "user_message", None) or "Stripe could not start checkout."
+        stripe_error = getattr(exc, "error", None)
+        message = (
+            getattr(exc, "user_message", None)
+            or getattr(stripe_error, "message", None)
+            or str(exc)
+            or "Stripe could not start checkout."
+        )
         raise HTTPException(status_code=400, detail=message) from exc
 
     intent_type, client_secret = _intent_details(subscription)
