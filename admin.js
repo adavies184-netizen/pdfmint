@@ -26,7 +26,10 @@
       if (enrolled.error) throw enrolled.error;
       factor = enrolled.data;
       document.getElementById('admin-mfa-copy').textContent = 'Scan this code with your authenticator app, then enter the six-digit code.';
-      qr.innerHTML = enrolled.data.totp.qr_code;
+      const qrImage = document.createElement('img');
+      qrImage.src = enrolled.data.totp.qr_code;
+      qrImage.alt = 'PDFBreeze Admin authenticator QR code';
+      qr.replaceChildren(qrImage);
     }
     modal.hidden = false;
     await new Promise((resolve, reject) => {
