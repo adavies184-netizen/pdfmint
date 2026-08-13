@@ -4625,6 +4625,13 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
   payButton.textContent = 'Processing payment...';
   try {
     if (!stripeElements) await prepareStripePaymentElement();
+    const session = await window.PDFMintAuth?.getSession?.();
+    const evidenceResponse = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/consent-evidence`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json','Authorization':`Bearer ${session?.access_token || ''}`},
+      body: JSON.stringify({subscription_id: stripeSubscriptionId, disclosure_version: 'checkout-gbp-v1'})
+    });
+    if (!evidenceResponse.ok) throw new Error('PDFBreeze could not securely record your acceptance. Please try again.');
     const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
     const {error} = await confirmation({
       elements: stripeElements,

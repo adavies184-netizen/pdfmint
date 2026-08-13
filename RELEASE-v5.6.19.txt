@@ -1,0 +1,7 @@
+PDFBreeze site v5.6.19
+
+- Checkout appearance and customer steps are unchanged.
+- Records checkout consent immediately before payment confirmation.
+- Adds admin-only authenticator-app verification.
+- Adds potential revenue for the next seven days.
+- Adds customer billing/consent evidence detail and provider readiness display.
