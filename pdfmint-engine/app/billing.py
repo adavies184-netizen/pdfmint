@@ -253,7 +253,7 @@ async def manage_subscription(
 
         if payload.action == "cancel":
             subscription = stripe.Subscription.modify(
-                subscription.id, cancel_at_period_end=True, pause_collection=""
+                subscription.id, cancel_at_period_end=True
             )
             effective_at = getattr(subscription, "trial_end", None) or getattr(subscription, "current_period_end", None)
         else:
@@ -271,7 +271,6 @@ async def manage_subscription(
         message = getattr(exc, "user_message", None) or getattr(stripe_error, "message", None) or str(exc)
         raise HTTPException(status_code=400, detail=message or "Stripe could not update the membership.") from exc
 
-    await _upsert_subscription(dict(subscription.items()))
     return {"updated": True, "action": payload.action, "effective_at": _iso_from_unix(effective_at)}
 
 
