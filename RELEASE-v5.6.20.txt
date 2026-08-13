@@ -1,0 +1,3 @@
+PDFBreeze site v5.6.20
+
+- Displays the admin authenticator QR code cleanly without printing its data address.
