@@ -54,7 +54,9 @@
     const displayStatus = membership.status === 'trialing' ? 'Trial active' :
       membership.status === 'active' ? 'Active' :
       membership.status === 'paused' ? 'Paused' : membership.status.replaceAll('_', ' ');
-    const dateValue = membership.trial_ends_at || membership.current_period_ends_at;
+    const dateValue = membership.status === 'paused'
+      ? membership.current_period_ends_at
+      : membership.trial_ends_at || membership.current_period_ends_at;
     const formattedDate = dateValue ? new Intl.DateTimeFormat('en-GB', {
       day:'numeric', month:'long', year:'numeric'
     }).format(new Date(dateValue)) : null;
@@ -700,9 +702,7 @@
     profileMessage.textContent = 'Saving your profile…';
     try {
       await accountAuth.updateProfile({ firstName:first, lastName:last, email });
-      layer.querySelector('[data-profile-name]').textContent = fullName;
-      layer.querySelector('[data-profile-email]').textContent = email;
-      layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase();
+      setProfileIdentity(first, last, email);
       profileMessage.textContent = email !== authenticatedUser.email ? 'Profile saved. Confirm the email sent to your new address.' : 'Profile updated.';
       updateDashboardGreeting(first, null);
       window.setTimeout(() => setExpander('profile-editor', false), 850);
@@ -813,13 +813,29 @@
     }
   } catch (_) {}
 
-  let accountFirstName = authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0] || 'there';
+  const cleanAccountName = value => {
+    const name = String(value || '').trim();
+    return name.toLowerCase() === 'there' ? '' : name;
+  };
+  const setProfileIdentity = (firstName, lastName, email) => {
+    const first = cleanAccountName(firstName);
+    const last = cleanAccountName(lastName);
+    const fullName = `${first} ${last}`.trim();
+    const nameElement = layer.querySelector('[data-profile-name]');
+    nameElement.textContent = fullName;
+    nameElement.hidden = !fullName;
+    layer.querySelector('[data-profile-email]').textContent = email;
+    layer.querySelector('[data-profile-initials]').textContent = fullName
+      ? `${first[0] || ''}${last[0] || ''}`.toUpperCase()
+      : String(email || 'P').slice(0, 1).toUpperCase();
+  };
+  let accountFirstName = cleanAccountName(
+    authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0]
+  );
   let accountTimezone = detectedTimezone;
   if (checkoutAccess?.email) {
     profileForm.elements.email.value = checkoutAccess.email;
-    layer.querySelector('[data-profile-name]').textContent = checkoutAccess.email;
-    layer.querySelector('[data-profile-email]').textContent = checkoutAccess.email;
-    layer.querySelector('[data-profile-initials]').textContent = checkoutAccess.email.slice(0, 2).toUpperCase();
+    setProfileIdentity('', '', checkoutAccess.email);
   }
   const updateDashboardGreeting = (firstNameOverride, timezoneOverride) => {
     if (firstNameOverride) accountFirstName = firstNameOverride;
@@ -828,22 +844,20 @@
     try { hour = Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:accountTimezone}).format(new Date())); } catch (_) {}
     const period = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
     const greeting = document.querySelector('[data-dashboard-greeting]');
-    if (greeting) greeting.textContent = `Good ${period}, ${accountFirstName}`;
+    if (greeting) greeting.textContent = accountFirstName ? `Good ${period}, ${accountFirstName}` : `Good ${period}`;
   };
   try {
     const profile = await accountAuth.loadProfile();
     if (profile) {
-      const first = profile.first_name || accountFirstName;
-      const last = profile.last_name || '';
+      const first = cleanAccountName(profile.first_name) || accountFirstName;
+      const last = cleanAccountName(profile.last_name);
       const email = profile.email || authenticatedUser.email || '';
       accountFirstName = first;
       accountTimezone = profile.timezone || detectedTimezone;
       profileForm.elements.firstName.value = first;
       profileForm.elements.lastName.value = last;
       profileForm.elements.email.value = email;
-      layer.querySelector('[data-profile-name]').textContent = `${first} ${last}`.trim() || email;
-      layer.querySelector('[data-profile-email]').textContent = email;
-      layer.querySelector('[data-profile-initials]').textContent = `${first[0] || ''}${last[0] || ''}`.toUpperCase() || email.slice(0,2).toUpperCase();
+      setProfileIdentity(first, last, email);
       if (profile.language) regionForm.elements.language.value = profile.language;
       if (profile.currency) regionForm.elements.currency.value = profile.currency;
       if (timezoneSelect && [...timezoneSelect.options].some(option => option.value === accountTimezone)) timezoneSelect.value = accountTimezone;
