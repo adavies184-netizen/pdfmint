@@ -26,6 +26,7 @@
     user_metadata: {}
   };
   if (!authenticatedUser) return;
+  let liveMembership = null;
 
   async function loadLiveMembership() {
     if (!signedInUser || !accountAuth.client) return;
@@ -37,6 +38,7 @@
       .limit(1);
     if (error) throw error;
     const membership = data?.[0];
+    liveMembership = membership || null;
     const statusElement = document.querySelector('[data-membership-status]');
     const planElement = document.querySelector('[data-membership-plan]');
     const renewalElement = document.querySelector('[data-membership-renewal]');
@@ -62,6 +64,8 @@
     }).format(new Date(dateValue)) : null;
     if (statusElement) statusElement.textContent = displayStatus;
     if (planElement) planElement.textContent = `Your current plan: ${names[membership.plan_code] || membership.plan_code}`;
+    const switchAnnual = document.querySelector('[data-switch-annual]');
+    if (switchAnnual) switchAnnual.hidden = membership.plan_code === 'annual';
     if (renewalElement) renewalElement.textContent = membership.status === 'paused'
       ? `Billing resumes: ${formattedDate || 'one month from the pause date'}`
       : membership.cancel_at_period_end
@@ -864,6 +868,33 @@
       layer.querySelector('[data-region-summary]').textContent = `${profile.language || 'English'}, ${profile.currency || 'GBP - British Pound (£)'} · ${accountTimezone}`;
     }
   } catch (error) { console.warn('PDFBreeze could not load the account profile.', error); }
+  const switchAnnualButton = document.querySelector('[data-switch-annual]');
+  switchAnnualButton?.addEventListener('click', async () => {
+    if (!liveMembership || liveMembership.plan_code === 'annual') return;
+    if (!window.confirm('Switch to Annual membership? £299.99 will be charged now and the plan will renew every 365 days until cancelled.')) return;
+    const message = document.querySelector('[data-membership-message]');
+    switchAnnualButton.disabled = true;
+    message?.classList.remove('error');
+    if (message) message.textContent = 'Switching your membership…';
+    try {
+      const session = await accountAuth.getSession();
+      if (!session?.access_token) throw new Error('Your sign-in session has expired. Please sign in again.');
+      const endpoint = `${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/, '')}/v1/billing/manage-subscription`;
+      const response = await fetch(endpoint, {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':`Bearer ${session.access_token}`},
+        body:JSON.stringify({action:'switch_annual'})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'PDFBreeze could not switch your membership.');
+      if (message) message.textContent = 'Annual membership activated.';
+      window.setTimeout(() => location.reload(), 900);
+    } catch (error) {
+      message?.classList.add('error');
+      if (message) message.textContent = error.message || 'PDFBreeze could not switch your membership.';
+      switchAnnualButton.disabled = false;
+    }
+  });
   updateDashboardGreeting();
   loadLiveMembership().catch(error => console.warn('PDFBreeze could not load membership details.', error));
   document.querySelectorAll('.logout-button,.mobile-account-logout').forEach(button => button.addEventListener('click', () => {
