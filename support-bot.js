@@ -51,7 +51,7 @@
       try {
         const response = await fetch(`${engine}/v1/support/message`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name:identity.name,email:identity.email,subject:form.elements.subject.value,message:form.elements.message.value,source:'member-chat',website:''})});
         if (!response.ok) throw new Error();
-        form.innerHTML = '<strong>Message sent</strong><p>PDFBreeze Support will reply to your email address.</p>';
+        form.innerHTML = '<p>Thanks for your message! PDFBreeze Support will reply to your email address within 24 hours, usually much sooner.</p>';
       } catch (_) { button.disabled = false; button.textContent = 'Send message'; status.textContent = 'The message could not be sent. Please try again.'; }
     });
   };
@@ -67,7 +67,10 @@
   };
   const open = () => { layer.hidden=false; document.body.style.overflow='hidden'; };
   const close = () => { layer.hidden=true; document.body.style.overflow=''; };
-  document.querySelectorAll('.support-pill,[data-open-support]').forEach(button => button.addEventListener('click', open));
+  document.querySelectorAll('.support-pill,[data-open-support]').forEach(button => button.addEventListener('click', event => {
+    event.currentTarget.blur();
+    open();
+  }));
   layer.querySelectorAll('[data-close-support]').forEach(button => button.addEventListener('click', close));
   intakeForm.addEventListener('submit', event => {
     event.preventDefault(); identity = {name:intakeForm.elements.name.value.trim(), email:intakeForm.elements.email.value.trim()};
