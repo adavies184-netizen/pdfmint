@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=5635" />
+  <link rel="stylesheet" href="styles.css?v=5637" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -379,11 +379,21 @@
     </nav>
 
     <div class="text-options-bar" id="text-options-bar" hidden aria-label="Add text options">
-      <label class="text-option colour-option" title="Font colour">
-        <span class="option-icon">T</span>
-        <input id="text-color" type="color" value="#111827" aria-label="Font colour">
-        <small>Font colour</small>
-      </label>
+      <div class="text-option colour-option font-colour-option">
+        <button class="font-colour-button" id="font-colour-button" type="button" aria-label="Choose font colour" aria-expanded="false">
+          <span class="font-colour-circle" id="font-colour-circle"></span>
+          <small>Font color</small>
+        </button>
+        <div class="font-colour-menu" id="font-colour-menu" hidden>
+          <div class="font-colour-grid" aria-label="Predefined font colors">
+            <button type="button" data-font-colour="#ff2d0a" style="--swatch:#ff2d0a" aria-label="Red"></button><button type="button" data-font-colour="#ff9800" style="--swatch:#ff9800" aria-label="Orange"></button><button type="button" data-font-colour="#fff200" style="--swatch:#fff200" aria-label="Yellow"></button><button type="button" data-font-colour="#58ad00" style="--swatch:#58ad00" aria-label="Green"></button><button type="button" data-font-colour="#2d91e8" style="--swatch:#2d91e8" aria-label="Blue"></button><button type="button" data-font-colour="#f000e8" style="--swatch:#f000e8" aria-label="Magenta"></button>
+            <button type="button" data-font-colour="#ff6d8f" style="--swatch:#ff6d8f" aria-label="Pink"></button><button type="button" data-font-colour="#ff865f" style="--swatch:#ff865f" aria-label="Coral"></button><button type="button" data-font-colour="#ffe77b" style="--swatch:#ffe77b" aria-label="Light yellow"></button><button type="button" data-font-colour="#8fee74" style="--swatch:#8fee74" aria-label="Light green"></button><button type="button" data-font-colour="#86b1f2" style="--swatch:#86b1f2" aria-label="Light blue"></button><button type="button" data-font-colour="#df7cf0" style="--swatch:#df7cf0" aria-label="Purple"></button>
+            <button type="button" data-font-colour="#ffffff" style="--swatch:#ffffff" aria-label="White"></button><button type="button" data-font-colour="#bfc1c3" style="--swatch:#bfc1c3" aria-label="Light grey"></button><button type="button" data-font-colour="#808285" style="--swatch:#808285" aria-label="Grey"></button><button type="button" data-font-colour="#3c3d3f" style="--swatch:#3c3d3f" aria-label="Dark grey"></button><button class="selected" type="button" data-font-colour="#111827" style="--swatch:#111827" aria-label="Black"></button>
+          </div>
+          <button class="custom-font-colour" id="custom-font-colour" type="button"><span>Custom color</span><b>＋</b></button>
+          <input id="text-color" type="color" value="#111827" aria-label="Custom font color">
+        </div>
+      </div>
       <label class="text-option colour-option" title="Fill colour">
         <span class="fill-swatch" id="fill-swatch"></span>
         <input id="text-fill-color" type="color" value="#ffffff" aria-label="Fill colour">
@@ -1164,7 +1174,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-  <script src="script.js?v=5635"></script>
+  <script src="script.js?v=5637"></script>
   <script src="from-pdf-converter.js?v=4600"></script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>
