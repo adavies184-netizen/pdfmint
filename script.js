@@ -4225,7 +4225,9 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
   button.textContent = 'Preparing…';
 
   try {
-    if (await hasUnlimitedPaidAccess()) {
+    // A file opened from My Files is already inside an authenticated member
+    // workflow. Bypass the public paywall before it is ever rendered.
+    if (isDashboardEditorSession() || await hasUnlimitedPaidAccess()) {
       const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
       closeFormatModal();
       await exportEditedDocument(format);
