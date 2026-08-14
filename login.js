@@ -66,6 +66,9 @@
     catch (error) { setMessage(message, auth.messageFor(error), true); button.disabled = false; }
   }));
 
-  auth.ready.then(({ user }) => { if (user) location.replace(returnTo); });
+  auth.ready.then(({ user }) => {
+    if (user) { location.replace(returnTo); return; }
+    document.documentElement.classList.remove('auth-checking');
+  }).catch(() => document.documentElement.classList.remove('auth-checking'));
   setMode(mode);
 })();

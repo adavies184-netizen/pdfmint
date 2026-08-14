@@ -100,6 +100,8 @@
   const closeDrawer = () => {
     drawer?.classList.remove('open');
     drawer?.setAttribute('aria-hidden','true');
+    const backdrop = document.querySelector('[data-close-drawer-backdrop]');
+    if (backdrop) backdrop.hidden = true;
     document.querySelectorAll('[data-dashboard-menu]').forEach(button => button.classList.remove('active'));
   };
   const openDrawer = (name) => {
@@ -114,6 +116,8 @@
     drawerTools.querySelectorAll('[data-drawer-tool]').forEach((button,index) => button.addEventListener('click', () => openDocumentPicker(menu.tools[index])));
     drawer.classList.add('open');
     drawer.setAttribute('aria-hidden','false');
+    const backdrop = document.querySelector('[data-close-drawer-backdrop]');
+    if (backdrop) backdrop.hidden = false;
   };
   window.openDashboardMenu = openDrawer;
   document.querySelectorAll('[data-dashboard-menu]').forEach(button => button.addEventListener('click', event => {
@@ -121,6 +125,7 @@
     openDrawer(button.dataset.dashboardMenu);
   }));
   drawer?.querySelector('[data-close-drawer]')?.addEventListener('click', closeDrawer);
+  document.querySelector('[data-close-drawer-backdrop]')?.addEventListener('click', closeDrawer);
 
   const directTools = {
     sign: ['Sign PDF','Add an electronic signature','i-sign','sign',''],
@@ -361,8 +366,17 @@
     const records = await getDashboardFiles();
     const recent = document.querySelector('[data-recent-files]');
     recent?.querySelectorAll('.dynamic-file-row').forEach(row => row.remove());
+    recent?.querySelectorAll('.file-row:not(.file-head):not(.dynamic-file-row)').forEach(row => row.remove());
     const head = recent?.querySelector('.file-head');
-    records.slice(0,12).reverse().forEach(record => {
+    const pagination = document.querySelector('[data-file-pagination]');
+    const pageSize = 10;
+    const pageCount = Math.max(1, Math.ceil(records.length / pageSize));
+    let currentPage = Math.min(Number(pagination?.dataset.page || 1), pageCount);
+    const renderPage = page => {
+      currentPage = page;
+      if (pagination) pagination.dataset.page = String(page);
+      recent?.querySelectorAll('.dynamic-file-row').forEach(row => row.remove());
+      records.slice((page - 1) * pageSize, page * pageSize).reverse().forEach(record => {
       const extension = String(record.name).split('.').pop().slice(0,4).toUpperCase();
       const row = document.createElement('div');
       row.className = 'file-row dynamic-file-row';
@@ -370,7 +384,14 @@
       row.innerHTML = `<span class="file-name"><i>${extension}</i><b></b></span><span>${formatBytes(record.size)}</span><span>${new Date(record.lastModified).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</span><button aria-label="File options">•••</button>`;
       row.querySelector('b').textContent = record.name;
       head?.insertAdjacentElement('afterend',row);
-    });
+      });
+      if (pagination) {
+        pagination.hidden = pageCount <= 1;
+        pagination.innerHTML = pageCount <= 1 ? '' : Array.from({length:pageCount},(_,index) => `<button type="button" data-file-page="${index + 1}" class="${index + 1 === page ? 'active' : ''}" aria-label="Show files page ${index + 1}" ${index + 1 === page ? 'aria-current="page"' : ''}>${index + 1}</button>`).join('');
+        pagination.querySelectorAll('[data-file-page]').forEach(button => button.addEventListener('click', () => renderPage(Number(button.dataset.filePage))));
+      }
+    };
+    renderPage(currentPage);
     const pickerFiles = document.querySelector('[data-picker-files]');
     pickerFiles?.querySelectorAll('[data-stored-file]').forEach(button => button.remove());
     records.slice(0,8).reverse().forEach(record => {
