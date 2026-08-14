@@ -6536,7 +6536,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const status = document.getElementById('contact-form-status');
   const button = form.querySelector('.contact-submit-button');
 
-  form.addEventListener('submit', event => {
+  form.addEventListener('submit', async event => {
     event.preventDefault();
     const name = form.querySelector('#contact-name')?.value.trim() || '';
     const email = form.querySelector('#contact-email')?.value.trim() || '';
@@ -6554,10 +6554,16 @@ document.addEventListener('DOMContentLoaded', () => {
     status.hidden = false;
     status.className = 'contact-form-status success';
     status.textContent = 'Opening your email app to send this message to PDFBreeze Support…';
+    status.textContent = 'Sending your message…';
     button.disabled = true;
-    const body = `Name: ${name}\nAccount email: ${email}\n\n${message}`;
-    window.location.href = `mailto:support@pdfbreeze.net?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-    setTimeout(() => { button.disabled = false; status.textContent = 'Please send the prepared email to complete your request.'; }, 1200);
+    try {
+      const engine = (window.PDFMintConfig?.engineBaseUrl || '').replace(/\/$/, '');
+      const response = await fetch(`${engine}/v1/support/message`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,subject,message,source:'contact-page',website:form.elements.website?.value || ''})});
+      if (!response.ok) throw new Error();
+      form.reset(); status.textContent = 'Your message has been sent. PDFBreeze Support will reply by email.';
+    } catch (_) {
+      status.className = 'contact-form-status error'; status.textContent = 'Your message could not be sent. Please try again.';
+    } finally { button.disabled = false; }
   });
 });
 
