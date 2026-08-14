@@ -65,6 +65,7 @@ let editor = {
   selectedAnnotationId: null,
   canvasMetrics: null,
   extractedText: {},
+  embeddedFonts: {},
   selectedExistingTextId: null,
   editTextBoxMode: false,
   editCreatedText: {},
@@ -239,7 +240,7 @@ async function loadEditorPdf(file) {
   clearAlert();
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
-    const pdfjs = await pdfjsLib.getDocument({data: bytes.slice()}).promise;
+    const pdfjs = await pdfjsLib.getDocument({data: bytes.slice(), fontExtraProperties: true}).promise;
     editor = {
       file,
       originalBytes: bytes,
@@ -256,6 +257,7 @@ async function loadEditorPdf(file) {
       selectedAnnotationId: null,
       canvasMetrics: null,
       extractedText: {},
+      embeddedFonts: {},
       selectedExistingTextId: null,
       editTextBoxMode: false,
       editCreatedText: {},
@@ -486,6 +488,55 @@ function approximatePdfFont(fontName = '') {
   return {font, bold, italic};
 }
 
+async function loadExactPdfFont(page, fontName) {
+  if (!fontName) return null;
+  if (Object.prototype.hasOwnProperty.call(editor.embeddedFonts, fontName)) {
+    return editor.embeddedFonts[fontName];
+  }
+
+  try {
+    const pdfFont = page.commonObjs.get(fontName);
+    const rawData = pdfFont?.data;
+    const data = rawData
+      ? new Uint8Array(rawData.buffer
+        ? rawData.buffer.slice(rawData.byteOffset, rawData.byteOffset + rawData.byteLength)
+        : rawData)
+      : null;
+    const family = `PDFBreezeExact_${fontName.replace(/[^a-z0-9_-]/gi, '_')}`;
+    const entry = {
+      family,
+      name: pdfFont?.name || fontName,
+      data,
+      ascent: Number.isFinite(pdfFont?.ascent) ? pdfFont.ascent : null,
+      descent: Number.isFinite(pdfFont?.descent) ? pdfFont.descent : null
+    };
+
+    if (data?.length && window.FontFace && document.fonts) {
+      const face = new FontFace(family, data);
+      await face.load();
+      document.fonts.add(face);
+      entry.face = face;
+    }
+
+    editor.embeddedFonts[fontName] = entry;
+    return entry;
+  } catch (error) {
+    console.warn(`PDFBreeze could not load embedded PDF font ${fontName}.`, error);
+    editor.embeddedFonts[fontName] = null;
+    return null;
+  }
+}
+
+function cssFamilyForExistingText(item) {
+  const exact = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
+  if (exact?.face) return `"${exact.family}"`;
+  return item.font === 'TimesRoman'
+    ? '"Times New Roman", Times, serif'
+    : item.font === 'Courier'
+      ? '"Courier New", monospace'
+      : 'Helvetica, Arial, sans-serif';
+}
+
 async function ensureExistingTextForCurrentPage() {
   const sourceIndex = getCurrentSourcePageIndex();
   if (sourceIndex === null) return [];
@@ -495,6 +546,9 @@ async function ensureExistingTextForCurrentPage() {
 
   const page = await editor.pdfjs.getPage(sourceIndex + 1);
   const textContent = await page.getTextContent();
+  await page.getOperatorList();
+  const fontNames = [...new Set(textContent.items.map(item => item.fontName).filter(Boolean))];
+  await Promise.all(fontNames.map(fontName => loadExactPdfFont(page, fontName)));
   const viewport = page.getViewport({scale: 1});
 
   const runs = textContent.items
@@ -505,7 +559,14 @@ async function ensureExistingTextForCurrentPage() {
       const tx = pdfjsLib.Util.transform(viewport.transform, textItem.transform);
       const fontHeight = Math.max(5, Math.hypot(tx[2], tx[3]));
       const rawX = tx[4];
-      const rawTop = tx[5] - fontHeight;
+      const textStyle = textContent.styles?.[textItem.fontName] || {};
+      const exactFont = editor.embeddedFonts[textItem.fontName];
+      const ascent = Number.isFinite(textStyle.ascent)
+        ? textStyle.ascent
+        : Number.isFinite(exactFont?.ascent)
+          ? exactFont.ascent
+          : 1;
+      const rawTop = tx[5] - fontHeight * ascent;
       const rawWidth = Math.max(1, Math.abs(textItem.width || 0));
       const x = Math.max(0, Math.min(viewport.width, rawX));
       const right = Math.max(0, Math.min(viewport.width, rawX + rawWidth));
@@ -531,6 +592,7 @@ async function ensureExistingTextForCurrentPage() {
         pdfY: textItem.transform[5],
         pdfFontSize: Math.max(5, Math.hypot(textItem.transform[0], textItem.transform[1])),
         fontName: textItem.fontName || '',
+        exactFontKey: exactFont?.data?.length ? textItem.fontName : '',
         font: style.font,
         bold: style.bold,
         italic: style.italic
@@ -594,7 +656,7 @@ async function ensureExistingTextForCurrentPage() {
       : false;
     const previousFirstRun = paragraphCandidate?.firstRun;
     const sameFontFamily = previousFirstRun
-      ? previousFirstRun.font === firstRun.font
+      ? (previousFirstRun.exactFontKey || previousFirstRun.font) === (firstRun.exactFontKey || firstRun.font)
       : false;
     const similarFontSize = previousFirstRun
       ? Math.abs(previousFirstRun.pdfFontSize - firstRun.pdfFontSize) <= Math.max(1.2, firstRun.pdfFontSize * .14)
@@ -641,33 +703,38 @@ async function ensureExistingTextForCurrentPage() {
     const measurementCanvas = document.createElement('canvas');
     const measurementContext = measurementCanvas.getContext('2d');
 
-    // PDF fonts are frequently embedded, subsetted or condensed. The browser
-    // fallback can therefore be visibly wider than the text painted by the
-    // PDF even when both use the same nominal point size. Fit the fallback to
-    // the widest extracted line once so opening a paragraph for editing does
-    // not enlarge it or introduce additional, artificial line wrapping.
-    const editingFamily =
-      firstRun.font === 'TimesRoman' ? 'Times New Roman' :
-      firstRun.font === 'Courier' ? 'Courier New' :
-      'Arial';
+    const exactEntry = firstRun.exactFontKey && editor.embeddedFonts[firstRun.exactFontKey];
+    const editingFamily = exactEntry?.face
+      ? exactEntry.family
+      : firstRun.font === 'TimesRoman' ? 'Times New Roman'
+        : firstRun.font === 'Courier' ? 'Courier New'
+          : 'Arial';
     measurementContext.font =
       `${firstRun.italic ? 'italic ' : ''}${firstRun.bold ? '700 ' : '400 '}` +
       `${firstRun.pdfFontSize}px "${editingFamily}"`;
-    const widestFallbackLine = Math.max(
-      1,
-      ...paragraph.lines.map(({text}) => measurementContext.measureText(text).width)
+    const fittedPdfFontSize = firstRun.pdfFontSize;
+    const lineWidths = paragraph.lines.map(({line}) => Math.max(1, line.right - line.left));
+    const lineOffsets = paragraph.lines.map(({line}) => line.left - paragraph.left);
+    const lineScaleSamples = paragraph.lines.map(({text}, lineIndex) => {
+      const measuredWidth = Math.max(.01, measurementContext.measureText(text).width);
+      return lineWidths[lineIndex] / measuredWidth;
+    });
+    const fontScaleX = Math.max(
+      .5,
+      Math.min(2, lineScaleSamples.reduce((sum, value) => sum + value, 0) / Math.max(1, lineScaleSamples.length))
     );
-    const fittedPdfFontSize = firstRun.pdfFontSize * Math.min(1, width / widestFallbackLine);
 
     paragraph.lines.forEach(({line}, paragraphLineIndex) => {
       line.runs.forEach(run => {
         const characters = Array.from(String(run.text || ''));
         if (!characters.length) return;
 
-        const family =
-          run.font === 'TimesRoman' ? 'Times New Roman' :
-          run.font === 'Courier' ? 'Courier New' :
-          'Arial';
+        const runExactEntry = run.exactFontKey && editor.embeddedFonts[run.exactFontKey];
+        const family = runExactEntry?.face
+          ? runExactEntry.family
+          : run.font === 'TimesRoman' ? 'Times New Roman'
+            : run.font === 'Courier' ? 'Courier New'
+              : 'Arial';
 
         measurementContext.font =
           `${run.italic ? 'italic ' : ''}${run.bold ? '700 ' : '400 '}${run.height}px "${family}"`;
@@ -749,7 +816,11 @@ async function ensureExistingTextForCurrentPage() {
       pdfWidth: width,
       pdfFontSize: firstRun.pdfFontSize,
       fittedPdfFontSize,
+      fontScaleX,
+      lineWidths,
+      lineOffsets,
       fontName: firstRun.fontName,
+      exactFontKey: firstRun.exactFontKey || '',
       font: firstRun.font,
       bold: firstRun.bold,
       italic: firstRun.italic,
@@ -819,10 +890,10 @@ function startExistingTextResize(event, item, side, box, content) {
       whiteout.dataset.for = item.id;
       document.getElementById('annotation-layer').insertBefore(whiteout, box);
     }
-    whiteout.style.left = `${item.originalX * metrics.width}px`;
-    whiteout.style.top = `${item.originalY * metrics.height}px`;
-    whiteout.style.width = `${item.originalW * metrics.width}px`;
-    whiteout.style.height = `${Math.max(16, item.originalH * metrics.height)}px`;
+    whiteout.style.left = `${item.originalX * metrics.width - 3}px`;
+    whiteout.style.top = `${item.originalY * metrics.height - 3}px`;
+    whiteout.style.width = `${item.originalW * metrics.width + 6}px`;
+    whiteout.style.height = `${Math.max(16, item.originalH * metrics.height) + 6}px`;
 
     const requiredHeight = Math.max(
       item.h * metrics.height,
@@ -1377,10 +1448,10 @@ function renderExistingTextBoxes(layer, metrics) {
       const whiteout = document.createElement('div');
       whiteout.className = 'existing-text-whiteout';
       whiteout.dataset.for = item.id;
-      whiteout.style.left = `${item.originalX * metrics.width}px`;
-      whiteout.style.top = `${item.originalY * metrics.height}px`;
-      whiteout.style.width = `${item.originalW * metrics.width}px`;
-      whiteout.style.height = `${Math.max(16, item.originalH * metrics.height)}px`;
+      whiteout.style.left = `${item.originalX * metrics.width - 3}px`;
+      whiteout.style.top = `${item.originalY * metrics.height - 3}px`;
+      whiteout.style.width = `${item.originalW * metrics.width + 6}px`;
+      whiteout.style.height = `${Math.max(16, item.originalH * metrics.height) + 6}px`;
       layer.appendChild(whiteout);
     }
 
@@ -1400,19 +1471,17 @@ function renderExistingTextBoxes(layer, metrics) {
     if (item.html) content.innerHTML = item.html;
     else content.textContent = item.text;
     content.spellcheck = false;
-    content.style.fontFamily = item.font === 'TimesRoman'
-      ? '"Times New Roman", Times, serif'
-      : item.font === 'Courier'
-        ? '"Courier New", monospace'
-        : 'Helvetica, Arial, sans-serif';
+    content.style.fontFamily = cssFamilyForExistingText(item);
     content.style.fontWeight = item.bold ? '700' : '400';
     content.style.fontStyle = item.italic ? 'italic' : 'normal';
-    const visualPdfFontSize = item.fontSizeChanged
-      ? item.pdfFontSize
-      : (item.fittedPdfFontSize || item.pdfFontSize);
+    const visualPdfFontSize = item.pdfFontSize;
     content.style.fontSize = `${Math.max(4, visualPdfFontSize * metrics.scale)}px`;
     content.style.lineHeight = `${Math.max(5, item.lineHeight * metrics.scale)}px`;
     content.style.color = item.color || '#111827';
+    const horizontalScale = Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+    content.style.transformOrigin = 'left top';
+    content.style.transform = `scaleX(${horizontalScale})`;
+    content.style.width = `${100 / horizontalScale}%`;
 
     const placeCaretAtPoint = (clientX, clientY) => {
       let range = null;
@@ -1450,6 +1519,18 @@ function renderExistingTextBoxes(layer, metrics) {
       content.setAttribute('contenteditable', 'plaintext-only');
       if (content.contentEditable !== 'plaintext-only') content.setAttribute('contenteditable', 'true');
       content.style.removeProperty('display');
+
+      let whiteout = document.querySelector(`.existing-text-whiteout[data-for="${item.id}"]`);
+      if (!whiteout) {
+        whiteout = document.createElement('div');
+        whiteout.className = 'existing-text-whiteout';
+        whiteout.dataset.for = item.id;
+        box.parentElement.insertBefore(whiteout, box);
+      }
+      whiteout.style.left = `${item.originalX * metrics.width - 3}px`;
+      whiteout.style.top = `${item.originalY * metrics.height - 3}px`;
+      whiteout.style.width = `${item.originalW * metrics.width + 6}px`;
+      whiteout.style.height = `${Math.max(16, item.originalH * metrics.height) + 6}px`;
       syncEditTextToolbar();
 
       requestAnimationFrame(() => {
@@ -3511,7 +3592,55 @@ async function createEditedPdfBytes() {
   const output = await PDFLib.PDFDocument.create();
   const fontCache = {};
 
+  if (window.fontkit && typeof output.registerFontkit === 'function') {
+    output.registerFontkit(window.fontkit);
+  }
+
+  async function createExistingTextPng(item, lines, width, height, fontSize, lineHeight, baselineOffset) {
+    const exactEntry = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
+    if (!exactEntry?.face) return null;
+
+    await exactEntry.face.loaded;
+    const pixelScale = 4;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.ceil(width * pixelScale));
+    canvas.height = Math.max(1, Math.ceil(height * pixelScale));
+    const context = canvas.getContext('2d');
+    context.scale(pixelScale, pixelScale);
+    context.textBaseline = 'alphabetic';
+    context.textAlign = 'left';
+    context.fillStyle = item.color || '#111827';
+    context.font = `${fontSize}px "${exactEntry.family}"`;
+
+    lines.forEach((line, index) => {
+      const measuredWidth = Math.max(.01, context.measureText(line).width);
+      const requestedWidth = Number(item.lineWidths?.[index]);
+      const lineScaleX = Number.isFinite(requestedWidth) && requestedWidth > 0
+        ? requestedWidth / measuredWidth
+        : Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+      const lineOffset = Number.isFinite(Number(item.lineOffsets?.[index]))
+        ? Number(item.lineOffsets[index])
+        : 0;
+      context.save();
+      context.translate(lineOffset, baselineOffset + index * lineHeight);
+      context.scale(lineScaleX, 1);
+      context.fillText(line, 0, 0);
+      context.restore();
+    });
+
+    return output.embedPng(canvas.toDataURL('image/png'));
+  }
+
   async function getFont(item) {
+    const exactEntry = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
+    if (exactEntry?.data?.length && window.fontkit) {
+      const exactKey = `exact:${item.exactFontKey}`;
+      if (!fontCache[exactKey]) {
+        fontCache[exactKey] = await output.embedFont(exactEntry.data, {subset: false});
+      }
+      return fontCache[exactKey];
+    }
+
     const sansFonts = ['Helvetica','Arial','Verdana','Tahoma','Trebuchet','Impact','ComicSans'];
     const serifFonts = ['TimesRoman','Georgia','Garamond'];
     const monoFonts = ['Courier','LucidaConsole'];
@@ -3590,23 +3719,44 @@ async function createEditedPdfBytes() {
     }
 
     for (const item of existingEdits) {
-      const font = await getFont(item);
       const fontSize = item.pdfFontSize || 12;
       const targetWidth = Math.max(10, item.w * width);
-      const lineHeight = fontSize * 1.15;
+      const lineHeight = item.lineHeight || fontSize * 1.15;
       const x = Math.max(0, item.x * width);
-      const topY = height - item.y * height;
+      const firstBaselineY = Number.isFinite(item.pdfY)
+        ? item.pdfY
+        : height - item.y * height - fontSize;
+      const replacementTopY = height - item.y * height;
 
       const rawLines = String(item.text || '').split(/\r?\n/);
       const wrappedLines = [];
 
+      const exactEntry = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
+      const measurementCanvas = document.createElement('canvas');
+      const measurementContext = measurementCanvas.getContext('2d');
+      measurementContext.font = exactEntry?.face
+        ? `${fontSize}px "${exactEntry.family}"`
+        : `${fontSize}px Helvetica`;
+
+      const fallbackFont = exactEntry?.face ? null : await getFont(item);
+
       for (const rawLine of rawLines) {
+        if (exactEntry?.face) {
+          // PDF.js has already reconstructed the document's visual line breaks.
+          // Preserve them verbatim for embedded-font edits; re-wrapping with a
+          // second metrics engine introduces different breaks and vertical drift.
+          wrappedLines.push(rawLine);
+          continue;
+        }
         const words = rawLine.split(/\s+/);
         let current = '';
 
         for (const word of words) {
           const test = current ? `${current} ${word}` : word;
-          if (font.widthOfTextAtSize(test, fontSize) > targetWidth && current) {
+          const measuredWidth = exactEntry?.face
+            ? measurementContext.measureText(test).width
+            : fallbackFont.widthOfTextAtSize(test, fontSize);
+          if (measuredWidth > targetWidth && current) {
             wrappedLines.push(current);
             current = word;
           } else {
@@ -3641,26 +3791,46 @@ async function createEditedPdfBytes() {
       if (replacementHeight > originalHeight) {
         page.drawRectangle({
           x: Math.max(0, x - 2),
-          y: Math.max(0, topY - replacementHeight - 2),
+          y: Math.max(0, replacementTopY - replacementHeight - 2),
           width: Math.min(width - x + 2, targetWidth + 4),
           height: replacementHeight + 4,
           color: PDFLib.rgb(1, 1, 1)
         });
       }
 
-      wrappedLines.forEach((line, lineIndex) => {
-        page.drawText(line, {
+      const baselineOffset = Math.max(0, replacementTopY - firstBaselineY);
+      const exactTextImage = await createExistingTextPng(
+        item,
+        wrappedLines,
+        targetWidth,
+        replacementHeight,
+        fontSize,
+        lineHeight,
+        baselineOffset
+      );
+
+      if (exactTextImage) {
+        page.drawImage(exactTextImage, {
           x,
-          y: topY - fontSize - lineIndex * lineHeight,
-          size: fontSize,
-          font,
-          color: (() => {
-            const c = hexToRgb01(item.color || '#111827');
-            return PDFLib.rgb(c.r, c.g, c.b);
-          })(),
-          maxWidth: targetWidth
+          y: replacementTopY - replacementHeight,
+          width: targetWidth,
+          height: replacementHeight
         });
-      });
+      } else {
+        wrappedLines.forEach((line, lineIndex) => {
+          page.drawText(line, {
+            x,
+            y: firstBaselineY - lineIndex * lineHeight,
+            size: fontSize,
+            font: fallbackFont,
+            color: (() => {
+              const c = hexToRgb01(item.color || '#111827');
+              return PDFLib.rgb(c.r, c.g, c.b);
+            })(),
+            maxWidth: targetWidth
+          });
+        });
+      }
     }
 
     const createdEditItems = getEditCreatedTextItems(state.sourceIndex);

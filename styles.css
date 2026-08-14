@@ -631,6 +631,15 @@ html,body{max-width:100%;overflow-x:hidden}
   background:#fff;
 }
 
+/* Exact embedded-font editing: the original PDF text is white-backed while
+   the real document font supplies both visible glyphs and caret metrics. */
+.existing-text-box.editing:not(.modified){background:#fff}
+.existing-text-box.editing:not(.modified) .existing-text-content{
+  color:#111827!important;
+  caret-color:#111827;
+  text-shadow:none;
+}
+
 
 /* PDFBreeze v2.4 — Edit Text secondary toolbar */
 .edit-text-options-bar{
