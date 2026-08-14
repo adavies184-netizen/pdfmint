@@ -6553,9 +6553,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     status.hidden = false;
     status.className = 'contact-form-status success';
-    status.textContent = 'Thanks for contacting PDFBreeze. Your message is ready to send.';
+    status.textContent = 'Opening your email app to send this message to PDFBreeze Support…';
     button.disabled = true;
-    setTimeout(() => button.disabled = false, 1200);
+    const body = `Name: ${name}\nAccount email: ${email}\n\n${message}`;
+    window.location.href = `mailto:support@pdfbreeze.net?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    setTimeout(() => { button.disabled = false; status.textContent = 'Please send the prepared email to complete your request.'; }, 1200);
   });
 });
 

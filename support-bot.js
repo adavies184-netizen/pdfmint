@@ -7,7 +7,7 @@
   const compose = layer.querySelector('[data-support-compose]');
   const messages = layer.querySelector('[data-support-messages]');
   const suggestions = layer.querySelector('[data-support-suggestions]');
-  const quickQuestions = ['How do I cancel?', 'Where are my files?', 'When will I be charged?', 'How do I reset my password?'];
+  const quickQuestions = ['How do I cancel?', 'Where are my files?', 'When will I be charged?', 'How do I reset my password?', 'Send support a message'];
 
   const answers = [
     { terms: ['cancel','stop subscription','end subscription'], html: 'You can cancel from <b>My account → Membership → Cancel plan</b>. Your access continues until the end of your current trial or billing period, and no further renewal will be taken.' },
@@ -21,6 +21,7 @@
     { terms: ['edit','editor','change pdf'], html: 'Choose <b>Edit PDF</b>, upload or select a saved PDF, make your changes and press <b>Done</b>. You can then choose the download format.' },
     { terms: ['compress','smaller','file size'], html: 'Choose <b>Compress PDF</b>, select your file and then choose light, recommended or strong compression. Stronger compression creates a smaller file but may reduce image quality.' },
     { terms: ['privacy','secure','security','safe'], html: 'PDFBreeze uses authenticated private accounts for saved documents. You can review the <a href="privacy-policy.html">Privacy Policy</a> for full details. Never share passwords or complete payment-card information in support messages.' }
+    ,{ terms: ['send support a message','contact support','human support'], html: 'You can send a message directly to our support team at <a href="mailto:support@pdfbreeze.net?subject=PDFBreeze%20support%20request">support@pdfbreeze.net</a>. Include the email linked to your account, but never include card details or your password.' }
   ];
 
   const addMessage = (content, role) => {
@@ -51,7 +52,7 @@
     const normalised = question.toLowerCase();
     const match = answers.find(item => item.terms.some(term => normalised.includes(term)));
     const typing = showTyping();
-    const delay = Math.min(850, Math.max(420, question.length * 16));
+    const delay = Math.min(1275, Math.max(630, question.length * 24));
     window.setTimeout(() => {
       typing.remove();
       addMessage(match?.html || 'I do not have an approved answer for that yet. Please use <a href="contact.html">Contact support</a> and the PDFBreeze team will help you.', 'bot');
