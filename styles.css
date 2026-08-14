@@ -593,6 +593,32 @@ html,body{max-width:100%;overflow-x:hidden}
   display:none;
 }
 
+/* PDFBreeze v2.5 — preserve PDF paragraph geometry while editing */
+.existing-text-box.selected:not(.editing):not(.modified){
+  background:rgba(82,104,255,.035);
+  color:transparent;
+}
+.existing-text-box.selected:not(.editing):not(.modified) .existing-text-content{
+  display:none;
+}
+.existing-text-box.editing,
+.existing-text-box.modified{
+  overflow:visible;
+}
+.existing-text-box.editing .existing-text-content,
+.existing-text-box.modified .existing-text-content{
+  box-sizing:border-box;
+  width:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  white-space:pre-wrap;
+  overflow-wrap:normal;
+  word-break:normal;
+  font-kerning:normal;
+  font-variant-ligatures:normal;
+}
+
 
 /* PDFBreeze v2.4 — Edit Text secondary toolbar */
 .edit-text-options-bar{

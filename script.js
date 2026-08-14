@@ -641,6 +641,24 @@ async function ensureExistingTextForCurrentPage() {
     const measurementCanvas = document.createElement('canvas');
     const measurementContext = measurementCanvas.getContext('2d');
 
+    // PDF fonts are frequently embedded, subsetted or condensed. The browser
+    // fallback can therefore be visibly wider than the text painted by the
+    // PDF even when both use the same nominal point size. Fit the fallback to
+    // the widest extracted line once so opening a paragraph for editing does
+    // not enlarge it or introduce additional, artificial line wrapping.
+    const editingFamily =
+      firstRun.font === 'TimesRoman' ? 'Times New Roman' :
+      firstRun.font === 'Courier' ? 'Courier New' :
+      'Arial';
+    measurementContext.font =
+      `${firstRun.italic ? 'italic ' : ''}${firstRun.bold ? '700 ' : '400 '}` +
+      `${firstRun.pdfFontSize}px "${editingFamily}"`;
+    const widestFallbackLine = Math.max(
+      1,
+      ...paragraph.lines.map(({text}) => measurementContext.measureText(text).width)
+    );
+    const fittedPdfFontSize = firstRun.pdfFontSize * Math.min(1, width / widestFallbackLine);
+
     paragraph.lines.forEach(({line}, paragraphLineIndex) => {
       line.runs.forEach(run => {
         const characters = Array.from(String(run.text || ''));
@@ -730,6 +748,7 @@ async function ensureExistingTextForCurrentPage() {
       pdfY: firstRun.pdfY,
       pdfWidth: width,
       pdfFontSize: firstRun.pdfFontSize,
+      fittedPdfFontSize,
       fontName: firstRun.fontName,
       font: firstRun.font,
       bold: firstRun.bold,
@@ -1350,10 +1369,11 @@ function renderExistingTextBoxes(layer, metrics) {
   getExistingTextItems(sourceIndex).forEach(item => {
     const isSelected = item.id === editor.selectedExistingTextId;
     const isModified = Boolean(item.modified);
+    const isEditing = Boolean(item.editing);
 
     // Whenever the text is selected, resized or edited, hide the original PDF
     // text beneath the complete original paragraph area.
-    if (isSelected || isModified) {
+    if (isEditing || isModified) {
       const whiteout = document.createElement('div');
       whiteout.className = 'existing-text-whiteout';
       whiteout.dataset.for = item.id;
@@ -1368,6 +1388,7 @@ function renderExistingTextBoxes(layer, metrics) {
     box.className = 'existing-text-box';
     if (isSelected) box.classList.add('selected');
     if (isModified) box.classList.add('modified');
+    if (isEditing) box.classList.add('editing');
     box.dataset.id = item.id;
     box.style.left = `${item.x * metrics.width}px`;
     box.style.top = `${item.y * metrics.height}px`;
@@ -1386,8 +1407,56 @@ function renderExistingTextBoxes(layer, metrics) {
         : 'Helvetica, Arial, sans-serif';
     content.style.fontWeight = item.bold ? '700' : '400';
     content.style.fontStyle = item.italic ? 'italic' : 'normal';
-    content.style.fontSize = `${Math.max(4, item.pdfFontSize * metrics.scale)}px`;
+    const visualPdfFontSize = item.fontSizeChanged
+      ? item.pdfFontSize
+      : (item.fittedPdfFontSize || item.pdfFontSize);
+    content.style.fontSize = `${Math.max(4, visualPdfFontSize * metrics.scale)}px`;
+    content.style.lineHeight = `${Math.max(5, item.lineHeight * metrics.scale)}px`;
     content.style.color = item.color || '#111827';
+
+    const placeCaretAtPoint = (clientX, clientY) => {
+      let range = null;
+      if (document.caretPositionFromPoint) {
+        const position = document.caretPositionFromPoint(clientX, clientY);
+        if (position && content.contains(position.offsetNode)) {
+          range = document.createRange();
+          range.setStart(position.offsetNode, position.offset);
+          range.collapse(true);
+        }
+      } else if (document.caretRangeFromPoint) {
+        const candidate = document.caretRangeFromPoint(clientX, clientY);
+        if (candidate && content.contains(candidate.startContainer)) range = candidate;
+      }
+
+      if (!range) {
+        range = document.createRange();
+        range.selectNodeContents(content);
+        range.collapse(false);
+      }
+
+      const selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+    };
+
+    const beginEditing = event => {
+      event.preventDefault();
+      event.stopPropagation();
+      selectExistingText(item.id);
+      editor.selectedEditCreatedTextId = null;
+      if (!item.editing) recordHistory();
+      item.editing = true;
+      box.classList.add('selected', 'editing');
+      content.setAttribute('contenteditable', 'plaintext-only');
+      if (content.contentEditable !== 'plaintext-only') content.setAttribute('contenteditable', 'true');
+      content.style.display = 'block';
+      syncEditTextToolbar();
+
+      requestAnimationFrame(() => {
+        content.focus({preventScroll: true});
+        placeCaretAtPoint(event.clientX, event.clientY);
+      });
+    };
 
     const leftHandle = document.createElement('span');
     leftHandle.className = 'existing-handle left-handle';
@@ -1397,39 +1466,17 @@ function renderExistingTextBoxes(layer, metrics) {
     box.append(content, leftHandle, rightHandle);
 
     box.addEventListener('click', event => {
-      event.stopPropagation();
-      if (box.classList.contains('editing')) return;
-      selectExistingText(item.id);
-      editor.selectedEditCreatedTextId = null;
-      syncEditTextToolbar();
+      if (box.classList.contains('editing')) {
+        event.stopPropagation();
+        return;
+      }
+      beginEditing(event);
     });
 
     box.addEventListener('dblclick', event => {
-      event.preventDefault();
+      // Once the first click has enabled content editing, leave the browser's
+      // native double-click word selection intact.
       event.stopPropagation();
-
-      selectExistingText(item.id);
-      recordHistory();
-
-      // Mark modified immediately so the replacement overlay remains visible
-      // after the user clicks away, even when only deleting text.
-      item.modified = true;
-      box.classList.add('selected', 'editing', 'modified');
-      content.setAttribute('contenteditable', 'plaintext-only');
-      if (content.contentEditable !== 'plaintext-only') {
-        content.setAttribute('contenteditable', 'true');
-      }
-      content.style.display = 'block';
-
-      requestAnimationFrame(() => {
-        content.focus({preventScroll: true});
-        const range = document.createRange();
-        range.selectNodeContents(content);
-        range.collapse(false);
-        const selection = window.getSelection();
-        selection.removeAllRanges();
-        selection.addRange(range);
-      });
     });
 
     content.addEventListener('mousedown', event => {
@@ -1462,16 +1509,19 @@ function renderExistingTextBoxes(layer, metrics) {
 
       content.removeAttribute('contenteditable');
       box.classList.remove('editing');
-      box.classList.add('modified');
+      item.editing = false;
 
       item.text = content.innerText.replace(/\r/g, '');
-      item.modified = true;
+      item.modified = item.modified || item.text !== item.originalText;
+      box.classList.toggle('modified', item.modified);
 
       const requiredHeight = Math.max(16, content.scrollHeight);
       box.style.minHeight = `${requiredHeight}px`;
       item.h = Math.min(1 - item.y, requiredHeight / metrics.height);
 
-      // Keep the replacement visible. Do not restore the original PDF text.
+      // Unchanged paragraphs return to the exact PDF rendering. Edited
+      // paragraphs retain the fitted replacement overlay.
+      renderAnnotations();
       refreshExistingTextSelectionClasses();
     });
 
@@ -4300,7 +4350,10 @@ document.getElementById('edit-text-font').addEventListener('change', event => {
 });
 
 document.getElementById('edit-text-size').addEventListener('change', event => {
-  updateEditTarget(item => item.pdfFontSize = Math.max(4, Math.min(200, Number(event.target.value) || 18)));
+  updateEditTarget(item => {
+    item.pdfFontSize = Math.max(4, Math.min(200, Number(event.target.value) || 18));
+    item.fontSizeChanged = true;
+  });
 });
 
 document.getElementById('edit-text-bold').addEventListener('click', () => {
