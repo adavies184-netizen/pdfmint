@@ -395,6 +395,30 @@
   const recordToFile = async record => record.remote
     ? window.PDFMintAuth.downloadDocument(record)
     : new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
+
+  async function openStoredRecord(record, tool) {
+    const entitlementKey = String(record.source_tool || '').startsWith('document-trial:')
+      ? String(record.source_tool).slice('document-trial:'.length)
+      : '';
+    selectedDashboardTool = tool;
+    await continueToDashboardTool(await recordToFile(record), {skipSave:true, alreadySaved:true, entitlementKey});
+  }
+
+  async function downloadStoredRecord(record) {
+    const file = await recordToFile(record);
+    downloadBlob(file, record.name);
+  }
+
+  function closeFileMenus(except = null) {
+    document.querySelectorAll('.file-action-menu.open').forEach(menu => {
+      if (menu !== except) menu.classList.remove('open');
+    });
+  }
+
+  document.addEventListener('pointerdown', event => {
+    if (!event.target.closest('.file-actions')) closeFileMenus();
+  });
+
   async function refreshDashboardFiles() {
     const records = await getDashboardFiles();
     const recent = document.querySelector('[data-recent-files]');
@@ -414,8 +438,30 @@
       const row = document.createElement('div');
       row.className = 'file-row dynamic-file-row';
       row.setAttribute('role','row');
-      row.innerHTML = `<span class="file-name"><i>${extension}</i><b></b></span><span>${formatBytes(record.size)}</span><span>${new Date(record.lastModified).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</span><button aria-label="File options">•••</button>`;
+      row.innerHTML = `<span class="file-name"><i>${extension}</i><b></b></span><span>${formatBytes(record.size)}</span><span>${new Date(record.lastModified).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}</span><span class="file-actions"><button class="file-quick-action" type="button" data-file-edit aria-label="Edit document"><svg><use href="#i-edit"></use></svg></button><button class="file-quick-action" type="button" data-file-download aria-label="Download document"><svg><use href="#i-upload"></use></svg></button><button class="file-more-action" type="button" data-file-more aria-label="More document actions">&#8226;&#8226;&#8226;</button><span class="file-action-menu" role="menu"><button type="button" data-file-tool="sign"><svg><use href="#i-sign"></use></svg>Sign document</button><button type="button" data-file-tool="edit"><svg><use href="#i-edit"></use></svg>Edit document</button><button type="button" data-file-tool="convert"><svg><use href="#i-convert"></use></svg>Convert to&hellip;</button><button type="button" data-file-tool="compress"><svg><use href="#i-compress"></use></svg>Compress</button><button type="button" data-file-tool="ocr"><svg><use href="#i-scan"></use></svg>OCR &amp; scan</button><i></i><button type="button" data-file-tool="download"><svg><use href="#i-upload"></use></svg>Download</button><button type="button" data-file-tool="organize"><svg><use href="#i-grid"></use></svg>Organise pages</button></span></span>`;
       row.querySelector('b').textContent = record.name;
+      row.querySelector('[data-file-edit]').addEventListener('click', () => openStoredRecord(record, ['Edit PDF','Update text and content','i-edit','edit','']));
+      row.querySelector('[data-file-download]').addEventListener('click', () => downloadStoredRecord(record));
+      const menu = row.querySelector('.file-action-menu');
+      row.querySelector('[data-file-more]').addEventListener('click', event => {
+        event.stopPropagation();
+        const opening = !menu.classList.contains('open');
+        closeFileMenus(menu);
+        menu.classList.toggle('open', opening);
+      });
+      const fileTools = {
+        sign: ['Sign PDF','Add an electronic signature','i-sign','sign',''],
+        edit: ['Edit PDF','Update text and content','i-edit','edit',''],
+        convert: ['Convert Files','Convert documents, images, audio and more','i-convert','convert-flow',''],
+        compress: ['Compress PDF','Reduce your PDF file size','i-compress','compress-flow',''],
+        ocr: ['OCR & Scan','Recognise text in a scanned PDF','i-scan','ocr-flow','ocr'],
+        organize: ['Organize Pages','Arrange and restructure your PDF pages','i-grid','manage','reorder']
+      };
+      menu.querySelectorAll('[data-file-tool]').forEach(button => button.addEventListener('click', async () => {
+        menu.classList.remove('open');
+        if (button.dataset.fileTool === 'download') await downloadStoredRecord(record);
+        else await openStoredRecord(record, fileTools[button.dataset.fileTool]);
+      }));
       head?.insertAdjacentElement('afterend',row);
       });
       if (pagination) {
