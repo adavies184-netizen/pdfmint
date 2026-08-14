@@ -1449,7 +1449,7 @@ function renderExistingTextBoxes(layer, metrics) {
       box.classList.add('selected', 'editing');
       content.setAttribute('contenteditable', 'plaintext-only');
       if (content.contentEditable !== 'plaintext-only') content.setAttribute('contenteditable', 'true');
-      content.style.display = 'block';
+      content.style.removeProperty('display');
       syncEditTextToolbar();
 
       requestAnimationFrame(() => {
@@ -1488,9 +1488,9 @@ function renderExistingTextBoxes(layer, metrics) {
     });
 
     content.addEventListener('input', () => {
-      item.text = content.innerText.replace(/\r/g, '');
-      item.modified = true;
-      box.classList.add('modified');
+      item.text = content.textContent.replace(/\r/g, '');
+      item.modified = item.text !== item.originalText || Boolean(item.html);
+      box.classList.toggle('modified', item.modified);
 
       const requiredHeight = Math.max(16, content.scrollHeight);
       box.style.minHeight = `${requiredHeight}px`;
@@ -1508,11 +1508,12 @@ function renderExistingTextBoxes(layer, metrics) {
       if (!box.classList.contains('editing')) return;
 
       content.removeAttribute('contenteditable');
+      content.style.removeProperty('display');
       box.classList.remove('editing');
       item.editing = false;
 
-      item.text = content.innerText.replace(/\r/g, '');
-      item.modified = item.modified || item.text !== item.originalText;
+      item.text = content.textContent.replace(/\r/g, '');
+      item.modified = item.text !== item.originalText || Boolean(item.html);
       box.classList.toggle('modified', item.modified);
 
       const requiredHeight = Math.max(16, content.scrollHeight);
@@ -3346,7 +3347,7 @@ document.getElementById('text-color').addEventListener('input', e => {
   updateSelectedText(item => item.color = e.target.value);
 });
 document.getElementById('text-color').addEventListener('change', recordHistory);
-document.getElementById('font-colour-button').addEventListener('click', event => {
+document.getElementById('font-colour-button')?.addEventListener('click', event => {
   event.stopPropagation();
   const menu = document.getElementById('font-colour-menu');
   menu.hidden = !menu.hidden;
@@ -3362,9 +3363,9 @@ document.querySelectorAll('[data-font-colour]').forEach(button => button.addEven
   document.getElementById('font-colour-menu').hidden = true;
   document.getElementById('font-colour-button').setAttribute('aria-expanded', 'false');
 }));
-document.getElementById('custom-font-colour').addEventListener('click', event => {
+document.getElementById('custom-font-colour')?.addEventListener('click', event => {
   event.stopPropagation();
-  document.getElementById('text-color').click();
+  document.getElementById('text-color')?.click();
 });
 document.addEventListener('click', event => {
   if (event.target.closest('.font-colour-option')) return;

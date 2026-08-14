@@ -612,11 +612,23 @@ html,body{max-width:100%;overflow-x:hidden}
   min-height:100%;
   margin:0;
   padding:0;
-  white-space:pre-wrap;
+  white-space:pre;
   overflow-wrap:normal;
   word-break:normal;
   font-kerning:normal;
   font-variant-ligatures:normal;
+}
+.existing-text-box.editing:not(.modified){
+  background:transparent;
+}
+.existing-text-box.editing:not(.modified) .existing-text-content{
+  color:transparent!important;
+  caret-color:#111827;
+  text-shadow:none;
+}
+.existing-text-box.editing.modified,
+.existing-text-box.modified{
+  background:#fff;
 }
 
 
