@@ -2478,7 +2478,7 @@ function startRotateAnnotation(event, item) {
   const centreX = layerRect.left + (item.x + item.w / 2) * metrics.width;
   const centreY = layerRect.top + (item.y + item.h / 2) * metrics.height;
   const move = e => {
-    item.rotation = Math.atan2(e.clientY - centreY, e.clientX - centreX) * 180 / Math.PI + 90;
+    item.rotation = Math.atan2(e.clientY - centreY, e.clientX - centreX) * 180 / Math.PI - 90;
     renderAnnotations();
   };
   const up = () => {
@@ -2543,6 +2543,11 @@ function syncTextInspector() {
   if (font) font.value = item.font || 'Helvetica';
   if (size) size.value = item.size || 18;
   if (colour) colour.value = item.color || '#111827';
+  const colourCircle = document.getElementById('font-colour-circle');
+  if (colourCircle) colourCircle.style.background = item.color || '#111827';
+  document.querySelectorAll('[data-font-colour]').forEach(button => {
+    button.classList.toggle('selected', button.dataset.fontColour.toLowerCase() === (item.color || '#111827').toLowerCase());
+  });
 
   const fillValue = item.fillColor && item.fillColor !== 'transparent' ? item.fillColor : '#ffffff';
   if (fill) fill.value = fillValue;
@@ -3287,9 +3292,36 @@ document.getElementById('text-size').addEventListener('change', e => {
   updateSelectedText(item => item.size = Math.max(8, Math.min(96, Number(e.target.value) || 18)));
 });
 document.getElementById('text-color').addEventListener('input', e => {
+  document.getElementById('font-colour-circle').style.background = e.target.value;
   updateSelectedText(item => item.color = e.target.value);
 });
 document.getElementById('text-color').addEventListener('change', recordHistory);
+document.getElementById('font-colour-button').addEventListener('click', event => {
+  event.stopPropagation();
+  const menu = document.getElementById('font-colour-menu');
+  menu.hidden = !menu.hidden;
+  event.currentTarget.setAttribute('aria-expanded', String(!menu.hidden));
+});
+document.querySelectorAll('[data-font-colour]').forEach(button => button.addEventListener('click', event => {
+  event.stopPropagation();
+  recordHistory();
+  const colour = button.dataset.fontColour;
+  document.getElementById('text-color').value = colour;
+  document.getElementById('font-colour-circle').style.background = colour;
+  updateSelectedText(item => item.color = colour);
+  document.getElementById('font-colour-menu').hidden = true;
+  document.getElementById('font-colour-button').setAttribute('aria-expanded', 'false');
+}));
+document.getElementById('custom-font-colour').addEventListener('click', event => {
+  event.stopPropagation();
+  document.getElementById('text-color').click();
+});
+document.addEventListener('click', event => {
+  if (event.target.closest('.font-colour-option')) return;
+  const menu = document.getElementById('font-colour-menu');
+  if (menu) menu.hidden = true;
+  document.getElementById('font-colour-button')?.setAttribute('aria-expanded', 'false');
+});
 document.getElementById('text-fill-color').addEventListener('input', e => {
   const swatch = document.getElementById('fill-swatch');
   if (swatch) swatch.style.background = e.target.value;

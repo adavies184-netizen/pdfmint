@@ -232,6 +232,15 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .text-option small,.option-label{font:600 10px Inter;color:#667085;white-space:nowrap}
 .colour-option{flex-direction:column;gap:3px;cursor:pointer}
 .colour-option input[type="color"]{position:absolute;opacity:0;width:1px;height:1px}
+.font-colour-option{padding:0;overflow:visible;z-index:30}
+.font-colour-button{width:98px;height:65px;border:0;background:transparent;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;cursor:pointer}
+.font-colour-button small{font:600 10px Inter;color:#667085}
+.font-colour-circle{width:28px;height:28px;border-radius:50%;background:#111827;border:1px solid rgba(15,23,42,.18);box-shadow:0 0 0 3px #fff}
+.font-colour-menu{position:absolute;left:0;top:calc(100% - 1px);width:306px;background:#fff;border:1px solid #d8dee8;border-radius:0 0 8px 8px;box-shadow:0 12px 28px rgba(15,23,42,.18);z-index:80;cursor:default}
+.font-colour-menu[hidden]{display:none}.font-colour-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:20px 16px;padding:25px 28px}
+.font-colour-grid button{width:27px;height:27px;padding:0;border-radius:50%;border:1px solid rgba(15,23,42,.15);background:var(--swatch);cursor:pointer}
+.font-colour-grid button:hover{transform:scale(1.1)}.font-colour-grid button.selected{box-shadow:0 0 0 2px #fff,0 0 0 4px #3157e0}
+.custom-font-colour{width:100%;height:58px;padding:0 19px;border:0;border-top:1px solid #e3e8ef;background:#fff;display:flex;align-items:center;justify-content:space-between;color:#475467;font:600 14px Inter;cursor:pointer}.custom-font-colour:hover{background:#f8fafc}.custom-font-colour b{font:300 30px/1 Inter;color:#202936}
 .option-icon{font:700 24px Georgia,serif;color:#111827;border-bottom:4px solid #111827;line-height:1}
 .fill-swatch{width:27px;height:23px;border-radius:3px;background:#fff;border:2px solid #344054;box-shadow:6px 6px 0 -2px #344054}
 .opacity-option{min-width:194px}
