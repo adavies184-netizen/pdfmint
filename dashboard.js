@@ -138,6 +138,39 @@
     if (tool) openDocumentPicker(tool);
   }));
 
+  const allDashboardTools = [
+    ...dashboardMenus.edit.tools,
+    ...dashboardMenus.organize.tools,
+    directTools.sign,
+    directTools.compress,
+    ...dashboardMenus.ocr.tools,
+    directTools.convert
+  ];
+  let allToolsUploadedFile = null;
+  const allToolsLayer = document.createElement('div');
+  allToolsLayer.className = 'all-tools-layer';
+  allToolsLayer.hidden = true;
+  allToolsLayer.innerHTML = `<section class="all-tools-dialog" role="dialog" aria-modal="true" aria-labelledby="all-tools-title"><header class="all-tools-head"><div><h2 id="all-tools-title">All PDFBreeze tools</h2><p>Choose a tool, or upload a file first and then choose what you want to do.</p></div><button class="all-tools-close" type="button" aria-label="Close">×</button></header><label class="all-tools-upload"><span>↑ Upload a file</span><small data-all-tools-file>PDF, Office documents and images up to 100 MB</small><input type="file" hidden></label><div class="all-tools-grid"></div></section>`;
+  document.body.appendChild(allToolsLayer);
+  const allToolsGrid = allToolsLayer.querySelector('.all-tools-grid');
+  allToolsGrid.innerHTML = allDashboardTools.map((tool,index) => `<button type="button" data-all-tool="${index}"><b>${tool[0]}</b><small>${tool[1]}</small></button>`).join('');
+  const closeAllTools = () => { allToolsLayer.hidden = true; document.body.style.overflow = ''; };
+  allToolsLayer.querySelector('.all-tools-close').addEventListener('click', closeAllTools);
+  allToolsLayer.addEventListener('pointerdown', event => { if (event.target === allToolsLayer) closeAllTools(); });
+  allToolsLayer.querySelector('input').addEventListener('change', event => {
+    allToolsUploadedFile = event.target.files?.[0] || null;
+    allToolsLayer.querySelector('[data-all-tools-file]').textContent = allToolsUploadedFile ? `${allToolsUploadedFile.name} selected — now choose a tool` : 'PDF, Office documents and images up to 100 MB';
+  });
+  allToolsGrid.querySelectorAll('[data-all-tool]').forEach((button,index) => button.addEventListener('click', () => {
+    const tool = allDashboardTools[index];
+    closeAllTools();
+    if (allToolsUploadedFile) { selectedDashboardTool = tool; const file = allToolsUploadedFile; allToolsUploadedFile = null; continueToDashboardTool(file); }
+    else openDocumentPicker(tool);
+  }));
+  document.querySelectorAll('[data-open-all-tools]').forEach(link => link.addEventListener('click', event => {
+    event.preventDefault(); allToolsLayer.hidden = false; document.body.style.overflow = 'hidden';
+  }));
+
   const openDocumentPicker = (tool) => {
     selectedDashboardTool = tool;
     if (!pickerLayer) return;
