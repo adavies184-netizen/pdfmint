@@ -6559,7 +6559,7 @@ document.addEventListener('DOMContentLoaded', () => {
     status.textContent = 'Sending your message…';
     button.disabled = true;
     try {
-      const engine = (window.PDFMintConfig?.engineBaseUrl || '').replace(/\/$/, '');
+      const engine = (window.PDFMINT_CONFIG?.engineBaseUrl || '').replace(/\/$/, '');
       const response = await fetch(`${engine}/v1/support/message`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({name,email,subject,message,source:'contact-page',website:form.elements.website?.value || ''})});
       if (!response.ok) throw new Error();
       form.reset(); status.textContent = 'Your message has been sent. PDFBreeze Support will reply by email.';

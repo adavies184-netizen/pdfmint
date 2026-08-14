@@ -7,7 +7,7 @@
   const compose = layer.querySelector('[data-support-compose]');
   const messages = layer.querySelector('[data-support-messages]');
   const suggestions = layer.querySelector('[data-support-suggestions]');
-  const engine = (window.PDFMintConfig?.engineBaseUrl || '').replace(/\/$/, '');
+  const engine = (window.PDFMINT_CONFIG?.engineBaseUrl || '').replace(/\/$/, '');
   let identity = { name: '', email: '' };
   const quickQuestions = ['How do I cancel?', 'Where are my files?', 'When will I be charged?', 'How do I reset my password?', 'Send support a message'];
   const answers = [
