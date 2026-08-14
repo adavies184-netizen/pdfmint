@@ -288,11 +288,13 @@
     }
     throw new Error('This editor tool currently supports saved PDF and image files.');
   }
-  async function continueToDashboardTool(file) {
+  async function continueToDashboardTool(file, options = {}) {
     if (!file || !selectedDashboardTool) return;
     selectedDashboardFile = file;
-    await saveDashboardFile(file, file.name);
-    await refreshDashboardFiles();
+    if (!options.alreadySaved) {
+      await saveDashboardFile(file, file.name);
+      await refreshDashboardFiles();
+    }
     closePicker(); closeDrawer();
     if (selectedDashboardTool[3] === 'compress-flow') {
       openCompressOptions(file);
@@ -316,10 +318,8 @@
     try {
       const editorFile = await ensureEditorCompatibleFile(file);
       await storeDashboardPdf(editorFile);
-      await new Promise(resolve => window.setTimeout(resolve,650));
       window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
-      await new Promise(resolve => window.setTimeout(resolve,250));
-      const params = new URLSearchParams({tool:selectedDashboardTool[3]});
+      const params = new URLSearchParams({tool:selectedDashboardTool[3], source:'dashboard'});
       if (selectedDashboardTool[4]) params.set('action',selectedDashboardTool[4]);
       window.location.href = `editor.html?${params}`;
     } catch (error) {
@@ -433,7 +433,7 @@
       button.dataset.storedFile = record.id;
       button.innerHTML = `<i>${String(record.name).split('.').pop().slice(0,4).toUpperCase()}</i><span><b></b><small>${formatBytes(record.size)} · Saved in My Files</small></span><svg><use href="#i-chevron"></use></svg>`;
       button.querySelector('b').textContent = record.name;
-      button.addEventListener('click', async () => continueToDashboardTool(await recordToFile(record)));
+      button.addEventListener('click', async () => continueToDashboardTool(await recordToFile(record), {alreadySaved:true}));
       pickerFiles?.prepend(button);
     });
   }
