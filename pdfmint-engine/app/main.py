@@ -19,10 +19,11 @@ from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
 from .admin import ProviderSelectionRequest, admin_overview, select_payment_provider
+from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.15.1"
+ENGINE_VERSION = "1.16.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -110,6 +111,11 @@ async def admin_dashboard_overview(authorization: str | None = Header(default=No
 @app.post("/v1/admin/payment-provider")
 async def admin_payment_provider(payload: ProviderSelectionRequest, authorization: str | None = Header(default=None)):
     return await select_payment_provider(payload, authorization)
+
+
+@app.post("/v1/support/message")
+async def website_support_message(payload: SupportMessageRequest):
+    return await send_support_message(payload)
 
 
 @app.post("/v1/jobs")
