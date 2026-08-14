@@ -191,11 +191,14 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .annotation-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .annotation-layer.text-mode{pointer-events:auto;cursor:crosshair}
 .annotation-layer.select-mode{pointer-events:auto;cursor:default}
-.text-annotation{position:absolute;min-width:70px;min-height:28px;padding:3px 5px;border:1px solid transparent;line-height:1.15;white-space:pre-wrap;word-break:break-word;cursor:move;transform-origin:center center;pointer-events:auto}
-.text-annotation:hover{border-color:rgba(52,199,154,.55)}
-.text-annotation.selected{border:1px solid var(--mint);box-shadow:0 0 0 2px rgba(52,199,154,.14)}
+.text-annotation{position:absolute;min-width:70px;min-height:28px;padding:3px 5px;border:1px solid transparent;line-height:1.15;white-space:pre-wrap;word-break:break-word;cursor:pointer;transform-origin:center center;pointer-events:auto}
+.text-annotation:hover{border-color:rgba(37,99,235,.48)}
+.text-annotation.selected{border:1px solid #2563eb;box-shadow:0 0 0 1px rgba(37,99,235,.16);cursor:move}
 .text-annotation[contenteditable="true"]{cursor:text;outline:none}
-.text-annotation .resize-handle{position:absolute;width:11px;height:11px;right:-6px;bottom:-6px;border-radius:50%;background:var(--mint);border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);cursor:nwse-resize}
+.text-annotation .resize-handle,.text-annotation .rotate-handle{display:none;position:absolute;width:10px;height:10px;border-radius:50%;background:#fff;border:2px solid #2563eb;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.text-annotation.selected:not([contenteditable="true"]) .resize-handle,.text-annotation.selected:not([contenteditable="true"]) .rotate-handle{display:block}
+.text-annotation .resize-nw{left:-6px;top:-6px;cursor:nwse-resize}.text-annotation .resize-ne{right:-6px;top:-6px;cursor:nesw-resize}.text-annotation .resize-sw{left:-6px;bottom:-6px;cursor:nesw-resize}.text-annotation .resize-se{right:-6px;bottom:-6px;cursor:nwse-resize}
+.text-annotation .rotate-handle{left:50%;bottom:-29px;transform:translateX(-50%);cursor:grab}.text-annotation .rotate-handle:before{content:"";position:absolute;left:50%;bottom:8px;width:1px;height:17px;background:#2563eb;transform:translateX(-50%)}
 .text-properties-card[hidden]{display:none}
 .inspector-field{display:grid;gap:6px;margin-top:12px}
 .inspector-field span{font-size:11px;color:#667085;font-weight:700}

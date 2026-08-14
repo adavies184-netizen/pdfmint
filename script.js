@@ -2263,7 +2263,7 @@ function renderAnnotations() {
     const el = document.createElement('div');
     el.className = 'text-annotation' + (item.id === editor.selectedAnnotationId ? ' selected' : '');
     el.dataset.id = item.id;
-    el.contentEditable = item.id === editor.selectedAnnotationId ? 'true' : 'false';
+    el.contentEditable = item.editing ? 'true' : 'false';
     el.spellcheck = false;
     el.textContent = item.text;
     el.style.left = `${item.x * metrics.width}px`;
@@ -2293,37 +2293,67 @@ function renderAnnotations() {
     el.style.color = item.color;
     el.style.opacity = item.opacity;
     el.style.lineHeight = '1.15';
+    el.style.transform = `rotate(${Number(item.rotation || 0)}deg)`;
 
-    const handle = document.createElement('span');
-    handle.className = 'resize-handle';
-    handle.contentEditable = 'false';
-    el.appendChild(handle);
+    const resizeHandles = ['nw','ne','sw','se'].map(direction => {
+      const handle = document.createElement('span');
+      handle.className = `resize-handle resize-${direction}`;
+      handle.dataset.resize = direction;
+      handle.contentEditable = 'false';
+      return handle;
+    });
+    const rotateHandle = document.createElement('span');
+    rotateHandle.className = 'rotate-handle';
+    rotateHandle.contentEditable = 'false';
+    el.append(...resizeHandles, rotateHandle);
 
     el.addEventListener('mousedown', event => {
-      if (event.target === handle) return;
+      if (event.target.closest('.resize-handle,.rotate-handle')) return;
       event.stopPropagation();
-      selectAnnotation(item.id);
-      if (editor.mode !== 'select') setEditorMode('select');
-      if (event.detail === 2) {
-        el.contentEditable = 'true';
-        el.focus();
-        return;
-      }
+      editor.selectedAnnotationId = item.id;
+      editor.mode = 'select';
+      document.getElementById('add-text-tool')?.classList.remove('active');
+      document.getElementById('annotation-layer')?.classList.remove('text-mode');
+      document.getElementById('annotation-layer')?.classList.add('select-mode');
+      document.getElementById('text-options-bar').hidden = false;
+      document.querySelectorAll('.text-annotation').forEach(node => node.classList.toggle('selected', node === el));
+      syncTextInspector();
+      if (event.detail > 1) return;
       if (el.isContentEditable && document.activeElement === el) return;
       startDragAnnotation(event, item, el);
     });
+    el.addEventListener('dblclick', event => {
+      event.preventDefault();
+      event.stopPropagation();
+      item.editing = true;
+      el.contentEditable = 'true';
+      requestAnimationFrame(() => {
+        el.focus({preventScroll:true});
+        const range = document.createRange();
+        range.selectNodeContents(el);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      });
+    });
     el.addEventListener('focus', () => { if (!el.dataset.historyRecorded) { recordHistory(); el.dataset.historyRecorded = '1'; } });
     el.addEventListener('input', () => {
-      item.text = Array.from(el.childNodes).filter(node => node !== handle).map(node => node.textContent).join('');
+      item.text = Array.from(el.childNodes).filter(node => !node.classList?.contains('resize-handle') && !node.classList?.contains('rotate-handle')).map(node => node.textContent).join('');
     });
     el.addEventListener('blur', () => {
       delete el.dataset.historyRecorded;
       item.text = el.innerText.replace(/\n+$/,'');
+      item.editing = false;
+      el.contentEditable = 'false';
     });
-    handle.addEventListener('mousedown', event => {
+    resizeHandles.forEach(handle => handle.addEventListener('mousedown', event => {
       event.stopPropagation();
       selectAnnotation(item.id);
-      startResizeAnnotation(event, item);
+      startResizeAnnotation(event, item, handle.dataset.resize);
+    }));
+    rotateHandle.addEventListener('mousedown', event => {
+      selectAnnotation(item.id);
+      startRotateAnnotation(event, item);
     });
     layer.appendChild(el);
   });
@@ -2380,10 +2410,14 @@ function renderCropSelection(layer, metrics) {
 }
 function selectAnnotation(id) {
   editor.selectedAnnotationId = id;
+  const textOptionsBar = document.getElementById('text-options-bar');
+  if (textOptionsBar) textOptionsBar.hidden = !id;
   renderAnnotations();
 }
 function deselectAnnotation() {
   editor.selectedAnnotationId = null;
+  const textOptionsBar = document.getElementById('text-options-bar');
+  if (textOptionsBar && editor.mode !== 'text') textOptionsBar.hidden = true;
   renderAnnotations();
 }
 function startDragAnnotation(event, item) {
@@ -2404,15 +2438,47 @@ function startDragAnnotation(event, item) {
   window.addEventListener('mousemove', move);
   window.addEventListener('mouseup', up);
 }
-function startResizeAnnotation(event, item) {
+function startResizeAnnotation(event, item, direction = 'se') {
   event.preventDefault();
   recordHistory();
   const metrics = editor.canvasMetrics;
   const startX = event.clientX, startY = event.clientY;
+  const startLeft = item.x, startTop = item.y;
   const startW = item.w, startH = item.h;
   const move = e => {
-    item.w = Math.max(.06, Math.min(1-item.x, startW + (e.clientX-startX)/metrics.width));
-    item.h = Math.max(.035, Math.min(1-item.y, startH + (e.clientY-startY)/metrics.height));
+    const dx = (e.clientX-startX)/metrics.width;
+    const dy = (e.clientY-startY)/metrics.height;
+    if (direction.includes('e')) item.w = Math.max(.06, Math.min(1-item.x, startW + dx));
+    if (direction.includes('s')) item.h = Math.max(.035, Math.min(1-item.y, startH + dy));
+    if (direction.includes('w')) {
+      const nextX = Math.max(0, Math.min(startLeft + startW - .06, startLeft + dx));
+      item.x = nextX;
+      item.w = startW + startLeft - nextX;
+    }
+    if (direction.includes('n')) {
+      const nextY = Math.max(0, Math.min(startTop + startH - .035, startTop + dy));
+      item.y = nextY;
+      item.h = startH + startTop - nextY;
+    }
+    renderAnnotations();
+  };
+  const up = () => {
+    window.removeEventListener('mousemove', move);
+    window.removeEventListener('mouseup', up);
+  };
+  window.addEventListener('mousemove', move);
+  window.addEventListener('mouseup', up);
+}
+function startRotateAnnotation(event, item) {
+  event.preventDefault();
+  event.stopPropagation();
+  recordHistory();
+  const metrics = editor.canvasMetrics;
+  const layerRect = document.getElementById('annotation-layer').getBoundingClientRect();
+  const centreX = layerRect.left + (item.x + item.w / 2) * metrics.width;
+  const centreY = layerRect.top + (item.y + item.h / 2) * metrics.height;
+  const move = e => {
+    item.rotation = Math.atan2(e.clientY - centreY, e.clientX - centreX) * 180 / Math.PI + 90;
     renderAnnotations();
   };
   const up = () => {
@@ -2441,7 +2507,9 @@ function addTextAt(clientX, clientY) {
     opacity: 1,
     bold: false,
     italic: false,
-    align: 'left'
+    align: 'left',
+    rotation: 0,
+    editing: true
   };
   getPageAnnotations(editor.pages[editor.selectedIndex].sourceIndex).push(item);
   editor.selectedAnnotationId = item.id;
@@ -3186,6 +3254,13 @@ document.getElementById('annotation-layer').addEventListener('pointerdown', begi
 document.getElementById('annotation-layer').addEventListener('mousedown', event => {
   if (event.target !== event.currentTarget) return;
   if (editor.mode === 'text') {
+    if (editor.selectedAnnotationId) {
+      document.activeElement?.blur?.();
+      editor.selectedAnnotationId = null;
+      setEditorMode('select');
+      document.getElementById('text-options-bar').hidden = true;
+      return;
+    }
     addTextAt(event.clientX, event.clientY);
   } else if (editor.mode === 'edit-existing') {
     if (editor.editTextBoxMode) {
@@ -3716,7 +3791,8 @@ async function createEditedPdfBytes() {
           size: fontSize,
           font,
           color: PDFLib.rgb(rgb.r, rgb.g, rgb.b),
-          opacity: item.opacity
+          opacity: item.opacity,
+          rotate: PDFLib.degrees(-Number(item.rotation || 0))
         });
       });
     }
