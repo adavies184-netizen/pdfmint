@@ -650,96 +650,14 @@ async function ensureExistingTextForCurrentPage() {
       return Math.abs(vertical) > Math.max(a.height, b.height) * .55 ? vertical : a.x - b.x;
     });
 
-  // First group runs into visual lines.
-  const lines = [];
-  for (const run of runs) {
-    let line = lines.find(candidate => {
-      const tolerance = Math.max(candidate.avgHeight, run.height) * .55;
-      return Math.abs(candidate.top - run.top) <= tolerance;
-    });
-
-    if (!line) {
-      line = {
-        runs: [],
-        top: run.top,
-        bottom: run.top + run.height,
-        left: run.x,
-        right: run.x + run.width,
-        avgHeight: run.height
-      };
-      lines.push(line);
-    }
-
-    line.runs.push(run);
-    line.top = Math.min(line.top, run.top);
-    line.bottom = Math.max(line.bottom, run.top + run.height);
-    line.left = Math.min(line.left, run.x);
-    line.right = Math.max(line.right, run.x + run.width);
-    line.avgHeight = line.runs.reduce((sum, item) => sum + item.height, 0) / line.runs.length;
-  }
-
-  lines.sort((a, b) => a.top - b.top);
-  lines.forEach(line => line.runs.sort((a, b) => a.x - b.x));
-
-  // Then group neighbouring lines into paragraph boxes.
-  const paragraphs = [];
-  for (const line of lines) {
-    const text = line.runs.map((run, i) => {
-      if (i === 0) return run.text;
-      const prev = line.runs[i - 1];
-      const gap = run.x - (prev.x + prev.width);
-      return `${gap > Math.max(2, line.avgHeight * .16) ? ' ' : ''}${run.text}`;
-    }).join('');
-
-    const firstRun = line.runs[0];
-    const paragraphCandidate = paragraphs[paragraphs.length - 1];
-    const lineGap = paragraphCandidate ? line.top - paragraphCandidate.bottom : Infinity;
-    const sameLeftEdge = paragraphCandidate
-      ? Math.abs(line.left - paragraphCandidate.left) <= Math.max(8, line.avgHeight * .85)
-      : false;
-    const closeVertically = paragraphCandidate
-      ? lineGap <= Math.max(line.avgHeight, paragraphCandidate.avgHeight) * .72
-      : false;
-    const previousFirstRun = paragraphCandidate?.firstRun;
-    const sameFontFamily = previousFirstRun
-      ? (previousFirstRun.exactFontKey || previousFirstRun.font) === (firstRun.exactFontKey || firstRun.font)
-      : false;
-    const similarFontSize = previousFirstRun
-      ? Math.abs(previousFirstRun.pdfFontSize - firstRun.pdfFontSize) <= Math.max(1.2, firstRun.pdfFontSize * .14)
-      : false;
-
-    if (paragraphCandidate && closeVertically && sameLeftEdge && sameFontFamily && similarFontSize) {
-      paragraphCandidate.lines.push({text, line});
-      paragraphCandidate.text += `\n${text}`;
-      paragraphCandidate.originalText = paragraphCandidate.text;
-      paragraphCandidate.left = Math.min(paragraphCandidate.left, line.left);
-      paragraphCandidate.right = Math.max(paragraphCandidate.right, line.right);
-      paragraphCandidate.top = Math.min(paragraphCandidate.top, line.top);
-      paragraphCandidate.bottom = Math.max(paragraphCandidate.bottom, line.bottom);
-      paragraphCandidate.avgHeight =
-        paragraphCandidate.lines.reduce((sum, item) => sum + item.line.avgHeight, 0) /
-        paragraphCandidate.lines.length;
-    } else {
-      paragraphs.push({
-        lines: [{text, line}],
-        text,
-        originalText: text,
-        left: line.left,
-        right: line.right,
-        top: line.top,
-        bottom: line.bottom,
-        avgHeight: line.avgHeight,
-        firstRun
-      });
-    }
-  }
-
-  const items = paragraphs.map((paragraph, index) => {
-    const firstRun = paragraph.firstRun;
-    const width = Math.max(12, paragraph.right - paragraph.left);
-    const height = Math.max(paragraph.avgHeight * 1.15, paragraph.bottom - paragraph.top);
-    const normalisedX = Math.max(0, Math.min(.995, paragraph.left / viewport.width));
-    const normalisedY = Math.max(0, Math.min(.995, paragraph.top / viewport.height));
+  // Keep every PDF.js text run independent. Joining neighbouring runs into a
+  // browser paragraph changes columns, spacing and fonts before the user edits
+  // anything. Run-level editing leaves every unrelated PDF object untouched.
+  const items = runs.map((run, index) => {
+    const width = Math.max(2, run.width);
+    const height = Math.max(5, run.height);
+    const normalisedX = Math.max(0, Math.min(.995, run.x / viewport.width));
+    const normalisedY = Math.max(0, Math.min(.995, run.top / viewport.height));
     const normalisedWidth = Math.min(1 - normalisedX, Math.max(.005, width / viewport.width));
     const normalisedHeight = Math.min(1 - normalisedY, Math.max(.008, height / viewport.height));
 
@@ -749,29 +667,19 @@ async function ensureExistingTextForCurrentPage() {
     const measurementCanvas = document.createElement('canvas');
     const measurementContext = measurementCanvas.getContext('2d');
 
-    const exactEntry = firstRun.exactFontKey && editor.embeddedFonts[firstRun.exactFontKey];
+    const exactEntry = run.exactFontKey && editor.embeddedFonts[run.exactFontKey];
     const editingFamily = exactEntry?.face
       ? exactEntry.family
-      : firstRun.font === 'TimesRoman' ? 'Times New Roman'
-        : firstRun.font === 'Courier' ? 'Courier New'
+      : run.font === 'TimesRoman' ? 'Times New Roman'
+        : run.font === 'Courier' ? 'Courier New'
           : 'Arial';
     measurementContext.font =
-      `${firstRun.italic ? 'italic ' : ''}${firstRun.fontWeight || (firstRun.bold ? 700 : 400)} ` +
-      `${firstRun.pdfFontSize}px "${editingFamily}"`;
-    const fittedPdfFontSize = firstRun.pdfFontSize;
-    const lineWidths = paragraph.lines.map(({line}) => Math.max(1, line.right - line.left));
-    const lineOffsets = paragraph.lines.map(({line}) => line.left - paragraph.left);
-    const lineScaleSamples = paragraph.lines.map(({text}, lineIndex) => {
-      const measuredWidth = Math.max(.01, measurementContext.measureText(text).width);
-      return lineWidths[lineIndex] / measuredWidth;
-    });
-    const fontScaleX = Math.max(
-      .5,
-      Math.min(2, lineScaleSamples.reduce((sum, value) => sum + value, 0) / Math.max(1, lineScaleSamples.length))
-    );
+      `${run.italic ? 'italic ' : ''}${run.fontWeight || (run.bold ? 700 : 400)} ` +
+      `${run.pdfFontSize}px "${editingFamily}"`;
+    const measuredRunWidth = Math.max(.01, measurementContext.measureText(run.text).width);
+    const fontScaleX = Math.max(.35, Math.min(3, run.width / measuredRunWidth));
 
-    paragraph.lines.forEach(({line}, paragraphLineIndex) => {
-      line.runs.forEach(run => {
+    {
         const characters = Array.from(String(run.text || ''));
         if (!characters.length) return;
 
@@ -830,7 +738,7 @@ async function ensureExistingTextForCurrentPage() {
           highlightCharacters.push({
             text: item.character,
             isWhitespace,
-            lineIndex: paragraphLineIndex,
+            lineIndex: 0,
             runIndex: run.index,
             characterIndex,
             x: Math.max(0, cursorX / viewport.width),
@@ -841,14 +749,13 @@ async function ensureExistingTextForCurrentPage() {
 
           cursorX += characterWidth;
         });
-      });
-    });
+    }
 
     return {
       id: `existing-${sourceIndex}-${index}`,
       type: 'existing-text',
-      originalText: paragraph.originalText,
-      text: paragraph.text,
+      originalText: run.text,
+      text: run.text,
       x: normalisedX,
       y: normalisedY,
       w: normalisedWidth,
@@ -857,21 +764,22 @@ async function ensureExistingTextForCurrentPage() {
       originalY: normalisedY,
       originalW: normalisedWidth,
       originalH: normalisedHeight,
-      pdfX: firstRun.pdfX,
-      pdfY: firstRun.pdfY,
+      pdfX: run.pdfX,
+      pdfY: run.pdfY,
       pdfWidth: width,
-      pdfFontSize: firstRun.pdfFontSize,
-      fittedPdfFontSize,
+      pdfFontSize: run.pdfFontSize,
+      fittedPdfFontSize: run.pdfFontSize,
       fontScaleX,
-      lineWidths,
-      lineOffsets,
-      fontName: firstRun.fontName,
-      exactFontKey: firstRun.exactFontKey || '',
-      font: firstRun.font,
-      fontWeight: firstRun.fontWeight,
-      bold: firstRun.bold,
-      italic: firstRun.italic,
-      lineHeight: paragraph.avgHeight,
+      lineWidths: [run.width],
+      lineOffsets: [0],
+      fontName: run.fontName,
+      exactFontKey: run.exactFontKey || '',
+      hasExactFont: Boolean(exactEntry?.face),
+      font: run.font,
+      fontWeight: run.fontWeight,
+      bold: run.bold,
+      italic: run.italic,
+      lineHeight: run.height,
       highlightCharacters,
       modified: false
     };
@@ -1002,8 +910,7 @@ function startExistingTextResize(event, item, side, box, content) {
     box.style.left = `${item.x * metrics.width}px`;
     box.style.width = `${item.w * metrics.width}px`;
 
-    // Ensure a whiteout exists over the full original paragraph while the
-    // resized replacement is being previewed.
+    // Cover only this original PDF text run while its replacement is previewed.
     let whiteout = document.querySelector(`.existing-text-whiteout[data-for="${item.id}"]`);
     if (!whiteout) {
       whiteout = document.createElement('div');
@@ -1011,10 +918,10 @@ function startExistingTextResize(event, item, side, box, content) {
       whiteout.dataset.for = item.id;
       document.getElementById('annotation-layer').insertBefore(whiteout, box);
     }
-    whiteout.style.left = `${item.originalX * metrics.width - 3}px`;
-    whiteout.style.top = `${item.originalY * metrics.height - 3}px`;
-    whiteout.style.width = `${item.originalW * metrics.width + 6}px`;
-    whiteout.style.height = `${Math.max(16, item.originalH * metrics.height) + 6}px`;
+    whiteout.style.left = `${item.originalX * metrics.width - 1}px`;
+    whiteout.style.top = `${item.originalY * metrics.height - 1}px`;
+    whiteout.style.width = `${item.originalW * metrics.width + 2}px`;
+    whiteout.style.height = `${Math.max(8, item.originalH * metrics.height) + 2}px`;
 
     const requiredHeight = Math.max(
       item.h * metrics.height,
@@ -1564,16 +1471,15 @@ function renderExistingTextBoxes(layer, metrics) {
     const isModified = Boolean(item.modified);
     const isEditing = Boolean(item.editing);
 
-    // Whenever the text is selected, resized or edited, hide the original PDF
-    // text beneath the complete original paragraph area.
-    if (isEditing || isModified) {
+    // A replacement hides only its corresponding original PDF text run.
+    if (isModified || (isEditing && item.hasExactFont)) {
       const whiteout = document.createElement('div');
       whiteout.className = 'existing-text-whiteout';
       whiteout.dataset.for = item.id;
-      whiteout.style.left = `${item.originalX * metrics.width - 3}px`;
-      whiteout.style.top = `${item.originalY * metrics.height - 3}px`;
-      whiteout.style.width = `${item.originalW * metrics.width + 6}px`;
-      whiteout.style.height = `${Math.max(16, item.originalH * metrics.height) + 6}px`;
+      whiteout.style.left = `${item.originalX * metrics.width - 1}px`;
+      whiteout.style.top = `${item.originalY * metrics.height - 1}px`;
+      whiteout.style.width = `${item.originalW * metrics.width + 2}px`;
+      whiteout.style.height = `${Math.max(8, item.originalH * metrics.height) + 2}px`;
       layer.appendChild(whiteout);
     }
 
@@ -1582,6 +1488,7 @@ function renderExistingTextBoxes(layer, metrics) {
     if (isSelected) box.classList.add('selected');
     if (isModified) box.classList.add('modified');
     if (isEditing) box.classList.add('editing');
+    if (!item.hasExactFont) box.classList.add('no-exact-font');
     box.dataset.id = item.id;
     box.style.left = `${item.x * metrics.width}px`;
     box.style.top = `${item.y * metrics.height}px`;
@@ -1600,7 +1507,22 @@ function renderExistingTextBoxes(layer, metrics) {
     content.style.fontSize = `${Math.max(4, visualPdfFontSize * metrics.scale)}px`;
     content.style.lineHeight = `${Math.max(5, item.lineHeight * metrics.scale)}px`;
     content.style.setProperty('color', item.color || '#000000', 'important');
-    const horizontalScale = Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+    const originalHorizontalScale = Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+    const scaleForCurrentText = () => {
+      if (!item.modified) return originalHorizontalScale;
+      const measureCanvas = document.createElement('canvas');
+      const measureContext = measureCanvas.getContext('2d');
+      measureContext.font =
+        `${item.italic ? 'italic ' : ''}${item.fontWeight || (item.bold ? 700 : 400)} ` +
+        `${Math.max(4, visualPdfFontSize * metrics.scale)}px ${cssFamilyForExistingText(item)}`;
+      const currentWidth = Math.max(.01, measureContext.measureText(item.text || '').width);
+      const availableWidth = Math.max(1, item.originalW * metrics.width);
+      // Shorter replacements keep their original glyph scale and simply leave
+      // unused space. Longer replacements compress only as much as necessary,
+      // preventing them from overwriting the adjacent PDF run.
+      return Math.max(.05, Math.min(originalHorizontalScale, availableWidth / currentWidth));
+    };
+    let horizontalScale = scaleForCurrentText();
     content.style.transformOrigin = 'left top';
     content.style.transform = `scaleX(${horizontalScale})`;
     content.style.width = `${100 / horizontalScale}%`;
@@ -1639,6 +1561,24 @@ function renderExistingTextBoxes(layer, metrics) {
       item.text = content.textContent.replace(/\r/g, '');
       item.modified = item.text !== item.originalText || Boolean(item.html);
       box.classList.toggle('modified', item.modified);
+      horizontalScale = scaleForCurrentText();
+      content.style.transform = `scaleX(${horizontalScale})`;
+      content.style.width = `${100 / horizontalScale}%`;
+
+      // Type 3 and other programmatic PDF fonts cannot be used by a browser
+      // contenteditable. Keep the original PDF glyphs visible until the user
+      // genuinely changes this run; only then cover this run (never its
+      // neighbours) and show the editable replacement.
+      if (item.modified && !document.querySelector(`.existing-text-whiteout[data-for="${CSS.escape(item.id)}"]`)) {
+        const whiteout = document.createElement('div');
+        whiteout.className = 'existing-text-whiteout';
+        whiteout.dataset.for = item.id;
+        whiteout.style.left = `${item.originalX * metrics.width - 1}px`;
+        whiteout.style.top = `${item.originalY * metrics.height - 1}px`;
+        whiteout.style.width = `${item.originalW * metrics.width + 2}px`;
+        whiteout.style.height = `${Math.max(8, item.originalH * metrics.height) + 2}px`;
+        layer.insertBefore(whiteout, box);
+      }
 
       const requiredHeight = Math.max(16, content.scrollHeight);
       box.style.minHeight = `${requiredHeight}px`;
@@ -3645,6 +3585,7 @@ async function createEditedPdfBytes() {
   const source = await PDFLib.PDFDocument.load(editor.originalBytes.slice());
   const output = await PDFLib.PDFDocument.create();
   const fontCache = {};
+  const ruleCanvasCache = new Map();
 
   if (window.fontkit && typeof output.registerFontkit === 'function') {
     output.registerFontkit(window.fontkit);
@@ -3652,9 +3593,7 @@ async function createEditedPdfBytes() {
 
   async function createExistingTextPng(item, lines, width, height, fontSize, lineHeight, baselineOffset) {
     const exactEntry = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
-    if (!exactEntry?.face) return null;
-
-    await exactEntry.face.loaded;
+    if (exactEntry?.face) await exactEntry.face.loaded;
     const pixelScale = 4;
     const canvas = document.createElement('canvas');
     canvas.width = Math.max(1, Math.ceil(width * pixelScale));
@@ -3664,14 +3603,16 @@ async function createEditedPdfBytes() {
     context.textBaseline = 'alphabetic';
     context.textAlign = 'left';
     context.fillStyle = item.color || '#000000';
-    context.font = `${item.italic ? 'italic ' : ''}${item.fontWeight || (item.bold ? 700 : 400)} ${fontSize}px "${exactEntry.family}"`;
+    const fontFamily = exactEntry?.face ? `"${exactEntry.family}"` : 'Arial, Helvetica, sans-serif';
+    context.font = `${item.italic ? 'italic ' : ''}${item.fontWeight || (item.bold ? 700 : 400)} ${fontSize}px ${fontFamily}`;
 
     lines.forEach((line, index) => {
       const measuredWidth = Math.max(.01, context.measureText(line).width);
       const requestedWidth = Number(item.lineWidths?.[index]);
+      const originalScaleX = Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
       const lineScaleX = Number.isFinite(requestedWidth) && requestedWidth > 0
-        ? requestedWidth / measuredWidth
-        : Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+        ? Math.min(originalScaleX, requestedWidth / measuredWidth)
+        : originalScaleX;
       const lineOffset = Number.isFinite(Number(item.lineOffsets?.[index]))
         ? Number(item.lineOffsets[index])
         : 0;
@@ -3682,6 +3623,38 @@ async function createEditedPdfBytes() {
       context.restore();
     });
 
+    return output.embedPng(canvas.toDataURL('image/png'));
+  }
+
+  async function createExistingTextMaskPng(item, width, height, fontSize, baselineOffset) {
+    const exactEntry = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
+    if (!exactEntry?.face) return null;
+    await exactEntry.face.loaded;
+    const pixelScale = 4;
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.ceil(width * pixelScale));
+    canvas.height = Math.max(1, Math.ceil(height * pixelScale));
+    const context = canvas.getContext('2d');
+    context.scale(pixelScale, pixelScale);
+    context.textBaseline = 'alphabetic';
+    context.textAlign = 'left';
+    context.fillStyle = '#ffffff';
+    context.strokeStyle = '#ffffff';
+    context.lineWidth = .35;
+    context.font = `${item.italic ? 'italic ' : ''}${item.fontWeight || (item.bold ? 700 : 400)} ${fontSize}px "${exactEntry.family}"`;
+    const originalText = String(item.originalText || '');
+    const measuredWidth = Math.max(.01, context.measureText(originalText).width);
+    const originalScaleX = Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+    const requestedWidth = Number(item.lineWidths?.[0]);
+    const scaleX = Number.isFinite(requestedWidth) && requestedWidth > 0
+      ? Math.min(originalScaleX, requestedWidth / measuredWidth)
+      : originalScaleX;
+    context.save();
+    context.translate(0, baselineOffset);
+    context.scale(scaleX, 1);
+    context.strokeText(originalText, 0, 0);
+    context.fillText(originalText, 0, 0);
+    context.restore();
     return output.embedPng(canvas.toDataURL('image/png'));
   }
 
@@ -3715,6 +3688,61 @@ async function createEditedPdfBytes() {
 
     if (!fontCache[key]) fontCache[key] = await output.embedFont(PDFLib.StandardFonts[key]);
     return fontCache[key];
+  }
+
+  async function restoreOriginalRules(page, item, pageWidth, pageHeight, sourceIndex) {
+    let canvas = ruleCanvasCache.get(sourceIndex);
+    if (!canvas) {
+      const sourcePage = await editor.pdfjs.getPage(sourceIndex + 1);
+      const viewport = sourcePage.getViewport({scale: 1});
+      canvas = document.createElement('canvas');
+      canvas.width = Math.max(1, Math.ceil(viewport.width));
+      canvas.height = Math.max(1, Math.ceil(viewport.height));
+      await sourcePage.render({canvasContext: canvas.getContext('2d'), viewport}).promise;
+      ruleCanvasCache.set(sourceIndex, canvas);
+    }
+    const context = canvas.getContext('2d', {willReadFrequently: true});
+    const x0 = Math.max(0, Math.floor(item.originalX * canvas.width));
+    const x1 = Math.min(canvas.width - 1, Math.ceil((item.originalX + item.originalW) * canvas.width));
+    const y0 = Math.max(0, Math.floor(item.originalY * canvas.height) - 2);
+    const y1 = Math.min(canvas.height - 1, Math.ceil((item.originalY + item.originalH) * canvas.height) + 2);
+    if (x1 <= x0 || y1 <= y0) return;
+    const pixels = context.getImageData(x0, y0, x1 - x0 + 1, y1 - y0 + 1);
+    const darkAt = (x, y) => {
+      const offset = (y * pixels.width + x) * 4;
+      return pixels.data[offset + 3] > 160 &&
+        (pixels.data[offset] + pixels.data[offset + 1] + pixels.data[offset + 2]) / 3 < 105;
+    };
+    const horizontal = [];
+    for (let y = 0; y < pixels.height; y++) {
+      let dark = 0;
+      for (let x = 0; x < pixels.width; x++) if (darkAt(x, y)) dark++;
+      if (dark / pixels.width > .72) horizontal.push(y);
+    }
+    for (const row of horizontal) {
+      const pdfY = pageHeight - ((y0 + row + .5) / canvas.height) * pageHeight;
+      page.drawLine({
+        start: {x: item.originalX * pageWidth, y: pdfY},
+        end: {x: (item.originalX + item.originalW) * pageWidth, y: pdfY},
+        thickness: Math.max(.35, pageHeight / canvas.height),
+        color: PDFLib.rgb(0, 0, 0)
+      });
+    }
+    const vertical = [];
+    for (let x = 0; x < pixels.width; x++) {
+      let dark = 0;
+      for (let y = 0; y < pixels.height; y++) if (darkAt(x, y)) dark++;
+      if (dark / pixels.height > .78) vertical.push(x);
+    }
+    for (const column of vertical) {
+      const pdfX = ((x0 + column + .5) / canvas.width) * pageWidth;
+      page.drawLine({
+        start: {x: pdfX, y: pageHeight - (y1 / canvas.height) * pageHeight},
+        end: {x: pdfX, y: pageHeight - (y0 / canvas.height) * pageHeight},
+        thickness: Math.max(.35, pageWidth / canvas.width),
+        color: PDFLib.rgb(0, 0, 0)
+      });
+    }
   }
 
   for (const state of editor.pages) {
@@ -3826,49 +3854,84 @@ async function createEditedPdfBytes() {
         wrappedLines.length * lineHeight + fontSize * .35
       );
 
-      // Always cover the complete original paragraph footprint first.
+      // Cover only the original PDF text run being changed. Every untouched
+      // run remains part of the copied source page and is never reconstructed.
       const originalX = item.originalX * width;
       const originalTopY = height - item.originalY * height;
       const originalWidth = item.originalW * width;
       const originalHeight = item.originalH * height;
 
-      page.drawRectangle({
-        x: Math.max(0, originalX - 2),
-        y: Math.max(0, originalTopY - originalHeight - 2),
-        width: Math.min(width - originalX + 2, originalWidth + 4),
-        height: originalHeight + 4,
-        color: PDFLib.rgb(1, 1, 1)
-      });
+      // Erase the glyph band from the run's real PDF baseline, rather than the
+      // whole PDF.js selection box. Selection boxes can extend onto adjacent
+      // table rules; the glyph band cannot.
+      const sourceFontSize = Math.max(1, Number(item.pdfFontSize) || originalHeight);
+      const sourceBaselineY = Number.isFinite(Number(item.pdfY))
+        ? Number(item.pdfY) * height
+        : originalTopY - originalHeight * .78;
+      const eraseBelowBaseline = Math.min(.85, Math.max(.2, sourceFontSize * .065));
+      const eraseAboveBaseline = Math.min(
+        originalHeight * .9,
+        Math.max(sourceFontSize * .82, originalHeight * .68)
+      );
+      const maskHeight = sourceFontSize;
+      const maskBaselineOffset = sourceFontSize * .82;
+      const originalMask = await createExistingTextMaskPng(
+        item,
+        originalWidth,
+        maskHeight,
+        sourceFontSize,
+        maskBaselineOffset
+      );
+      if (originalMask) {
+        page.drawImage(originalMask, {
+          x: Math.max(0, originalX),
+          y: sourceBaselineY - maskHeight + maskBaselineOffset,
+          width: Math.min(width - originalX, originalWidth),
+          height: maskHeight
+        });
+      } else {
+        page.drawRectangle({
+          x: Math.max(0, originalX),
+          y: Math.max(0, sourceBaselineY + .35),
+          width: Math.min(width - originalX, originalWidth),
+          height: Math.max(.1, eraseAboveBaseline - .35),
+          color: PDFLib.rgb(1, 1, 1)
+        });
+      }
 
       // If the replacement wraps lower than the original paragraph, cover that
       // additional vertical area too.
       if (replacementHeight > originalHeight) {
         page.drawRectangle({
-          x: Math.max(0, x - 2),
-          y: Math.max(0, replacementTopY - replacementHeight - 2),
-          width: Math.min(width - x + 2, targetWidth + 4),
-          height: replacementHeight + 4,
+          x: Math.max(0, x - .75),
+          y: Math.max(0, replacementTopY - replacementHeight - .75),
+          width: Math.min(width - x + .75, targetWidth + 1.5),
+          height: replacementHeight + 1.5,
           color: PDFLib.rgb(1, 1, 1)
         });
       }
 
       const baselineOffset = Math.max(0, replacementTopY - firstBaselineY);
+      const rasterBaselineOffset = fontSize * .82;
+      const rasterHeight = Math.max(
+        fontSize,
+        rasterBaselineOffset + Math.max(0, wrappedLines.length - 1) * lineHeight + fontSize * .12
+      );
       const exactTextImage = await createExistingTextPng(
         item,
         wrappedLines,
         targetWidth,
-        replacementHeight,
+        rasterHeight,
         fontSize,
         lineHeight,
-        baselineOffset
+        rasterBaselineOffset
       );
-
       if (exactTextImage) {
         page.drawImage(exactTextImage, {
           x,
-          y: replacementTopY - replacementHeight,
+          y: firstBaselineY - rasterHeight + rasterBaselineOffset,
           width: targetWidth,
-          height: replacementHeight
+          height: rasterHeight
         });
       } else {
         wrappedLines.forEach((line, lineIndex) => {
@@ -3885,6 +3948,7 @@ async function createEditedPdfBytes() {
           });
         });
       }
+      await restoreOriginalRules(page, item, width, height, state.sourceIndex);
     }
 
     const createdEditItems = getEditCreatedTextItems(state.sourceIndex);
