@@ -678,6 +678,7 @@ html,body{max-width:100%;overflow-x:hidden}
   overflow-wrap:normal;
   word-break:normal;
   pointer-events:none;
+  font-synthesis:none;
 }
 .annotation-layer.edit-text-mode .existing-text-box.editing .existing-text-content{
   pointer-events:auto;

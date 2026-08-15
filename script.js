@@ -735,7 +735,24 @@ async function ensureExistingTextForCurrentPage() {
   }
 
   const items = paragraphs.map((paragraph, index) => {
-    const firstRun = paragraph.firstRun;
+    const paragraphRuns = paragraph.lines.flatMap(({line}) => line.runs);
+    const styleTotals = new Map();
+    paragraphRuns.forEach(run => {
+      const key = [
+        run.exactFontKey || run.fontName || run.font,
+        run.fontWeight,
+        run.italic ? 1 : 0
+      ].join('|');
+      const total = styleTotals.get(key) || {run, score: 0};
+      total.score += Math.max(1, String(run.text || '').replace(/\s/g, '').length);
+      styleTotals.set(key, total);
+    });
+    // A PDF paragraph can begin with a short run that differs from the main
+    // body (for example a normal-weight prefix followed by medium text). The
+    // editable overlay must use the paragraph's real dominant embedded style,
+    // not whichever run happened to be first in extraction order.
+    const firstRun = [...styleTotals.values()]
+      .sort((a, b) => b.score - a.score)[0]?.run || paragraph.firstRun;
     const width = Math.max(12, paragraph.right - paragraph.left);
     const height = Math.max(paragraph.avgHeight * 1.15, paragraph.bottom - paragraph.top);
     const normalisedX = Math.max(0, Math.min(.995, paragraph.left / viewport.width));
@@ -869,6 +886,7 @@ async function ensureExistingTextForCurrentPage() {
       exactFontKey: firstRun.exactFontKey || '',
       font: firstRun.font,
       fontWeight: firstRun.fontWeight,
+      originalFontWeight: firstRun.fontWeight,
       bold: firstRun.bold,
       italic: firstRun.italic,
       lineHeight: paragraph.avgHeight,
@@ -1594,7 +1612,12 @@ function renderExistingTextBoxes(layer, metrics) {
     else content.textContent = item.text;
     content.spellcheck = false;
     content.style.fontFamily = cssFamilyForExistingText(item);
-    content.style.fontWeight = String(item.fontWeight || (item.bold ? 700 : 400));
+    const preservedFontWeight = Number.isFinite(item.fontWeight)
+      ? item.fontWeight
+      : Number.isFinite(item.originalFontWeight)
+        ? item.originalFontWeight
+        : item.bold ? 700 : 400;
+    content.style.fontWeight = String(preservedFontWeight);
     content.style.fontStyle = item.italic ? 'italic' : 'normal';
     const visualPdfFontSize = item.pdfFontSize;
     content.style.fontSize = `${Math.max(4, visualPdfFontSize * metrics.scale)}px`;
