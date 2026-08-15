@@ -2263,3 +2263,98 @@ html,body{max-width:100%;overflow-x:hidden}
 @media(max-width:600px){.ocr-format-dialog{padding:20px 16px}.ocr-format-choice{grid-template-columns:22px 38px minmax(0,1fr);padding:11px}.ocr-choice-icon{width:36px;height:42px}.ocr-file-summary{grid-template-columns:30px minmax(0,1fr)}.ocr-file-summary small{display:none}}
 .converter-progress{width:min(100%,420px);margin:22px auto 0;text-align:left}.converter-progress[hidden]{display:none}.converter-progress-row{display:flex;justify-content:space-between;gap:16px;color:#17233d;font-size:14px}.converter-progress-track{height:10px;margin:10px 0 7px;border-radius:999px;background:#dce9e5;overflow:hidden}.converter-progress-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#23b88a,#169f76);transition:width .25s ease}.converter-progress small{display:block!important;color:#64748b!important;text-align:left}.upload-card.dragging{border-color:#21b98a;background:#f1fcf8}.upload-button:disabled{opacity:.65;cursor:wait}
 .from-pdf-layer{position:fixed;inset:0;z-index:5000;display:grid;place-items:center;padding:24px}.from-pdf-backdrop{position:absolute;inset:0;background:rgba(15,23,42,.62)}.from-pdf-modal,.from-pdf-progress-modal{position:relative;width:min(920px,100%);max-height:calc(100vh - 48px);overflow:auto;background:#fff;border-radius:30px;padding:38px 42px;box-shadow:0 28px 80px rgba(15,23,42,.28);font-family:Poppins,Inter,sans-serif}.from-pdf-modal h2,.from-pdf-progress-modal h2{margin:0;color:#17233d;font-size:36px}.from-pdf-modal>p,.from-pdf-progress-modal>p{margin:5px 0 24px;color:#536079;font-size:19px}.from-pdf-modal hr{border:0;border-top:1px solid #dde4eb;margin-bottom:24px}.from-pdf-close{position:absolute;right:25px;top:18px;border:0;background:transparent;color:#7d8796;font-size:42px;cursor:pointer}.from-pdf-headings{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin:0 0 12px;font-size:23px;color:#17233d}.from-pdf-options{display:grid;grid-template-columns:1fr 1fr;gap:14px}.from-pdf-option{display:grid;grid-template-columns:66px 1fr;align-items:center;gap:14px;min-height:126px;padding:18px;border:2px solid transparent;border-radius:18px;background:#f7f8fa;cursor:pointer}.from-pdf-option.active{border-color:#20ad80;background:#edfaf5;box-shadow:0 0 0 3px rgba(32,173,128,.12)}.from-pdf-option input{position:absolute;opacity:0}.from-pdf-icon{display:grid;place-items:center;width:58px;height:58px;border-radius:50%;background:#20ad80;color:#fff;font-size:13px;font-weight:800}.from-pdf-option b{color:#17233d;font-size:20px}.from-pdf-option small{display:block;margin-top:7px;color:#536079;font-size:15px;font-weight:500;line-height:1.4}.from-pdf-name{display:grid;gap:8px;margin-top:20px;color:#17233d;font-size:18px;font-weight:600}.from-pdf-name input{width:100%;padding:15px 17px;border:1px solid #d5dce5;border-radius:12px;font:inherit;font-weight:400}.from-pdf-download{width:100%;margin-top:18px;padding:17px;border:0;border-radius:12px;background:#20ad80;color:#fff;font-size:20px;font-weight:800;cursor:pointer}.from-pdf-check{display:flex;align-items:center;gap:10px;margin-top:18px;color:#45526a;font-size:17px}.from-pdf-check input{width:22px;height:22px;accent-color:#20ad80}.from-pdf-progress-modal{width:min(620px,100%);text-align:center}.from-pdf-progress-row{display:flex;justify-content:space-between;margin-top:25px;color:#17233d}.from-pdf-progress-track{height:12px;margin-top:10px;border-radius:99px;background:#dce9e5;overflow:hidden}.from-pdf-progress-track i{display:block;height:100%;border-radius:inherit;background:#20ad80;transition:width .25s}.from-pdf-email{position:relative;z-index:1}.from-pdf-email .from-pdf-close{z-index:2}@media(max-width:680px){.from-pdf-layer{padding:12px}.from-pdf-modal{padding:30px 18px 22px;border-radius:22px}.from-pdf-modal h2{font-size:28px}.from-pdf-headings{display:none}.from-pdf-options{grid-template-columns:1fr}.from-pdf-option{min-height:102px}.from-pdf-close{right:14px;top:8px}}
+/* PDFBreeze v5.6.50 — unified compact editor option bars */
+.text-options-bar,
+.edit-text-options-bar,
+.draw-options-bar,
+.text-highlight-options-bar,
+.watermark-options-bar,
+.crop-options-bar,
+.line-options-bar {
+  height: 64px;
+  min-height: 64px;
+  max-height: 64px;
+  box-sizing: border-box;
+  padding: 0 8px;
+  align-items: stretch;
+  position: relative;
+  z-index: 60;
+}
+
+.desktop-editor:has(.text-options-bar:not([hidden]), .edit-text-options-bar:not([hidden]), .draw-options-bar:not([hidden]), .text-highlight-options-bar:not([hidden]), .watermark-options-bar:not([hidden]), .crop-options-bar:not([hidden]), .line-options-bar:not([hidden])) {
+  grid-template-rows: 60px 92px 64px minmax(0, 1fr);
+}
+.desktop-editor.toolbar-compact:has(.text-options-bar:not([hidden]), .edit-text-options-bar:not([hidden]), .draw-options-bar:not([hidden]), .text-highlight-options-bar:not([hidden]), .watermark-options-bar:not([hidden]), .crop-options-bar:not([hidden]), .line-options-bar:not([hidden])) {
+  grid-template-rows: 60px 56px 64px minmax(0, 1fr);
+}
+
+/* Add text */
+.text-options-bar { overflow: visible !important; }
+.text-option { min-width: 82px; height: 64px; padding: 5px 10px; gap: 3px; box-sizing: border-box; }
+.font-colour-option { padding: 0; overflow: visible !important; z-index: 200; }
+.font-colour-button { width: 84px; height: 63px; padding: 5px 8px; gap: 3px; }
+.font-colour-circle { width: 22px; height: 22px; }
+.fill-swatch { width: 22px; height: 22px; }
+.font-colour-button span:last-child,
+.text-option > span:last-child { line-height: 1.05; }
+.opacity-option { min-width: 170px; }
+.select-option { min-width: 188px; }
+.select-option select { height: 34px; min-width: 136px; padding: 0 30px 0 10px; }
+.size-option { min-width: 92px; }
+.size-option input { width: 58px; height: 34px; }
+.alignment-option { min-width: 140px; gap: 4px; }
+.alignment-button { width: 34px; height: 34px; padding: 8px 7px; gap: 3px; }
+.alignment-button span { display: block; height: 2px; border-radius: 2px; }
+.alignment-button span:nth-child(1), .alignment-button span:nth-child(3) { width: 17px; }
+.alignment-button span:nth-child(2) { width: 12px; }
+.alignment-button.align-left span { align-self: flex-start; }
+.alignment-button.align-centre span { align-self: center; }
+.alignment-button.align-right span { align-self: flex-end; }
+.font-colour-menu { top: calc(100% + 1px); z-index: 5000 !important; }
+
+/* Edit text */
+.edit-text-options-bar { overflow: visible !important; z-index: 70; }
+.edit-option-button,
+.edit-option-control,
+.edit-format-toggle { height: 64px; min-width: 82px; padding: 5px 10px; gap: 3px; box-sizing: border-box; }
+.edit-option-control { min-width: 180px; }
+.edit-option-control select { height: 34px; min-width: 136px; padding: 0 30px 0 10px; }
+.edit-size-control { min-width: 96px; }
+.edit-size-control select { min-width: 64px; }
+.edit-format-toggle { min-width: 50px; }
+.edit-colour-icon { display: none; }
+.edit-colour-line { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #fff; outline: 1px solid #cbd5e1; box-shadow: 0 0 0 2px #eef2f7; }
+.edit-colour-menu { top: calc(100% + 1px); left: 4px; width: 250px; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 12px; z-index: 5000 !important; }
+.edit-colour-menu button { width: 26px; height: 26px; border-radius: 50%; }
+
+/* Draw */
+.draw-tool-choice { min-width: 82px; height: 64px; padding: 5px 10px; gap: 3px; box-sizing: border-box; }
+.draw-control, .draw-custom-colour, .draw-colour-section { height: 64px; padding: 5px 10px; gap: 4px; box-sizing: border-box; }
+.draw-control select { height: 34px; min-width: 96px; }
+.draw-colour-swatch { width: 22px; height: 22px; }
+.draw-custom-colour input { width: 48px; height: 32px; }
+.draw-clear-page { height: 38px; margin: 13px 0 13px 10px; }
+
+/* Highlight */
+.text-highlight-options-bar { padding: 0 14px; gap: 14px; }
+.text-highlight-colour { width: 26px; height: 26px; }
+
+/* Watermark */
+.watermark-control { height: 64px; padding: 5px 10px; gap: 3px; box-sizing: border-box; }
+.watermark-control input[type="text"], .watermark-control select { height: 34px; }
+.watermark-colour-swatch { width: 22px; height: 22px; }
+.watermark-done { height: 38px; margin-top: 13px; margin-bottom: 13px; }
+
+/* Crop */
+.crop-scope-control,
+.crop-instructions,
+.crop-dimensions { height: 64px; padding: 5px 10px; box-sizing: border-box; }
+.crop-scope-choices input[type="number"] { height: 34px; }
+.crop-action { height: 38px; margin-top: 13px; margin-bottom: 13px; }
+.crop-instructions { line-height: 1.15; }
+
+/* Lines and arrows */
+.line-current-shape, .line-option { height: 64px; padding: 5px 12px; gap: 3px; box-sizing: border-box; }
+.line-option input[type="color"] { width: 48px; height: 32px; }
+.line-opacity { min-width: 170px; }
+.line-option select { height: 34px; min-width: 96px; }
