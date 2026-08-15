@@ -716,6 +716,36 @@ html,body{max-width:100%;overflow-x:hidden}
   display:none!important;
 }
 
+/* PDFBreeze v2.7 — canvas-rasterised existing text.
+   The PDF preview and replacement now use the same browser canvas text
+   rasterisation. The contenteditable layer remains present for native caret
+   placement and input, but it no longer supplies the visible glyphs. */
+.existing-text-render{
+  display:none;
+  position:absolute;
+  left:0;
+  top:0;
+  max-width:none;
+  pointer-events:none;
+  z-index:0;
+}
+.existing-text-box.editing .existing-text-render,
+.existing-text-box.modified .existing-text-render{
+  display:block;
+}
+.existing-text-box.editing .existing-text-content,
+.existing-text-box.modified .existing-text-content{
+  position:relative;
+  z-index:1;
+  color:transparent!important;
+  -webkit-text-fill-color:transparent!important;
+  -webkit-text-stroke-width:0!important;
+  caret-color:#111827!important;
+}
+.existing-text-box.editing .existing-text-content::selection{
+  background:rgba(82,104,255,.28);
+}
+
 
 /* PDFBreeze v2.4 — Edit Text secondary toolbar */
 .edit-text-options-bar{

@@ -719,6 +719,7 @@ async function ensureExistingTextForCurrentPage() {
         width,
         height: clippedHeight,
         baselineY: textItem.transform[5],
+        visualBaselineY: tx[5],
         pdfX: textItem.transform[4],
         pdfY: textItem.transform[5],
         pdfFontSize: Math.max(5, Math.hypot(textItem.transform[0], textItem.transform[1])),
@@ -968,6 +969,10 @@ async function ensureExistingTextForCurrentPage() {
       fontScaleX,
       lineWidths,
       lineOffsets,
+      lineScaleXs: lineScaleSamples,
+      lineBaselineOffsets: paragraph.lines.map(({line}) =>
+        (line.runs[0]?.visualBaselineY ?? (line.top + line.avgHeight)) - paragraph.top
+      ),
       fontName: firstRun.fontName,
       exactFontKey: firstRun.exactFontKey || '',
       font: firstRun.font,
@@ -1031,7 +1036,11 @@ function commitExistingTextEditing({render = true} = {}) {
 
   if (changed) {
     item.text = nextText;
-    const requiredHeight = Math.max(16, content?.scrollHeight || 0);
+    const requiredHeight = Math.max(
+      16,
+      item.h * (editor.canvasMetrics?.height || 0),
+      content?.scrollHeight || 0
+    );
     if (editor.canvasMetrics?.height) {
       item.h = Math.min(1 - item.y, requiredHeight / editor.canvasMetrics.height);
     }
@@ -1657,6 +1666,59 @@ function renderTextHighlightInteraction(layer, metrics) {
 }
 
 
+function renderExistingTextCanvas(canvas, item, metrics, content = null) {
+  const exactEntry = item.exactFontKey && editor.embeddedFonts[item.exactFontKey];
+  const cssWidth = Math.max(1, item.w * metrics.width);
+  const cssHeight = Math.max(16, item.h * metrics.height, content?.scrollHeight || 0);
+  const pixelRatio = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+  canvas.width = Math.max(1, Math.ceil(cssWidth * pixelRatio));
+  canvas.height = Math.max(1, Math.ceil(cssHeight * pixelRatio));
+  canvas.style.width = `${cssWidth}px`;
+  canvas.style.height = `${cssHeight}px`;
+
+  const context = canvas.getContext('2d');
+  context.clearRect(0, 0, canvas.width, canvas.height);
+  context.scale(pixelRatio, pixelRatio);
+  context.textBaseline = 'alphabetic';
+  context.textAlign = 'left';
+  context.fillStyle = item.color || '#000000';
+  context.strokeStyle = item.color || '#000000';
+  context.lineJoin = 'round';
+  context.lineWidth = Math.max(0, Number(item.fontStrokeWidth) || 0) * metrics.scale * 2;
+
+  const preservedWeight = Number.isFinite(item.fontWeight)
+    ? item.fontWeight
+    : Number.isFinite(item.originalFontWeight)
+      ? item.originalFontWeight
+      : item.bold ? 700 : 400;
+  const family = exactEntry?.face
+    ? `"${exactEntry.family}"`
+    : cssFamilyForExistingText(item);
+  const fontSize = Math.max(4, item.pdfFontSize * metrics.scale);
+  context.font = `${item.italic ? 'italic ' : ''}${preservedWeight} ${fontSize}px ${family}`;
+
+  const lines = String(item.text || '').split('\n');
+  const baselineFallback = Math.max(fontSize * .75, (item.lineHeight || item.pdfFontSize) * metrics.scale * .75);
+  lines.forEach((line, lineIndex) => {
+    const lineOffset = Number.isFinite(Number(item.lineOffsets?.[lineIndex]))
+      ? Number(item.lineOffsets[lineIndex]) * metrics.scale
+      : 0;
+    const baseline = Number.isFinite(Number(item.lineBaselineOffsets?.[lineIndex]))
+      ? Number(item.lineBaselineOffsets[lineIndex]) * metrics.scale
+      : baselineFallback + lineIndex * item.lineHeight * metrics.scale;
+    const horizontalScale = Number.isFinite(Number(item.lineScaleXs?.[lineIndex]))
+      ? Number(item.lineScaleXs[lineIndex])
+      : Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+
+    context.save();
+    context.translate(lineOffset, baseline);
+    context.scale(horizontalScale, 1);
+    if (context.lineWidth > 0) context.strokeText(line, 0, 0);
+    context.fillText(line, 0, 0);
+    context.restore();
+  });
+}
+
 function renderExistingTextBoxes(layer, metrics) {
   const sourceIndex = getCurrentSourcePageIndex();
   if (sourceIndex === null) return;
@@ -1719,12 +1781,16 @@ function renderExistingTextBoxes(layer, metrics) {
     content.style.transform = `scaleX(${horizontalScale})`;
     content.style.width = `${100 / horizontalScale}%`;
 
+    const visualCanvas = document.createElement('canvas');
+    visualCanvas.className = 'existing-text-render';
+    renderExistingTextCanvas(visualCanvas, item, metrics, content);
+
     const leftHandle = document.createElement('span');
     leftHandle.className = 'existing-handle left-handle';
     const rightHandle = document.createElement('span');
     rightHandle.className = 'existing-handle right-handle';
 
-    box.append(content, leftHandle, rightHandle);
+    box.append(visualCanvas, content, leftHandle, rightHandle);
 
     box.addEventListener('click', event => {
       if (!editModeActive) return;
@@ -1754,9 +1820,10 @@ function renderExistingTextBoxes(layer, metrics) {
       item.modified = item.text !== item.originalText || Boolean(item.html);
       box.classList.toggle('modified', item.modified);
 
-      const requiredHeight = Math.max(16, content.scrollHeight);
+      const requiredHeight = Math.max(16, item.h * metrics.height, content.scrollHeight);
       box.style.minHeight = `${requiredHeight}px`;
       item.h = Math.min(1 - item.y, requiredHeight / metrics.height);
+      renderExistingTextCanvas(visualCanvas, item, metrics, content);
     });
 
     content.addEventListener('keydown', event => {
@@ -3775,6 +3842,11 @@ async function createEditedPdfBytes() {
     canvas.height = Math.max(1, Math.ceil(height * pixelScale));
     const context = canvas.getContext('2d');
     context.scale(pixelScale, pixelScale);
+    // The replacement must be opaque. A transparent text image can leave the
+    // original PDF glyphs visible underneath, making an unchanged 400-weight
+    // font look artificially bold after export.
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, width, height);
     context.textBaseline = 'alphabetic';
     context.textAlign = 'left';
     context.fillStyle = item.color || '#000000';
@@ -3791,14 +3863,21 @@ async function createEditedPdfBytes() {
     lines.forEach((line, index) => {
       const measuredWidth = Math.max(.01, context.measureText(line).width);
       const requestedWidth = Number(item.lineWidths?.[index]);
-      const lineScaleX = Number.isFinite(requestedWidth) && requestedWidth > 0
-        ? requestedWidth / measuredWidth
-        : Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
+      const storedLineScale = Number(item.lineScaleXs?.[index]);
+      const lineScaleX = Number.isFinite(storedLineScale) && storedLineScale > 0
+        ? storedLineScale
+        : Number.isFinite(requestedWidth) && requestedWidth > 0
+          ? requestedWidth / measuredWidth
+          : Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
       const lineOffset = Number.isFinite(Number(item.lineOffsets?.[index]))
         ? Number(item.lineOffsets[index])
         : 0;
+      const storedBaseline = Number(item.lineBaselineOffsets?.[index]);
+      const lineBaseline = Number.isFinite(storedBaseline)
+        ? storedBaseline
+        : baselineOffset + index * lineHeight;
       context.save();
-      context.translate(lineOffset, baselineOffset + index * lineHeight);
+      context.translate(lineOffset, lineBaseline);
       context.scale(lineScaleX, 1);
       if (context.lineWidth > 0) context.strokeText(line, 0, 0);
       context.fillText(line, 0, 0);
