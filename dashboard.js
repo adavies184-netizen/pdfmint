@@ -94,6 +94,7 @@
   const compressLayer = document.querySelector('[data-compress-options]');
   const ocrLayer = document.querySelector('[data-ocr-options]');
   const convertLayer = document.querySelector('[data-convert-options]');
+  const uploadCompleteLayer = document.querySelector('[data-upload-complete]');
   let selectedDashboardTool = null;
   let selectedDashboardFile = null;
 
@@ -492,10 +493,35 @@
       try {
         for (const file of files) await saveDashboardFile(file, file.name);
         await refreshDashboardFiles();
+        const uploadedFile = files[files.length - 1];
+        selectedDashboardFile = uploadedFile;
+        uploadCompleteLayer.querySelector('[data-upload-complete-type]').textContent = String(uploadedFile.name || 'PDF').split('.').pop().slice(0,4).toUpperCase();
+        uploadCompleteLayer.querySelector('[data-upload-complete-name]').textContent = uploadedFile.name;
+        uploadCompleteLayer.querySelector('[data-upload-complete-size]').textContent = `${formatBytes(uploadedFile.size)} · Saved in My Files`;
+        uploadCompleteLayer.hidden = false;
+        document.body.style.overflow = 'hidden';
       } catch (error) {
         console.warn('PDFBreeze could not add the uploaded file to My Files.', error);
       }
     });
+  });
+
+  const closeUploadComplete = () => {
+    if (uploadCompleteLayer) uploadCompleteLayer.hidden = true;
+    document.body.style.overflow = '';
+  };
+  uploadCompleteLayer?.querySelectorAll('[data-close-upload-complete]').forEach(button => button.addEventListener('click', closeUploadComplete));
+  uploadCompleteLayer?.querySelector('[data-upload-edit]')?.addEventListener('click', async () => {
+    const file = selectedDashboardFile;
+    closeUploadComplete();
+    selectedDashboardTool = ['Edit PDF','Update text and content','i-edit','edit',''];
+    await continueToDashboardTool(file, {alreadySaved:true});
+  });
+  uploadCompleteLayer?.querySelector('[data-upload-convert]')?.addEventListener('click', () => {
+    const file = selectedDashboardFile;
+    closeUploadComplete();
+    selectedDashboardTool = directTools.convert;
+    openConvertOptions(file);
   });
 
   const converterTargetsByExtension = {

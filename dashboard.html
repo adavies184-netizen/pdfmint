@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="dashboard.css?v=5641">
+  <link rel="stylesheet" href="dashboard.css?v=5652">
   <link rel="stylesheet" href="pdfbreeze-support-v1.css">
   <link rel="stylesheet" href="pdfbreeze-mobile-menu-v2.css">
   <style>
@@ -172,6 +172,19 @@
       <div class="picker-files" data-picker-files>
         <button type="button" data-library-file="Terms of Business.pdf"><i>PDF</i><span><b>Terms of Business.pdf</b><small>531 KB · Edited today</small></span><svg><use href="#i-chevron"/></svg></button>
         <button type="button" data-library-file="Signed agreement.pdf"><i>PDF</i><span><b>Signed agreement.pdf</b><small>284 KB · Edited yesterday</small></span><svg><use href="#i-chevron"/></svg></button>
+      </div>
+    </section>
+  </div>
+
+  <div class="upload-complete-layer" data-upload-complete hidden>
+    <button class="choice-backdrop" type="button" data-close-upload-complete aria-label="Close upload options"></button>
+    <section class="upload-complete-dialog" role="dialog" aria-modal="true" aria-labelledby="upload-complete-title">
+      <button class="choice-close" type="button" data-close-upload-complete aria-label="Close"><svg><use href="#i-close"/></svg></button>
+      <header><span><svg><use href="#i-check"/></svg></span><div><small>UPLOAD COMPLETE</small><h2 id="upload-complete-title">What would you like to do?</h2><p>Your file is safely stored in My Files and ready to use.</p></div></header>
+      <div class="choice-file"><i data-upload-complete-type>PDF</i><span><b data-upload-complete-name>Document.pdf</b><small data-upload-complete-size>Ready to use</small></span></div>
+      <div class="upload-complete-actions">
+        <button type="button" data-upload-edit><i><svg><use href="#i-edit"/></svg></i><span><b>Edit PDF</b><small>Open this document in the PDFBreeze editor.</small></span><svg><use href="#i-chevron"/></svg></button>
+        <button type="button" data-upload-convert><i><svg><use href="#i-convert"/></svg></i><span><b>Convert PDF</b><small>Choose a format for this uploaded document.</small></span><svg><use href="#i-chevron"/></svg></button>
       </div>
     </section>
   </div>
@@ -343,7 +356,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-  <script src="dashboard.js?v=5641"></script>
+  <script src="dashboard.js?v=5652"></script>
 <script src="support-bot.js?v=5633"></script>
   <script>
     (() => {
