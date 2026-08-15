@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=5651" />
+  <link rel="stylesheet" href="styles.css?v=5653" />
 <style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -817,6 +817,19 @@
     </section>
   </div>
 
+  <div class="editor-export-progress-layer" id="dashboard-export-progress" hidden>
+    <section class="editor-export-progress-dialog" role="dialog" aria-modal="true" aria-labelledby="dashboard-export-progress-title">
+      <span class="editor-export-progress-icon" aria-hidden="true">P</span>
+      <small>PDFBREEZE EXPORT</small>
+      <h2 id="dashboard-export-progress-title">Preparing your document</h2>
+      <p id="dashboard-export-progress-detail">Applying your edits securely…</p>
+      <div class="editor-export-progress-track"><i id="dashboard-export-progress-bar"></i></div>
+      <strong id="dashboard-export-progress-percent">0%</strong>
+      <p class="editor-export-progress-note" id="dashboard-export-progress-note">Please keep this window open. Your download will start automatically.</p>
+      <button type="button" id="dashboard-export-progress-close" hidden>Return to editor</button>
+    </section>
+  </div>
+
   <div class="checkout-layer" id="access-page" hidden>
     <section class="checkout-page" aria-labelledby="access-title">
       <header class="checkout-header">
@@ -1175,7 +1188,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-  <script src="script.js?v=5648"></script>
+  <script src="script.js?v=5653"></script>
   <script src="from-pdf-converter.js?v=4600"></script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>

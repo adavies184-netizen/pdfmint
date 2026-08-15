@@ -421,7 +421,7 @@
   });
 
   async function refreshDashboardFiles() {
-    const records = await getDashboardFiles();
+    const records = (await getDashboardFiles()).filter(record => /\.pdf$/i.test(String(record.name || '')));
     const recent = document.querySelector('[data-recent-files]');
     recent?.querySelectorAll('.dynamic-file-row').forEach(row => row.remove());
     recent?.querySelectorAll('.file-row:not(.file-head):not(.dynamic-file-row)').forEach(row => row.remove());
@@ -631,8 +631,10 @@
         throw new Error(message);
       }
       const blob = await response.blob();
-      await saveDashboardFile(blob, filename);
-      await refreshDashboardFiles();
+      if (/\.pdf$/i.test(String(filename || ''))) {
+        await saveDashboardFile(blob, filename);
+        await refreshDashboardFiles();
+      }
       window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
       titleElement.textContent = 'Your download is ready';
       copyElement.textContent = 'The finished file has been downloaded. Returning to My Files…';
