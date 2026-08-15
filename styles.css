@@ -640,6 +640,81 @@ html,body{max-width:100%;overflow-x:hidden}
   text-shadow:none;
 }
 
+/* PDFBreeze v2.6 — one deterministic Edit Text visual state.
+   Every detected paragraph remains blue while the tool is active. Only a
+   paragraph that is being edited or was genuinely changed covers the PDF
+   canvas and displays replacement text. */
+.annotation-layer.edit-text-mode .existing-text-box,
+.annotation-layer.edit-text-mode .existing-text-box.selected,
+.annotation-layer.edit-text-mode .existing-text-box.modified,
+.annotation-layer.edit-text-mode .existing-text-box.modified.selected,
+.annotation-layer.edit-text-mode .existing-text-box.editing{
+  border:1px dashed #5268ff;
+  background:rgba(82,104,255,.025);
+  color:transparent;
+  overflow:visible;
+}
+.annotation-layer.edit-text-mode .existing-text-box:hover,
+.annotation-layer.edit-text-mode .existing-text-box.selected{
+  background:rgba(82,104,255,.055);
+}
+.annotation-layer.edit-text-mode .existing-text-box:not(.editing):not(.modified) .existing-text-content{
+  display:none!important;
+}
+.annotation-layer.edit-text-mode .existing-text-box.editing,
+.annotation-layer.edit-text-mode .existing-text-box.modified{
+  background:transparent;
+  color:#000;
+}
+.annotation-layer.edit-text-mode .existing-text-box.editing .existing-text-content,
+.annotation-layer.edit-text-mode .existing-text-box.modified .existing-text-content{
+  display:block!important;
+  color:#000!important;
+  width:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  white-space:pre;
+  overflow-wrap:normal;
+  word-break:normal;
+  pointer-events:none;
+}
+.annotation-layer.edit-text-mode .existing-text-box.editing .existing-text-content{
+  pointer-events:auto;
+  user-select:text;
+  -webkit-user-select:text;
+  caret-color:#111827;
+  cursor:text;
+  outline:none;
+}
+.annotation-layer.edit-text-mode .existing-text-box.selected:not(.editing) .existing-handle{
+  display:block;
+}
+.annotation-layer.edit-text-mode .existing-text-box.editing .existing-handle{
+  display:none!important;
+}
+.annotation-layer:not(.edit-text-mode) .existing-text-box.modified{
+  border:0;
+  background:transparent;
+  pointer-events:none;
+  color:#000;
+}
+.annotation-layer:not(.edit-text-mode) .existing-text-box.modified .existing-text-content{
+  display:block!important;
+  color:#000!important;
+  width:100%;
+  min-height:100%;
+  margin:0;
+  padding:0;
+  white-space:pre;
+  overflow-wrap:normal;
+  word-break:normal;
+  pointer-events:none;
+}
+.annotation-layer:not(.edit-text-mode) .existing-text-box.modified .existing-handle{
+  display:none!important;
+}
+
 
 /* PDFBreeze v2.4 — Edit Text secondary toolbar */
 .edit-text-options-bar{

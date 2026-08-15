@@ -327,6 +327,7 @@ function getSelectedAnnotation() {
 }
 
 function clearEditTextInterfaceImmediately() {
+  commitExistingTextEditing({render: false});
   editor.editTextBoxMode = false;
   editor.selectedExistingTextId = null;
   editor.selectedEditCreatedTextId = null;
@@ -347,8 +348,12 @@ function clearEditTextInterfaceImmediately() {
   // Remove the visible Edit Text layer now, during the toolbar click itself.
   // Do not wait for a later click on the PDF preview.
   document.querySelectorAll(
-    '.existing-text-box, .existing-text-whiteout, .edit-created-text'
+    '.existing-text-box:not(.modified), .edit-created-text'
   ).forEach(element => element.remove());
+  document.querySelectorAll('.existing-text-box.modified').forEach(box => {
+    box.classList.remove('selected', 'editing');
+    box.querySelector('.existing-text-content')?.removeAttribute('contenteditable');
+  });
 }
 
 function setEditorMode(mode) {
@@ -903,6 +908,80 @@ function selectExistingText(id) {
 function deselectExistingText() {
   editor.selectedExistingTextId = null;
   refreshExistingTextSelectionClasses();
+}
+
+function commitExistingTextEditing({render = true} = {}) {
+  const box = document.querySelector('.existing-text-box.editing');
+  if (!box) return false;
+  const sourceIndex = getCurrentSourcePageIndex();
+  const item = sourceIndex === null ? null : getExistingTextItems(sourceIndex)
+    .find(candidate => candidate.id === box.dataset.id);
+  if (!item) return false;
+
+  const content = box.querySelector('.existing-text-content');
+  const nextText = (content?.textContent || '').replace(/\r/g, '');
+  const changed = nextText !== item.originalText || Boolean(item.html);
+  item.editing = false;
+  item.modified = changed;
+
+  if (changed) {
+    item.text = nextText;
+    const requiredHeight = Math.max(16, content?.scrollHeight || 0);
+    if (editor.canvasMetrics?.height) {
+      item.h = Math.min(1 - item.y, requiredHeight / editor.canvasMetrics.height);
+    }
+  } else {
+    item.text = item.originalText;
+    item.html = '';
+    item.x = item.originalX;
+    item.y = item.originalY;
+    item.w = item.originalW;
+    item.h = item.originalH;
+  }
+
+  if (render) renderAnnotations();
+  return true;
+}
+
+function beginExistingTextEditing(item, clientX, clientY) {
+  commitExistingTextEditing({render: false});
+  editor.selectedExistingTextId = item.id;
+  editor.selectedAnnotationId = null;
+  editor.selectedEditCreatedTextId = null;
+  if (!item.editing) recordHistory();
+  item.editing = true;
+  renderAnnotations();
+  syncEditTextToolbar();
+
+  requestAnimationFrame(() => {
+    const box = document.querySelector(`.existing-text-box[data-id="${CSS.escape(item.id)}"]`);
+    const content = box?.querySelector('.existing-text-content');
+    if (!content) return;
+    content.setAttribute('contenteditable', 'plaintext-only');
+    if (content.contentEditable !== 'plaintext-only') content.setAttribute('contenteditable', 'true');
+    content.focus({preventScroll: true});
+
+    let range = null;
+    if (document.caretPositionFromPoint) {
+      const position = document.caretPositionFromPoint(clientX, clientY);
+      if (position && content.contains(position.offsetNode)) {
+        range = document.createRange();
+        range.setStart(position.offsetNode, position.offset);
+        range.collapse(true);
+      }
+    } else if (document.caretRangeFromPoint) {
+      const candidate = document.caretRangeFromPoint(clientX, clientY);
+      if (candidate && content.contains(candidate.startContainer)) range = candidate;
+    }
+    if (!range) {
+      range = document.createRange();
+      range.selectNodeContents(content);
+      range.collapse(false);
+    }
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+  });
 }
 
 function startExistingTextResize(event, item, side, box, content) {
@@ -1474,12 +1553,13 @@ function renderTextHighlightInteraction(layer, metrics) {
 
 
 function renderExistingTextBoxes(layer, metrics) {
-  if (editor.mode !== 'edit-existing') return;
-
   const sourceIndex = getCurrentSourcePageIndex();
   if (sourceIndex === null) return;
 
-  getExistingTextItems(sourceIndex).forEach(item => {
+  const editModeActive = editor.mode === 'edit-existing';
+  getExistingTextItems(sourceIndex)
+    .filter(item => editModeActive || item.modified)
+    .forEach(item => {
     const isSelected = item.id === editor.selectedExistingTextId;
     const isModified = Boolean(item.modified);
     const isEditing = Boolean(item.editing);
@@ -1525,62 +1605,6 @@ function renderExistingTextBoxes(layer, metrics) {
     content.style.transform = `scaleX(${horizontalScale})`;
     content.style.width = `${100 / horizontalScale}%`;
 
-    const placeCaretAtPoint = (clientX, clientY) => {
-      let range = null;
-      if (document.caretPositionFromPoint) {
-        const position = document.caretPositionFromPoint(clientX, clientY);
-        if (position && content.contains(position.offsetNode)) {
-          range = document.createRange();
-          range.setStart(position.offsetNode, position.offset);
-          range.collapse(true);
-        }
-      } else if (document.caretRangeFromPoint) {
-        const candidate = document.caretRangeFromPoint(clientX, clientY);
-        if (candidate && content.contains(candidate.startContainer)) range = candidate;
-      }
-
-      if (!range) {
-        range = document.createRange();
-        range.selectNodeContents(content);
-        range.collapse(false);
-      }
-
-      const selection = window.getSelection();
-      selection.removeAllRanges();
-      selection.addRange(range);
-    };
-
-    const beginEditing = event => {
-      event.preventDefault();
-      event.stopPropagation();
-      selectExistingText(item.id);
-      editor.selectedEditCreatedTextId = null;
-      if (!item.editing) recordHistory();
-      item.editing = true;
-      box.classList.add('selected', 'editing');
-      content.setAttribute('contenteditable', 'plaintext-only');
-      if (content.contentEditable !== 'plaintext-only') content.setAttribute('contenteditable', 'true');
-      content.style.removeProperty('display');
-
-      let whiteout = document.querySelector(`.existing-text-whiteout[data-for="${item.id}"]`);
-      if (!whiteout) {
-        whiteout = document.createElement('div');
-        whiteout.className = 'existing-text-whiteout';
-        whiteout.dataset.for = item.id;
-        box.parentElement.insertBefore(whiteout, box);
-      }
-      whiteout.style.left = `${item.originalX * metrics.width - 3}px`;
-      whiteout.style.top = `${item.originalY * metrics.height - 3}px`;
-      whiteout.style.width = `${item.originalW * metrics.width + 6}px`;
-      whiteout.style.height = `${Math.max(16, item.originalH * metrics.height) + 6}px`;
-      syncEditTextToolbar();
-
-      requestAnimationFrame(() => {
-        content.focus({preventScroll: true});
-        placeCaretAtPoint(event.clientX, event.clientY);
-      });
-    };
-
     const leftHandle = document.createElement('span');
     leftHandle.className = 'existing-handle left-handle';
     const rightHandle = document.createElement('span');
@@ -1589,11 +1613,12 @@ function renderExistingTextBoxes(layer, metrics) {
     box.append(content, leftHandle, rightHandle);
 
     box.addEventListener('click', event => {
+      if (!editModeActive) return;
       if (box.classList.contains('editing')) {
         event.stopPropagation();
         return;
       }
-      beginEditing(event);
+      beginExistingTextEditing(item, event.clientX, event.clientY);
     });
 
     box.addEventListener('dblclick', event => {
@@ -1628,33 +1653,18 @@ function renderExistingTextBoxes(layer, metrics) {
     });
 
     content.addEventListener('blur', () => {
-      if (!box.classList.contains('editing')) return;
-
-      content.removeAttribute('contenteditable');
-      content.style.removeProperty('display');
-      box.classList.remove('editing');
-      item.editing = false;
-
-      item.text = content.textContent.replace(/\r/g, '');
-      item.modified = item.text !== item.originalText || Boolean(item.html);
-      box.classList.toggle('modified', item.modified);
-
-      const requiredHeight = Math.max(16, content.scrollHeight);
-      box.style.minHeight = `${requiredHeight}px`;
-      item.h = Math.min(1 - item.y, requiredHeight / metrics.height);
-
-      // Unchanged paragraphs return to the exact PDF rendering. Edited
-      // paragraphs retain the fitted replacement overlay.
-      renderAnnotations();
-      refreshExistingTextSelectionClasses();
+      if (!item.editing || !box.classList.contains('editing')) return;
+      commitExistingTextEditing();
     });
 
     leftHandle.addEventListener('mousedown', event => {
+      if (!editModeActive) return;
       item.modified = true;
       box.classList.add('modified');
       startExistingTextResize(event, item, 'left', box, content);
     });
     rightHandle.addEventListener('mousedown', event => {
+      if (!editModeActive) return;
       item.modified = true;
       box.classList.add('modified');
       startExistingTextResize(event, item, 'right', box, content);
@@ -3445,9 +3455,11 @@ document.getElementById('annotation-layer').addEventListener('mousedown', event 
     if (editor.editTextBoxMode) {
       addEditTextBoxAt(event.clientX, event.clientY);
     } else {
+      commitExistingTextEditing({render: false});
       deselectExistingText();
       editor.selectedEditCreatedTextId = null;
       document.querySelectorAll('.edit-created-text').forEach(el => el.classList.remove('selected'));
+      renderAnnotations();
     }
   } else {
     if (editor.mode === 'link') return;
