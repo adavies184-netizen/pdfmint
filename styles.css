@@ -191,7 +191,7 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .annotation-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .annotation-layer.text-mode{pointer-events:auto;cursor:crosshair}
 .annotation-layer.select-mode{pointer-events:auto;cursor:default}
-.text-annotation{position:absolute;min-width:70px;min-height:28px;padding:3px 5px;border:1px solid transparent;line-height:1.15;white-space:pre-wrap;word-break:break-word;cursor:pointer;transform-origin:center center;pointer-events:auto}
+.text-annotation{position:absolute;box-sizing:border-box;min-width:70px;min-height:28px;padding:3px 5px;border:1px solid transparent;line-height:1.15;white-space:pre-wrap;word-break:break-word;cursor:pointer;transform-origin:center center;pointer-events:auto}
 .text-annotation:hover{border-color:rgba(37,99,235,.48)}
 .text-annotation.selected{border:1px solid #2563eb;box-shadow:0 0 0 1px rgba(37,99,235,.16);cursor:move}
 .text-annotation[contenteditable="true"]{cursor:text;outline:none}

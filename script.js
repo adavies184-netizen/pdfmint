@@ -2393,7 +2393,7 @@ function renderAnnotations() {
     el.style.left = `${item.x * metrics.width}px`;
     el.style.top = `${item.y * metrics.height}px`;
     el.style.width = `${item.w * metrics.width}px`;
-    el.style.minHeight = `${item.h * metrics.height}px`;
+    el.style.height = `${Math.max(28, item.h * metrics.height)}px`;
     const fontFamilies = {
       Helvetica: 'Helvetica, Arial, sans-serif',
       Arial: 'Arial, sans-serif',
@@ -2431,6 +2431,13 @@ function renderAnnotations() {
     rotateHandle.contentEditable = 'false';
     el.append(...resizeHandles, rotateHandle);
 
+    const fitHeightToText = () => {
+      el.style.height = 'auto';
+      const fittedHeight = Math.max(28, el.scrollHeight + 2);
+      el.style.height = `${fittedHeight}px`;
+      item.h = Math.min(1 - item.y, fittedHeight / metrics.height);
+    };
+
     el.addEventListener('mousedown', event => {
       if (event.target.closest('.resize-handle,.rotate-handle')) return;
       event.stopPropagation();
@@ -2463,12 +2470,14 @@ function renderAnnotations() {
     el.addEventListener('focus', () => { if (!el.dataset.historyRecorded) { recordHistory(); el.dataset.historyRecorded = '1'; } });
     el.addEventListener('input', () => {
       item.text = Array.from(el.childNodes).filter(node => !node.classList?.contains('resize-handle') && !node.classList?.contains('rotate-handle')).map(node => node.textContent).join('');
+      fitHeightToText();
     });
     el.addEventListener('blur', () => {
       delete el.dataset.historyRecorded;
       item.text = el.innerText.replace(/\n+$/,'');
       item.editing = false;
       el.contentEditable = 'false';
+      fitHeightToText();
     });
     resizeHandles.forEach(handle => handle.addEventListener('mousedown', event => {
       event.stopPropagation();
@@ -2480,6 +2489,7 @@ function renderAnnotations() {
       startRotateAnnotation(event, item);
     });
     layer.appendChild(el);
+    if (item.editing) fitHeightToText();
   });
   renderSavedTextHighlights(layer, metrics);
   renderExistingTextBoxes(layer, metrics);
@@ -2623,7 +2633,7 @@ function addTextAt(clientX, clientY) {
     id: `txt-${Date.now()}-${Math.random().toString(36).slice(2,7)}`,
     type: 'text',
     text: 'Type here',
-    x, y, w: .18, h: .045,
+    x, y, w: .18, h: Math.min(1 - y, 28 / rect.height),
     size: 18,
     font: 'Helvetica',
     color: '#111827',
@@ -2946,6 +2956,16 @@ document.addEventListener('keydown', event => {
     if (event.shiftKey) redoEditor(); else undoEditor();
   } else if (modifier && event.key.toLowerCase() === 'y') {
     event.preventDefault(); redoEditor();
+  } else if ((event.key === 'Delete' || event.key === 'Backspace') &&
+             editor.selectedAnnotationId &&
+             !event.target.matches('input,textarea,[contenteditable="true"]')) {
+    event.preventDefault();
+    recordHistory();
+    const sourceIndex = editor.pages[editor.selectedIndex].sourceIndex;
+    editor.annotations[String(sourceIndex)] =
+      getPageAnnotations(sourceIndex).filter(item => item.id !== editor.selectedAnnotationId);
+    editor.selectedAnnotationId = null;
+    renderAnnotations();
   } else if ((event.key === 'Delete' || event.key === 'Backspace') &&
              editor.selectedSignatureId &&
              !event.target.matches('input,textarea,[contenteditable="true"]')) {
@@ -6726,7 +6746,8 @@ if (documentConvertModal) {
 async function initialiseSharedEditorRoute() {
   if (document.body.dataset.editorRoute !== 'true') return;
 
-  const tool = new URLSearchParams(window.location.search).get('tool') || 'none';
+  const requestedTool = new URLSearchParams(window.location.search).get('tool') || 'none';
+  const tool = requestedTool === 'edit' ? 'none' : requestedTool;
 
   try {
     const file = await takePdfForSharedEditor();
