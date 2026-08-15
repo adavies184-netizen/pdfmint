@@ -4683,15 +4683,21 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
     if (isDashboardEditorSession() || await hasUnlimitedPaidAccess()) {
       const format = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
       closeFormatModal();
+      showDashboardExportProgress(format);
       await exportEditedDocument(format);
       await pendingDashboardFileSave;
+      updateExportProgress(100, 'Download ready', `Your ${format.toUpperCase()} file has downloaded.`);
+      const progressNote = document.getElementById('dashboard-export-progress-note');
+      if (progressNote) progressNote.textContent = 'Returning to My Files…';
+      await new Promise(resolve => window.setTimeout(resolve, 550));
       window.location.assign('dashboard.html?updated=1');
       return;
     }
     preparedExportBytes = await createEditedPdfBytes();
     openEmailModal();
   } catch (error) {
-    showAlert('PDFBreeze could not prepare this PDF.');
+    if (isDashboardEditorSession()) showDashboardExportError(error?.message || 'PDFBreeze could not prepare this file.');
+    else showAlert('PDFBreeze could not prepare this PDF.');
   } finally {
     button.disabled = false;
     button.textContent = 'Download';
@@ -5259,9 +5265,13 @@ function startExportCountdown(format) {
       pdfMintExportDisplayedProgress = estimatedProgress;
       const bar = document.getElementById('export-progress-bar');
       const percentNode = document.getElementById('export-progress-percent');
+      const dashboardBar = document.getElementById('dashboard-export-progress-bar');
+      const dashboardPercent = document.getElementById('dashboard-export-progress-percent');
 
       if (bar) bar.style.width = `${estimatedProgress}%`;
       if (percentNode) percentNode.textContent = `${Math.round(estimatedProgress)}%`;
+      if (dashboardBar) dashboardBar.style.width = `${estimatedProgress}%`;
+      if (dashboardPercent) dashboardPercent.textContent = `${Math.round(estimatedProgress)}%`;
     }
   }, 250);
 }
@@ -5272,6 +5282,10 @@ function updateExportProgress(percent, title, detail) {
   const detailNode = document.getElementById('export-progress-detail');
   const percentNode = document.getElementById('export-progress-percent');
   const bar = document.getElementById('export-progress-bar');
+  const dashboardTitle = document.getElementById('dashboard-export-progress-title');
+  const dashboardDetail = document.getElementById('dashboard-export-progress-detail');
+  const dashboardPercent = document.getElementById('dashboard-export-progress-percent');
+  const dashboardBar = document.getElementById('dashboard-export-progress-bar');
 
   if (panel) panel.hidden = false;
   const requestedPercent = Math.max(0, Math.min(100, Number(percent) || 0));
@@ -5286,7 +5300,44 @@ function updateExportProgress(percent, title, detail) {
   if (detailNode) detailNode.textContent = detail || '';
   if (percentNode) percentNode.textContent = `${safePercent}%`;
   if (bar) bar.style.width = `${safePercent}%`;
+  if (dashboardTitle) dashboardTitle.textContent = title || 'Preparing document';
+  if (dashboardDetail) dashboardDetail.textContent = detail || '';
+  if (dashboardPercent) dashboardPercent.textContent = `${safePercent}%`;
+  if (dashboardBar) dashboardBar.style.width = `${safePercent}%`;
 }
+
+function showDashboardExportProgress(format) {
+  const layer = document.getElementById('dashboard-export-progress');
+  if (!layer) return;
+  const close = document.getElementById('dashboard-export-progress-close');
+  const note = document.getElementById('dashboard-export-progress-note');
+  layer.classList.remove('is-error');
+  if (close) close.hidden = true;
+  if (note) note.textContent = 'Please keep this window open. Your download will start automatically.';
+  layer.hidden = false;
+  document.body.style.overflow = 'hidden';
+  resetExportProgress();
+  startExportCountdown(format);
+  updateExportProgress(2, 'Starting export', `Preparing ${format.toUpperCase()}…`);
+}
+
+function showDashboardExportError(message) {
+  stopExportCountdown();
+  const layer = document.getElementById('dashboard-export-progress');
+  const close = document.getElementById('dashboard-export-progress-close');
+  const note = document.getElementById('dashboard-export-progress-note');
+  const percent = document.getElementById('dashboard-export-progress-percent');
+  if (layer) layer.classList.add('is-error');
+  updateExportProgress(0, 'Export could not be completed', message || 'Please try again.');
+  if (percent) percent.textContent = '—';
+  if (note) note.textContent = 'Your editor remains open and your changes have not been lost.';
+  if (close) close.hidden = false;
+}
+
+document.getElementById('dashboard-export-progress-close')?.addEventListener('click', () => {
+  document.getElementById('dashboard-export-progress').hidden = true;
+  document.body.style.overflow = '';
+});
 
 function resetExportProgress() {
   stopExportCountdown();
@@ -5504,7 +5555,9 @@ function downloadBlob(blob, filename) {
     link.click();
     link.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 1500);
-    pendingDashboardFileSave = saveFileToDashboard(blob, filename);
+    pendingDashboardFileSave = /\.pdf$/i.test(String(filename || ''))
+      ? saveFileToDashboard(blob, filename)
+      : Promise.resolve();
     return;
   }
   pendingCheckoutBlob = blob;

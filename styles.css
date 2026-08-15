@@ -1738,6 +1738,24 @@ html,body{max-width:100%;overflow-x:hidden}
 }
 
 /* PDFBreeze v3.9.6 — Contact page */
+/* PDFBreeze v5.6.53 — member editor export progress */
+.editor-export-progress-layer{position:fixed;z-index:5000;inset:0;display:grid;place-items:center;padding:20px;background:rgba(16,29,45,.66);backdrop-filter:blur(3px)}
+.editor-export-progress-layer[hidden]{display:none}
+.editor-export-progress-dialog{box-sizing:border-box;width:min(480px,calc(100vw - 40px));padding:34px;border-radius:22px;background:#fff;box-shadow:0 28px 80px rgba(15,31,51,.3);text-align:center}
+.editor-export-progress-icon{width:58px;height:58px;margin:0 auto 14px;border-radius:16px;background:#dff7ee;color:#11825f;display:grid;place-items:center;font-size:27px;font-weight:700}
+.editor-export-progress-dialog>small{color:#11825f;font-size:9px;font-weight:700;letter-spacing:1.2px}
+.editor-export-progress-dialog h2{margin:6px 0 7px;color:#192537;font-size:23px}
+.editor-export-progress-dialog>p{margin:0;color:#718095;font-size:12px;line-height:1.55}
+.editor-export-progress-track{height:10px;margin:24px 0 10px;overflow:hidden;border-radius:999px;background:#dcece4}
+.editor-export-progress-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,#20b98b,#149f74);transition:width .28s ease}
+.editor-export-progress-layer.is-error .editor-export-progress-track i{background:#d94b4b}
+.editor-export-progress-layer.is-error .editor-export-progress-dialog>strong{color:#b52f2f}
+.editor-export-progress-dialog>strong{color:#11825f;font-size:14px;font-variant-numeric:tabular-nums}
+.editor-export-progress-dialog .editor-export-progress-note{margin-top:14px;font-size:10px}
+.editor-export-progress-dialog>button{height:42px;margin-top:20px;padding:0 18px;border:0;border-radius:9px;background:#20b98b;color:#fff;font-size:11px;font-weight:700;cursor:pointer}
+@media(max-width:600px){.editor-export-progress-layer{padding:14px}.editor-export-progress-dialog{width:100%;padding:28px 20px;border-radius:18px}.editor-export-progress-dialog h2{font-size:20px}}
+
+/* PDFBreeze v3.9.6 — Contact page */
 .contact-page-main{background:#f7faf8}
 .contact-hero{padding:78px 20px 48px;text-align:center;background:radial-gradient(circle at 50% 0%,rgba(33,160,107,.10),transparent 38%),linear-gradient(180deg,#fff 0%,#f7faf8 100%)}
 .contact-hero .container{max-width:840px;margin:0 auto}
