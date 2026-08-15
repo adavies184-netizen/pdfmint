@@ -488,6 +488,36 @@ function approximatePdfFont(fontName = '') {
   return {font, bold, italic};
 }
 
+function getEmbeddedFontTraits(data, fallbackName = '') {
+  const lowerName = String(fallbackName || '').toLowerCase();
+  let weight = /thin/.test(lowerName) ? 100
+    : /extra[- ]?light|ultra[- ]?light/.test(lowerName) ? 200
+      : /light/.test(lowerName) ? 300
+        : /medium/.test(lowerName) ? 500
+          : /semi[- ]?bold|demi/.test(lowerName) ? 600
+            : /extra[- ]?bold|ultra[- ]?bold/.test(lowerName) ? 800
+              : /black|heavy/.test(lowerName) ? 900
+                : /bold/.test(lowerName) ? 700
+                  : 400;
+  let italic = /italic|oblique/.test(lowerName);
+
+  try {
+    const parsed = data?.length && window.fontkit?.create
+      ? window.fontkit.create(data)
+      : null;
+    const parsedWeight = Number(parsed?.['OS/2']?.usWeightClass);
+    if (Number.isFinite(parsedWeight) && parsedWeight >= 1 && parsedWeight <= 1000) {
+      weight = parsedWeight;
+    }
+    italic = italic || Number(parsed?.post?.italicAngle || 0) !== 0 ||
+      /italic|oblique/.test(String(parsed?.subfamilyName || '').toLowerCase());
+  } catch (error) {
+    console.warn('PDFBreeze could not read embedded font traits.', error);
+  }
+
+  return {weight, italic};
+}
+
 async function loadExactPdfFont(page, fontName) {
   if (!fontName) return null;
   if (Object.prototype.hasOwnProperty.call(editor.embeddedFonts, fontName)) {
@@ -503,16 +533,22 @@ async function loadExactPdfFont(page, fontName) {
         : rawData)
       : null;
     const family = `PDFBreezeExact_${fontName.replace(/[^a-z0-9_-]/gi, '_')}`;
+    const traits = getEmbeddedFontTraits(data, pdfFont?.name || fontName);
     const entry = {
       family,
       name: pdfFont?.name || fontName,
       data,
+      weight: traits.weight,
+      italic: traits.italic,
       ascent: Number.isFinite(pdfFont?.ascent) ? pdfFont.ascent : null,
       descent: Number.isFinite(pdfFont?.descent) ? pdfFont.descent : null
     };
 
     if (data?.length && window.FontFace && document.fonts) {
-      const face = new FontFace(family, data);
+      const face = new FontFace(family, data, {
+        weight: String(traits.weight),
+        style: traits.italic ? 'italic' : 'normal'
+      });
       await face.load();
       document.fonts.add(face);
       entry.face = face;
@@ -578,7 +614,11 @@ async function ensureExistingTextForCurrentPage() {
       // outside the page. They previously produced selection boxes across the
       // editor. Ignore those runs and clip partial runs to the visible page.
       if (width < 1 || clippedHeight < 1) return null;
-      const style = approximatePdfFont(textItem.fontName);
+      const style = approximatePdfFont(exactFont?.name || textItem.fontName);
+      const fontWeight = Number.isFinite(exactFont?.weight)
+        ? exactFont.weight
+        : style.bold ? 700 : 400;
+      const italic = exactFont?.face ? Boolean(exactFont.italic) : style.italic;
 
       return {
         index,
@@ -594,8 +634,9 @@ async function ensureExistingTextForCurrentPage() {
         fontName: textItem.fontName || '',
         exactFontKey: exactFont?.data?.length ? textItem.fontName : '',
         font: style.font,
-        bold: style.bold,
-        italic: style.italic
+        fontWeight,
+        bold: fontWeight >= 600,
+        italic
       };
     })
     .filter(Boolean)
@@ -710,7 +751,7 @@ async function ensureExistingTextForCurrentPage() {
         : firstRun.font === 'Courier' ? 'Courier New'
           : 'Arial';
     measurementContext.font =
-      `${firstRun.italic ? 'italic ' : ''}${firstRun.bold ? '700 ' : '400 '}` +
+      `${firstRun.italic ? 'italic ' : ''}${firstRun.fontWeight || (firstRun.bold ? 700 : 400)} ` +
       `${firstRun.pdfFontSize}px "${editingFamily}"`;
     const fittedPdfFontSize = firstRun.pdfFontSize;
     const lineWidths = paragraph.lines.map(({line}) => Math.max(1, line.right - line.left));
@@ -737,7 +778,7 @@ async function ensureExistingTextForCurrentPage() {
               : 'Arial';
 
         measurementContext.font =
-          `${run.italic ? 'italic ' : ''}${run.bold ? '700 ' : '400 '}${run.height}px "${family}"`;
+          `${run.italic ? 'italic ' : ''}${run.fontWeight || (run.bold ? 700 : 400)} ${run.height}px "${family}"`;
 
         const measured = characters.map(character => {
           const metrics = measurementContext.measureText(character);
@@ -822,6 +863,7 @@ async function ensureExistingTextForCurrentPage() {
       fontName: firstRun.fontName,
       exactFontKey: firstRun.exactFontKey || '',
       font: firstRun.font,
+      fontWeight: firstRun.fontWeight,
       bold: firstRun.bold,
       italic: firstRun.italic,
       lineHeight: paragraph.avgHeight,
@@ -1472,12 +1514,12 @@ function renderExistingTextBoxes(layer, metrics) {
     else content.textContent = item.text;
     content.spellcheck = false;
     content.style.fontFamily = cssFamilyForExistingText(item);
-    content.style.fontWeight = item.bold ? '700' : '400';
+    content.style.fontWeight = String(item.fontWeight || (item.bold ? 700 : 400));
     content.style.fontStyle = item.italic ? 'italic' : 'normal';
     const visualPdfFontSize = item.pdfFontSize;
     content.style.fontSize = `${Math.max(4, visualPdfFontSize * metrics.scale)}px`;
     content.style.lineHeight = `${Math.max(5, item.lineHeight * metrics.scale)}px`;
-    content.style.color = item.color || '#111827';
+    content.style.setProperty('color', item.color || '#000000', 'important');
     const horizontalScale = Number.isFinite(item.fontScaleX) ? item.fontScaleX : 1;
     content.style.transformOrigin = 'left top';
     content.style.transform = `scaleX(${horizontalScale})`;
@@ -3609,8 +3651,8 @@ async function createEditedPdfBytes() {
     context.scale(pixelScale, pixelScale);
     context.textBaseline = 'alphabetic';
     context.textAlign = 'left';
-    context.fillStyle = item.color || '#111827';
-    context.font = `${fontSize}px "${exactEntry.family}"`;
+    context.fillStyle = item.color || '#000000';
+    context.font = `${item.italic ? 'italic ' : ''}${item.fontWeight || (item.bold ? 700 : 400)} ${fontSize}px "${exactEntry.family}"`;
 
     lines.forEach((line, index) => {
       const measuredWidth = Math.max(.01, context.measureText(line).width);
@@ -3735,7 +3777,7 @@ async function createEditedPdfBytes() {
       const measurementCanvas = document.createElement('canvas');
       const measurementContext = measurementCanvas.getContext('2d');
       measurementContext.font = exactEntry?.face
-        ? `${fontSize}px "${exactEntry.family}"`
+        ? `${item.italic ? 'italic ' : ''}${item.fontWeight || (item.bold ? 700 : 400)} ${fontSize}px "${exactEntry.family}"`
         : `${fontSize}px Helvetica`;
 
       const fallbackFont = exactEntry?.face ? null : await getFont(item);
@@ -3824,7 +3866,7 @@ async function createEditedPdfBytes() {
             size: fontSize,
             font: fallbackFont,
             color: (() => {
-              const c = hexToRgb01(item.color || '#111827');
+              const c = hexToRgb01(item.color || '#000000');
               return PDFLib.rgb(c.r, c.g, c.b);
             })(),
             maxWidth: targetWidth
@@ -3837,7 +3879,7 @@ async function createEditedPdfBytes() {
 
     for (const item of createdEditItems) {
       const font = await getFont(item);
-      const rgb = hexToRgb01(item.color || '#111827');
+      const rgb = hexToRgb01(item.color || '#000000');
       const fontSize = item.pdfFontSize || 18;
       const lineHeight = fontSize * 1.15;
       const maxWidth = Math.max(10, item.w * width);
@@ -4528,7 +4570,10 @@ document.getElementById('edit-text-size').addEventListener('change', event => {
 });
 
 document.getElementById('edit-text-bold').addEventListener('click', () => {
-  updateEditTarget(item => item.bold = !item.bold);
+  updateEditTarget(item => {
+    item.bold = !item.bold;
+    item.fontWeight = item.bold ? 700 : 400;
+  });
 });
 
 document.getElementById('edit-text-italic').addEventListener('click', () => {
