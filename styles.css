@@ -2358,3 +2358,47 @@ html,body{max-width:100%;overflow-x:hidden}
 .line-option input[type="color"] { width: 48px; height: 32px; }
 .line-opacity { min-width: 170px; }
 .line-option select { height: 34px; min-width: 96px; }
+
+/* v5.6.51: final submenu label alignment */
+.text-highlight-options-bar {
+  align-items: center;
+}
+
+.text-highlight-options-title {
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin: 0;
+  line-height: 1;
+}
+
+.text-highlight-colours {
+  align-self: center;
+}
+
+.line-current-shape,
+.line-option {
+  justify-content: flex-start;
+}
+
+.line-current-shape > span,
+.line-option > span {
+  display: flex;
+  align-items: center;
+  height: 14px;
+  min-height: 14px;
+  margin: 0;
+  line-height: 14px;
+}
+
+.line-current-shape > strong {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  min-height: 34px;
+  line-height: 34px;
+}
+
+.line-fill-row {
+  height: 32px;
+}
