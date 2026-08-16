@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Iterable
 
 import fitz
+from lxml import etree
 from docx import Document
 from docx.enum.section import WD_SECTION
 from docx.oxml import OxmlElement
@@ -18,6 +19,7 @@ from docx.shared import Pt
 from ..settings import JOB_TIMEOUT_SECONDS
 
 logger = logging.getLogger("pdfmint.word")
+VML_NAMESPACE = "urn:schemas-microsoft-com:vml"
 
 
 def _anchor_picture_to_page(inline_shape) -> None:
@@ -30,7 +32,7 @@ def _anchor_picture_to_page(inline_shape) -> None:
     inline.set("distR", "0")
     inline.set("simplePos", "0")
     inline.set("relativeHeight", "0")
-    inline.set("behindDoc", "0")
+    inline.set("behindDoc", "1")
     inline.set("locked", "1")
     inline.set("layoutInCell", "1")
     inline.set("allowOverlap", "1")
@@ -62,14 +64,137 @@ def _anchor_picture_to_page(inline_shape) -> None:
     inline.insert(effect_extent_index + 1, wrap_none)
 
 
-def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
-    """Create a fidelity-first Word document from the rendered PDF pages.
+def _word_font_name(pdf_font: str) -> str:
+    name = str(pdf_font or "Arial").split("+")[-1]
+    lowered = name.lower()
+    if "helvetica" in lowered or "arial" in lowered:
+        return "Arial"
+    if "times" in lowered or "serif" in lowered:
+        return "Times New Roman"
+    if "courier" in lowered or "mono" in lowered:
+        return "Courier New"
+    return name.replace("-Bold", "").replace("-Italic", "") or "Arial"
 
-    PDF is a fixed-layout format. Reconstructing its drawing operators as Word
-    paragraphs and shapes loses rules, signatures and exact positioning. Each
-    source page is therefore rendered and placed edge-to-edge on an identically
-    sized Word page so DOCX and the downstream DOC export preserve appearance.
-    """
+
+def _colour_hex(value: int) -> str:
+    return f"{int(value or 0) & 0xFFFFFF:06X}"
+
+
+def _append_editable_text_box(paragraph, span: dict, shape_id: int) -> None:
+    text = str(span.get("text") or "")
+    if not text:
+        return
+
+    x0, y0, x1, y1 = [float(value) for value in span["bbox"]]
+    size = max(1.0, float(span.get("size") or 11.0))
+    flags = int(span.get("flags") or 0)
+    font_name = _word_font_name(span.get("font", "Arial"))
+    width = max(2.0, x1 - x0 + max(2.0, size * .22))
+    height = max(size * 1.35, y1 - y0 + 2.0)
+
+    run = paragraph.add_run()
+    pict = OxmlElement("w:pict")
+    shape = etree.Element(f"{{{VML_NAMESPACE}}}shape")
+    shape.set("id", f"pdfmint-text-{shape_id}")
+    shape.set("type", "#_x0000_t202")
+    shape.set(
+        "style",
+        ";".join(
+            [
+                "position:absolute",
+                f"margin-left:{x0:.3f}pt",
+                f"margin-top:{max(0.0, y0 - size * .08):.3f}pt",
+                f"width:{width:.3f}pt",
+                f"height:{height:.3f}pt",
+                "z-index:251659264",
+                "mso-wrap-style:none",
+                "mso-position-horizontal-relative:page",
+                "mso-position-vertical-relative:page",
+            ]
+        ),
+    )
+    shape.set("stroked", "f")
+    shape.set("filled", "f")
+
+    textbox = etree.Element(f"{{{VML_NAMESPACE}}}textbox")
+    textbox.set("inset", "0,0,0,0")
+    content = OxmlElement("w:txbxContent")
+    text_paragraph = OxmlElement("w:p")
+    paragraph_properties = OxmlElement("w:pPr")
+    spacing = OxmlElement("w:spacing")
+    spacing.set(qn("w:before"), "0")
+    spacing.set(qn("w:after"), "0")
+    spacing.set(qn("w:line"), str(max(20, round(size * 20 * 1.15))))
+    spacing.set(qn("w:lineRule"), "exact")
+    paragraph_properties.append(spacing)
+    text_paragraph.append(paragraph_properties)
+
+    text_run = OxmlElement("w:r")
+    run_properties = OxmlElement("w:rPr")
+    fonts = OxmlElement("w:rFonts")
+    for attribute in ("ascii", "hAnsi", "eastAsia", "cs"):
+        fonts.set(qn(f"w:{attribute}"), font_name)
+    run_properties.append(fonts)
+    colour = OxmlElement("w:color")
+    colour.set(qn("w:val"), _colour_hex(span.get("color", 0)))
+    run_properties.append(colour)
+    font_size = OxmlElement("w:sz")
+    font_size.set(qn("w:val"), str(max(2, round(size * 2))))
+    run_properties.append(font_size)
+    complex_font_size = OxmlElement("w:szCs")
+    complex_font_size.set(qn("w:val"), str(max(2, round(size * 2))))
+    run_properties.append(complex_font_size)
+    if flags & 16:
+        run_properties.append(OxmlElement("w:b"))
+    if flags & 2:
+        run_properties.append(OxmlElement("w:i"))
+    text_run.append(run_properties)
+    text_node = OxmlElement("w:t")
+    text_node.set("{http://www.w3.org/XML/1998/namespace}space", "preserve")
+    text_node.text = text
+    text_run.append(text_node)
+    text_paragraph.append(text_run)
+    content.append(text_paragraph)
+    textbox.append(content)
+    shape.append(textbox)
+    pict.append(shape)
+    run._r.append(pict)
+
+
+def _page_text_spans(page) -> list[dict]:
+    spans: list[dict] = []
+    for block in page.get_text("dict", sort=True).get("blocks", []):
+        if block.get("type") != 0:
+            continue
+        for line in block.get("lines", []):
+            for span in line.get("spans", []):
+                if str(span.get("text") or "").strip():
+                    spans.append(span)
+    return spans
+
+
+def _render_graphics_background(source, page_index: int, spans: list[dict], image_path: Path) -> None:
+    background = fitz.open()
+    try:
+        background.insert_pdf(source, from_page=page_index, to_page=page_index)
+        page = background[0]
+        for span in spans:
+            rectangle = fitz.Rect(span["bbox"])
+            rectangle.x0 -= .35
+            rectangle.y0 -= .35
+            rectangle.x1 += .35
+            rectangle.y1 += .35
+            page.add_redact_annot(rectangle, fill=None, cross_out=False)
+        if spans:
+            page.apply_redactions(images=0, graphics=0, text=0)
+        pixmap = page.get_pixmap(matrix=fitz.Matrix(2.5, 2.5), alpha=False)
+        pixmap.save(str(image_path))
+    finally:
+        background.close()
+
+
+def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
+    """Create a visually faithful Word file whose detected text stays editable."""
     source = fitz.open(str(pdf_path))
     if source.page_count < 1:
         source.close()
@@ -101,15 +226,17 @@ def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
                 paragraph.paragraph_format.space_before = Pt(0)
                 paragraph.paragraph_format.space_after = Pt(0)
 
+                spans = _page_text_spans(page)
                 image_path = Path(temp_dir) / f"page-{page_index + 1}.png"
-                pixmap = page.get_pixmap(matrix=fitz.Matrix(2.5, 2.5), alpha=False)
-                pixmap.save(str(image_path))
+                _render_graphics_background(source, page_index, spans, image_path)
                 picture = paragraph.add_run().add_picture(
                     str(image_path),
                     width=Pt(page_width),
                     height=Pt(page_height),
                 )
                 _anchor_picture_to_page(picture)
+                for span in spans:
+                    _append_editable_text_box(paragraph, span, shape_id=(page_index + 1) * 10000 + len(paragraph.runs))
 
             document.save(str(output_path))
         finally:
@@ -119,7 +246,7 @@ def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
         raise RuntimeError("DOCX conversion did not produce a valid file.")
 
     logger.info(
-        "Fidelity-first DOCX created path=%s size_bytes=%s",
+        "Hybrid editable DOCX created path=%s size_bytes=%s",
         output_path,
         output_path.stat().st_size,
     )

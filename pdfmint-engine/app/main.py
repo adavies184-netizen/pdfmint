@@ -23,7 +23,7 @@ from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.16.1"
+ENGINE_VERSION = "1.16.2"
 
 app = FastAPI(
     title="PDFBreeze Engine",
