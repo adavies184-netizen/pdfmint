@@ -2394,6 +2394,12 @@ function renderAnnotations() {
     el.style.top = `${item.y * metrics.height}px`;
     el.style.width = `${item.w * metrics.width}px`;
     el.style.height = `${Math.max(28, item.h * metrics.height)}px`;
+    const textInsetX = Number(item.textInsetX ?? (6 / Math.max(metrics.scale, .01)));
+    const textInsetY = Number(item.textInsetY ?? (4 / Math.max(metrics.scale, .01)));
+    el.style.paddingLeft = `${Math.max(0, textInsetX * metrics.scale - 1)}px`;
+    el.style.paddingRight = `${Math.max(0, textInsetX * metrics.scale - 1)}px`;
+    el.style.paddingTop = `${Math.max(0, textInsetY * metrics.scale - 1)}px`;
+    el.style.paddingBottom = `${Math.max(0, textInsetY * metrics.scale - 1)}px`;
     const fontFamilies = {
       Helvetica: 'Helvetica, Arial, sans-serif',
       Arial: 'Arial, sans-serif',
@@ -2634,6 +2640,8 @@ function addTextAt(clientX, clientY) {
     type: 'text',
     text: 'Type here',
     x, y, w: .18, h: Math.min(1 - y, 28 / rect.height),
+    textInsetX: 6 / Math.max(editor.canvasMetrics?.scale || 1, .01),
+    textInsetY: 4 / Math.max(editor.canvasMetrics?.scale || 1, .01),
     size: 18,
     font: 'Helvetica',
     color: '#111827',
@@ -4135,8 +4143,13 @@ async function createEditedPdfBytes() {
       const rgb = hexToRgb01(item.color);
       const fontSize = item.size;
       const lineHeight = fontSize * 1.15;
-      const maxWidth = Math.max(10, item.w * width);
-      const startX = item.x * width;
+      // Match the visible glyph origin inside the editor's border-box. The
+      // preview has a 1px border plus 5px/3px text padding; exporting from the
+      // outer box origin made text move left and slightly upward in the PDF.
+      const horizontalTextInset = Number(item.textInsetX ?? 6);
+      const verticalTextInset = Number(item.textInsetY ?? 4);
+      const maxWidth = Math.max(10, item.w * width - horizontalTextInset * 2);
+      const startX = item.x * width + horizontalTextInset;
       const topY = height - item.y * height;
 
       if (item.fillColor && item.fillColor !== 'transparent') {
@@ -4178,7 +4191,7 @@ async function createEditedPdfBytes() {
 
         page.drawText(line, {
           x,
-          y: topY - fontSize - idx * lineHeight,
+          y: topY - verticalTextInset - fontSize - idx * lineHeight,
           size: fontSize,
           font,
           color: PDFLib.rgb(rgb.r, rgb.g, rgb.b),
