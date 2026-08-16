@@ -4,27 +4,125 @@ import logging
 import os
 import shutil
 import subprocess
+import tempfile
 from pathlib import Path
 from typing import Iterable
 
-from pdf2docx import Converter
+import fitz
+from docx import Document
+from docx.enum.section import WD_SECTION
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
+from docx.shared import Pt
 
 from ..settings import JOB_TIMEOUT_SECONDS
 
 logger = logging.getLogger("pdfmint.word")
 
 
+def _anchor_picture_to_page(inline_shape) -> None:
+    """Turn python-docx's inline picture into an exact page-positioned anchor."""
+    inline = inline_shape._inline
+    inline.tag = qn("wp:anchor")
+    inline.set("distT", "0")
+    inline.set("distB", "0")
+    inline.set("distL", "0")
+    inline.set("distR", "0")
+    inline.set("simplePos", "0")
+    inline.set("relativeHeight", "0")
+    inline.set("behindDoc", "0")
+    inline.set("locked", "1")
+    inline.set("layoutInCell", "1")
+    inline.set("allowOverlap", "1")
+
+    simple_position = OxmlElement("wp:simplePos")
+    simple_position.set("x", "0")
+    simple_position.set("y", "0")
+
+    horizontal = OxmlElement("wp:positionH")
+    horizontal.set("relativeFrom", "page")
+    horizontal_offset = OxmlElement("wp:posOffset")
+    horizontal_offset.text = "0"
+    horizontal.append(horizontal_offset)
+
+    vertical = OxmlElement("wp:positionV")
+    vertical.set("relativeFrom", "page")
+    vertical_offset = OxmlElement("wp:posOffset")
+    vertical_offset.text = "0"
+    vertical.append(vertical_offset)
+
+    wrap_none = OxmlElement("wp:wrapNone")
+    inline.insert(0, simple_position)
+    inline.insert(1, horizontal)
+    inline.insert(2, vertical)
+    effect_extent_index = next(
+        (index for index, child in enumerate(inline) if child.tag == qn("wp:effectExtent")),
+        3,
+    )
+    inline.insert(effect_extent_index + 1, wrap_none)
+
+
 def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
-    converter = Converter(str(pdf_path))
-    try:
-        converter.convert(str(output_path), start=0, end=None)
-    finally:
-        converter.close()
+    """Create a fidelity-first Word document from the rendered PDF pages.
+
+    PDF is a fixed-layout format. Reconstructing its drawing operators as Word
+    paragraphs and shapes loses rules, signatures and exact positioning. Each
+    source page is therefore rendered and placed edge-to-edge on an identically
+    sized Word page so DOCX and the downstream DOC export preserve appearance.
+    """
+    source = fitz.open(str(pdf_path))
+    if source.page_count < 1:
+        source.close()
+        raise RuntimeError("The PDF does not contain any pages.")
+
+    document = Document()
+
+    with tempfile.TemporaryDirectory(prefix="pdfmint-word-pages-") as temp_dir:
+        try:
+            for page_index, page in enumerate(source):
+                if page_index == 0:
+                    section = document.sections[0]
+                    paragraph = document.add_paragraph()
+                else:
+                    section = document.add_section(WD_SECTION.NEW_PAGE)
+                    paragraph = document.paragraphs[-1]
+
+                page_width = float(page.rect.width)
+                page_height = float(page.rect.height)
+                section.page_width = Pt(page_width)
+                section.page_height = Pt(page_height)
+                section.top_margin = Pt(0)
+                section.bottom_margin = Pt(0)
+                section.left_margin = Pt(0)
+                section.right_margin = Pt(0)
+                section.header_distance = Pt(0)
+                section.footer_distance = Pt(0)
+
+                paragraph.paragraph_format.space_before = Pt(0)
+                paragraph.paragraph_format.space_after = Pt(0)
+
+                image_path = Path(temp_dir) / f"page-{page_index + 1}.png"
+                pixmap = page.get_pixmap(matrix=fitz.Matrix(2.5, 2.5), alpha=False)
+                pixmap.save(str(image_path))
+                picture = paragraph.add_run().add_picture(
+                    str(image_path),
+                    width=Pt(page_width),
+                    height=Pt(page_height),
+                )
+                _anchor_picture_to_page(picture)
+
+            document.save(str(output_path))
+        finally:
+            source.close()
 
     if not output_path.exists() or output_path.stat().st_size == 0:
         raise RuntimeError("DOCX conversion did not produce a valid file.")
 
-    logger.info("DOCX created path=%s size_bytes=%s", output_path, output_path.stat().st_size)
+    logger.info(
+        "Fidelity-first DOCX created path=%s size_bytes=%s",
+        output_path,
+        output_path.stat().st_size,
+    )
     return output_path
 
 
