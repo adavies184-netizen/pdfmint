@@ -6501,7 +6501,9 @@ async function routeFileToSharedEditor(file, options = {}) {
   }
 
   const query = params.toString();
-  window.location.href = `editor.html${query ? `?${query}` : ''}`;
+  const previewRequested = new URLSearchParams(window.location.search).get('editor') === 'next';
+  const editorRoute = previewRequested ? 'editor-next.html' : 'editor.html';
+  window.location.href = `${editorRoute}${query ? `?${query}` : ''}`;
 }
 
 window.PDFMintShared = Object.assign(window.PDFMintShared || {}, {

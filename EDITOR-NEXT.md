@@ -10,6 +10,9 @@ This folder is an isolated working copy of the authoritative PDFBreeze v5.6.55 s
 ## Boundaries
 
 - The existing editor and upload flow are not redirected to `editor-next.html`.
+- Add `?editor=next` to an existing PDF tool landing page to test its normal upload handoff with the preview. For example, `edit-pdf.html?editor=next` stores the selected PDF in the existing IndexedDB transfer area and opens `editor-next.html`.
+- Without that explicit preview query parameter, every existing upload continues to open `editor.html`.
+- `edit-pdf.html` has a preview-specific cache version for `script.js` so the opt-in handoff is available immediately after deployment.
 - The preview is marked `noindex,nofollow` and is not linked from the public site.
 - Production has not been modified or deployed.
 - `config.js` remains byte-for-byte identical to the authoritative v5.6.55 file.
