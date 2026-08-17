@@ -96,3 +96,9 @@ Combined v15 adds an Add Text contextual options row directly below the PDFBreez
 - PDFBreeze-layout EmbedPDF preview: `editor-pdfbreeze.html`
 
 The third editor does not replace or redirect either existing route. Tools that EmbedPDF does not currently provide show an explanation in the contextual options bar instead of pretending to work.
+## Combined build 16
+
+- Keeps the PDFBreeze-style Add Text submenu.
+- Connects font colour, fill colour, opacity, PDF-standard font, size and alignment to EmbedPDF's annotation defaults.
+- Applies the same controls to a selected free-text annotation when one is selected.
+- Keeps EmbedPDF's large native navigation toolbar hidden.
