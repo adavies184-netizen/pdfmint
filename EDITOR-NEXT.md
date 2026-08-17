@@ -60,3 +60,23 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - The verified working render path is unchanged.
 - EmbedPDF's supported `zoom.defaultZoomLevel` configuration is set to numeric scale `1` for an initial 100% zoom.
 - There are no runtime zoom calls, layout listeners, forced scrolling or UI schema changes.
+
+## Paint-then-zoom revision 7
+
+- EmbedPDF starts in its reliable automatic zoom mode so the first page is painted normally.
+- After the initial layout has been ready for 800 ms, the zoom plugin receives one supported `requestZoom(1)` call, equivalent to choosing 100% manually.
+- The callback does not scroll, rewrite the UI schema or issue further zoom requests.
+
+## Header filename revision 8
+
+- The `Editing` label and current filename have moved from the PDFBreeze tools row into the centre of the top header.
+- The filename uses a smaller 14 px treatment with ellipsis for long names, matching the current PDFBreeze editor more closely.
+- The header filename is hidden on narrower layouts where it could collide with the logo or action buttons.
+- Crop remains in the new toolbar as a later integration point.
+
+## Combined revision 9
+
+- Retains the render-safe paint-then-zoom behavior from revision 7.
+- Retains the centred header filename from revision 8.
+- Restores Crop to the PDFBreeze toolbar.
+- Leaves EmbedPDF's standard category tabs in place until a render-safe replacement is implemented.

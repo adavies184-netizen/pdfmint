@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>PDFBreeze Next Editor</title>
-  <link rel="stylesheet" href="embedpdf-poc.css?v=zoom-100-6">
+  <link rel="stylesheet" href="embedpdf-poc.css?v=combined-9">
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="index.html" aria-label="PDFBreeze home"><span class="brand-mark">P</span><span>PDFBreeze</span></a>
     <span class="test-badge">Next editor preview</span>
+    <div class="header-document" title="Currently open document"><span class="file-label">Editing</span><strong id="file-name">Document.pdf</strong></div>
     <div class="top-actions">
       <button id="open-another" class="button button-secondary" type="button" hidden>Open another PDF</button>
       <button id="download-pdf" class="button button-primary" type="button" hidden>Download PDF</button>
@@ -75,12 +76,11 @@
         <button class="quick-tool pending-tool" type="button" data-pending-tool="Manage pages" aria-pressed="false" aria-disabled="true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><rect x="14" y="14" width="6" height="6" rx="1"/></svg><span>Manage</span>
         </button>
-        <div class="editing-file" title="Currently open document"><span class="file-label">Editing</span><strong id="file-name">Document.pdf</strong></div>
       </nav>
       <div id="status" class="status sr-only" role="status" aria-live="polite"><span class="spinner" aria-hidden="true"></span>Loading editor…</div>
       <div id="pdf-viewer" class="viewer" aria-label="PDF editor"></div>
     </section>
   </main>
-  <script type="module" src="embedpdf-poc.js?v=zoom-100-6"></script>
+  <script type="module" src="embedpdf-poc.js?v=combined-9"></script>
 </body>
 </html>
