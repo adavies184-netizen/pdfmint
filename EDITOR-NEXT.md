@@ -54,3 +54,9 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - The explicit zoom configuration has also been removed for this recovery checkpoint.
 - EmbedPDF now uses the same render-safe initialization as the original successful proof of concept.
 - The outer PDFBreeze toolbar remains, but EmbedPDF's category tabs temporarily return until they can be removed without changing the live viewer schema after document initialization.
+
+## Zoom revision 6
+
+- The verified working render path is unchanged.
+- EmbedPDF's supported `zoom.defaultZoomLevel` configuration is set to numeric scale `1` for an initial 100% zoom.
+- There are no runtime zoom calls, layout listeners, forced scrolling or UI schema changes.
