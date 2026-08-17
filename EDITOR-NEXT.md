@@ -102,3 +102,9 @@ The third editor does not replace or redirect either existing route. Tools that 
 - Connects font colour, fill colour, opacity, PDF-standard font, size and alignment to EmbedPDF's annotation defaults.
 - Applies the same controls to a selected free-text annotation when one is selected.
 - Keeps EmbedPDF's large native navigation toolbar hidden.
+
+## Combined build 17
+
+- Corrects build 16's incompatible annotation calls against the actual EmbedPDF 2.x API.
+- Uses `setToolDefaults('freeText', patch)` for new text and `updateAnnotations(...)` for selected text.
+- Uses EmbedPDF 2.x numeric PDF font and text-alignment values and its `color` free-text background property.
