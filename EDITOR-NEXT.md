@@ -83,6 +83,8 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - Leaves EmbedPDF's standard category tabs in place until a render-safe replacement is implemented.
 # Third editor: PDFBreeze layout over EmbedPDF
 
+Combined v13 removes PDFBreeze's forced startup zoom from `editor-next.html`. EmbedPDF now selects its own native default zoom and initial document position.
+
 `editor-pdfbreeze.html` is a separate isolated editor concept. It recreates the existing PDFBreeze header, main tool ribbon, contextual secondary options bar, thumbnail sidebar, and document-preview layout while using EmbedPDF for the supported editing commands.
 
 - Existing production editor: `editor.html`
