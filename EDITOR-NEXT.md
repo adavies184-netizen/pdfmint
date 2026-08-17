@@ -64,7 +64,9 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 ## Paint-then-zoom revision 7
 
 - EmbedPDF starts in its reliable automatic zoom mode so the first page is painted normally.
-- After the initial layout has been ready for 800 ms, the zoom plugin receives one supported `requestZoom(1)` call, equivalent to choosing 100% manually.
+- EmbedPDF is configured to render initially at 100%, rather than painting at automatic zoom and changing afterward.
+- The viewer stays hidden only during its first layout, positions page 1 at the top with an instant supported scroll command, and is then revealed without a visible zoom jump.
+- The standard left sidebar opens on the Thumbnails tab during that same first layout and remains user-collapsible afterward.
 - The callback does not scroll, rewrite the UI schema or issue further zoom requests.
 
 ## Header filename revision 8
