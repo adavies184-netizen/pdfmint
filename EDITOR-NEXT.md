@@ -33,3 +33,11 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - The open filename now appears at the far right of the PDFBreeze tools row.
 - The row now includes the original editor's Add Text, Edit Text, Sign, Image, Draw, Highlight, Link, Note, Stamp, Watermark, Crop, Line and Manage tools.
 - Edit Text is an intentional placeholder until PDFium is integrated. Watermark, Crop and Manage are also displayed as later integration points; supported EmbedPDF tools are connected now.
+
+## Hybrid toolbar revision 3
+
+- The hidden status region now remains visually hidden when its message changes, removing lines such as `Draw selected` from between the toolbars.
+- EmbedPDF's word-based View, Annotate, Shapes, Insert, Form and Redact mode tabs are removed from its visible main toolbar because the PDFBreeze toolbar now selects those modes.
+- EmbedPDF's compact document, sidebar, zoom, pan, pointer, search and comment controls remain available.
+- Contextual EmbedPDF tool options remain visible only when the corresponding PDFBreeze tool is selected.
+- The post-layout viewport reset that could leave the document outside the visible preview was removed. The viewer now sets 100% zoom and navigates to the top of page one through EmbedPDF's zoom and scroll APIs only.
