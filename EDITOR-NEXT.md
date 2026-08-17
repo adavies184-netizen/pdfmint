@@ -47,3 +47,10 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - All programmatic zoom and scroll calls after layout have been removed because they could desynchronise EmbedPDF's page renderer, leaving a grey workspace or an unpainted white page and frozen zoom controls.
 - The initial zoom is now supplied only through EmbedPDF's supported `zoom.defaultZoomLevel: 1` configuration.
 - EmbedPDF retains full ownership of page layout, rendering, scrolling and subsequent zoom changes.
+
+## Render recovery revision 5
+
+- The runtime `ui.mergeSchema()` toolbar rewrite has been removed because it can remount the ready-made viewer while a blob-backed PDF is loading, leaving the document canvas unpainted.
+- The explicit zoom configuration has also been removed for this recovery checkpoint.
+- EmbedPDF now uses the same render-safe initialization as the original successful proof of concept.
+- The outer PDFBreeze toolbar remains, but EmbedPDF's category tabs temporarily return until they can be removed without changing the live viewer schema after document initialization.
