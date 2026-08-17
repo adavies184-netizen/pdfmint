@@ -41,3 +41,9 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - EmbedPDF's compact document, sidebar, zoom, pan, pointer, search and comment controls remain available.
 - Contextual EmbedPDF tool options remain visible only when the corresponding PDFBreeze tool is selected.
 - The post-layout viewport reset that could leave the document outside the visible preview was removed. The viewer now sets 100% zoom and navigates to the top of page one through EmbedPDF's zoom and scroll APIs only.
+
+## Hybrid toolbar revision 4
+
+- All programmatic zoom and scroll calls after layout have been removed because they could desynchronise EmbedPDF's page renderer, leaving a grey workspace or an unpainted white page and frozen zoom controls.
+- The initial zoom is now supplied only through EmbedPDF's supported `zoom.defaultZoomLevel: 1` configuration.
+- EmbedPDF retains full ownership of page layout, rendering, scrolling and subsequent zoom changes.
