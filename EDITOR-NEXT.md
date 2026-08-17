@@ -64,8 +64,8 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 ## Paint-then-zoom revision 7
 
 - EmbedPDF starts in its reliable automatic zoom mode so the first page is painted normally.
-- EmbedPDF is configured to render normally and immediately at 80%, with no delayed zoom, hidden initialization, forced scroll position, or reveal workaround.
-- The standard left sidebar opens on the Thumbnails tab during that same first layout and remains user-collapsible afterward.
+- EmbedPDF uses its known-working native startup. At the first supported layout event it requests 80% immediately, with no timer, hidden initialization, forced scroll position, sidebar manipulation, or delayed reveal.
+- The standard sidebar remains available from EmbedPDF's sidebar button and is left closed during startup for stability.
 - The callback does not scroll, rewrite the UI schema or issue further zoom requests.
 
 ## Header filename revision 8
