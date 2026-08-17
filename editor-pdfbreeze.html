@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>PDFBreeze Editor – EmbedPDF layout</title>
+  <link rel="stylesheet" href="editor-pdfbreeze.css?v=classic-1">
+</head>
+<body>
+  <section id="welcome" class="welcome">
+    <div class="welcome-card"><span class="pdf-mark">PDF</span><p>PDFBREEZE EDITOR PREVIEW</p><h1>Open a PDF</h1><p>Try EmbedPDF inside the familiar PDFBreeze editor layout.</p><label class="drop-zone" id="drop-zone">Choose a PDF <input id="pdf-input" type="file" accept="application/pdf,.pdf"></label><small>Your PDF stays in this browser.</small><div id="welcome-error" class="error" hidden></div></div>
+  </section>
+
+  <section id="editor" class="editor" hidden>
+    <header class="editor-header">
+      <a class="brand" href="index.html"><b>+</b><strong>PDF<span>Breeze</span></strong></a>
+      <div class="file-summary"><strong id="file-name">Document.pdf</strong><small id="file-meta">PDF document</small></div>
+      <div class="header-actions"><button id="open-another" class="secondary">Open another PDF</button><button id="download-pdf" class="primary">Done <span>✓</span></button></div>
+    </header>
+
+    <nav class="main-tools" aria-label="PDF editing tools">
+      <button class="tool history" data-action="undo" disabled><i>↶</i><span>Undo</span></button>
+      <button class="tool history" data-action="redo" disabled><i>↷</i><span>Redo</span></button>
+      <button class="tool" data-tool="add-text" data-mode="mode:annotate" data-command="annotation:add-text"><i>Ｔ</i><span>Add text</span></button>
+      <button class="tool" data-tool="edit-text" data-unavailable="PDFium"><i> T✎ </i><span>Edit text</span></button>
+      <button class="tool" data-tool="watermark" data-unavailable="PDFBreeze watermark engine"><i>♧</i><span>Watermark</span></button>
+      <button class="tool" data-tool="crop" data-unavailable="PDFBreeze crop engine"><i>⌗</i><span>Crop</span></button>
+      <button class="tool" data-tool="manage" data-unavailable="PDFBreeze page manager"><i>▦</i><span>Manage</span></button>
+      <button class="tool" data-tool="sign" data-mode="mode:insert" data-command="insert:add-signature"><i>〽</i><span>Sign</span></button>
+      <button class="tool" data-tool="draw" data-mode="mode:annotate" data-command="annotation:add-ink"><i>✎</i><span>Draw</span></button>
+      <button class="tool" data-tool="line" data-mode="mode:shapes" data-command="annotation:add-line"><i>／</i><span>Line</span></button>
+      <button class="tool" data-tool="highlight" data-mode="mode:annotate" data-command="annotation:add-highlight"><i> H̲ </i><span>Text highlight</span></button>
+      <button class="tool" data-tool="image" data-mode="mode:insert" data-command="insert:add-image"><i>▧</i><span>Image</span></button>
+      <button class="tool" data-tool="stamp" data-mode="mode:insert" data-command="insert:add-rubber-stamp"><i>♟</i><span>Stamp</span></button>
+      <button class="tool" data-tool="link" data-mode="mode:annotate" data-command="annotation:add-link"><i>⌁</i><span>Link</span></button>
+      <button class="tool" data-tool="note" data-mode="mode:annotate" data-command="annotation:add-comment"><i>▤</i><span>Note</span></button>
+    </nav>
+
+    <div id="options" class="options" aria-live="polite">
+      <div class="option-intro"><strong>Select a tool</strong><span>Its options will appear here.</span></div>
+    </div>
+
+    <div class="editor-body">
+      <aside class="sidebar"><div class="sidebar-title"><span>⠿</span><strong>Thumbnails</strong></div><div id="thumbnail-list" class="thumbnail-list"><div class="thumbnail-skeleton"></div><small>Pages will appear here</small></div></aside>
+      <main class="document-stage"><div class="embed-crop"><div id="pdf-viewer" aria-label="PDF document preview"></div></div><div id="loading" class="loading">Loading PDF…</div></main>
+    </div>
+  </section>
+  <script type="module" src="editor-pdfbreeze.js?v=classic-1"></script>
+</body>
+</html>

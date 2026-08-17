@@ -81,3 +81,12 @@ The `embedpdf-poc.*` filenames are retained temporarily to keep this first trans
 - Retains the centred header filename from revision 8.
 - Restores Crop to the PDFBreeze toolbar.
 - Leaves EmbedPDF's standard category tabs in place until a render-safe replacement is implemented.
+# Third editor: PDFBreeze layout over EmbedPDF
+
+`editor-pdfbreeze.html` is a separate isolated editor concept. It recreates the existing PDFBreeze header, main tool ribbon, contextual secondary options bar, thumbnail sidebar, and document-preview layout while using EmbedPDF for the supported editing commands.
+
+- Existing production editor: `editor.html`
+- Existing EmbedPDF preview: `editor-next.html`
+- PDFBreeze-layout EmbedPDF preview: `editor-pdfbreeze.html`
+
+The third editor does not replace or redirect either existing route. Tools that EmbedPDF does not currently provide show an explanation in the contextual options bar instead of pretending to work.
