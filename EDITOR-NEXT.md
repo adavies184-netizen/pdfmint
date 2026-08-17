@@ -87,6 +87,8 @@ Combined v13 removes PDFBreeze's forced startup zoom from `editor-next.html`. Em
 
 Combined v14 hides EmbedPDF's native toolbar and any native contextual toolbar rows. The PDFBreeze quick-tools ribbon is the only visible editor toolbar, while the EmbedPDF document canvas continues to fill the remaining viewer.
 
+Combined v15 adds an Add Text contextual options row directly below the PDFBreeze quick-tools ribbon. It appears only while Add Text is selected and contains the same font colour, fill, opacity, font, size, and alignment layout used by the normal PDFBreeze editor. EmbedPDF's removed navigation toolbar remains hidden.
+
 `editor-pdfbreeze.html` is a separate isolated editor concept. It recreates the existing PDFBreeze header, main tool ribbon, contextual secondary options bar, thumbnail sidebar, and document-preview layout while using EmbedPDF for the supported editing commands.
 
 - Existing production editor: `editor.html`
