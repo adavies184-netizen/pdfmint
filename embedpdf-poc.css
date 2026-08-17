@@ -7,4 +7,3 @@
 @media(max-width:900px){.header-document{display:none}}
 @media(max-width:660px){.topbar{height:auto;min-height:66px;padding:10px 14px;flex-wrap:wrap}.brand{font-size:19px}.test-badge{font-size:10px}.top-actions{width:100%;order:3}.top-actions .button{flex:1}.welcome{min-height:calc(100vh - 66px)}.welcome-card{padding:28px 18px}.workspace{height:calc(100vh - 66px);padding:7px}.quick-tools{min-height:50px;justify-content:flex-start}.quick-tools-label{display:none}.quick-tool{padding:7px 9px}.quick-tool span{font-size:12px}}
 @media(max-width:420px){.quick-tool{min-width:40px}.quick-tool span{display:none}}
-.viewer.viewer-initializing{visibility:hidden}
