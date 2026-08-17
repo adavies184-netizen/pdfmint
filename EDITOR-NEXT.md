@@ -25,3 +25,11 @@ This folder is an isolated working copy of the authoritative PDFBreeze v5.6.55 s
 - `embedpdf-poc.js`
 
 The `embedpdf-poc.*` filenames are retained temporarily to keep this first transplant identical to the proven standalone test. They can be renamed after the main-site integration is verified.
+
+## Hybrid toolbar revision 2
+
+- Documents open at 100% and return to the top of page one after the initial layout is ready.
+- The separate filename/status strip has been removed.
+- The open filename now appears at the far right of the PDFBreeze tools row.
+- The row now includes the original editor's Add Text, Edit Text, Sign, Image, Draw, Highlight, Link, Note, Stamp, Watermark, Crop, Line and Manage tools.
+- Edit Text is an intentional placeholder until PDFium is integrated. Watermark, Crop and Manage are also displayed as later integration points; supported EmbedPDF tools are connected now.
