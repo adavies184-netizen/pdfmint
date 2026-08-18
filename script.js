@@ -6808,12 +6808,8 @@ async function initialiseSharedEditorRoute() {
       const signedInUser = await window.PDFMintAuth?.getUser?.();
       if (signedInUser) {
         pdfiumAuthenticatedCheckout = true;
-        requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
-      } else {
-        preparedExportFilename = `${transferredName || safeExportBaseName()}.${preferredFormat}`;
-        closeFormatModal();
-        await exportEditedDocument(preferredFormat);
       }
+      requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
       return;
     }
     if (routeParams.get('convert') === 'image') {
