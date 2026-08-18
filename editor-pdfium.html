@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=pdfium-main-6">
+<link rel="stylesheet" href="editor-pdfium.css?v=pdfium-main-7">
 </head>
 <body class="no-document transfer-pending">
   <header class="topbar">
@@ -151,22 +151,21 @@
   </div>
   <div id="exportEmailModal" class="pdfium-export-layer pdfium-email-layer" hidden>
     <div class="pdfium-export-backdrop"></div>
-    <section class="pdfium-email-dialog" role="dialog" aria-modal="true" aria-labelledby="exportEmailTitle">
+    <section class="pdfium-email-dialog legacy-email-design" role="dialog" aria-modal="true" aria-labelledby="exportEmailTitle">
       <button id="exportEmailClose" class="pdfium-email-close" type="button" aria-label="Close">×</button>
-      <div class="export-brand"><span>P</span><strong>PDFBreeze</strong></div>
-      <div class="pdfium-email-icon">✉</div>
-      <p class="pdfium-email-kicker">ONE LAST STEP</p>
-      <h2 id="exportEmailTitle">Where should we send your document?</h2>
-      <p>Enter your email to continue. We’ll also send your secure account details automatically.</p>
-      <label>Email address<input id="exportEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+      <h2 id="exportEmailTitle">Use your email to continue</h2>
+      <button class="social-login-button" id="exportGoogle" type="button"><span class="google-mark">G</span>Continue with Google</button>
+      <div class="email-divider"><span>OR</span></div>
+      <label class="email-field"><span>Email</span><input id="exportEmail" type="email" autocomplete="email" placeholder="email@example.com"></label>
       <span id="exportEmailError" class="pdfium-email-error" hidden>Please enter a valid email address.</span>
-      <button id="exportEmailContinue" class="pdfium-email-continue" type="button">Continue</button>
-      <small>🔒 Your details are protected by PDFBreeze.</small>
+      <button id="exportEmailContinue" class="pdfium-email-continue" type="button">Download</button>
+      <p class="login-copy">Already have an account? <button id="exportLogin" type="button" class="text-link-button">Log in</button></p>
+      <p class="terms-copy">By clicking <strong>Download</strong>, you agree to the <a href="terms-of-use.html" target="_blank">Terms of Service</a>, <a href="subscription-policy.html" target="_blank">Subscription Terms</a>, <a href="privacy-policy.html" target="_blank">Privacy Policy</a>, and <a href="cookie-policy.html" target="_blank">Cookie Policy</a>.</p>
     </section>
   </div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
-<script type="module" src="editor-pdfium.js?v=pdfium-main-6"></script>
+<script type="module" src="editor-pdfium.js?v=pdfium-main-7"></script>
 </body>
 </html>
