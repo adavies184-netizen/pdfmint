@@ -5049,6 +5049,13 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     if (warning) warning.hidden = false;
     return;
   }
+  const payButton = document.getElementById('mock-pay-button');
+  const payButtonLabel = payButton?.textContent || 'Pay and download document';
+  if (payButton) {
+    payButton.disabled = true;
+    payButton.classList.add('is-processing');
+    payButton.innerHTML = '<span class="payment-spinner" aria-hidden="true"></span><span>Processing payment…</span>';
+  }
   try {
     if (!stripeElements) await prepareStripePaymentElement();
     const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
@@ -5059,6 +5066,11 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     });
     if (error) {
       showStripeError(error.message || 'Payment could not be completed.');
+      if (payButton) {
+        payButton.disabled = false;
+        payButton.classList.remove('is-processing');
+        payButton.textContent = payButtonLabel;
+      }
       return;
     }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
@@ -5077,6 +5089,11 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     window.location.assign('dashboard.html?payment=complete&download=1');
   } catch (error) {
     showStripeError(error.message || 'Payment could not be completed.');
+    if (payButton) {
+      payButton.disabled = false;
+      payButton.classList.remove('is-processing');
+      payButton.textContent = payButtonLabel;
+    }
   }
 });
 

@@ -20,6 +20,9 @@ html.pdfium-checkout-route body:has(.checkout-layer:not([hidden]))::before{displ
 .stripe-loading-shell i{display:block;height:48px;border-radius:9px;background:linear-gradient(90deg,#edf2f5 25%,#f8fafb 50%,#edf2f5 75%);background-size:200% 100%;animation:stripe-loading 1.2s linear infinite}
 .stripe-loading-shell i:first-of-type{height:54px}.stripe-loading-shell i:last-of-type{width:48%}
 @keyframes stripe-loading{to{background-position:-200% 0}}
+.pay-now-button.is-processing{display:flex;align-items:center;justify-content:center;gap:11px;cursor:wait;opacity:.9}
+.payment-spinner{width:20px;height:20px;border:3px solid rgba(255,255,255,.38);border-top-color:#fff;border-radius:50%;animation:payment-spin .7s linear infinite}
+@keyframes payment-spin{to{transform:rotate(360deg)}}
 </style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
@@ -1199,7 +1202,7 @@ html.pdfium-checkout-route body:has(.checkout-layer:not([hidden]))::before{displ
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-<script src="script.js?v=pdfium-main-9"></script>
+<script src="script.js?v=pdfium-main-10"></script>
   <script src="from-pdf-converter.js?v=4600"></script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>
