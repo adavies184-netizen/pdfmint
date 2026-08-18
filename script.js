@@ -3505,12 +3505,15 @@ document.getElementById('text-align-right').addEventListener('click', () => {
 let preparedExportBytes = null;
 let preparedExportFilename = '';
 let pendingDashboardFileSave = Promise.resolve();
+let pdfiumAuthenticatedCheckout = false;
 
 function isDashboardEditorSession() {
   try {
     const params = new URLSearchParams(window.location.search);
-    return Boolean(window.PDFMintAuth?.isSignedIn?.()) &&
-      params.get('source') === 'dashboard';
+    return pdfiumAuthenticatedCheckout || (
+      Boolean(window.PDFMintAuth?.isSignedIn?.()) &&
+      (params.get('source') === 'dashboard' || params.get('pdfiumCheckout') === '1')
+    );
   } catch (_) {
     return false;
   }
@@ -6569,12 +6572,21 @@ async function routeLandingUploadToEditor(file) {
       : /(?:^|\/)pdf-to-excel\.html$/.test(path) ? 'excel'
       : /(?:^|\/)pdf-to-pptx\.html$/.test(path) ? 'powerpoint'
       : '';
+    const exportFormat = /(?:^|\/)pdf-to-(?:jpg|jpeg|image|picture)\.html$/.test(path) ? 'jpg'
+      : /(?:^|\/)pdf-to-png\.html$/.test(path) ? 'png'
+      : /(?:^|\/)pdf-to-txt\.html$/.test(path) ? 'txt'
+      : /(?:^|\/)pdf-to-xls\.html$/.test(path) ? 'xls'
+      : /(?:^|\/)pdf-to-xlsx\.html$/.test(path) ? 'xlsx'
+      : /(?:^|\/)pdf-to-word\.html$/.test(path) ? 'docx'
+      : /(?:^|\/)pdf-to-excel\.html$/.test(path) ? 'xlsx'
+      : /(?:^|\/)pdf-to-pptx\.html$/.test(path) ? 'pptx'
+      : '';
     let managerAction = '';
     if (/(?:^|\/)rotate-pdf\.html$/.test(path)) managerAction = 'rotate';
     if (/(?:^|\/)delete-pdf-pages\.html$/.test(path)) managerAction = 'delete';
     if (/(?:^|\/)split-pdf\.html$/.test(path)) managerAction = 'split';
     if (managerAction) tool = 'manage';
-    await routeFileToSharedEditor(file, { tool, managerAction, imageConvertFormat, documentConvertType });
+    await routeFileToSharedEditor(file, { tool, managerAction, imageConvertFormat, documentConvertType, exportFormat });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
     if (status) status.textContent = 'Could not open the editor. Please try again.';
@@ -6793,7 +6805,15 @@ async function initialiseSharedEditorRoute() {
       if (transferredName) document.getElementById('export-filename').value = transferredName;
       sessionStorage.removeItem('pdfbreezePdfiumExportName');
       sessionStorage.removeItem('pdfbreezePdfiumExportFormat');
-      requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+      const signedInUser = await window.PDFMintAuth?.getUser?.();
+      if (signedInUser) {
+        pdfiumAuthenticatedCheckout = true;
+        requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+      } else {
+        preparedExportFilename = `${transferredName || safeExportBaseName()}.${preferredFormat}`;
+        closeFormatModal();
+        await exportEditedDocument(preferredFormat);
+      }
       return;
     }
     if (routeParams.get('convert') === 'image') {
