@@ -4771,6 +4771,12 @@ function closeEditorCheckoutOverlays() {
   closeFormatModal();
 }
 
+function showStripeLoadingShell() {
+  const mount = document.getElementById('stripe-payment-element');
+  if (!mount) return;
+  mount.innerHTML = '<div class="stripe-loading-shell" role="status"><span>Loading secure payment…</span><i></i><i></i><i></i></div>';
+}
+
 async function openAccessPage() {
   closeEditorCheckoutOverlays();
   document.getElementById('access-page').hidden = false;
@@ -4809,6 +4815,13 @@ async function openPaymentPage() {
 
   closeAccessPage();
   document.getElementById('payment-page').hidden = false;
+  let stripeMount = document.getElementById('stripe-payment-element');
+  if (!stripeMount) {
+    stripeMount = document.createElement('div');
+    stripeMount.id = 'stripe-payment-element';
+    document.getElementById('card-payment-panel')?.prepend(stripeMount);
+  }
+  showStripeLoadingShell();
   await renderCheckoutPreview('payment-preview-canvas');
   try {
     await prepareStripePaymentElement();
@@ -4919,9 +4932,9 @@ async function prepareStripePaymentElement() {
   if (!mount) {
     mount = document.createElement('div');
     mount.id = 'stripe-payment-element';
-    mount.textContent = 'Loading secure payment…';
     panel.prepend(mount);
   }
+  showStripeLoadingShell();
 
   const session = await window.PDFMintAuth?.getSession?.();
   if (!session?.access_token) {
@@ -5049,16 +5062,19 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
       return;
     }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
-      triggerPreparedDownload(pendingCheckoutBlob, pendingCheckoutFilename);
-      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, pendingCheckoutFilename, 'paid-download')
-        .catch(saveError => console.warn('PDFBreeze could not save the paid document.', saveError));
+      const paidFilename = pendingCheckoutFilename;
+      await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, paidFilename, 'paid-download');
+      sessionStorage.setItem('pdfmintPostCheckoutDownload', JSON.stringify({
+        filename: paidFilename,
+        createdAt: Date.now()
+      }));
       pendingCheckoutBlob = null;
       pendingCheckoutFilename = '';
     }
     await sendCheckoutWelcomeEmail().catch(emailError => {
       console.warn('PDFBreeze could not send the welcome email.', emailError);
     });
-    window.setTimeout(() => window.location.assign('dashboard.html?payment=complete'), 350);
+    window.location.assign('dashboard.html?payment=complete&download=1');
   } catch (error) {
     showStripeError(error.message || 'Payment could not be completed.');
   }

@@ -410,6 +410,23 @@
     downloadBlob(file, record.name);
   }
 
+  async function downloadPendingCheckoutFile() {
+    let pending = null;
+    try { pending = JSON.parse(sessionStorage.getItem('pdfmintPostCheckoutDownload') || 'null'); } catch (_) {}
+    if (!pending?.filename || Date.now() - Number(pending.createdAt || 0) > 10 * 60 * 1000) {
+      sessionStorage.removeItem('pdfmintPostCheckoutDownload');
+      return;
+    }
+    const records = await getDashboardFiles();
+    const record = records
+      .filter(item => String(item.name || '') === String(pending.filename))
+      .sort((a, b) => Number(b.lastModified || 0) - Number(a.lastModified || 0))[0];
+    if (!record) return;
+    await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    await downloadStoredRecord(record);
+    sessionStorage.removeItem('pdfmintPostCheckoutDownload');
+  }
+
   function closeFileMenus(except = null) {
     document.querySelectorAll('.file-action-menu.open').forEach(menu => {
       if (menu !== except) menu.classList.remove('open');
@@ -851,7 +868,7 @@
     }
   } catch (_) {}
 
-  let accountFirstName = authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0] || 'there';
+  let accountFirstName = authenticatedUser.user_metadata?.first_name || authenticatedUser.user_metadata?.full_name?.split(' ')[0] || '';
   let accountTimezone = detectedTimezone;
   if (checkoutAccess?.email) {
     profileForm.elements.email.value = checkoutAccess.email;
@@ -866,7 +883,7 @@
     try { hour = Number(new Intl.DateTimeFormat('en-GB',{hour:'2-digit',hourCycle:'h23',timeZone:accountTimezone}).format(new Date())); } catch (_) {}
     const period = hour < 12 ? 'morning' : hour < 18 ? 'afternoon' : 'evening';
     const greeting = document.querySelector('[data-dashboard-greeting]');
-    if (greeting) greeting.textContent = `Good ${period}, ${accountFirstName}`;
+    if (greeting) greeting.textContent = `Good ${period}${accountFirstName ? `, ${accountFirstName}` : ''}`;
   };
   try {
     const profile = await accountAuth.loadProfile();
@@ -893,7 +910,9 @@
     sessionStorage.removeItem('pdfmintCheckoutAccess');
     accountAuth.signOut();
   }));
-  refreshDashboardFiles().catch(error => console.warn('PDFBreeze could not load My Files.', error));
+  refreshDashboardFiles()
+    .then(downloadPendingCheckoutFile)
+    .catch(error => console.warn('PDFBreeze could not load My Files or complete the pending download.', error));
 
   const params = new URLSearchParams(location.search);
   if (params.get('menu')) openDrawer(params.get('menu'));

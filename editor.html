@@ -9,7 +9,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=pdfium-main-4">
-<style>body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}</style></head>
+<script>if(new URLSearchParams(location.search).get('pdfiumCheckout')==='1')document.documentElement.classList.add('pdfium-checkout-route')</script>
+<style>
+body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}
+html.pdfium-checkout-route body{background:#f4faf8}
+html.pdfium-checkout-route body>.site-header,html.pdfium-checkout-route body>main,html.pdfium-checkout-route body>.site-footer{display:none!important}
+html.pdfium-checkout-route body::before{content:'Preparing your secure checkout…';position:fixed;inset:0;z-index:3999;display:grid;place-items:center;background:#f4faf8;color:#11203c;font:600 18px Poppins,Arial,sans-serif}
+html.pdfium-checkout-route body:has(.checkout-layer:not([hidden]))::before{display:none}
+.stripe-loading-shell{min-height:250px;padding:8px 0 4px;display:grid;gap:16px;align-content:start;color:#56657a;font:600 14px Poppins,Arial,sans-serif}
+.stripe-loading-shell i{display:block;height:48px;border-radius:9px;background:linear-gradient(90deg,#edf2f5 25%,#f8fafb 50%,#edf2f5 75%);background-size:200% 100%;animation:stripe-loading 1.2s linear infinite}
+.stripe-loading-shell i:first-of-type{height:54px}.stripe-loading-shell i:last-of-type{width:48%}
+@keyframes stripe-loading{to{background-position:-200% 0}}
+</style></head>
 <body class="editor-route-loading" data-editor-route="true">
   <header class="site-header">
     <div class="container nav-wrap">
@@ -1188,7 +1199,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-<script src="script.js?v=pdfium-main-8"></script>
+<script src="script.js?v=pdfium-main-9"></script>
   <script src="from-pdf-converter.js?v=4600"></script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>
