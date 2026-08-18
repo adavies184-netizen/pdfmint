@@ -6788,7 +6788,6 @@ async function initialiseSharedEditorRoute() {
     }
 
     await loadEditorPdf(file);
-    document.body.classList.remove('editor-route-loading');
     activateSharedEditorTool(tool);
 
     const routeParams = new URLSearchParams(window.location.search);
@@ -6808,10 +6807,19 @@ async function initialiseSharedEditorRoute() {
       const signedInUser = await window.PDFMintAuth?.getUser?.();
       if (signedInUser) {
         pdfiumAuthenticatedCheckout = true;
+        requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+      } else if (routeParams.get('emailBridge') === '1') {
+        const bridgedEmail = sessionStorage.getItem('pdfbreezePdfiumBridgeEmail') || sessionStorage.getItem('pdfmintPendingEmail') || '';
+        sessionStorage.removeItem('pdfbreezePdfiumBridgeEmail');
+        const emailInput = document.getElementById('download-email');
+        if (emailInput) emailInput.value = bridgedEmail;
+        requestAnimationFrame(() => document.getElementById('final-download')?.click());
+      } else {
+        requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
       }
-      requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
       return;
     }
+    document.body.classList.remove('editor-route-loading');
     if (routeParams.get('convert') === 'image') {
       requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
     }
