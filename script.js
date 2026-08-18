@@ -6808,6 +6808,9 @@ async function initialiseSharedEditorRoute() {
       if (signedInUser) {
         pdfiumAuthenticatedCheckout = true;
         requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+      } else if (routeParams.get('googleBridge') === '1') {
+        preparedExportFilename = `${transferredName || safeExportBaseName()}.${preferredFormat}`;
+        await exportEditedDocument(preferredFormat);
       } else if (routeParams.get('emailBridge') === '1') {
         const bridgedEmail = sessionStorage.getItem('pdfbreezePdfiumBridgeEmail') || sessionStorage.getItem('pdfmintPendingEmail') || '';
         sessionStorage.removeItem('pdfbreezePdfiumBridgeEmail');
