@@ -3512,7 +3512,7 @@ function isDashboardEditorSession() {
     const params = new URLSearchParams(window.location.search);
     return pdfiumAuthenticatedCheckout || (
       Boolean(window.PDFMintAuth?.isSignedIn?.()) &&
-      (params.get('source') === 'dashboard' || params.get('pdfiumCheckout') === '1')
+      params.get('source') === 'dashboard'
     );
   } catch (_) {
     return false;
@@ -6865,8 +6865,14 @@ async function initialiseSharedEditorRoute() {
       sessionStorage.removeItem('pdfbreezePdfiumExportFormat');
       const signedInUser = await window.PDFMintAuth?.getUser?.();
       if (signedInUser) {
-        pdfiumAuthenticatedCheckout = true;
-        requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+        if (await hasUnlimitedPaidAccess()) {
+          pdfiumAuthenticatedCheckout = true;
+          requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+        } else {
+          const emailInput = document.getElementById('download-email');
+          if (emailInput) emailInput.value = signedInUser.email || '';
+          requestAnimationFrame(() => document.getElementById('final-download')?.click());
+        }
       } else if (routeParams.get('googleBridge') === '1') {
         preparedExportFilename = `${transferredName || safeExportBaseName()}.${preferredFormat}`;
         await exportEditedDocument(preferredFormat);
