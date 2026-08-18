@@ -5007,7 +5007,7 @@ function finishMockCheckout() {
   // Give the browser time to accept the download before replacing the editor.
   window.setTimeout(() => {
     if (window.PDFMintAuth?.isSignedIn?.()) {
-      window.location.assign('dashboard.html?welcome=1');
+      window.location.assign('dashboard.html?v=pdfium-dashboard-3&welcome=1');
       return;
     }
     const email = sessionStorage.getItem('pdfmintPendingEmail') || '';
@@ -5015,7 +5015,7 @@ function finishMockCheckout() {
       email,
       completedAt: Date.now()
     }));
-    window.location.assign('dashboard.html?welcome=1');
+    window.location.assign('dashboard.html?v=pdfium-dashboard-3&welcome=1');
   }, 350);
 }
 
@@ -5061,7 +5061,7 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
     const {error} = await confirmation({
       elements: stripeElements,
-      confirmParams: {return_url: `${location.origin}/dashboard.html?payment=complete`},
+      confirmParams: {return_url: `${location.origin}/dashboard.html?v=pdfium-dashboard-3&payment=complete`},
       redirect: 'if_required'
     });
     if (error) {
@@ -5086,7 +5086,7 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     await sendCheckoutWelcomeEmail().catch(emailError => {
       console.warn('PDFBreeze could not send the welcome email.', emailError);
     });
-    window.location.assign('dashboard.html?payment=complete&download=1');
+    window.location.assign('dashboard.html?v=pdfium-dashboard-3&payment=complete&download=1');
   } catch (error) {
     showStripeError(error.message || 'Payment could not be completed.');
     if (payButton) {

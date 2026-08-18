@@ -27,16 +27,16 @@
   };
   if (!authenticatedUser) return;
   const tools = [
-    ['Edit PDF','Update text and content','dashboard.html?v=pdfium-dashboard-2&menu=edit','i-edit'],
-    ['Convert files','Convert documents, images, audio and more','dashboard.html?v=pdfium-dashboard-2&tool=convert','i-convert'],
-    ['Compress PDF','Reduce PDF file size','dashboard.html?v=pdfium-dashboard-2&tool=compress','i-compress'],
-    ['Merge PDF','Combine documents','dashboard.html?v=pdfium-dashboard-2&menu=organize','i-convert'],
-    ['Sign PDF','Add an electronic signature','dashboard.html?v=pdfium-dashboard-2&tool=sign','i-sign'],
-    ['OCR & Scan','Recognise scanned text','dashboard.html?v=pdfium-dashboard-2&menu=ocr','i-scan'],
-    ['Add watermark','Add text across PDF pages','dashboard.html?v=pdfium-dashboard-2&menu=edit','i-edit'],
-    ['Crop PDF','Trim page margins','dashboard.html?v=pdfium-dashboard-2&menu=edit','i-grid'],
-    ['Split PDF','Separate document pages','dashboard.html?v=pdfium-dashboard-2&menu=organize','i-grid'],
-    ['PDF to Word','Create an editable document','dashboard.html?v=pdfium-dashboard-2&tool=convert','i-file']
+    ['Edit PDF','Update text and content','dashboard.html?v=pdfium-dashboard-3&menu=edit','i-edit'],
+    ['Convert files','Convert documents, images, audio and more','dashboard.html?v=pdfium-dashboard-3&tool=convert','i-convert'],
+    ['Compress PDF','Reduce PDF file size','dashboard.html?v=pdfium-dashboard-3&tool=compress','i-compress'],
+    ['Merge PDF','Combine documents','dashboard.html?v=pdfium-dashboard-3&menu=organize','i-convert'],
+    ['Sign PDF','Add an electronic signature','dashboard.html?v=pdfium-dashboard-3&tool=sign','i-sign'],
+    ['OCR & Scan','Recognise scanned text','dashboard.html?v=pdfium-dashboard-3&menu=ocr','i-scan'],
+    ['Add watermark','Add text across PDF pages','dashboard.html?v=pdfium-dashboard-3&menu=edit','i-edit'],
+    ['Crop PDF','Trim page margins','dashboard.html?v=pdfium-dashboard-3&menu=edit','i-grid'],
+    ['Split PDF','Separate document pages','dashboard.html?v=pdfium-dashboard-3&menu=organize','i-grid'],
+    ['PDF to Word','Create an editable document','dashboard.html?v=pdfium-dashboard-3&tool=convert','i-file']
   ];
 
   document.querySelectorAll('[data-tool-search]').forEach((search) => {
@@ -320,9 +320,9 @@
       const editorFile = await ensureEditorCompatibleFile(file);
       await storeDashboardPdf(editorFile);
       window.clearInterval(timer); bar.style.width = '100%'; percent.textContent = '100%';
-      const params = new URLSearchParams({tool:selectedDashboardTool[3], source:'dashboard'});
+      const params = new URLSearchParams({v:'pdfium-dashboard-3', tool:selectedDashboardTool[3], source:'dashboard'});
       if (selectedDashboardTool[4]) params.set('action',selectedDashboardTool[4]);
-      window.location.href = `editor.html?${params}`;
+      window.location.href = `editor-pdfium.html?${params}`;
     } catch (error) {
       window.clearInterval(timer); console.error(error); progressLayer.hidden = true; document.body.style.overflow = '';
     }
