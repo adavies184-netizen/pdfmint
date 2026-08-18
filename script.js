@@ -6501,8 +6501,12 @@ async function routeFileToSharedEditor(file, options = {}) {
   }
 
   const query = params.toString();
-  const previewRequested = new URLSearchParams(window.location.search).get('editor') === 'next';
-  const editorRoute = previewRequested ? 'editor-next.html' : 'editor.html';
+  const editorChoice = new URLSearchParams(window.location.search).get('editor');
+  const editorRoute = editorChoice === 'next'
+    ? 'editor-next.html'
+    : editorChoice === 'legacy'
+      ? 'editor.html'
+      : 'editor-pdfium.html';
   window.location.href = `${editorRoute}${query ? `?${query}` : ''}`;
 }
 
@@ -6540,8 +6544,8 @@ async function takePdfForSharedEditor() {
 }
 
 function sharedEditorUrl(tool) {
-  if (!tool || tool === 'none') return 'editor.html';
-  return `editor.html?tool=${encodeURIComponent(tool)}`;
+  if (!tool || tool === 'none') return 'editor-pdfium.html';
+  return `editor-pdfium.html?tool=${encodeURIComponent(tool)}`;
 }
 
 async function routeLandingUploadToEditor(file) {
