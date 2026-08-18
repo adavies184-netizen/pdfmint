@@ -6780,6 +6780,22 @@ async function initialiseSharedEditorRoute() {
     activateSharedEditorTool(tool);
 
     const routeParams = new URLSearchParams(window.location.search);
+    if (routeParams.get('pdfiumCheckout') === '1') {
+      const preferredFormat = routeParams.get('format') || sessionStorage.getItem('pdfbreezePdfiumExportFormat') || 'pdf';
+      const preferredRadio = document.querySelector(`input[name="export-format"][value="${CSS.escape(preferredFormat)}"]`);
+      const fallbackRadio = document.querySelector('input[name="export-format"][value="pdf"]');
+      const radio = preferredRadio || fallbackRadio;
+      if (radio) {
+        radio.checked = true;
+        radio.dispatchEvent(new Event('change', { bubbles: true }));
+      }
+      const transferredName = sessionStorage.getItem('pdfbreezePdfiumExportName');
+      if (transferredName) document.getElementById('export-filename').value = transferredName;
+      sessionStorage.removeItem('pdfbreezePdfiumExportName');
+      sessionStorage.removeItem('pdfbreezePdfiumExportFormat');
+      requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+      return;
+    }
     if (routeParams.get('convert') === 'image') {
       requestAnimationFrame(() => openImageConvertModal(routeParams.get('format') || 'jpg'));
     }

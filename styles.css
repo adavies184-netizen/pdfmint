@@ -1819,7 +1819,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .desktop-nav .nav-dropdown-menu{
   display:none;
   position:absolute;
-  top:calc(100% + 12px);
+  top:100%;
   left:0;
   z-index:1000;
 }
