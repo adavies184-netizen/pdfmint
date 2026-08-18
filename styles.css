@@ -2422,4 +2422,4 @@ html,body{max-width:100%;overflow-x:hidden}
 }
 /* PDFBreeze main-brand refresh — matches the PDFium editor identity. */
 .brand{gap:12px;font-size:24px;font-weight:850;letter-spacing:-1px}
-.brand-mark{width:42px;height:42px;border-radius:12px;font-size:25px;font-weight:850;box-shadow:none}
+.brand-mark{width:42px;height:42px;border-radius:12px;font-size:25px;font-weight:850;line-height:1;padding-bottom:2px;box-shadow:none}
