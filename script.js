@@ -4920,6 +4920,34 @@ let stripeIntentType = null;
 let stripeElementPlan = null;
 let stripeCheckoutSubscriptionId = '';
 const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
+const googleAdsTrialPurchaseSendTo = 'AW-877738202/uIB3CO2Sq-QcENrxxKID';
+
+async function reportGoogleAdsTrialPurchase(transactionId) {
+  const cleanTransactionId = String(transactionId || '').trim();
+  const value = Number(selectedAccessPlan?.price);
+  if (!cleanTransactionId || !Number.isFinite(value) || value <= 0 || typeof window.gtag !== 'function') return;
+
+  const dedupeKey = `pdfbreeze-google-trial-purchase:${cleanTransactionId}`;
+  if (sessionStorage.getItem(dedupeKey) === 'sent') return;
+  sessionStorage.setItem(dedupeKey, 'sent');
+
+  await new Promise(resolve => {
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      resolve();
+    };
+    window.gtag('event', 'conversion', {
+      send_to: googleAdsTrialPurchaseSendTo,
+      value,
+      currency: 'GBP',
+      transaction_id: cleanTransactionId,
+      event_callback: finish
+    });
+    window.setTimeout(finish, 1200);
+  });
+}
 
 let stripeLibraryPromise = null;
 function loadStripeLibrary() {
@@ -5131,7 +5159,7 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
   try {
     if (!stripeElements) await prepareStripePaymentElement();
     const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
-    const {error} = await confirmation({
+    const {error, paymentIntent, setupIntent} = await confirmation({
       elements: stripeElements,
       confirmParams: {return_url: `${location.origin}/dashboard.html?v=pdfium-dashboard-3&payment=complete`},
       redirect: 'if_required'
@@ -5145,6 +5173,8 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
       }
       return;
     }
+    const googleTransactionId = paymentIntent?.id || stripeCheckoutSubscriptionId || setupIntent?.id;
+    await reportGoogleAdsTrialPurchase(googleTransactionId);
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
       const paidFilename = pendingCheckoutFilename;
       await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, paidFilename, 'paid-download');
