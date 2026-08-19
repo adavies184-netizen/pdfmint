@@ -7093,7 +7093,6 @@ async function initialiseSharedEditorRoute() {
     const routeParams = new URLSearchParams(window.location.search);
     if (routeParams.get('pdfiumCheckout') === '1') {
       document.body.classList.remove('editor-route-loading');
-      document.documentElement.classList.remove('pdfium-checkout-route');
       const preferredFormat = routeParams.get('format') || sessionStorage.getItem('pdfbreezePdfiumExportFormat') || 'pdf';
       const preferredRadio = document.querySelector(`input[name="export-format"][value="${CSS.escape(preferredFormat)}"]`);
       const fallbackRadio = document.querySelector('input[name="export-format"][value="pdf"]');
