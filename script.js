@@ -4986,7 +4986,10 @@ async function prepareStripePaymentElement() {
       variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
     }
   });
-  stripeElements.create('payment', {layout: 'tabs'}).mount('#stripe-payment-element');
+  stripeElements.create('payment', {
+    layout: 'tabs',
+    terms: {card: 'never'}
+  }).mount('#stripe-payment-element');
   stripeElementPlan = plan;
   showStripeError('');
 }
@@ -5186,7 +5189,7 @@ function preparePaymentPrototypeUi() {
   const annualSubtext = annualInput?.closest('.plan-option')?.querySelector('.plan-copy small');
   if (annualSubtext) annualSubtext.textContent = 'Unlimited access · billed £299.99 yearly';
   const annualPrice = annualInput?.closest('.plan-option')?.querySelector('.plan-price');
-  if (annualPrice) annualPrice.innerHTML = '£25.00<span>/month equivalent</span>';
+  if (annualPrice) annualPrice.innerHTML = '£25.00<span>/pm</span>';
 
   document.querySelectorAll('.plan-benefits div').forEach(item => {
     if (item.textContent.includes('Convert PDFs to and from common formats')) {
