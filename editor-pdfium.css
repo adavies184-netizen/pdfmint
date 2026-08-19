@@ -111,11 +111,12 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .brand-mark{width:36px;height:36px;border-radius:10px;font-size:22px;padding:0;line-height:1}
   .preview-badge,.document-name{display:none!important}
   .top-actions{margin-left:auto;gap:6px}
+  .top-actions .button.secondary{display:none}
   .top-actions .button{height:36px;padding:0 9px;border-radius:8px;font-size:11px}
   .top-actions .download-button{gap:4px}
   .top-actions .download-button svg{width:15px;height:15px}
 
-  .document-open .tool-ribbon{position:fixed;z-index:120;left:0;right:0;bottom:82px;height:66px;margin:0;padding:6px 8px;gap:3px;border-width:1px 0;border-radius:0;box-shadow:0 -8px 22px #14203816;scrollbar-width:none;overscroll-behavior-x:contain}
+  .document-open .tool-ribbon{position:fixed;z-index:120;left:0;right:0;bottom:0;height:66px;margin:0;padding:6px 8px;gap:3px;border-width:1px 0 0;border-radius:0;box-shadow:0 -8px 22px #14203816;scrollbar-width:none;overscroll-behavior-x:contain}
   .tool-ribbon::-webkit-scrollbar{display:none}
   .history{width:42px;height:48px;flex:0 0 42px;background:#f5f8fb}
   .history-divider{height:34px;margin:0 3px}
@@ -137,7 +138,7 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .draw-mode,.shape-mode,.highlight-mode{min-width:76px;height:46px;padding:0 8px;font-size:10px}
   .draw-select,.draw-custom,.draw-colours,.clear-drawings,.shape-width,.shape-fill,.shape-colours,.highlight-colours,.highlight-custom,.highlight-opacity,.delete-highlight{height:46px}
 
-  .editor-shell,.editor-shell.sidebar-hidden{height:auto;min-height:0;flex:1;margin:0 0 148px;display:flex;flex-direction:column;overflow:hidden;border:0;border-radius:0;background:#e8eef5}
+  .editor-shell,.editor-shell.sidebar-hidden{height:auto;min-height:0;flex:1;margin:0 0 66px;display:flex;flex-direction:column;overflow:hidden;border:0;border-radius:0;background:#e8eef5}
   .viewer-area{order:1;min-height:0;flex:1}
   .viewer-toolbar{height:44px;flex:0 0 44px;padding:0 8px;gap:4px;overflow:hidden}
   .viewer-toolbar button{width:31px;height:31px;font-size:17px}
@@ -146,7 +147,7 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .stage{padding:14px 8px 22px;overscroll-behavior:contain}
   .page-wrap{max-width:100%}
 
-  .sidebar{position:fixed;z-index:110;left:0;right:0;bottom:0;order:2;width:100%;height:82px;min-height:82px;overflow:hidden;border:0;border-top:1px solid var(--line);background:#fff;transition:none}
+  .sidebar{display:none!important}
   .sidebar-title{display:none}
   .page-thumbnails{height:82px;padding:7px 10px;display:flex;align-items:center;gap:8px;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;scrollbar-width:none;overscroll-behavior-x:contain}
   .page-thumbnails::-webkit-scrollbar{display:none}
@@ -160,6 +161,10 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 }
 
 @media(max-width:410px){
-  .brand>span:last-child{display:none}
+  .brand>span:last-child{display:inline!important}
   .top-actions .button{padding:0 8px}
+}
+
+@media(max-width:760px){
+  .text-hit.added,.image-hit,.image-handle,.annotation-hit{touch-action:none;-webkit-user-select:none;user-select:none}
 }
