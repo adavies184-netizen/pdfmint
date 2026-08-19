@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=pdfium-mobile-2">
+<link rel="stylesheet" href="editor-pdfium.css?v=pdfium-mobile-3">
 </head>
 <body class="no-document transfer-pending">
   <header class="topbar">
@@ -58,8 +58,8 @@
     </div>
     <div id="editControls" class="edit-controls">
       <div class="context-heading"><strong>Edit existing text</strong><span>Select text directly on the page or from the sidebar.</span></div>
-      <label>Replacement text<input id="replacement" type="text" disabled placeholder="Select a text object"></label>
-      <button id="apply" class="button primary compact" disabled>Apply replacement</button><span id="selectionMeta" class="selection-meta">Nothing selected</span>
+      <label><span class="replacement-label"><span>Replacement</span> <span>text</span></span><input id="replacement" type="text" disabled placeholder="Select a text object"></label>
+      <button id="apply" class="button primary compact" disabled><span class="apply-long">Apply replacement</span><span class="apply-short">Replace</span></button><span id="selectionMeta" class="selection-meta">Nothing selected</span>
     </div>
     <div id="drawControls" class="draw-controls" hidden>
       <div class="draw-modes" aria-label="Drawing mode">
@@ -168,6 +168,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
-<script type="module" src="editor-pdfium.js?v=pdfium-mobile-2"></script>
+<script type="module" src="editor-pdfium.js?v=pdfium-mobile-3"></script>
 </body>
 </html>

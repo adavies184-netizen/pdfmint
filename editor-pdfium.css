@@ -73,6 +73,7 @@
 .shape-fill-swatch.none:after,.shape-fill-none i:after{left:50%;top:50%;width:145%;height:4px;transform:translate(-50%,-50%) rotate(-45deg);transform-origin:center}.shape-fill-panel>label{font-weight:750}.shape-colour-picker span{font-size:12px}
 
 .download-button{display:inline-flex;align-items:center;gap:8px}.download-button svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.apply-short{display:none}
 
 body.manage-mode{overflow:hidden}body.manage-mode .tool-context,body.manage-mode .editor-shell{display:none}body.manage-mode .tool-ribbon{border-bottom:0}body.manage-mode #manageModal{position:static;inset:auto;z-index:auto;display:block;padding:0;background:transparent}body.manage-mode .manage-dialog{width:100%;height:calc(100vh - 174px);max-height:none;border-radius:0;box-shadow:none;background:#edf4fa}body.manage-mode .manage-actions{order:0;min-height:104px;padding:0;gap:0;border-top:1px solid #d9e2ec;border-bottom:1px solid #d9e2ec}body.manage-mode .manage-actions>button{min-width:118px;height:104px;padding:13px 16px;border:0;border-right:1px solid #d9e2ec;border-radius:0;gap:8px}body.manage-mode .manage-actions>button:hover:not(:disabled){border-color:#d9e2ec}body.manage-mode .manage-actions svg{width:30px;height:30px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}body.manage-mode .manage-actions span{display:none}body.manage-mode .manage-actions small{font-size:12px;font-weight:700}body.manage-mode .signature-head{order:1;height:auto;min-height:112px;padding:28px 50px 18px;border:0;background:#edf4fa}body.manage-mode .signature-head h2{font-size:30px}body.manage-mode .signature-head p{font-size:15px}body.manage-mode #manageClose{display:none}body.manage-mode .manage-summary{position:absolute;right:52px;top:132px;z-index:2;display:grid;justify-items:end;gap:7px;padding:0;font-size:14px}body.manage-mode .manage-summary strong{color:var(--green-dark);font-size:18px}body.manage-mode .manage-grid{order:3;flex:1;min-height:0;padding:26px 54px 110px;grid-template-columns:repeat(auto-fill,minmax(calc(215px * var(--manage-zoom)),max-content));gap:42px;background:#edf4fa}body.manage-mode .manage-page-card{width:calc(205px * var(--manage-zoom))}body.manage-mode .manage-page-paper{height:calc(278px * var(--manage-zoom));border-width:3px;border-radius:14px}body.manage-mode .manage-page-card.selected .manage-page-paper{box-shadow:0 0 0 6px #22aa7a24}body.manage-mode .manage-page-card>strong{padding:8px 25px;border-radius:999px;background:var(--green);color:#fff;font-size:14px}body.manage-mode .manage-dialog>.signature-foot{order:4;position:sticky;bottom:0;flex:0 0 82px;padding:0 46px;background:#fff}
 
@@ -106,15 +107,15 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 /* Mobile bottom-dock editor. Desktop geometry above remains unchanged. */
 @media(max-width:760px){
   body{min-width:0;width:100%;height:100dvh;display:flex;flex-direction:column;overflow:hidden}
-  .topbar{height:60px;flex:0 0 60px;padding:0 9px;gap:6px}
+  .topbar{height:60px;flex:0 0 60px;padding:0 8px 0 9px;gap:6px}
   .brand{min-width:0;gap:7px;font-size:18px;letter-spacing:-.5px}
   .brand-mark{width:36px;height:36px;border-radius:10px;font-size:22px;padding:0;line-height:1}
   .preview-badge,.document-name{display:none!important}
-  .top-actions{margin-left:auto;gap:6px}
+  .top-actions{width:40%;flex:0 0 40%;margin-left:auto;justify-content:flex-end;gap:6px}
   .top-actions .button.secondary{display:none}
   .top-actions .button{height:36px;padding:0 9px;border-radius:8px;font-size:11px}
-  .top-actions .download-button{gap:4px}
-  .top-actions .download-button svg{width:15px;height:15px}
+  .top-actions .download-button{width:100%;height:44px;justify-content:center;gap:6px;font-size:14px}
+  .top-actions .download-button svg{width:18px;height:18px}
 
   .document-open .tool-ribbon{position:fixed;z-index:120;left:0;right:0;bottom:0;height:66px;margin:0;padding:6px 8px;gap:3px;border-width:1px 0 0;border-radius:0;box-shadow:0 -8px 22px #14203816;scrollbar-width:none;overscroll-behavior-x:contain}
   .tool-ribbon::-webkit-scrollbar{display:none}
@@ -132,8 +133,11 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .edit-controls{min-width:max-content;gap:7px}
   .edit-controls .context-heading{display:none}
   .edit-controls label{gap:6px}
+  .replacement-label{width:78px;flex:0 0 78px;text-align:center;line-height:1.05}
+  .replacement-label span{display:block}
   .edit-controls input{width:190px;height:40px}
   .edit-controls .compact{height:40px;padding:0 10px;font-size:11px}
+  .apply-long{display:none}.apply-short{display:inline}
   .selection-meta{display:none}
   .draw-mode,.shape-mode,.highlight-mode{min-width:76px;height:46px;padding:0 8px;font-size:10px}
   .draw-select,.draw-custom,.draw-colours,.clear-drawings,.shape-width,.shape-fill,.shape-colours,.highlight-colours,.highlight-custom,.highlight-opacity,.delete-highlight{height:46px}
@@ -158,6 +162,30 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .upload-screen{height:calc(100dvh - 60px);padding:16px}
   .upload-card{width:100%;padding:38px 22px}
   .upload-card h1{font-size:27px}
+
+  body.manage-mode #manageModal{position:fixed;inset:0;z-index:1000;display:block;padding:0;background:#edf4fa}
+  body.manage-mode .manage-dialog{width:100vw;height:100dvh;max-height:none;border-radius:0;box-shadow:none;background:#edf4fa}
+  body.manage-mode .signature-head{order:0;flex:0 0 58px;min-height:58px;height:58px;padding:7px 12px;border-bottom:1px solid #d9e2ec;background:#fff}
+  body.manage-mode .signature-head h2{font-size:20px}
+  body.manage-mode .signature-head p{display:none}
+  body.manage-mode #manageClose{display:grid;width:36px;height:36px;place-items:center;font-size:25px}
+  body.manage-mode .manage-actions{order:1;flex:0 0 108px;min-height:108px;height:108px;padding:3px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));grid-template-rows:repeat(2,49px);gap:2px;overflow:visible;background:#fff}
+  body.manage-mode .manage-actions>button{min-width:0;width:100%;height:49px;padding:2px 1px;border:0;border-radius:6px;gap:1px}
+  body.manage-mode .manage-actions svg{width:18px;height:18px}
+  body.manage-mode .manage-actions span{font-size:18px}
+  body.manage-mode .manage-actions small{max-width:100%;font-size:8px;line-height:1;white-space:normal;text-align:center}
+  body.manage-mode .manage-summary{position:static;order:2;flex:0 0 28px;min-height:28px;padding:4px 12px;display:flex;align-items:center;justify-content:flex-end;background:#edf4fa;font-size:10px}
+  body.manage-mode .manage-summary strong{font-size:12px}
+  body.manage-mode .manage-grid{order:3;flex:1;min-height:0;padding:10px 12px 16px;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;align-items:start;gap:12px 10px;background:#edf4fa}
+  body.manage-mode .manage-page-unit{min-width:0;width:100%}
+  body.manage-mode .manage-page-card{width:min(100%,calc(138px * var(--manage-zoom)));gap:4px}
+  body.manage-mode .manage-page-paper{width:100%;height:auto;aspect-ratio: .74;border-width:2px;border-radius:8px}
+  body.manage-mode .manage-page-card.selected .manage-page-paper{box-shadow:0 0 0 3px #22aa7a24}
+  body.manage-mode .manage-page-card>strong{padding:4px 12px;font-size:10px}
+  body.manage-mode .manage-drag{left:5px;top:5px;font-size:11px}
+  body.manage-mode .manage-check{right:5px;top:5px;width:20px;height:20px;font-size:10px}
+  body.manage-mode .manage-dialog>.signature-foot{order:4;position:static;flex:0 0 62px;height:62px;padding:7px 10px;background:#fff}
+  body.manage-mode .manage-dialog>.signature-foot .button{height:46px;padding:0 15px;font-size:12px}
 }
 
 @media(max-width:410px){
