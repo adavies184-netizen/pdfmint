@@ -25,7 +25,16 @@
   <link rel="preconnect" href="https://api.stripe.com" crossorigin>
   <script async src="https://js.stripe.com/v3/" data-pdfbreeze-stripe="true"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=pdfium-main-9">
+<link rel="stylesheet" href="styles.css?v=site-hero-1">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=AW-877738202"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'AW-877738202');
+</script>
 </head>
 <body data-landing-tool="edit">
   <header class="site-header">
@@ -148,15 +157,14 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <span class="eyebrow">SMARTER DOCUMENT TOOLS</span>
-          <h1>PDFBreeze</h1>
-          <p class="hero-subtitle">PDFBreeze is an online application for editing, signing, organising, compressing, converting and managing PDF and document files securely in your browser.</p>
+          <span class="eyebrow">Trusted by 1M+ users</span>
+          <h1>Everything you need to work with PDFs</h1>
+          <p class="hero-subtitle">Edit, sign, organise and convert documents with simple, polished tools that work wherever you do.</p>
           <ul class="check-list">
-            <li>Works on any device</li>
-            <li>No software installation</li>
-            <li>Private and secure processing</li>
-            <li>Keeps your document layout intact</li>
-            <li>Supports popular file formats</li>
+            <li>Edit, sign and organise PDFs</li>
+            <li>Convert popular document formats</li>
+            <li>Secure browser-based processing</li>
+            <li>Works on desktop and mobile</li>
           </ul>
         </div>
 
@@ -216,6 +224,33 @@
           <a class="tool-card" href="#"><span class="tool-icon">X</span><span>Excel to PDF</span><small>Preserve spreadsheet formatting</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">J</span><span>JPG to PDF</span><small>Combine photos into a PDF</small></a>
           <a class="tool-card" href="#"><span class="tool-icon">N</span><span>PNG to PDF</span><small>Convert PNG images with ease</small></a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section editor-showcase-section" aria-labelledby="editor-showcase-title">
+      <div class="container">
+        <div class="section-heading centered editor-showcase-heading">
+          <span class="eyebrow">ONE CLEAR WORKSPACE</span>
+          <h2 id="editor-showcase-title">Powerful PDF tools that still feel simple</h2>
+          <p>Make precise changes, sign documents and organise every page without jumping between different apps.</p>
+        </div>
+        <div class="editor-showcase-grid">
+          <article class="showcase-card showcase-card-wide">
+            <div class="showcase-copy"><span class="showcase-number">01</span><h3>Edit real PDF text</h3><p>Select existing wording, replace it accurately and keep the document looking natural.</p></div>
+            <div class="editor-product-visual" aria-hidden="true">
+              <div class="visual-toolbar"><span>↶</span><span>↷</span><b>Ｔ Add text</b><b class="active">Ｔ Edit text</b><b>✎ Sign</b><b>▧ Image</b></div>
+              <div class="visual-workspace"><div class="visual-sidebar"><i></i><i></i><i></i></div><div class="visual-page"><strong>Project proposal</strong><em></em><p>Clear documents, edited with confidence.</p><span class="visual-selection">edited with confidence</span></div></div>
+            </div>
+          </article>
+          <article class="showcase-card">
+            <div class="showcase-copy"><span class="showcase-number">02</span><h3>Sign and annotate</h3><p>Add signatures, notes, highlights, stamps and drawings from one consistent toolbar.</p></div>
+            <div class="showcase-mini-visual signature-visual" aria-hidden="true"><div class="mini-page"><span>Approved</span><strong>Your Signature</strong></div></div>
+          </article>
+          <article class="showcase-card">
+            <div class="showcase-copy"><span class="showcase-number">03</span><h3>Organise every page</h3><p>Reorder, rotate, duplicate or remove pages with clear visual feedback.</p></div>
+            <div class="showcase-mini-visual pages-visual" aria-hidden="true"><div>1</div><div class="active">2</div><div>3</div></div>
+          </article>
         </div>
       </div>
     </section>
@@ -1048,7 +1083,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-<script src="script.js?v=pdfium-main-16"></script>
+<script src="script.js?v=site-hero-1"></script>
   <script>
     (async()=>{if(!window.PDFMintAuth)return;await window.PDFMintAuth.ready;const user=await window.PDFMintAuth.getUser();if(!user)return;document.querySelectorAll('[data-auth-nav]').forEach(link=>{link.href='dashboard.html';link.textContent='My account';});})();
   </script>

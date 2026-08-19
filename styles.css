@@ -2425,3 +2425,47 @@ html,body{max-width:100%;overflow-x:hidden}
 /* PDFBreeze main-brand refresh — matches the PDFium editor identity. */
 .brand{gap:12px;font-size:24px;font-weight:850;letter-spacing:-1px}
 .brand-mark{width:42px;height:42px;border-radius:12px;font-size:25px;font-weight:850;line-height:1;padding-bottom:2px;box-shadow:none}
+
+/* Responsive trust-led homepage and landing-page hero. */
+.hero{padding:64px 0 72px;background:radial-gradient(circle at 18% 10%,#fff 0,rgba(255,255,255,.65) 24%,transparent 48%),linear-gradient(125deg,#f5fbfa 0%,#edf4f7 52%,#e8f4f0 100%)}
+.hero-grid{grid-template-columns:minmax(0,1fr) minmax(420px,.94fr);gap:56px;align-items:stretch}
+.hero-copy{display:flex;flex-direction:column;justify-content:center;padding:8px 0}
+.hero .hero-copy>.eyebrow{align-self:flex-start;display:inline-flex;align-items:center;gap:9px;margin-bottom:30px;padding:9px 15px;border:1px solid #c9e2dc;border-radius:999px;background:#fff;color:#102039;font-size:14px;font-weight:750;letter-spacing:0;text-transform:none;box-shadow:0 5px 14px rgba(15,35,53,.08)}
+.hero .hero-copy>.eyebrow svg{width:22px;height:22px;color:#18a87e}
+.hero h1{max-width:720px;margin:0 0 22px;font-size:clamp(44px,4.2vw,68px);line-height:1.04;letter-spacing:-2.4px}
+.hero-subtitle{max-width:690px;margin-bottom:30px;font-size:clamp(18px,1.45vw,22px);line-height:1.55;color:#42536a}
+.hero .check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 24px;margin:0;padding:22px 24px;border:1px solid rgba(200,220,218,.75);border-radius:22px;background:rgba(255,255,255,.76);box-shadow:0 16px 35px rgba(31,55,72,.06);backdrop-filter:blur(8px)}
+.hero .check-list li{position:relative;padding-left:32px;color:#22334a;font-size:15px;font-weight:650;line-height:1.35}
+.hero .check-list li::before{content:'✓';position:absolute;left:0;top:-2px;display:grid;width:23px;height:23px;place-items:center;border-radius:50%;background:#20b58a;color:#fff;font-size:13px;font-weight:900}
+.hero .upload-card{min-height:500px;padding:44px 34px;border:2px dashed #1fac83;border-radius:30px;background:rgba(255,255,255,.92);box-shadow:0 24px 55px rgba(26,61,80,.1);cursor:pointer;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
+.hero .upload-card:hover,.hero .upload-card:focus-visible,.hero .upload-card.dragover{transform:translateY(-3px);border-color:#087f63;box-shadow:0 28px 64px rgba(26,61,80,.15);outline:none}
+.hero .upload-icon{display:grid;width:100px;height:100px;margin-bottom:28px;place-items:center;border-radius:50%;background:#e4f7f1;color:#129673}
+.hero .upload-icon svg{width:53px;height:53px}
+.hero .upload-card h2{max-width:520px;margin-bottom:12px;font-size:clamp(25px,2.2vw,34px);line-height:1.18}
+.hero .upload-card p{margin-bottom:24px;color:#69778b;font-size:16px}
+.hero .upload-card .or-label{display:none}
+.hero .upload-card .upload-button{width:min(100%,430px);min-height:64px;justify-content:center;font-size:18px}
+.hero .upload-card small{margin-top:24px;color:#68778a;font-size:13px}
+
+/* Homepage editor feature showcase. */
+.editor-showcase-section{padding:88px 0;background:#fff}
+.editor-showcase-heading{max-width:760px;margin:0 auto 42px}
+.editor-showcase-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px}
+.showcase-card{overflow:hidden;position:relative;min-height:410px;padding:30px;border:1px solid #dce7e6;border-radius:28px;background:linear-gradient(145deg,#f8fbfc,#eef7f4);box-shadow:0 16px 38px rgba(25,50,68,.07)}
+.showcase-card-wide{grid-column:1/-1;display:grid;grid-template-columns:.72fr 1.28fr;align-items:center;gap:34px;min-height:480px}
+.showcase-copy{position:relative;z-index:2}.showcase-number{display:inline-grid;width:42px;height:42px;margin-bottom:20px;place-items:center;border-radius:13px;background:#dff5ef;color:#087f63;font-weight:850}.showcase-copy h3{margin:0 0 12px;font-size:30px;line-height:1.08;color:#102039}.showcase-copy p{max-width:470px;margin:0;color:#607087;font-size:16px;line-height:1.6}
+.editor-product-visual{overflow:hidden;border:1px solid #d9e3e8;border-radius:20px;background:#fff;box-shadow:0 18px 45px rgba(25,47,65,.14);transform:rotate(-1deg)}
+.visual-toolbar{display:flex;gap:8px;align-items:center;padding:13px;border-bottom:1px solid #dde7ea;white-space:nowrap}.visual-toolbar span,.visual-toolbar b{padding:8px 10px;border-radius:9px;color:#26374d;font-size:11px}.visual-toolbar .active{background:#e3f6f0;color:#087f63}
+.visual-workspace{display:grid;grid-template-columns:78px 1fr;min-height:300px;background:#edf2f6}.visual-sidebar{padding:18px 12px;background:#fff}.visual-sidebar i{display:block;height:75px;margin-bottom:12px;border:1px solid #d8e2e5;border-radius:6px;background:linear-gradient(#fff 0 20%,#d5e5df 21% 23%,#fff 24%)}
+.visual-page{position:relative;width:66%;min-height:255px;margin:25px auto;padding:32px;background:#fff;box-shadow:0 8px 22px rgba(31,45,61,.14)}.visual-page strong{display:block;font-size:18px}.visual-page em{display:block;height:3px;margin:10px 0 22px;background:#24bb8e}.visual-page p{font-size:11px;color:#718097}.visual-selection{display:inline-block;margin-top:30px;padding:5px 8px;border:2px solid #3388f2;background:#eaf3ff;color:#17253a;font-size:11px}
+.showcase-mini-visual{height:190px;margin-top:28px;border:1px solid #d9e4e5;border-radius:20px;background:#fff;box-shadow:0 15px 30px rgba(25,47,65,.09)}.signature-visual{display:grid;place-items:center}.mini-page{width:72%;padding:24px;border-bottom:2px solid #23b78b}.mini-page span{display:block;margin-bottom:20px;color:#19926f;font-size:13px;font-weight:800}.mini-page strong{font-family:cursive;font-size:30px;font-weight:500}.pages-visual{display:flex;align-items:center;justify-content:center;gap:14px;padding:22px}.pages-visual div{display:grid;width:25%;height:132px;place-items:end center;padding:10px;border:1px solid #cfdde0;border-radius:9px;background:linear-gradient(#fff 0 18%,#dff2ec 19% 21%,#fff 22%);color:#627188;font-weight:800}.pages-visual .active{border:2px solid #1bb286;box-shadow:0 0 0 5px #dff6ef;color:#087f63;transform:translateY(-8px)}
+
+@media(max-width:900px){
+  .hero{padding:42px 0 48px}.hero-grid{grid-template-columns:1fr;gap:32px}.hero h1{font-size:clamp(40px,8vw,58px)}.hero .upload-card{min-height:400px}
+  .showcase-card-wide{grid-template-columns:1fr}.editor-product-visual{transform:none}.showcase-card-wide{min-height:0}
+}
+@media(max-width:600px){
+  .hero{padding:26px 0 32px}.hero-grid{gap:22px}.hero-copy{padding:0}.hero .hero-copy>.eyebrow{margin-bottom:20px;padding:7px 12px;font-size:12px}.hero .hero-copy>.eyebrow svg{width:18px;height:18px}.hero h1{margin-bottom:14px;font-size:34px;line-height:1.08;letter-spacing:-1.3px}.hero-subtitle{margin-bottom:20px;font-size:16px;line-height:1.45}.hero .check-list{display:none}
+  .hero .upload-card{display:block;min-height:0;padding:0;border:0;background:transparent;box-shadow:none;transform:none}.hero .upload-card:hover,.hero .upload-card:focus-visible,.hero .upload-card.dragover{transform:none;box-shadow:none}.hero .upload-icon,.hero .upload-card h2,.hero .upload-card p,.hero .upload-card small,.hero .upload-card .or-label{display:none}.hero .upload-card .upload-button{display:flex;width:100%;min-height:68px;margin:0;border-radius:14px;font-size:17px;box-shadow:0 12px 25px rgba(17,151,113,.22)}.hero .upload-card .file-status{margin-top:10px}
+  .editor-showcase-section{padding:60px 0}.editor-showcase-grid{grid-template-columns:1fr}.showcase-card,.showcase-card-wide{grid-column:auto;padding:22px;border-radius:22px}.showcase-copy h3{font-size:25px}.editor-product-visual{margin-top:4px}.visual-toolbar{overflow:hidden}.visual-workspace{grid-template-columns:54px 1fr}.visual-page{width:78%;padding:22px}.showcase-mini-visual{height:170px}
+}

@@ -6108,6 +6108,42 @@ document.getElementById('continue-google')?.addEventListener('click', openAccess
 const heroInput = document.getElementById('file-input');
 const heroCard = document.getElementById('upload-card');
 const heroStatus = document.getElementById('file-status');
+if (heroCard && heroInput) {
+  const hero = heroCard.closest('.hero');
+  const badge = hero?.querySelector('.hero-copy .eyebrow');
+  const title = hero?.querySelector('.hero-copy h1')?.textContent.trim() || '';
+  const isHome = /Everything you need to work with PDFs/i.test(title);
+  if (badge) {
+    badge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.6-2.8 8.1-7 10-4.2-1.9-7-5.4-7-10V6l7-3Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Trusted by 1M+ users</span>';
+  }
+  if (!isHome) {
+    const list = hero?.querySelector('.check-list');
+    const lowerTitle = title.toLowerCase();
+    const items = lowerTitle.includes('sign')
+      ? ['Create a signature in seconds', 'Place and resize it precisely', 'Add notes and highlights', 'Download a polished PDF']
+      : (lowerTitle.includes('edit')
+        ? ['Edit text and add new content', 'Sign and annotate in your browser', 'Organise pages visually', 'Download a polished PDF']
+        : ['Fast document conversion', 'Preserve clean page formatting', 'Secure browser-based processing', 'Works on desktop and mobile']);
+    if (list) list.innerHTML = items.map(item => `<li>${item}</li>`).join('');
+  }
+  const dropTitle = heroCard.querySelector('h2');
+  const dropCopy = heroCard.querySelector('p');
+  const dropSmall = heroCard.querySelector('small');
+  if (dropTitle) dropTitle.textContent = 'Drag & drop your document to start';
+  if (dropCopy) dropCopy.textContent = 'or choose a file from your device';
+  if (dropSmall) dropSmall.textContent = 'Secure processing · files up to 100 MB';
+  heroCard.tabIndex = 0;
+  heroCard.setAttribute('role', 'button');
+  heroCard.setAttribute('aria-label', 'Choose a document to upload');
+  heroCard.addEventListener('click', event => {
+    if (event.target.closest('input, label, button, a')) return;
+    heroInput.click();
+  });
+  heroCard.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    heroInput.click();
+  });
 ['dragenter','dragover'].forEach(name => heroCard.addEventListener(name, event => {
   event.preventDefault(); heroCard.classList.add('dragover');
 }));
@@ -6134,6 +6170,7 @@ heroCard.addEventListener('drop', event => {
   }
   loadEditorPdf(file);
 });
+}
 document.getElementById('preview-file-input').addEventListener('change', event => {
   const file = event.target.files[0];
   if (file) loadEditorPdf(file);

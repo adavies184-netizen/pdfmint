@@ -199,7 +199,7 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .export-window-actions{right:9px;top:9px}
   .export-window-actions #exportClose{width:34px;height:34px;font-size:23px}
   .pdfium-export-body{min-height:0;flex:1;padding:12px 12px 10px;display:flex;flex-direction:column;overflow-y:auto}
-  .export-section-heading{margin-bottom:15px}
+  .export-section-heading{margin-bottom:15px;padding-bottom:20px}
   .export-section-heading strong{font-size:13px}.export-section-heading span{font-size:9px}
   .pdfium-format-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
   .pdfium-format-grid button{height:58px;padding:4px 2px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-radius:9px;text-align:center}
