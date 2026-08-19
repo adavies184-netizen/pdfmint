@@ -4774,12 +4774,13 @@ function closeEditorCheckoutOverlays() {
 function showStripeLoadingShell() {
   const mount = document.getElementById('stripe-payment-element');
   if (!mount) return;
-  mount.innerHTML = '<div class="stripe-loading-shell" role="status"><span>Loading secure payment…</span><i></i><i></i><i></i></div>';
+  mount.innerHTML = '<div class="stripe-loading-shell stripe-form-shell" role="status" aria-label="Secure payment form loading"><div class="stripe-shell-head"><strong>Card information</strong><span><i></i>Securing form…</span></div><div class="stripe-shell-card"><b>1234 1234 1234 1234</b><em>MM / YY&nbsp;&nbsp;&nbsp;CVC</em></div><div class="stripe-shell-field"><b>Country or region</b><span>United Kingdom</span></div><small>The form is visible now and will unlock as soon as Stripe is ready.</small></div>';
 }
 
 async function openAccessPage() {
   closeEditorCheckoutOverlays();
   document.getElementById('access-page').hidden = false;
+  loadStripeLibrary().catch(() => {});
   await renderCheckoutPreview('plan-preview-canvas');
 }
 
@@ -4787,7 +4788,7 @@ function closeAccessPage() {
   document.getElementById('access-page').hidden = true;
 }
 
-async function openPaymentPage() {
+async function openPaymentPage(options = {}) {
   const checked = document.querySelector('input[name="access-plan"]:checked');
   if (!checked) return;
   const option = checked.closest('.plan-option');
@@ -4815,6 +4816,9 @@ async function openPaymentPage() {
 
   closeAccessPage();
   document.getElementById('payment-page').hidden = false;
+  if (!options.fromHistory && history.state?.pdfbreezeCheckout !== 'payment') {
+    history.pushState({...history.state, pdfbreezeCheckout:'payment'}, '', location.href);
+  }
   let stripeMount = document.getElementById('stripe-payment-element');
   if (!stripeMount) {
     stripeMount = document.createElement('div');
@@ -4855,8 +4859,19 @@ document.querySelectorAll('input[name="access-plan"]').forEach(input => {
 
 document.getElementById('plan-continue').addEventListener('click', openPaymentPage);
 document.getElementById('back-to-plans').addEventListener('click', () => {
-  closePaymentPage();
-  document.getElementById('access-page').hidden = false;
+  if (history.state?.pdfbreezeCheckout === 'payment') history.back();
+  else {
+    closePaymentPage();
+    document.getElementById('access-page').hidden = false;
+  }
+});
+
+window.addEventListener('popstate', event => {
+  const paymentPage = document.getElementById('payment-page');
+  if (!paymentPage?.hidden && event.state?.pdfbreezeCheckout !== 'payment') {
+    closePaymentPage();
+    document.getElementById('access-page').hidden = false;
+  }
 });
 
 document.querySelectorAll('.payment-method').forEach(button => {

@@ -393,9 +393,15 @@
     db.close();
     return records.sort((a,b) => b.lastModified - a.lastModified);
   }
-  const recordToFile = async record => record.remote
-    ? window.PDFMintAuth.downloadDocument(record)
-    : new File([record.bytes], record.name, {type:record.type,lastModified:record.lastModified});
+  const recordToFile = async record => {
+    if (!record) throw new Error('That saved file could not be found.');
+    if (record.remote) return window.PDFMintAuth.downloadDocument(record);
+    const payload = record.bytes instanceof Blob || record.bytes instanceof ArrayBuffer || ArrayBuffer.isView(record.bytes)
+      ? record.bytes
+      : record.bytes?.data || record.blob;
+    if (!payload) throw new Error('This saved file has no readable PDF data. Please upload it again.');
+    return new File([payload], record.name || 'PDFBreeze document.pdf', {type:record.type || 'application/pdf',lastModified:record.lastModified || Date.now()});
+  };
 
   async function openStoredRecord(record, tool) {
     const entitlementKey = String(record.source_tool || '').startsWith('document-trial:')
@@ -497,7 +503,21 @@
       button.dataset.storedFile = record.id;
       button.innerHTML = `<i>${String(record.name).split('.').pop().slice(0,4).toUpperCase()}</i><span><b></b><small>${formatBytes(record.size)} · Saved in My Files</small></span><svg><use href="#i-chevron"></use></svg>`;
       button.querySelector('b').textContent = record.name;
-      button.addEventListener('click', async () => continueToDashboardTool(await recordToFile(record), {alreadySaved:true}));
+      button.addEventListener('click', async () => {
+        if (button.disabled) return;
+        button.disabled = true;
+        button.classList.add('opening');
+        try {
+          const file = await recordToFile(record);
+          await continueToDashboardTool(file, {alreadySaved:true});
+        } catch (error) {
+          console.error(error);
+          button.disabled = false;
+          button.classList.remove('opening');
+          const small = button.querySelector('small');
+          if (small) small.textContent = error.message || 'This file could not be opened. Please upload it again.';
+        }
+      });
       pickerFiles?.prepend(button);
     });
   }
