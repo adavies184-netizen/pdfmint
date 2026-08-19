@@ -4774,13 +4774,14 @@ function closeEditorCheckoutOverlays() {
 function showStripeLoadingShell() {
   const mount = document.getElementById('stripe-payment-element');
   if (!mount) return;
-  mount.innerHTML = '<div class="stripe-loading-shell stripe-form-shell" role="status" aria-label="Secure payment form loading"><div class="stripe-shell-head"><strong>Card information</strong><span><i></i>Securing form…</span></div><div class="stripe-shell-card"><b>1234 1234 1234 1234</b><em>MM / YY&nbsp;&nbsp;&nbsp;CVC</em></div><div class="stripe-shell-field"><b>Country or region</b><span>United Kingdom</span></div><small>The form is visible now and will unlock as soon as Stripe is ready.</small></div>';
+  mount.replaceChildren();
 }
 
 async function openAccessPage() {
   closeEditorCheckoutOverlays();
   document.getElementById('access-page').hidden = false;
   loadStripeLibrary().catch(() => {});
+  window.PDFMintAuth?.getSession?.().catch?.(() => {});
   await renderCheckoutPreview('plan-preview-canvas');
 }
 

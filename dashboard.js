@@ -445,6 +445,8 @@
 
   async function refreshDashboardFiles() {
     const records = (await getDashboardFiles()).filter(record => /\.pdf$/i.test(String(record.name || '')));
+    const pickerEmpty = document.querySelector('[data-picker-empty]');
+    if (pickerEmpty) pickerEmpty.hidden = records.length > 0;
     const recent = document.querySelector('[data-recent-files]');
     recent?.querySelectorAll('.dynamic-file-row').forEach(row => row.remove());
     recent?.querySelectorAll('.file-row:not(.file-head):not(.dynamic-file-row)').forEach(row => row.remove());
