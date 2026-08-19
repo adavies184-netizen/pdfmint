@@ -7092,6 +7092,8 @@ async function initialiseSharedEditorRoute() {
 
     const routeParams = new URLSearchParams(window.location.search);
     if (routeParams.get('pdfiumCheckout') === '1') {
+      document.body.classList.remove('editor-route-loading');
+      document.documentElement.classList.remove('pdfium-checkout-route');
       const preferredFormat = routeParams.get('format') || sessionStorage.getItem('pdfbreezePdfiumExportFormat') || 'pdf';
       const preferredRadio = document.querySelector(`input[name="export-format"][value="${CSS.escape(preferredFormat)}"]`);
       const fallbackRadio = document.querySelector('input[name="export-format"][value="pdf"]');
@@ -7121,8 +7123,13 @@ async function initialiseSharedEditorRoute() {
         const bridgedEmail = sessionStorage.getItem('pdfbreezePdfiumBridgeEmail') || sessionStorage.getItem('pdfmintPendingEmail') || '';
         sessionStorage.removeItem('pdfbreezePdfiumBridgeEmail');
         const emailInput = document.getElementById('download-email');
-        if (emailInput) emailInput.value = bridgedEmail;
-        requestAnimationFrame(() => document.getElementById('final-download')?.click());
+        const validBridgedEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bridgedEmail);
+        if (validBridgedEmail) {
+          if (emailInput) emailInput.value = bridgedEmail;
+          requestAnimationFrame(() => document.getElementById('final-download')?.click());
+        } else {
+          requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+        }
       } else {
         requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
       }
@@ -7158,6 +7165,7 @@ async function initialiseSharedEditorRoute() {
   } catch (error) {
     console.error('Shared editor failed:', error);
     document.body.classList.remove('editor-route-loading');
+    document.documentElement.classList.remove('pdfium-checkout-route');
     showAlert('PDFBreeze could not open this document in the editor.');
   }
 }

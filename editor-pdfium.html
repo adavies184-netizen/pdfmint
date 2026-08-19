@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=pdfium-mobile-8">
+<link rel="stylesheet" href="editor-pdfium.css?v=pdfium-export-skins-1">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-877738202"></script>
 <script>
@@ -133,12 +133,13 @@
   <div id="manageModal" class="signature-modal" hidden><section class="manage-dialog" role="dialog" aria-modal="true" aria-labelledby="manageTitle"><header class="signature-head"><div><h2 id="manageTitle">Manage pages</h2><p>Click pages to select them. Drag selected pages to reorder.</p></div><button id="manageClose" aria-label="Close">×</button></header><div class="manage-actions"><button id="manageDelete"><span>⌫</span><small>Delete</small></button><button id="manageDuplicate"><span>▣</span><small>Duplicate</small></button><button id="manageRotateLeft"><span>↶</span><small>Rotate left</small></button><button id="manageRotateRight"><span>↷</span><small>Rotate right</small></button><button id="manageMoveLeft"><span>←</span><small>Move before</small></button><button id="manageMoveRight"><span>→</span><small>Move after</small></button><button id="manageUndo"><span>↶</span><small>Undo</small></button><button id="manageRedo"><span>↷</span><small>Redo</small></button><button id="manageSelectAll"><span>☑</span><small>Select all</small></button><button id="manageSelectNone"><span>☐</span><small>Select none</small></button><button id="manageZoomOut"><span>−</span><small>Zoom out</small></button><button id="manageZoomIn"><span>+</span><small>Zoom in</small></button></div><div class="manage-summary"><strong id="manageSelectionCount">0 selected</strong></div><div id="manageGrid" class="manage-grid"></div><footer class="signature-foot"><button id="manageCancel" class="button secondary">Cancel</button><button id="manageApply" class="button primary">Apply changes</button></footer></section></div>
   <div id="exportModal" class="pdfium-export-layer" hidden>
     <div class="pdfium-export-backdrop"></div>
-    <section id="exportDialog" class="pdfium-export-dialog mint-skin" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
+    <section id="exportDialog" class="pdfium-export-dialog mint-skin" data-export-skin="barely" role="dialog" aria-modal="true" aria-labelledby="exportTitle">
       <header class="pdfium-export-hero">
         <div class="export-brand"><span>P</span><strong>PDFBreeze</strong></div>
         <div class="export-window-actions"><button id="exportClose" type="button" aria-label="Close">×</button></div>
         <div class="export-success-mark">✓</div>
         <p>READY TO EXPORT</p><h2 id="exportTitle">Awesome Job!</h2><span class="export-subtitle">Choose a format and we’ll prepare your finished document.</span>
+        <div class="export-skin-switcher" role="group" aria-label="Popup background style"><button type="button" class="active" data-export-skin-choice="barely" aria-pressed="true">Barely-there mint</button><button type="button" data-export-skin-choice="grid" aria-pressed="false">Mint grid</button></div>
       </header>
       <div class="pdfium-export-body">
         <div class="export-section-heading"><strong>Download as</strong><span>10 file types</span></div>
@@ -177,6 +178,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
-<script type="module" src="editor-pdfium.js?v=pdfium-mobile-4"></script>
+<script type="module" src="editor-pdfium.js?v=pdfium-export-skins-1"></script>
 </body>
 </html>
