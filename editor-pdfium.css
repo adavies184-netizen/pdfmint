@@ -186,6 +186,55 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   body.manage-mode .manage-check{right:5px;top:5px;width:20px;height:20px;font-size:10px}
   body.manage-mode .manage-dialog>.signature-foot{order:4;position:static;flex:0 0 62px;height:62px;padding:7px 10px;background:#fff}
   body.manage-mode .manage-dialog>.signature-foot .button{height:46px;padding:0 15px;font-size:12px}
+
+  .pdfium-export-layer{padding:0;place-items:stretch}
+  .pdfium-export-dialog{width:100vw;height:100dvh;max-height:none;display:flex;flex-direction:column;overflow:hidden;border-radius:0;box-shadow:none}
+  .pdfium-export-hero{flex:0 0 112px;min-height:112px;padding:15px 17px 12px;border-radius:0}
+  .pdfium-export-hero .export-brand{margin:0 0 9px;gap:7px}
+  .pdfium-export-hero .export-brand>span{width:30px;height:30px;border-radius:8px;font-size:18px}
+  .pdfium-export-hero .export-brand strong{font-size:14px}
+  .pdfium-export-hero>p{margin-bottom:3px;font-size:8px}
+  .pdfium-export-hero h2{margin-bottom:3px;font-size:25px}
+  .pdfium-export-hero .export-subtitle{font-size:11px}
+  .export-window-actions{right:9px;top:9px}
+  .export-window-actions #exportClose{width:34px;height:34px;font-size:23px}
+  .pdfium-export-body{min-height:0;flex:1;padding:12px 12px 10px;display:flex;flex-direction:column;overflow-y:auto}
+  .export-section-heading{margin-bottom:7px}
+  .export-section-heading strong{font-size:13px}.export-section-heading span{font-size:9px}
+  .pdfium-format-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+  .pdfium-format-grid button{height:58px;padding:4px 2px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-radius:9px;text-align:center}
+  .pdfium-format-grid i{width:23px;height:26px;flex:0 0 26px;border-radius:5px;font-size:6px}
+  .pdfium-format-grid span{align-self:auto;font-size:8px;line-height:1}
+  .pdfium-format-grid small{display:none}
+  .pdfium-export-filename{gap:4px;margin-top:9px}
+  .pdfium-export-filename>span{font-size:10px}
+  .pdfium-export-filename>div{height:43px;padding:0 11px;border-radius:10px}
+  .pdfium-export-filename input,.pdfium-export-filename b{font-size:12px}
+  .pdfium-export-actions{grid-template-columns:.72fr 1.28fr;gap:7px;margin-top:9px}
+  .pdfium-export-actions button{height:45px;border-radius:10px;font-size:11px}
+  .pdfium-export-actions button:first-child{order:0}
+  .pdfium-export-privacy{margin-top:7px;font-size:8px}
+
+  .pdfium-email-layer{padding:8px;place-items:center}
+  .pdfium-email-dialog.legacy-email-design{width:100%;max-height:calc(100dvh - 16px);padding:32px 18px 20px;overflow-y:auto;border-radius:18px}
+  .legacy-email-design .pdfium-email-close{right:8px;top:6px;width:34px;height:34px;font-size:28px}
+  .legacy-email-design h2{margin:14px 30px 20px;font-size:24px;line-height:1.14}
+  .legacy-email-design .social-login-button{height:52px;margin:0 0 12px;border-radius:9px;font-size:16px;gap:10px}
+  .legacy-email-design .google-mark{width:20px;height:20px;flex-basis:20px}
+  .legacy-email-design .email-divider{gap:12px;margin:14px 0}
+  .legacy-email-design .email-field span{font-size:13px}
+  .legacy-email-design .email-field input{width:100%;height:50px;padding:0 12px;border-radius:9px;font-size:16px}
+  .legacy-email-design .pdfium-email-continue{width:100%;height:52px;margin-top:15px;border-radius:9px;font-size:16px}
+  .legacy-email-design .login-copy{margin-top:16px!important;font-size:13px!important}
+  .legacy-email-design .text-link-button{font-size:13px}
+  .legacy-email-design .terms-copy{margin-top:15px!important;font-size:10px!important;line-height:1.42!important}
+}
+
+@media(max-width:760px) and (max-height:570px){
+  .pdfium-export-dialog{overflow-y:auto}
+  .pdfium-export-hero{flex-basis:96px;min-height:96px;padding-top:10px}
+  .pdfium-export-hero .export-brand{margin-bottom:4px}
+  .pdfium-export-body{overflow:visible}
 }
 
 @media(max-width:410px){

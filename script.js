@@ -4921,23 +4921,41 @@ let stripeElementPlan = null;
 let stripeCheckoutSubscriptionId = '';
 const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
 
+let stripeLibraryPromise = null;
 function loadStripeLibrary() {
   if (window.Stripe) return Promise.resolve();
-  return new Promise((resolve, reject) => {
-    const existing = document.querySelector('script[data-pdfbreeze-stripe]');
-    if (existing) {
-      existing.addEventListener('load', resolve, {once: true});
-      existing.addEventListener('error', reject, {once: true});
-      return;
+  if (stripeLibraryPromise) return stripeLibraryPromise;
+  stripeLibraryPromise = new Promise((resolve, reject) => {
+    let existing = document.querySelector('script[data-pdfbreeze-stripe]');
+    if (existing?.dataset.loadFailed === 'true' || (existing?.dataset.loaded === 'true' && !window.Stripe)) {
+      existing.remove();
+      existing = null;
     }
-    const script = document.createElement('script');
+    const script = existing || document.createElement('script');
+    let settled = false;
+    const finish = (error) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      if (error) {
+        script.dataset.loadFailed = 'true';
+        stripeLibraryPromise = null;
+        reject(error);
+      } else {
+        script.dataset.loaded = 'true';
+        resolve();
+      }
+    };
+    const timeout = window.setTimeout(() => finish(new Error('Stripe took too long to load. Please check your connection and try again.')), 15000);
+    script.addEventListener('load', () => window.Stripe ? finish() : finish(new Error('Stripe loaded without starting correctly. Please try again.')), {once: true});
+    script.addEventListener('error', () => finish(new Error('Stripe could not load. Please check your connection and try again.')), {once: true});
+    if (existing) return;
     script.src = 'https://js.stripe.com/v3/';
     script.async = true;
     script.dataset.pdfbreezeStripe = 'true';
-    script.addEventListener('load', resolve, {once: true});
-    script.addEventListener('error', () => reject(new Error('Stripe could not load.')), {once: true});
     document.head.appendChild(script);
   });
+  return stripeLibraryPromise;
 }
 
 function stripePlanCode() {
@@ -4985,8 +5003,13 @@ async function prepareStripePaymentElement() {
   if (stripeElements && stripeElementPlan === plan) return;
   await loadStripeLibrary();
 
-  const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
+  const checkoutController = new AbortController();
+  const checkoutTimeout = window.setTimeout(() => checkoutController.abort(), 20000);
+  let response;
+  try {
+    response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
     method: 'POST',
+    signal: checkoutController.signal,
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${session.access_token}`
@@ -4995,7 +5018,13 @@ async function prepareStripePaymentElement() {
       plan,
       document_key: plan === 'document_trial' ? stripeCheckoutDocumentKey : null
     })
-  });
+    });
+  } catch (error) {
+    if (error?.name === 'AbortError') throw new Error('The secure checkout service took too long to respond. Please try again.');
+    throw error;
+  } finally {
+    clearTimeout(checkoutTimeout);
+  }
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result.detail || 'PDFBreeze could not start secure checkout.');
 
