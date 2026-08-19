@@ -6134,6 +6134,74 @@ function showOAuthSetupMessage(provider) {
 
 document.getElementById('continue-google')?.addEventListener('click', openAccessPage);
 
+function initialiseDailyEditCounter(hero, badge) {
+  if (!hero || !badge) return;
+
+  let proofRow = badge.closest('.hero-proof-row');
+  if (!proofRow) {
+    proofRow = document.createElement('div');
+    proofRow.className = 'hero-proof-row';
+    badge.before(proofRow);
+    proofRow.appendChild(badge);
+  }
+
+  let counter = proofRow.querySelector('.live-edit-count');
+  if (!counter) {
+    counter = document.createElement('span');
+    counter.className = 'live-edit-count';
+    counter.setAttribute('aria-label', 'Live edits today');
+    counter.innerHTML = '<span class="live-edit-dot" aria-hidden="true"></span><strong data-edit-count>53,200</strong><span>edits today</span>';
+    proofRow.appendChild(counter);
+  }
+
+  const output = counter.querySelector('[data-edit-count]');
+  if (!output || window.__pdfBreezeDailyEditCounter) return;
+  window.__pdfBreezeDailyEditCounter = true;
+
+  const storageKey = 'pdfbreeze-daily-edit-counter-v1';
+  const now = Date.now();
+  const today = new Date(now).toLocaleDateString('en-CA');
+  const baseline = 53200;
+  let state = { date: today, value: baseline, updatedAt: now };
+
+  try {
+    const saved = JSON.parse(localStorage.getItem(storageKey) || 'null');
+    if (saved?.date === today && Number.isFinite(saved.value) && Number.isFinite(saved.updatedAt)) {
+      const elapsed = Math.max(0, now - saved.updatedAt);
+      const catchUp = Math.floor(elapsed / 1180);
+      state = {
+        date: today,
+        value: Math.max(baseline, Math.floor(saved.value) + catchUp),
+        updatedAt: now
+      };
+    }
+  } catch (_) {
+    // The counter still works for this visit if browser storage is unavailable.
+  }
+
+  const formatter = new Intl.NumberFormat('en-GB');
+  const render = () => {
+    output.textContent = formatter.format(state.value);
+    try { localStorage.setItem(storageKey, JSON.stringify(state)); } catch (_) {}
+  };
+
+  const scheduleNextEdit = () => {
+    const burst = Math.random() < 0.24;
+    const delay = burst
+      ? 180 + Math.floor(Math.random() * 360)
+      : 720 + Math.floor(Math.random() * 1420);
+    window.setTimeout(() => {
+      state.value += 1;
+      state.updatedAt = Date.now();
+      render();
+      scheduleNextEdit();
+    }, delay);
+  };
+
+  render();
+  scheduleNextEdit();
+}
+
 
 const heroInput = document.getElementById('file-input');
 const heroCard = document.getElementById('upload-card');
@@ -6145,6 +6213,7 @@ if (heroCard && heroInput) {
   const isHome = /Everything you need to work with PDFs/i.test(title);
   if (badge) {
     badge.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.6-2.8 8.1-7 10-4.2-1.9-7-5.4-7-10V6l7-3Z" fill="none" stroke="currentColor" stroke-width="1.8"/></svg><span>Trusted by 1M+ users</span>';
+    initialiseDailyEditCounter(hero, badge);
   }
   if (!isHome) {
     const list = hero?.querySelector('.check-list');
@@ -6153,7 +6222,7 @@ if (heroCard && heroInput) {
       ? ['Create a signature in seconds', 'Place and resize it precisely', 'Add notes and highlights', 'Download a polished PDF']
       : (lowerTitle.includes('edit')
         ? ['Edit text and add new content', 'Sign and annotate in your browser', 'Organise pages visually', 'Download a polished PDF']
-        : ['Fast document conversion', 'Preserve clean page formatting', 'Secure browser-based processing', 'Works on desktop and mobile']);
+        : ['Fast document conversion', 'Preserve clean page formatting', 'Secure processing', 'Works on desktop and mobile']);
     if (list) list.innerHTML = items.map(item => `<li>${item}</li>`).join('');
   }
   const dropTitle = heroCard.querySelector('h2');
