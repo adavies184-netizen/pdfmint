@@ -199,7 +199,7 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .export-window-actions{right:9px;top:9px}
   .export-window-actions #exportClose{width:34px;height:34px;font-size:23px}
   .pdfium-export-body{min-height:0;flex:1;padding:12px 12px 10px;display:flex;flex-direction:column;overflow-y:auto}
-  .export-section-heading{margin-bottom:7px}
+  .export-section-heading{margin-bottom:15px}
   .export-section-heading strong{font-size:13px}.export-section-heading span{font-size:9px}
   .pdfium-format-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
   .pdfium-format-grid button{height:58px;padding:4px 2px;display:flex;flex-direction:column;justify-content:center;gap:2px;border-radius:9px;text-align:center}
@@ -228,6 +228,7 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .legacy-email-design .login-copy{margin-top:16px!important;font-size:13px!important}
   .legacy-email-design .text-link-button{font-size:13px}
   .legacy-email-design .terms-copy{margin-top:15px!important;font-size:10px!important;line-height:1.42!important}
+  .signature-panel canvas{height:auto;aspect-ratio:16/5}
 }
 
 @media(max-width:760px) and (max-height:570px){
