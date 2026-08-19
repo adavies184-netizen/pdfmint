@@ -4827,7 +4827,9 @@ async function openPaymentPage(options = {}) {
     document.getElementById('card-payment-panel')?.prepend(stripeMount);
   }
   showStripeLoadingShell();
-  await renderCheckoutPreview('payment-preview-canvas');
+  const previewPromise = renderCheckoutPreview('payment-preview-canvas').catch(error => {
+    console.warn('Checkout preview could not be rendered.', error);
+  });
   try {
     await prepareStripePaymentElement();
   } catch (error) {
@@ -4835,6 +4837,7 @@ async function openPaymentPage(options = {}) {
     const payButton = document.getElementById('mock-pay-button');
     if (payButton) payButton.disabled = true;
   }
+  await previewPromise;
 }
 
 function closePaymentPage() {
