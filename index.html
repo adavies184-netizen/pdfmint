@@ -25,7 +25,7 @@
   <link rel="preconnect" href="https://api.stripe.com" crossorigin>
   <script async src="https://js.stripe.com/v3/" data-pdfbreeze-stripe="true"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=site-hero-2">
+<link rel="stylesheet" href="styles.css?v=homepage-explorer-1">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-877738202"></script>
 <script>
@@ -158,8 +158,8 @@
       <div class="container hero-grid">
         <div class="hero-copy">
           <span class="eyebrow">Trusted by 1M+ users</span>
-          <h1>Everything you need to work with PDFs</h1>
-          <p class="hero-subtitle">Edit, sign, organise and convert documents with simple, polished tools that work wherever you do.</p>
+          <h1>Smart, secure PDF tools for every document</h1>
+          <p class="hero-subtitle">Convert, sign, organise, protect and share — all from one simple workspace.</p>
           <ul class="check-list">
             <li>Edit, sign and organise PDFs</li>
             <li>Convert popular document formats</li>
@@ -172,8 +172,8 @@
           <div class="upload-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" role="img"><path d="M16 4h22l10 10v42a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M38 4v12h12M32 45V24m0 0-8 8m8-8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
-          <h2>Upload your files</h2>
-          <p>Drop PDF files here</p>
+          <h2>Drag &amp; drop your document to start</h2>
+          <p>Or choose a PDF from your device</p>
           <span class="or-label">OR</span>
           <label class="button button-primary upload-button">
             Upload to edit
@@ -233,29 +233,42 @@
       </div>
     </section>
 
-    <section class="section editor-showcase-section" aria-labelledby="editor-showcase-title">
+    <section class="section feature-explorer-section" aria-labelledby="feature-explorer-title">
       <div class="container">
-        <div class="section-heading centered editor-showcase-heading">
-          <span class="eyebrow">ONE CLEAR WORKSPACE</span>
-          <h2 id="editor-showcase-title">Powerful PDF tools that still feel simple</h2>
-          <p>Make precise changes, sign documents and organise every page without jumping between different apps.</p>
+        <div class="section-heading centered feature-explorer-heading">
+          <span class="eyebrow">FEATURES</span>
+          <h2 id="feature-explorer-title">Everything you need to work with PDFs</h2>
+          <p>Choose a feature to see how PDFBreeze turns everyday document jobs into a clear, focused workflow.</p>
         </div>
-        <div class="editor-showcase-grid">
-          <article class="showcase-card showcase-card-wide">
-            <div class="showcase-copy"><span class="showcase-number">01</span><h3>Edit real PDF text</h3><p>Select existing wording, replace it accurately and keep the document looking natural.</p></div>
-            <div class="editor-product-visual" aria-hidden="true">
-              <div class="visual-toolbar"><span>↶</span><span>↷</span><b>Ｔ Add text</b><b class="active">Ｔ Edit text</b><b>✎ Sign</b><b>▧ Image</b></div>
-              <div class="visual-workspace"><div class="visual-sidebar"><i></i><i></i><i></i></div><div class="visual-page"><strong>Project proposal</strong><em></em><p>Clear documents, edited with confidence.</p><span class="visual-selection">edited with confidence</span></div></div>
-            </div>
-          </article>
-          <article class="showcase-card">
-            <div class="showcase-copy"><span class="showcase-number">02</span><h3>Sign and annotate</h3><p>Add signatures, notes, highlights, stamps and drawings from one consistent toolbar.</p></div>
-            <div class="showcase-mini-visual signature-visual" aria-hidden="true"><div class="mini-page"><span>Approved</span><strong>Your Signature</strong></div></div>
-          </article>
-          <article class="showcase-card">
-            <div class="showcase-copy"><span class="showcase-number">03</span><h3>Organise every page</h3><p>Reorder, rotate, duplicate or remove pages with clear visual feedback.</p></div>
-            <div class="showcase-mini-visual pages-visual" aria-hidden="true"><div>1</div><div class="active">2</div><div>3</div></div>
-          </article>
+        <div class="feature-explorer">
+          <div class="feature-tabs" role="tablist" aria-label="PDFBreeze features">
+            <button class="feature-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="feature-scene-editor" data-feature="editor"><span class="feature-tab-icon">✎</span><span><strong>Edit PDFs</strong><small>Change text, add content and annotate precisely.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-sign" data-feature="sign"><span class="feature-tab-icon">⌁</span><span><strong>Sign documents</strong><small>Draw, type or upload a reusable signature.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-convert" data-feature="convert"><span class="feature-tab-icon">⇄</span><span><strong>Convert files</strong><small>Move between PDF, Word, images and more.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-organise" data-feature="organise"><span class="feature-tab-icon">▦</span><span><strong>Organise pages</strong><small>Reorder, rotate, duplicate and remove pages.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-ocr" data-feature="ocr"><span class="feature-tab-icon">⌗</span><span><strong>Recognise text</strong><small>Turn scanned pages into searchable content.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-secure" data-feature="secure"><span class="feature-tab-icon">◇</span><span><strong>Protect documents</strong><small>Redact sensitive details and work securely.</small></span><i>→</i></button>
+          </div>
+          <div class="feature-stage" aria-live="polite">
+            <article class="feature-scene is-active" id="feature-scene-editor" data-scene="editor" role="tabpanel"><div class="scene-caption"><span>PDF EDITOR</span><strong>Edit existing text without covering the original</strong></div><div class="scene-window"><div class="scene-toolbar"><b>↶</b><b>↷</b><span>Add text</span><span class="active">Edit text</span><span>Sign</span></div><div class="scene-document"><h3>Project proposal</h3><i></i><p>Clear documents, <mark>edited with confidence</mark>.</p><p>Keep the original layout while making precise changes.</p></div></div></article>
+            <article class="feature-scene" id="feature-scene-sign" data-scene="sign" role="tabpanel" hidden><div class="scene-caption"><span>E-SIGNATURES</span><strong>Create a signature and place it exactly where it belongs</strong></div><div class="scene-window scene-sign"><div class="signature-dialog"><b>Add your signature</b><div>Draw&nbsp;&nbsp;&nbsp; Type&nbsp;&nbsp;&nbsp; Upload</div><em>Your Signature</em></div><div class="scene-document"><h3>Approval</h3><i></i><span class="placed-signature">Your Signature</span></div></div></article>
+            <article class="feature-scene" id="feature-scene-convert" data-scene="convert" role="tabpanel" hidden><div class="scene-caption"><span>FILE CONVERSION</span><strong>Convert popular formats with a simple, guided flow</strong></div><div class="scene-window scene-convert"><div class="convert-card"><b>W</b><span>Word document</span></div><strong class="convert-arrow">→</strong><div class="convert-card pdf"><b>PDF</b><span>Ready to download</span></div></div></article>
+            <article class="feature-scene" id="feature-scene-organise" data-scene="organise" role="tabpanel" hidden><div class="scene-caption"><span>PAGE MANAGER</span><strong>See every page and arrange the document visually</strong></div><div class="scene-window scene-pages"><div class="page-card"><span>1</span><i></i><i></i></div><div class="drop-line"></div><div class="page-card active"><span>2</span><i></i><i></i></div><div class="page-card"><span>3</span><i></i><i></i></div></div></article>
+            <article class="feature-scene" id="feature-scene-ocr" data-scene="ocr" role="tabpanel" hidden><div class="scene-caption"><span>TEXT RECOGNITION</span><strong>Make scanned paperwork searchable and useful again</strong></div><div class="scene-window scene-ocr"><div class="scan-page"><span></span><span></span><span></span><span></span></div><div class="ocr-beam"></div><div class="ocr-result"><b>Text recognised</b><p>Search, copy and work with the words on the page.</p></div></div></article>
+            <article class="feature-scene" id="feature-scene-secure" data-scene="secure" role="tabpanel" hidden><div class="scene-caption"><span>PRIVACY TOOLS</span><strong>Redact sensitive information before sharing</strong></div><div class="scene-window scene-secure"><div class="secure-shield">✓</div><div class="scene-document"><h3>Private statement</h3><i></i><p>Account: <mark class="redacted">0000 0000 0000</mark></p><p>Prepared securely for sharing.</p></div></div></article>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="team-marquee-section" aria-labelledby="team-marquee-title">
+      <div class="container">
+        <h2 id="team-marquee-title">Made for teams that work with documents every day</h2>
+      </div>
+      <div class="team-marquee" aria-label="Teams PDFBreeze is designed for">
+        <div class="team-marquee-track">
+          <span><i>✦</i> Freelancers</span><span><i>▦</i> Small businesses</span><span><i>✓</i> Legal teams</span><span><i>⌂</i> Property teams</span><span><i>◎</i> Educators</span><span><i>↗</i> Agencies</span>
+          <span aria-hidden="true"><i>✦</i> Freelancers</span><span aria-hidden="true"><i>▦</i> Small businesses</span><span aria-hidden="true"><i>✓</i> Legal teams</span><span aria-hidden="true"><i>⌂</i> Property teams</span><span aria-hidden="true"><i>◎</i> Educators</span><span aria-hidden="true"><i>↗</i> Agencies</span>
         </div>
       </div>
     </section>
@@ -317,15 +330,27 @@
       </div>
     </section>
 
-    <section class="section faq-section">
+    <section class="section homepage-pricing-section" id="pricing">
+      <div class="container">
+        <div class="section-heading centered pricing-heading"><span class="eyebrow">SIMPLE PRICING</span><h2>Choose the access that fits your job</h2><p>Start with a low-cost seven-day option or choose annual access for regular document work.</p></div>
+        <div class="homepage-pricing-grid">
+          <article class="homepage-price-card"><span class="price-icon">↗</span><h3>Limited access</h3><p>Edit and download one document.</p><div class="price-line"><strong>£0.50</strong><span>for 7 days</span></div><small>Then £49.99 every 4 weeks unless cancelled.</small><a class="button button-outline" href="#upload-card">Start now</a><ul><li>PDF editing tools</li><li>One document download</li><li>Secure browser workflow</li></ul></article>
+          <article class="homepage-price-card featured"><span class="popular-badge">MOST POPULAR</span><span class="price-icon">✓</span><h3>Full access</h3><p>Use every PDFBreeze tool for seven days.</p><div class="price-line"><strong>£1</strong><span>for 7 days</span></div><small>Then £49.99 every 4 weeks unless cancelled.</small><a class="button button-primary" href="#upload-card">Start now</a><ul><li>All editing and signing tools</li><li>Conversions and page management</li><li>Unlimited document workflows</li></ul></article>
+          <article class="homepage-price-card"><span class="price-icon">▤</span><h3>Annual access</h3><p>For regular document work throughout the year.</p><div class="price-line"><strong>£299.99</strong><span>per year</span></div><small>Equivalent to approximately £25 per month.</small><a class="button button-outline" href="#upload-card">Start now</a><ul><li>Full PDFBreeze access</li><li>One annual payment</li><li>Work across desktop and mobile</li></ul></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section faq-section homepage-faq-section">
       <div class="container faq-layout">
-        <div class="faq-intro"><span class="eyebrow">HELP CENTRE</span><h2>Got questions?</h2><p>Find quick answers about PDFBreeze, document security and using our online tools.</p></div>
+        <div class="faq-intro"><span class="eyebrow">FREQUENTLY ASKED QUESTIONS</span><h2>Everything you need to know</h2><p>Clear answers about editing, security, subscriptions and using PDFBreeze on any device.</p><div class="faq-help-card"><h3>Still need help?</h3><p>Our support team can help with your account or document workflow.</p><a class="button button-outline" href="contact.html">Contact us</a></div></div>
         <div class="faq-list">
           <details open><summary>What is PDFBreeze?</summary><p>PDFBreeze is an online document service for editing, signing, organising and converting PDFs directly in your browser. The interface is designed to be quick to learn and easy to use.</p></details>
           <details><summary>Is PDFBreeze safe to use?</summary><p>PDFBreeze is being designed around encrypted transfers, limited file retention and clear privacy controls. Final policies will be published before the service accepts live customer documents.</p></details>
           <details><summary>What tools will PDFBreeze offer?</summary><p>The platform will include PDF editing, signatures, compression, merging, splitting, watermarks, page management and popular file conversions.</p></details>
           <details><summary>Do I need to install software?</summary><p>No. PDFBreeze runs in modern desktop and mobile browsers. You only need a browser and an internet connection.</p></details>
           <details><summary>Will my original formatting be preserved?</summary><p>Our goal is to retain text positioning, images, fonts and page dimensions as accurately as possible during editing and conversion.</p></details>
+          <details><summary>Can I cancel a subscription?</summary><p>Yes. You can cancel from your account settings before the next renewal date. Your existing access remains available until the paid period ends.</p></details>
         </div>
       </div>
     </section>
@@ -1091,6 +1116,7 @@
 <script src="script.js?v=google-trial-conversion-1"></script>
   <script>
     (async()=>{if(!window.PDFMintAuth)return;await window.PDFMintAuth.ready;const user=await window.PDFMintAuth.getUser();if(!user)return;document.querySelectorAll('[data-auth-nav]').forEach(link=>{link.href='dashboard.html';link.textContent='My account';});})();
+    (()=>{const tabs=[...document.querySelectorAll('.feature-tab')];const scenes=[...document.querySelectorAll('.feature-scene')];if(!tabs.length)return;const activate=(tab)=>{tabs.forEach(item=>{const active=item===tab;item.classList.toggle('is-active',active);item.setAttribute('aria-selected',String(active));});scenes.forEach(scene=>{const active=scene.dataset.scene===tab.dataset.feature;scene.classList.toggle('is-active',active);scene.hidden=!active;});};tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activate(tab));tab.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const direction=['ArrowDown','ArrowRight'].includes(event.key)?1:-1;const next=tabs[(index+direction+tabs.length)%tabs.length];next.focus();activate(next);});});})();
   </script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>
