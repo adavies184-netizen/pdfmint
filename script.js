@@ -4774,7 +4774,28 @@ function closeEditorCheckoutOverlays() {
 function showStripeLoadingShell() {
   const mount = document.getElementById('stripe-payment-element');
   if (!mount) return;
-  mount.replaceChildren();
+  const shell = document.createElement('div');
+  shell.className = 'stripe-loading-skeleton';
+  shell.setAttribute('role', 'status');
+  shell.setAttribute('aria-live', 'polite');
+  shell.innerHTML = `
+    <div class="stripe-loading-notice">
+      <span class="stripe-loading-spinner" aria-hidden="true"></span>
+      <span>Secure checkout loading…</span>
+    </div>
+    <div class="stripe-skeleton-field stripe-skeleton-card">
+      <span class="stripe-skeleton-label"></span>
+      <span class="stripe-skeleton-input"></span>
+    </div>
+    <div class="stripe-skeleton-row">
+      <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
+      <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
+    </div>
+    <div class="stripe-skeleton-row">
+      <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
+      <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
+    </div>`;
+  mount.replaceChildren(shell);
 }
 
 async function openAccessPage() {
