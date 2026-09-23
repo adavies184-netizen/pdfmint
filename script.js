@@ -3509,9 +3509,11 @@ let pdfiumAuthenticatedCheckout = false;
 
 function isDashboardEditorSession() {
   try {
-    // A signed-in file belongs to the user's workspace regardless of whether
-    // it entered the editor from the dashboard, homepage, or a landing page.
-    return pdfiumAuthenticatedCheckout || Boolean(window.PDFMintAuth?.isSignedIn?.());
+    const params = new URLSearchParams(window.location.search);
+    return pdfiumAuthenticatedCheckout || (
+      Boolean(window.PDFMintAuth?.isSignedIn?.()) &&
+      params.get('source') === 'dashboard'
+    );
   } catch (_) {
     return false;
   }
@@ -7105,8 +7107,14 @@ async function initialiseSharedEditorRoute() {
       sessionStorage.removeItem('pdfbreezePdfiumExportFormat');
       const signedInUser = await window.PDFMintAuth?.getUser?.();
       if (signedInUser) {
-        pdfiumAuthenticatedCheckout = true;
-        requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+        if (routeParams.get('source') === 'dashboard' || await hasUnlimitedPaidAccess()) {
+          pdfiumAuthenticatedCheckout = true;
+          requestAnimationFrame(() => document.getElementById('continue-to-email')?.click());
+        } else {
+          const emailInput = document.getElementById('download-email');
+          if (emailInput) emailInput.value = signedInUser.email || '';
+          requestAnimationFrame(() => document.getElementById('final-download')?.click());
+        }
       } else if (routeParams.get('googleBridge') === '1') {
         preparedExportFilename = `${transferredName || safeExportBaseName()}.${preferredFormat}`;
         await exportEditedDocument(preferredFormat);
