@@ -4780,8 +4780,8 @@ function showStripeLoadingShell() {
   shell.setAttribute('aria-live', 'polite');
   shell.innerHTML = `
     <div class="stripe-loading-notice">
-      <span class="stripe-loading-spinner" aria-hidden="true"></span>
-      <span>Secure checkout loading…</span>
+      <span class="stripe-document-loader" aria-hidden="true"><i>PDF</i><b></b><b></b><b></b></span>
+      <span><strong data-stripe-loading-title>Opening secure payment</strong><small data-stripe-loading-detail>Your document is ready. Payment fields will appear here.</small></span>
     </div>
     <div class="stripe-skeleton-field stripe-skeleton-card">
       <span class="stripe-skeleton-label"></span>
@@ -4796,6 +4796,14 @@ function showStripeLoadingShell() {
       <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
     </div>`;
   mount.replaceChildren(shell);
+}
+
+function setStripeLoadingStage(title, detail) {
+  const shell = document.querySelector('#stripe-payment-element .stripe-loading-skeleton');
+  const titleNode = shell?.querySelector('[data-stripe-loading-title]');
+  const detailNode = shell?.querySelector('[data-stripe-loading-detail]');
+  if (titleNode) titleNode.textContent = title;
+  if (detailNode) detailNode.textContent = detail;
 }
 
 async function openAccessPage() {
@@ -4847,7 +4855,6 @@ async function openPaymentPage(options = {}) {
     stripeMount.id = 'stripe-payment-element';
     document.getElementById('card-payment-panel')?.prepend(stripeMount);
   }
-  showStripeLoadingShell();
   const previewPromise = renderCheckoutPreview('payment-preview-canvas').catch(error => {
     console.warn('Checkout preview could not be rendered.', error);
   });
@@ -5020,22 +5027,25 @@ async function prepareStripePaymentElement() {
     mount.id = 'stripe-payment-element';
     panel.prepend(mount);
   }
+  const plan = stripePlanCode();
+  if (stripeElements && stripeElementPlan === plan) return;
   showStripeLoadingShell();
-
+  const payButton = document.getElementById('mock-pay-button');
+  if (payButton) payButton.disabled = true;
+  setStripeLoadingStage('Checking your secure session', 'Your document is ready while we connect the payment form.');
+  const stripeReady = loadStripeLibrary();
+  stripeReady.catch(() => {});
   const session = await window.PDFMintAuth?.getSession?.();
   if (!session?.access_token) {
     throw new Error('Your checkout session could not be established. Please return to the email step and try again.');
   }
-
-  const plan = stripePlanCode();
-  if (stripeElements && stripeElementPlan === plan) return;
-  await loadStripeLibrary();
+  setStripeLoadingStage('Connecting to secure payment', 'This normally takes only a moment.');
 
   const checkoutController = new AbortController();
   const checkoutTimeout = window.setTimeout(() => checkoutController.abort(), 20000);
   let response;
   try {
-    response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
+    [response] = await Promise.all([fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/checkout`, {
     method: 'POST',
     signal: checkoutController.signal,
     headers: {
@@ -5046,7 +5056,7 @@ async function prepareStripePaymentElement() {
       plan,
       document_key: plan === 'document_trial' ? stripeCheckoutDocumentKey : null
     })
-    });
+    }), stripeReady]);
   } catch (error) {
     if (error?.name === 'AbortError') throw new Error('The secure checkout service took too long to respond. Please try again.');
     throw error;
@@ -5056,7 +5066,7 @@ async function prepareStripePaymentElement() {
   const result = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(result.detail || 'PDFBreeze could not start secure checkout.');
 
-  mount.replaceChildren();
+  setStripeLoadingStage('Loading payment fields', 'Secure fields are being supplied directly by Stripe.');
   stripeClient = window.Stripe(config.publishableKey);
   stripeIntentType = result.intent_type;
   stripeCheckoutSubscriptionId = result.subscription_id || result.subscription || '';
@@ -5067,10 +5077,20 @@ async function prepareStripePaymentElement() {
       variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
     }
   });
-  stripeElements.create('payment', {
+  const paymentTarget = document.createElement('div');
+  paymentTarget.className = 'stripe-payment-fields';
+  paymentTarget.style.opacity = '0';
+  mount.append(paymentTarget);
+  const paymentElement = stripeElements.create('payment', {
     layout: 'tabs',
     terms: {card: 'never'}
-  }).mount('#stripe-payment-element');
+  });
+  paymentElement.on('ready', () => {
+    mount.querySelector('.stripe-loading-skeleton')?.remove();
+    paymentTarget.style.opacity = '1';
+    if (payButton) payButton.disabled = false;
+  });
+  paymentElement.mount(paymentTarget);
   stripeElementPlan = plan;
   showStripeError('');
 }
