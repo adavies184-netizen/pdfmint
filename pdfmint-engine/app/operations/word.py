@@ -10,6 +10,12 @@ from typing import Iterable
 from pdf2docx import Converter
 
 from ..settings import JOB_TIMEOUT_SECONDS
+from .word_vectors import (
+    parsed_table_bboxes,
+    needs_positioned_text,
+    pdf2docx_layout_settings,
+    preserve_pdf_vectors,
+)
 
 logger = logging.getLogger("pdfmint.word")
 
@@ -17,14 +23,37 @@ logger = logging.getLogger("pdfmint.word")
 def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
     converter = Converter(str(pdf_path))
     try:
-        converter.convert(str(output_path), start=0, end=None)
+        settings = converter.default_settings
+        settings.update(pdf2docx_layout_settings(pdf_path))
+        converter.parse(start=0, end=None, **settings)
+        table_regions = parsed_table_bboxes(converter.store())
+        converter.make_docx(str(output_path), **settings)
     finally:
         converter.close()
 
     if not output_path.exists() or output_path.stat().st_size == 0:
         raise RuntimeError("DOCX conversion did not produce a valid file.")
 
-    logger.info("DOCX created path=%s size_bytes=%s", output_path, output_path.stat().st_size)
+    vector_result = preserve_pdf_vectors(
+        pdf_path,
+        output_path,
+        table_regions,
+        position_text=needs_positioned_text(pdf_path),
+    )
+
+    logger.info(
+        "DOCX created path=%s size_bytes=%s vector_shapes=%s form_widgets=%s "
+        "vector_pages=%s skipped_table_shapes=%s skipped_control_appearances=%s "
+        "positioned_text_boxes=%s",
+        output_path,
+        output_path.stat().st_size,
+        vector_result["shapes"],
+        vector_result["widgets"],
+        vector_result["pages_with_vectors"],
+        vector_result["skipped_table_shapes"],
+        vector_result["skipped_control_appearances"],
+        vector_result["positioned_text_boxes"],
+    )
     return output_path
 
 
