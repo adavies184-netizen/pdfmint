@@ -4790,10 +4790,6 @@ function showStripeLoadingShell() {
     <div class="stripe-skeleton-row">
       <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
       <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
-    </div>
-    <div class="stripe-skeleton-row">
-      <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
-      <div class="stripe-skeleton-field"><span class="stripe-skeleton-label"></span><span class="stripe-skeleton-input"></span></div>
     </div>`;
   mount.replaceChildren(shell);
 }
@@ -5083,6 +5079,7 @@ async function prepareStripePaymentElement() {
   mount.append(paymentTarget);
   const paymentElement = stripeElements.create('payment', {
     layout: 'tabs',
+    fields: {billingDetails: {address: 'if_required'}},
     terms: {card: 'never'}
   });
   paymentElement.on('ready', () => {
