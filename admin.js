@@ -8,6 +8,19 @@
   const planName = value => ({document_trial:'7-day single-document access',unlimited_trial:'7-day unlimited access',annual:'Annual unlimited membership'}[value] || 'No plan');
   const status = value => `<i class="status ${safe(value)}">${safe(String(value || '').replaceAll('_',' '))}</i>`;
   const row = (cells, attributes='') => `<div class="admin-row" ${attributes}>${cells.map(cell => `<span>${cell}</span>`).join('')}</div>`;
+  const PAGE_SIZE = 20;
+  const pagedTables = new Map();
+  function renderPagedTable(key, container, items, header, renderItem) {
+    const record = pagedTables.get(key) || {page:1};
+    record.page = Math.max(1, Math.min(record.page, Math.max(1, Math.ceil(items.length / PAGE_SIZE))));
+    record.render = () => renderPagedTable(key, container, items, header, renderItem);
+    pagedTables.set(key, record);
+    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    const start = (record.page - 1) * PAGE_SIZE;
+    const visibleItems = items.slice(start, start + PAGE_SIZE);
+    const pages = Array.from({length:pageCount}, (_,index) => index + 1);
+    container.innerHTML = header + visibleItems.map(renderItem).join('') + `<div class="admin-pagination"><span>Showing ${items.length ? start + 1 : 0}–${Math.min(start + PAGE_SIZE, items.length)} of ${items.length}</span><nav aria-label="${safe(key)} pages"><button type="button" data-page-table="${safe(key)}" data-page-number="${record.page - 1}" ${record.page === 1 ? 'disabled':''}>Previous</button>${pages.map(page => `<button type="button" data-page-table="${safe(key)}" data-page-number="${page}" class="${page === record.page ? 'active':''}" aria-current="${page === record.page ? 'page':'false'}">${page}</button>`).join('')}<button type="button" data-page-table="${safe(key)}" data-page-number="${record.page + 1}" ${record.page === pageCount ? 'disabled':''}>Next</button></nav></div>`;
+  }
   let adminSession = null;
   let funnelLoaded = false;
   let selectedFunnelStage = 0;
@@ -17,6 +30,15 @@
     if (name === 'funnel' && adminSession && !funnelLoaded) loadFunnel().catch(showFunnelError);
   };
   document.addEventListener('click', event => { const target = event.target.closest('[data-admin-view]'); if (target) showView(target.dataset.adminView); });
+  document.addEventListener('click', event => {
+    const button = event.target.closest('[data-page-table]');
+    if (!button || button.disabled) return;
+    const pager = pagedTables.get(button.dataset.pageTable);
+    if (!pager) return;
+    pager.page = Number(button.dataset.pageNumber) || 1;
+    pager.render();
+    button.closest('.admin-card')?.scrollIntoView({behavior:'smooth', block:'start'});
+  });
   const adminSidebar = document.querySelector('.admin-sidebar');
   const adminMenuTrigger = document.getElementById('admin-menu-trigger');
   const adminMenuBackdrop = document.getElementById('admin-menu-backdrop');
@@ -191,9 +213,9 @@
     const memberHeader = '<div class="admin-row header"><span>Member</span><span>Plan</span><span>Provider</span><span>Status</span><span>Next payment</span></div>';
     const memberRow = member => row([`<b>${safe(member.name || member.email)}</b><br><small>${member.name ? safe(member.email) : ''}</small>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
     document.querySelector('[data-recent-members]').innerHTML = memberHeader + data.members.slice(0,5).map(memberRow).join('');
-    document.querySelector('[data-members-table]').innerHTML = memberHeader + data.members.map(memberRow).join('');
-    document.querySelector('[data-payments-table]').innerHTML = '<div class="admin-row header"><span>Payment ID</span><span>Type</span><span>Provider</span><span>Status</span><span>Amount</span></div>' + data.payments.map(payment => row([`<b>${safe(payment.provider_payment_id)}</b>`,safe(payment.payment_type),safe(payment.provider),status(payment.status),money(payment.amount)])).join('');
-    document.querySelector('[data-documents-table]').innerHTML = '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>' + data.documents.map(doc => row([`<b>${safe(doc.name)}</b>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)])).join('');
+    renderPagedTable('members', document.querySelector('[data-members-table]'), data.members, memberHeader, memberRow);
+    renderPagedTable('payments', document.querySelector('[data-payments-table]'), data.payments, '<div class="admin-row header"><span>Payment ID</span><span>Type</span><span>Provider</span><span>Status</span><span>Amount</span></div>', payment => row([`<b>${safe(payment.provider_payment_id)}</b>`,safe(payment.payment_type),safe(payment.provider),status(payment.status),money(payment.amount)]));
+    renderPagedTable('documents', document.querySelector('[data-documents-table]'), data.documents, '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>', doc => row([`<b>${safe(doc.name)}</b>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)]));
     const providersHtml = data.providers.map(provider => `<div class="provider-choice ${provider.is_default ? 'active-provider':''}"><b><span class="stripe-logo">${safe(provider.display_name.slice(0,1))}</span>${safe(provider.display_name)}</b><mark>${provider.configured ? 'Configured ✓' : 'Not connected'}</mark><span>${provider.is_default ? 'Default for new subscriptions' : provider.configured ? `<button data-select-provider="${safe(provider.provider)}">Make default</button>` : 'Available after connection'}</span></div>`).join('');
     document.querySelector('[data-provider-summary]').innerHTML = providersHtml;
     document.querySelector('[data-providers-list]').innerHTML = `<h2>Provider routing</h2>${providersHtml}<p>Stripe remains the only enabled provider. Future providers use the same internal subscription structure.</p>`;
