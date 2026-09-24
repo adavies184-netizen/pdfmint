@@ -4922,6 +4922,9 @@ let stripeElements = null;
 let stripeIntentType = null;
 let stripeElementPlan = null;
 let stripeCheckoutSubscriptionId = '';
+let stripeClientSecret = '';
+let stripeCardNumberElement = null;
+let stripeCardElements = [];
 const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
 const googleAdsTrialPurchaseSendTo = 'AW-877738202/uIB3CO2Sq-QcENrxxKID';
 
@@ -5066,28 +5069,59 @@ async function prepareStripePaymentElement() {
   stripeClient = window.Stripe(config.publishableKey);
   stripeIntentType = result.intent_type;
   stripeCheckoutSubscriptionId = result.subscription_id || result.subscription || '';
-  stripeElements = stripeClient.elements({
-    clientSecret: result.client_secret,
-    appearance: {
-      theme: 'stripe',
-      variables: {colorPrimary: '#21b887', borderRadius: '8px', fontFamily: 'Poppins, Arial, sans-serif'}
-    }
-  });
+  stripeClientSecret = result.client_secret;
+  stripeCardElements.forEach(element => element.unmount());
+  stripeCardElements = [];
+  stripeElements = stripeClient.elements();
   const paymentTarget = document.createElement('div');
   paymentTarget.className = 'stripe-payment-fields';
   paymentTarget.style.opacity = '0';
+  paymentTarget.innerHTML = `
+    <label class="stripe-card-field stripe-card-number-field">
+      <span>Card number</span>
+      <div id="stripe-card-number"></div>
+    </label>
+    <div class="stripe-card-field-row">
+      <label class="stripe-card-field">
+        <span>Expiry date</span>
+        <div id="stripe-card-expiry"></div>
+      </label>
+      <label class="stripe-card-field">
+        <span>Security code</span>
+        <div id="stripe-card-cvc"></div>
+      </label>
+    </div>`;
   mount.append(paymentTarget);
-  const paymentElement = stripeElements.create('payment', {
-    layout: 'tabs',
-    fields: {billingDetails: {address: 'if_required'}},
-    terms: {card: 'never'}
-  });
-  paymentElement.on('ready', () => {
+  const fieldStyle = {
+    base: {
+      color: '#172033',
+      fontFamily: 'Poppins, Arial, sans-serif',
+      fontSize: '16px',
+      fontSmoothing: 'antialiased',
+      '::placeholder': {color: '#9aa4b2'}
+    },
+    invalid: {color: '#d92d20'}
+  };
+  const cardNumber = stripeElements.create('cardNumber', {style: fieldStyle, showIcon: true});
+  const cardExpiry = stripeElements.create('cardExpiry', {style: fieldStyle});
+  const cardCvc = stripeElements.create('cardCvc', {style: fieldStyle});
+  stripeCardNumberElement = cardNumber;
+  stripeCardElements = [cardNumber, cardExpiry, cardCvc];
+  let readyFields = 0;
+  const onFieldReady = () => {
+    readyFields += 1;
+    if (readyFields < stripeCardElements.length) return;
     mount.querySelector('.stripe-loading-skeleton')?.remove();
     paymentTarget.style.opacity = '1';
     if (payButton) payButton.disabled = false;
+  };
+  stripeCardElements.forEach(element => {
+    element.on('ready', onFieldReady);
+    element.on('change', event => showStripeError(event.error?.message || ''));
   });
-  paymentElement.mount(paymentTarget);
+  cardNumber.mount('#stripe-card-number');
+  cardExpiry.mount('#stripe-card-expiry');
+  cardCvc.mount('#stripe-card-cvc');
   stripeElementPlan = plan;
   showStripeError('');
 }
@@ -5161,12 +5195,11 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
   }
   try {
     if (!stripeElements) await prepareStripePaymentElement();
-    const confirmation = stripeIntentType === 'setup' ? stripeClient.confirmSetup : stripeClient.confirmPayment;
-    const {error, paymentIntent, setupIntent} = await confirmation({
-      elements: stripeElements,
-      confirmParams: {return_url: `${location.origin}/dashboard.html?v=pdfium-dashboard-3&payment=complete`},
-      redirect: 'if_required'
-    });
+    if (!stripeClientSecret || !stripeCardNumberElement) throw new Error('Secure card fields are not ready yet. Please try again.');
+    const confirmation = stripeIntentType === 'setup'
+      ? stripeClient.confirmCardSetup(stripeClientSecret, {payment_method: {card: stripeCardNumberElement}})
+      : stripeClient.confirmCardPayment(stripeClientSecret, {payment_method: {card: stripeCardNumberElement}});
+    const {error, paymentIntent, setupIntent} = await confirmation;
     if (error) {
       showStripeError(error.message || 'Payment could not be completed.');
       if (payButton) {
@@ -5375,7 +5408,20 @@ function preparePaymentPrototypeUi() {
     seal.src = 'assets/digicert-secured.svg';
     seal.alt = 'DigiCert Secured';
     const button = cardPanel.querySelector('.pay-now-button');
-    if (button) button.insertAdjacentElement('afterend', seal);
+    const note = cardPanel.querySelector('.secure-payment-note');
+    if (button && note) {
+      const assurance = document.createElement('div');
+      assurance.className = 'payment-assurance-row';
+      button.before(assurance);
+      assurance.append(note, seal);
+    }
+  }
+
+  if (cardPanel && !cardPanel.querySelector('.payment-legal-copy')) {
+    const legal = document.createElement('p');
+    legal.className = 'payment-legal-copy';
+    legal.innerHTML = 'By clicking on the button, you accept our <a href="terms-of-use.html" target="_blank" rel="noopener">Terms of Use</a> and <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.';
+    cardPanel.querySelector('.pay-now-button')?.insertAdjacentElement('afterend', legal);
   }
 
   if (orderSummary) {
