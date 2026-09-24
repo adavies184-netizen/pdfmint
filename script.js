@@ -4780,7 +4780,7 @@ function showStripeLoadingShell() {
   shell.setAttribute('aria-live', 'polite');
   shell.innerHTML = `
     <div class="stripe-loading-notice">
-      <span class="stripe-document-loader" aria-hidden="true"><i>PDF</i><b></b><b></b><b></b></span>
+      <span class="stripe-circle-loader" aria-hidden="true"></span>
       <span><strong data-stripe-loading-title>Opening secure payment</strong><small data-stripe-loading-detail>Your document is ready. Payment fields will appear here.</small></span>
     </div>
     <div class="stripe-skeleton-field stripe-skeleton-card">
@@ -5137,9 +5137,6 @@ function finishMockCheckout() {
 }
 
 function validateMockCheckout() {
-  const consent = document.querySelector('#card-payment-panel .payment-consent input');
-  const consentLabel = consent?.closest('.payment-consent');
-  const warning = document.getElementById('payment-consent-warning');
   const requiredFields = [...document.querySelectorAll('#card-payment-panel input:not([type="checkbox"])')]
     .filter(input => input.dataset.paymentField !== 'billingPostcode');
   let valid = true;
@@ -5150,24 +5147,13 @@ function validateMockCheckout() {
     if (empty) valid = false;
   });
 
-  const consentMissing = !consent?.checked;
-  consentLabel?.classList.toggle('payment-consent-error', consentMissing);
-  if (warning) warning.hidden = !consentMissing;
-  if (consentMissing) valid = false;
-
   return valid;
 }
 
 document.getElementById('mock-pay-button').addEventListener('click', async () => {
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
-  const consent = document.querySelector('#card-payment-panel .payment-consent input');
-  const warning = document.getElementById('payment-consent-warning');
-  if (!consent?.checked) {
-    if (warning) warning.hidden = false;
-    return;
-  }
   const payButton = document.getElementById('mock-pay-button');
-  const payButtonLabel = payButton?.textContent || 'Pay and download document';
+  const payButtonLabel = payButton?.textContent || 'Download my document';
   if (payButton) {
     payButton.disabled = true;
     payButton.classList.add('is-processing');
@@ -5253,15 +5239,15 @@ function preparePaymentPrototypeUi() {
   const paymentTitle = document.getElementById('payment-title');
   const payButton = document.getElementById('mock-pay-button');
   const cardPanel = document.getElementById('card-payment-panel');
-  const consent = cardPanel?.querySelector('.payment-consent input');
-  const consentCopy = cardPanel?.querySelector('.payment-consent span');
   const orderSummary = document.querySelector('.order-summary-card');
 
   document.querySelectorAll('.recommended-ribbon').forEach(ribbon => {
     ribbon.textContent = 'Top Choice';
   });
   document.querySelectorAll('.secure-payment-note').forEach(note => {
-    note.textContent = 'Secure, encrypted payment processing.';
+    note.textContent = 'Your payment is secured and the information is encrypted.';
+    const button = note.closest('.card-payment-panel')?.querySelector('.pay-now-button');
+    if (button) button.before(note);
   });
 
   const paymentInputs = [...(cardPanel?.querySelectorAll('input:not([type="checkbox"])') || [])];
@@ -5282,7 +5268,7 @@ function preparePaymentPrototypeUi() {
 
   if (accessTitle) accessTitle.textContent = 'Select a plan to download your document';
   if (paymentTitle) paymentTitle.textContent = "You're on the last step before receiving your document";
-  if (payButton) payButton.textContent = '🔒  Pay and download document';
+  if (payButton) payButton.textContent = 'Download my document';
 
   const annualInput = document.querySelector('input[name="access-plan"][value="annual"]');
   if (annualInput) annualInput.dataset.price = '299.99';
@@ -5330,15 +5316,66 @@ function preparePaymentPrototypeUi() {
 
   const planDisclosure = document.getElementById('plan-disclosure');
   if (planDisclosure) {
-    planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team via email at <a href="mailto:support@pdfbreeze.net">support@pdfbreeze.net</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a>.</p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfbreeze.net?subject=Free%20document%20download">click here</a>.</p>';
+    const disclosureCopy = 'After 7 days and when your trial period expires, your monthly subscription will be renewed at £49.99, billed every 4 weeks. You can cancel at any time. 7 days refund guarantee.';
+    planDisclosure.textContent = disclosureCopy;
     document.querySelectorAll('input[name="access-plan"]').forEach(input => input.addEventListener('change', () => {
-      planDisclosure.innerHTML = '<p>After 7 days, the price is £49 with auto-renewal. Billed every 4 weeks. Cancel anytime.</p><p><strong>7-day money-back guarantee.</strong> You may cancel by contacting our customer support team via email at <a href="mailto:support@pdfbreeze.net">support@pdfbreeze.net</a> or by phone at <a href="tel:+442079460182">+44 (0)20 7946 0182</a>.</p><p>To access your first document for free after a 3 hour delay please <a href="mailto:support@pdfbreeze.net?subject=Free%20document%20download">click here</a>.</p>';
+      planDisclosure.textContent = disclosureCopy;
     }));
   }
 
-  if (consent) consent.checked = false;
-  if (consentCopy) {
-    consentCopy.innerHTML = 'By continuing, you agree to the <a href="terms-of-use.html" target="_blank">Terms of Use &amp; Service</a>, <a href="privacy-policy.html" target="_blank">Privacy Policy</a>, and confirm that if you do not cancel at least 24 hours before the end of the 7-day trial for £1, you will be charged £49 per 28 days until you cancel your subscription by contacting our customer support team via email at <a href="mailto:billing@pdfbreeze.net">billing@pdfbreeze.net</a> or in your account settings. Payments will be charged from the card you specified above. This charge will appear on your credit card statement as pdfbreeze.net.';
+  cardPanel?.querySelector('.payment-consent')?.remove();
+  document.getElementById('payment-consent-warning')?.remove();
+
+  const backToPlans = document.getElementById('back-to-plans');
+  backToPlans?.remove();
+
+  const paymentProgress = document.querySelector('#payment-page .checkout-progress');
+  const paymentSteps = [...(paymentProgress?.querySelectorAll('.progress-step') || [])];
+  const goToCheckoutStep = stepIndex => {
+    if (stepIndex === 0) {
+      closePaymentPage();
+      closeAccessPage();
+      openEmailModal();
+      return;
+    }
+    if (stepIndex === 1) {
+      closePaymentPage();
+      document.getElementById('access-page').hidden = false;
+    }
+  };
+  paymentSteps.forEach((step, index) => {
+    if (!step.classList.contains('complete') || index > 1) return;
+    step.classList.add('checkout-step-link');
+    step.setAttribute('role', 'button');
+    step.setAttribute('tabindex', '0');
+    step.setAttribute('aria-label', index === 0 ? 'Return to email step' : 'Return to plan selection');
+    step.addEventListener('click', () => goToCheckoutStep(index));
+    step.addEventListener('keydown', event => {
+      if (event.key !== 'Enter' && event.key !== ' ') return;
+      event.preventDefault();
+      goToCheckoutStep(index);
+    });
+  });
+
+  document.querySelectorAll('.checkout-review-grid article').forEach(article => {
+    if (article.querySelector('.review-avatar')) return;
+    const name = article.querySelector('small');
+    if (!name) return;
+    const initials = name.textContent.trim().split(/\s+/).map(part => part[0]).join('').slice(0, 2).toUpperCase();
+    const identity = document.createElement('div');
+    identity.className = 'review-identity';
+    identity.innerHTML = `<span class="review-avatar" aria-hidden="true">${initials}</span>`;
+    identity.append(name);
+    article.append(identity);
+  });
+
+  if (cardPanel && !cardPanel.querySelector('.digicert-secured')) {
+    const seal = document.createElement('img');
+    seal.className = 'digicert-secured';
+    seal.src = 'assets/digicert-secured.svg';
+    seal.alt = 'DigiCert Secured';
+    const button = cardPanel.querySelector('.pay-now-button');
+    if (button) button.insertAdjacentElement('afterend', seal);
   }
 
   if (orderSummary) {
@@ -5354,16 +5391,6 @@ function preparePaymentPrototypeUi() {
     }
   }
 
-  if (cardPanel && !document.getElementById('payment-consent-warning')) {
-    const warning = document.createElement('p');
-    warning.id = 'payment-consent-warning';
-    warning.className = 'payment-consent-warning';
-    warning.hidden = true;
-    warning.textContent = '⚠ You must check the box below';
-    const consentLabel = cardPanel.querySelector('.payment-consent');
-    cardPanel.insertBefore(warning, consentLabel);
-  }
-
   if (cardPanel && !document.querySelector('.express-payment-row')) {
     const express = document.createElement('div');
     express.className = 'express-payment-row';
@@ -5374,11 +5401,6 @@ function preparePaymentPrototypeUi() {
 
   cardPanel?.querySelectorAll('input').forEach(input => input.addEventListener('input', () => {
     input.classList.remove('payment-invalid');
-    if (input.type === 'checkbox' && input.checked) {
-      input.closest('.payment-consent')?.classList.remove('payment-consent-error');
-      const warning = document.getElementById('payment-consent-warning');
-      if (warning) warning.hidden = true;
-    }
   }));
 
   const params = new URLSearchParams(window.location.search);
