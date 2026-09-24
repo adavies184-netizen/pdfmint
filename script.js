@@ -14,6 +14,14 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 /* ---- PDFBreeze application code ---- */
 
+if (!window.PDFBreezeAnalytics && !document.querySelector('script[data-pdfbreeze-analytics]')) {
+  const analyticsScript = document.createElement('script');
+  analyticsScript.src = 'analytics.js?v=1';
+  analyticsScript.async = true;
+  analyticsScript.dataset.pdfbreezeAnalytics = 'true';
+  document.head.appendChild(analyticsScript);
+}
+
 const tabs = document.querySelectorAll('.tool-tab');
 const panels = document.querySelectorAll('.tool-panel');
 tabs.forEach(tab => tab.addEventListener('click', () => {
@@ -4805,6 +4813,7 @@ function setStripeLoadingStage(title, detail) {
 async function openAccessPage() {
   closeEditorCheckoutOverlays();
   document.getElementById('access-page').hidden = false;
+  window.PDFBreezeAnalytics?.track('payment_plan_viewed');
   loadStripeLibrary().catch(() => {});
   window.PDFMintAuth?.getSession?.().catch?.(() => {});
   await renderCheckoutPreview('plan-preview-canvas');
@@ -4842,6 +4851,7 @@ async function openPaymentPage(options = {}) {
 
   closeAccessPage();
   document.getElementById('payment-page').hidden = false;
+  window.PDFBreezeAnalytics?.track('payment_card_viewed', checked.value);
   if (!options.fromHistory && history.state?.pdfbreezeCheckout !== 'payment') {
     history.pushState({...history.state, pdfbreezeCheckout:'payment'}, '', location.href);
   }
@@ -5053,7 +5063,9 @@ async function prepareStripePaymentElement() {
     },
     body: JSON.stringify({
       plan,
-      document_key: plan === 'document_trial' ? stripeCheckoutDocumentKey : null
+      document_key: plan === 'document_trial' ? stripeCheckoutDocumentKey : null,
+      analytics_session_id: window.PDFBreezeAnalytics?.sessionId?.() || null,
+      analytics_landing_page: window.PDFBreezeAnalytics?.landingPage?.() || 'unknown'
     })
     }), stripeReady]);
   } catch (error) {
@@ -5210,6 +5222,7 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
       return;
     }
     const googleTransactionId = paymentIntent?.id || stripeCheckoutSubscriptionId || setupIntent?.id;
+    await window.PDFBreezeAnalytics?.track('purchase_complete', stripePlanCode());
     await reportGoogleAdsTrialPurchase(googleTransactionId);
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
       const paidFilename = pendingCheckoutFilename;
@@ -6147,6 +6160,7 @@ document.getElementById('final-download').addEventListener('click', async () => 
 
   if (error) error.hidden = true;
   sessionStorage.setItem('pdfmintPendingEmail', email);
+  await window.PDFBreezeAnalytics?.track('email_entered');
 
   const button = document.getElementById('final-download');
   const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
@@ -6217,7 +6231,10 @@ function showOAuthSetupMessage(provider) {
   error.hidden = false;
 }
 
-document.getElementById('continue-google')?.addEventListener('click', openAccessPage);
+document.getElementById('continue-google')?.addEventListener('click', () => {
+  window.PDFBreezeAnalytics?.track('email_entered', 'google');
+  openAccessPage();
+});
 
 function initialiseDailyEditCounter(hero, badge) {
   if (!hero || !badge) return;

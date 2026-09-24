@@ -9,7 +9,7 @@ import time
 import uuid
 from pathlib import Path
 
-from fastapi import FastAPI, File, Form, Header, HTTPException, Request, UploadFile
+from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
@@ -18,12 +18,13 @@ from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
-from .admin import ProviderSelectionRequest, admin_overview, select_payment_provider
+from .admin import ProviderSelectionRequest, admin_funnel, admin_overview, select_payment_provider
+from .analytics import AnalyticsEventRequest, store_analytics_event
 from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.16.3"
+ENGINE_VERSION = "1.17.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -108,6 +109,15 @@ async def admin_dashboard_overview(authorization: str | None = Header(default=No
     return await admin_overview(authorization)
 
 
+@app.get("/v1/admin/funnel")
+async def admin_conversion_funnel(
+    authorization: str | None = Header(default=None),
+    days: int = Query(default=7, ge=1, le=90),
+    landing_page: str | None = Query(default=None, max_length=120),
+):
+    return await admin_funnel(authorization, days, landing_page)
+
+
 @app.post("/v1/admin/payment-provider")
 async def admin_payment_provider(payload: ProviderSelectionRequest, authorization: str | None = Header(default=None)):
     return await select_payment_provider(payload, authorization)
@@ -116,6 +126,15 @@ async def admin_payment_provider(payload: ProviderSelectionRequest, authorizatio
 @app.post("/v1/support/message")
 async def website_support_message(payload: SupportMessageRequest):
     return await send_support_message(payload)
+
+
+@app.post("/v1/analytics/events")
+async def website_analytics_event(
+    payload: AnalyticsEventRequest,
+    request: Request,
+    authorization: str | None = Header(default=None),
+):
+    return await store_analytics_event(payload, request, authorization)
 
 
 @app.post("/v1/jobs")

@@ -22,11 +22,14 @@ from .settings import (
     SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_URL,
 )
+from .analytics import store_server_event
 
 
 class CheckoutRequest(BaseModel):
     plan: str
     document_key: str | None = Field(default=None, max_length=200)
+    analytics_session_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{16,80}$")
+    analytics_landing_page: str | None = Field(default=None, max_length=120)
 
 
 class WelcomeEmailRequest(BaseModel):
@@ -102,6 +105,8 @@ async def create_checkout(
         "plan_code": payload.plan,
         "currency": "gbp",
         "document_key": payload.document_key or "",
+        "analytics_session_id": payload.analytics_session_id or "",
+        "analytics_landing_page": payload.analytics_landing_page or "unknown",
     }
 
     try:
@@ -491,4 +496,13 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
                     params={"provider": "eq.stripe", "provider_subscription_id": f"eq.{subscription['id']}"},
                     json={"payment_confirmed": True, "confirmed_at": datetime.now(timezone.utc).isoformat()},
                 )
+            metadata = subscription.get("metadata") or {}
+            await store_server_event(
+                session_id=str(metadata.get("analytics_session_id") or ""),
+                event_name="purchase_complete",
+                event_value=str(metadata.get("plan_code") or ""),
+                landing_page=str(metadata.get("analytics_landing_page") or "unknown"),
+                page_path="/checkout/complete",
+                user_id=str(metadata.get("supabase_user_id") or "") or None,
+            )
     return {"received": True}

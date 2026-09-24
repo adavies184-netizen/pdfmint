@@ -8,9 +8,13 @@
   const planName = value => ({document_trial:'7-day single-document access',unlimited_trial:'7-day unlimited access',annual:'Annual unlimited membership'}[value] || 'No plan');
   const status = value => `<i class="status ${safe(value)}">${safe(String(value || '').replaceAll('_',' '))}</i>`;
   const row = (cells, attributes='') => `<div class="admin-row" ${attributes}>${cells.map(cell => `<span>${cell}</span>`).join('')}</div>`;
+  let adminSession = null;
+  let funnelLoaded = false;
+  let selectedFunnelStage = 0;
   const showView = name => {
     document.querySelectorAll('[data-view-panel]').forEach(panel => panel.hidden = panel.dataset.viewPanel !== name);
     document.querySelectorAll('[data-admin-view]').forEach(button => button.classList.toggle('active', button.dataset.adminView === name));
+    if (name === 'funnel' && adminSession && !funnelLoaded) loadFunnel().catch(showFunnelError);
   };
   document.addEventListener('click', event => { const target = event.target.closest('[data-admin-view]'); if (target) showView(target.dataset.adminView); });
   const adminSidebar = document.querySelector('.admin-sidebar');
@@ -23,12 +27,17 @@
 
   async function requireAdminMfa() {
     const assurance = await api.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (assurance.error) throw assurance.error;
     if (assurance.data?.currentLevel === 'aal2') return;
     const factorsResult = await api.auth.mfa.listFactors();
+    if (factorsResult.error) throw factorsResult.error;
     let factor = factorsResult.data?.totp?.find(item => item.status === 'verified');
     const modal = document.getElementById('admin-mfa');
     const qr = document.getElementById('admin-mfa-qr');
+    qr.replaceChildren();
     if (!factor) {
+      const staleFactors = (factorsResult.data?.totp || []).filter(item => item.status !== 'verified');
+      await Promise.all(staleFactors.map(item => api.auth.mfa.unenroll({factorId:item.id}).catch(() => null)));
       const enrolled = await api.auth.mfa.enroll({factorType:'totp', friendlyName:'PDFBreeze Admin'});
       if (enrolled.error) throw enrolled.error;
       factor = enrolled.data;
@@ -51,6 +60,91 @@
         resolve();
       };
     });
+  }
+
+  const funnelNumber = value => Number(value || 0).toLocaleString('en-GB');
+  const funnelPercent = (value, total) => total ? `${Math.round(value / total * 1000) / 10}%` : '0%';
+  const funnelLabel = value => String(value || 'unknown').replace(/\.html$/i,'').replaceAll('-',' ').replace(/\b\w/g, letter => letter.toUpperCase());
+
+  function showFunnelError(error) {
+    const chart = document.querySelector('[data-funnel-chart]');
+    if (chart) chart.innerHTML = `<div class="funnel-empty">${safe(error?.message || 'Conversion analytics could not be loaded.')}</div>`;
+    document.querySelector('[data-view-panel="funnel"]')?.classList.remove('funnel-loading');
+  }
+
+  function renderFunnel(data) {
+    const stages = data.stages || [];
+    const original = Number(stages[0]?.count || 0);
+    const colours = ['#0d4939','#125641','#17634b','#207157','#2a7e62','#378d70','#49a080','#64af94'];
+    const chart = document.querySelector('[data-funnel-chart]');
+    const details = document.querySelector('[data-funnel-stage-data]');
+    const visitors = stages.find(item => item.event === 'landing_view')?.count || 0;
+    const editors = stages.find(item => item.event === 'editor_opened')?.count || 0;
+    const payment = stages.find(item => item.event === 'payment_card_viewed')?.count || 0;
+    const purchases = stages.find(item => item.event === 'purchase_complete')?.count || 0;
+    const metricValues = {visitors, editors, payment, purchases};
+    Object.entries(metricValues).forEach(([key,value]) => {
+      const target = document.querySelector(`[data-funnel-metric="${key}"]`);
+      if (target) target.textContent = funnelNumber(value);
+      const rate = document.querySelector(`[data-funnel-rate="${key}"]`);
+      if (rate) rate.textContent = `${funnelPercent(value, visitors)} of visitors`;
+    });
+
+    const greatestDrop = stages.slice(1).reduce((best,item) => Number(item.dropped || 0) > Number(best?.dropped || -1) ? item : best, null);
+    document.querySelector('[data-funnel-bottleneck]').textContent = greatestDrop ? `Biggest drop: ${greatestDrop.label}` : 'Waiting for data';
+    document.querySelector('[data-funnel-title]').textContent = document.getElementById('funnel-landing-page').selectedOptions[0]?.textContent || 'All landing pages';
+
+    if (!stages.length || !original) {
+      chart.innerHTML = '<div class="funnel-empty">No journey events have been recorded for this selection yet.</div>';
+      details.replaceChildren();
+    } else {
+      chart.innerHTML = stages.map((stage,index) => `<button type="button" class="funnel-stage${index === selectedFunnelStage ? ' active':''}" data-funnel-stage="${index}" style="width:${100-index*7}%;--funnel-colour:${colours[index]}"><i>${index+1}</i><b>${safe(stage.label)}</b><span>${safe(stage.original_rate)}%</span></button>`).join('');
+      details.innerHTML = stages.map((stage,index) => `<div class="funnel-stage-row${index === selectedFunnelStage ? ' active':''}"><strong>${funnelNumber(stage.count)}</strong><div><b>${safe(stage.original_rate)}% of original visitors</b><small>${index ? `${safe(stage.previous_rate)}% continued · ${funnelNumber(stage.dropped)} dropped here` : 'Starting audience · 100%'}</small></div></div>`).join('');
+      chart.querySelectorAll('[data-funnel-stage]').forEach(button => button.addEventListener('click', () => {
+        selectedFunnelStage = Number(button.dataset.funnelStage);
+        renderFunnel(data);
+      }));
+      const selected = stages[selectedFunnelStage] || stages[0];
+      document.querySelector('[data-funnel-selected]').innerHTML = `<strong>${safe(selected.label)}</strong> · ${funnelNumber(selected.count)} sessions · ${safe(selected.original_rate)}% of initial visitors${selectedFunnelStage ? ` · ${safe(selected.previous_rate)}% from previous stage` : ''}`;
+    }
+
+    const tools = data.tools || [];
+    const maximumToolCount = Math.max(1, ...tools.map(item => Number(item.sessions || 0)));
+    const toolsHtml = tools.length ? tools.map(tool => `<div class="funnel-tool"><span>${safe(funnelLabel(tool.name))}</span><div class="funnel-tool-track"><div class="funnel-tool-bar" style="width:${Math.round(Number(tool.sessions || 0)/maximumToolCount*100)}%"></div></div><strong>${funnelNumber(tool.sessions)}</strong></div>`).join('') : '<div class="funnel-empty">No editor-tool activity yet.</div>';
+    document.querySelectorAll('[data-funnel-tools], [data-funnel-tools-overview]').forEach(target => { target.innerHTML = toolsHtml; });
+
+    const journeys = data.journeys || [];
+    const journeyHeader = '<div class="admin-row header"><span>Visitor</span><span>Landing page</span><span>Tools used</span><span>Last stage</span><span>Time</span></div>';
+    document.querySelector('[data-funnel-journeys]').innerHTML = journeyHeader + (journeys.length ? journeys.slice(0,20).map(item => row([
+      `<b>${safe(item.visitor)}</b>`,
+      safe(funnelLabel(item.landing_page)),
+      safe((item.tools || []).map(funnelLabel).join(', ') || '—'),
+      safe(item.last_stage),
+      date(item.last_event_at)
+    ])).join('') : '<div class="funnel-empty">No visitor journeys yet.</div>');
+
+    const pageSelect = document.getElementById('funnel-landing-page');
+    if (pageSelect.value === 'all') {
+      const current = pageSelect.value;
+      pageSelect.innerHTML = '<option value="all">All landing pages</option>' + (data.landing_pages || []).map(item => `<option value="${safe(item.name)}">${safe(funnelLabel(item.name))} (${funnelNumber(item.sessions)})</option>`).join('');
+      pageSelect.value = current;
+    }
+  }
+
+  async function loadFunnel() {
+    const panel = document.querySelector('[data-view-panel="funnel"]');
+    panel.classList.add('funnel-loading');
+    const days = document.getElementById('funnel-days').value;
+    const landing = document.getElementById('funnel-landing-page').value;
+    const params = new URLSearchParams({days});
+    if (landing !== 'all') params.set('landing_page', landing);
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/funnel?${params}`, {headers:{Authorization:`Bearer ${adminSession.access_token}`}});
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || 'Conversion analytics could not be loaded.');
+    selectedFunnelStage = Math.min(selectedFunnelStage, Math.max(0,(data.stages || []).length-1));
+    renderFunnel(data);
+    funnelLoaded = true;
+    panel.classList.remove('funnel-loading');
   }
 
   async function enrollBackupAuthenticator() {
@@ -86,6 +180,7 @@
     await requireAdminMfa();
     document.getElementById('admin-add-factor').onclick = () => enrollBackupAuthenticator().catch(error => alert(error.message || 'The backup authenticator could not be added.'));
     const session = await auth.getSession();
+    adminSession = session;
     const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/overview`, {headers:{Authorization:`Bearer ${session.access_token}`}});
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.detail || 'The admin dashboard could not be loaded.');
@@ -110,6 +205,12 @@
     });
     document.querySelector('.drawer-close').onclick = () => { document.getElementById('member-drawer').hidden = true; };
     document.getElementById('admin-search').addEventListener('input', event => document.querySelectorAll('.admin-row:not(.header)').forEach(item => item.hidden = Boolean(event.target.value.trim()) && !item.textContent.toLowerCase().includes(event.target.value.trim().toLowerCase())));
+    document.getElementById('funnel-landing-page').addEventListener('change', () => { selectedFunnelStage = 0; loadFunnel().catch(showFunnelError); });
+    document.getElementById('funnel-days').addEventListener('change', () => { selectedFunnelStage = 0; funnelLoaded = false; loadFunnel().catch(showFunnelError); });
+    document.querySelectorAll('[data-funnel-tab]').forEach(button => button.addEventListener('click', () => {
+      document.querySelectorAll('[data-funnel-tab]').forEach(item => item.classList.toggle('active', item === button));
+      document.querySelectorAll('[data-funnel-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.funnelTabPanel !== button.dataset.funnelTab; });
+    }));
     document.body.classList.remove('admin-loading');
   } catch (error) {
     errorBox.hidden = false;
