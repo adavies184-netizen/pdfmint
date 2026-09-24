@@ -10,6 +10,19 @@
   const row = (cells, attributes='') => `<div class="admin-row" ${attributes}>${cells.map(cell => `<span>${cell}</span>`).join('')}</div>`;
   const PAGE_SIZE = 20;
   const pagedTables = new Map();
+  function paginationPages(current, total) {
+    if (total <= 7) return Array.from({length:total}, (_,index) => index + 1);
+    const visible = new Set([1, total, current - 1, current, current + 1]);
+    if (current <= 3) [2,3,4].forEach(page => visible.add(page));
+    if (current >= total - 2) [total - 3,total - 2,total - 1].forEach(page => visible.add(page));
+    const ordered = [...visible].filter(page => page >= 1 && page <= total).sort((a,b) => a-b);
+    const tokens = [];
+    ordered.forEach((page,index) => {
+      if (index && page - ordered[index - 1] > 1) tokens.push('ellipsis');
+      tokens.push(page);
+    });
+    return tokens;
+  }
   function renderPagedTable(key, container, items, header, renderItem) {
     const record = pagedTables.get(key) || {page:1};
     record.page = Math.max(1, Math.min(record.page, Math.max(1, Math.ceil(items.length / PAGE_SIZE))));
@@ -18,8 +31,8 @@
     const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
     const start = (record.page - 1) * PAGE_SIZE;
     const visibleItems = items.slice(start, start + PAGE_SIZE);
-    const pages = Array.from({length:pageCount}, (_,index) => index + 1);
-    container.innerHTML = header + visibleItems.map(renderItem).join('') + `<div class="admin-pagination"><span>Showing ${items.length ? start + 1 : 0}–${Math.min(start + PAGE_SIZE, items.length)} of ${items.length}</span><nav aria-label="${safe(key)} pages"><button type="button" data-page-table="${safe(key)}" data-page-number="${record.page - 1}" ${record.page === 1 ? 'disabled':''}>Previous</button>${pages.map(page => `<button type="button" data-page-table="${safe(key)}" data-page-number="${page}" class="${page === record.page ? 'active':''}" aria-current="${page === record.page ? 'page':'false'}">${page}</button>`).join('')}<button type="button" data-page-table="${safe(key)}" data-page-number="${record.page + 1}" ${record.page === pageCount ? 'disabled':''}>Next</button></nav></div>`;
+    const pages = paginationPages(record.page, pageCount);
+    container.innerHTML = header + visibleItems.map(renderItem).join('') + `<div class="admin-pagination"><span class="admin-pagination-count">${items.length ? start + 1 : 0}–${Math.min(start + PAGE_SIZE, items.length)} of ${items.length}</span><nav aria-label="${safe(key)} pages"><button class="admin-page-direction" type="button" data-page-table="${safe(key)}" data-page-number="${record.page - 1}" ${record.page === 1 ? 'disabled':''}><span aria-hidden="true">←</span> Previous</button><div class="admin-page-numbers">${pages.map(page => page === 'ellipsis' ? '<span class="admin-page-ellipsis" aria-hidden="true">…</span>' : `<button type="button" data-page-table="${safe(key)}" data-page-number="${page}" class="admin-page-number ${page === record.page ? 'active':''}" ${page === record.page ? 'aria-current="page"':''}>${page}</button>`).join('')}</div><button class="admin-page-direction" type="button" data-page-table="${safe(key)}" data-page-number="${record.page + 1}" ${record.page === pageCount ? 'disabled':''}>Next <span aria-hidden="true">→</span></button></nav></div>`;
   }
   let adminSession = null;
   let funnelLoaded = false;
