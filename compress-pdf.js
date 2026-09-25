@@ -16,7 +16,7 @@
   }
 
   function estimate(size, level) {
-    const r = { light:.10, standard:.20, high:.40 }[level] || .20;
+    const r = { light:.10, standard:.25, high:.50 }[level] || .25;
     return Math.max(1, Math.round(size * (1-r)));
   }
 
@@ -105,7 +105,13 @@
       );
 
       await new Promise(resolve => setTimeout(resolve, 550));
-      await window.PDFMintShared.openEditorWithExport(output, 'pdf');
+      await window.PDFMintShared.openEditorWithExport(output, 'pdf', {
+        kind: 'compression',
+        reduction,
+        originalSize: selectedFile.size,
+        compressedSize: blob.size,
+        level
+      });
     } catch (error) {
       clearInterval(progressTimer);
       $('#compression-progress-modal').hidden = true;

@@ -255,3 +255,29 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 @media(max-width:760px){
   .text-hit.added,.image-hit,.image-handle,.annotation-hit{touch-action:none;-webkit-user-select:none;user-select:none}
 }
+
+.compression-complete-layer{position:fixed;inset:0;z-index:6500;display:grid;place-items:center;padding:20px}
+.compression-complete-layer[hidden]{display:none}
+.compression-complete-backdrop{position:absolute;inset:0;background:rgba(17,29,47,.62);backdrop-filter:blur(4px)}
+.compression-complete-dialog{position:relative;z-index:1;width:min(520px,calc(100vw - 32px));padding:38px 42px 36px;border:1px solid #dce7e3;border-radius:26px;background:#fff;box-shadow:0 28px 90px rgba(13,30,52,.3);text-align:center;color:#142038}
+.compression-complete-close{position:absolute;right:15px;top:13px;width:38px;height:38px;border:0;border-radius:11px;background:#f2f7f5;color:#718078;font-size:28px;line-height:1;cursor:pointer}
+.compression-complete-icon{width:68px;height:68px;margin:0 auto 18px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#35cda2,#18a97c);box-shadow:0 10px 28px #20aa7d3d;color:#fff}
+.compression-complete-icon svg{width:36px;height:36px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round}
+.compression-complete-kicker{display:block;margin-bottom:8px;color:var(--green-dark);font-size:11px;font-weight:900;letter-spacing:1.5px}
+.compression-complete-dialog h2{margin:0;font-size:30px;line-height:1.16;letter-spacing:-.7px}
+.compression-complete-dialog>p{margin:12px auto 0;max-width:390px;color:#6b7890;font-size:15px;line-height:1.55}
+.compression-complete-result{margin:24px 0 18px;padding:18px 22px;display:flex;align-items:center;justify-content:center;gap:18px;border:1px solid #cde8df;border-radius:15px;background:#f3fbf8;color:#6d7b86;font-size:18px;font-weight:750}
+.compression-complete-result svg{width:22px;height:22px;fill:none;stroke:#20aa7d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.compression-complete-result strong{color:#078c68;font-size:22px}
+.compression-complete-dialog .compression-complete-help{font-size:13px;color:#58687c}
+.compression-complete-done{width:100%;height:52px;margin-top:22px;border:1px solid #108b68;border-radius:12px;background:#20aa7d;color:#fff;font-size:15px;font-weight:850;cursor:pointer;box-shadow:0 8px 20px #20aa7d28}
+.download-attention{animation:download-attention 1.2s ease-in-out 2}
+@keyframes download-attention{0%,100%{box-shadow:0 6px 16px #20aa7d28}50%{box-shadow:0 0 0 5px #20aa7d36,0 10px 26px #20aa7d55;transform:translateY(-1px)}}
+@media(max-width:760px){
+  .compression-complete-layer{padding:12px}
+  .compression-complete-dialog{width:100%;padding:32px 20px 24px;border-radius:20px}
+  .compression-complete-icon{width:58px;height:58px;margin-bottom:14px}
+  .compression-complete-dialog h2{font-size:25px}
+  .compression-complete-result{margin:20px 0 15px;padding:15px 12px;gap:12px;font-size:15px}
+  .compression-complete-result strong{font-size:18px}
+}

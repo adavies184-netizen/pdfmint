@@ -6877,7 +6877,7 @@ function openPdfMintTransferDb() {
   });
 }
 
-async function storePdfForSharedEditor(file) {
+async function storePdfForSharedEditor(file, completionNotice = null) {
   const db = await openPdfMintTransferDb();
   const bytes = await file.arrayBuffer();
   await new Promise((resolve, reject) => {
@@ -6886,7 +6886,8 @@ async function storePdfForSharedEditor(file) {
       name: file.name,
       type: file.type || 'application/pdf',
       lastModified: file.lastModified || Date.now(),
-      bytes
+      bytes,
+      completionNotice
     }, PDFMINT_TRANSFER_KEY);
     tx.oncomplete = resolve;
     tx.onerror = () => reject(tx.error);
@@ -6897,7 +6898,7 @@ async function storePdfForSharedEditor(file) {
 async function routeFileToSharedEditor(file, options = {}) {
   if (!file) throw new Error('No file was provided for the editor.');
 
-  await storePdfForSharedEditor(file);
+  await storePdfForSharedEditor(file, options.completionNotice || null);
 
   const params = new URLSearchParams();
   if (options.tool && options.tool !== 'none') params.set('tool', options.tool);
@@ -6930,8 +6931,8 @@ window.PDFMintShared = Object.assign(window.PDFMintShared || {}, {
     const baseName = String(file?.name || 'document').replace(/\.pdf$/i, '');
     return convertPdfThroughPdfMintEngine(file, `compress-pdf-${safeLevel}`, baseName);
   },
-  openEditorWithExport(file, format) {
-    return routeFileToSharedEditor(file, { exportFormat: format });
+  openEditorWithExport(file, format, completionNotice = null) {
+    return routeFileToSharedEditor(file, { exportFormat: format, completionNotice });
   }
 });
 
