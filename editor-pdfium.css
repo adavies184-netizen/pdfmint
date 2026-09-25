@@ -276,7 +276,8 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 .compression-complete-done{width:100%;height:52px;margin-top:22px;border:1px solid #108b68;border-radius:12px;background:#20aa7d;color:#fff;font-size:15px;font-weight:850;cursor:pointer;box-shadow:0 8px 20px #20aa7d28}
 .download-attention{animation:download-attention 1.2s ease-in-out 2}
 @keyframes download-attention{0%,100%{box-shadow:0 6px 16px #20aa7d28}50%{box-shadow:0 0 0 5px #20aa7d36,0 10px 26px #20aa7d55;transform:translateY(-1px)}}
-.manage-tool-sticky{position:sticky;right:-18px;z-index:8;flex:0 0 auto;margin-left:auto;border-left-color:#b9ddd2;background:#f6fcfa;box-shadow:-18px 0 18px 2px #fff}
+.manage-tool-sticky{position:sticky;right:-18px;z-index:8;flex:0 0 auto;margin-left:auto;border-left-color:transparent;background:#fff;box-shadow:-18px 0 18px 2px #fff}
+.manage-tool-sticky:before{content:"";position:absolute;left:-10px;top:9px;bottom:9px;width:1px;background:#d6dee6;pointer-events:none}
 .manage-tool-sticky.manage-attention{animation:manage-attention 1.65s ease-out 1}
 @keyframes manage-attention{0%,100%{border-color:#b9ddd2;background:#f6fcfa;box-shadow:-18px 0 18px 2px #fff}28%{border-color:#078c68;background:#dff8ef;box-shadow:-18px 0 18px 2px #fff,0 0 0 5px #20aa7d38,0 8px 24px #078c6852;transform:translateY(-2px)}58%{border-color:#20aa7d;background:#effbf7;box-shadow:-18px 0 18px 2px #fff,0 0 0 2px #20aa7d24;transform:translateY(0)}}
 @media(max-width:760px){
@@ -288,4 +289,24 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .compression-complete-result>div strong{font-size:18px}
   .compression-complete-result>div .compression-new-size{font-size:21px}
   .manage-tool-sticky{right:-8px;margin-left:0;box-shadow:-14px 0 15px 1px #fff}
+}
+
+@media(min-width:761px){
+  .tool-ribbon{height:64px;margin-top:8px;padding:0 10px;gap:1px;scrollbar-width:none}
+  .tool-ribbon::-webkit-scrollbar{display:none}
+  .tool{height:44px;padding:0 7px;gap:5px;border-radius:8px;color:#142038;font-size:12px;font-weight:750}
+  .tool .icon{width:19px;height:21px;display:grid;place-items:center;color:#142038;font-size:19px}
+  .tool .icon svg{width:19px;height:19px;stroke-width:1.75}
+  .tool:hover{border-color:#d6e4df;background:#f4faf8;color:#142038}
+  .tool.active{border-color:#91d9c5;background:#e9f8f3;color:#078c68}
+  .tool.active .icon{color:#078c68}
+  .history{width:34px;height:40px;flex:0 0 34px;background:transparent;color:#142038}
+  .history svg{width:18px;height:18px}
+  .history-divider{height:31px;margin:0 4px}
+  .manage-tool-sticky{right:-10px;width:76px;height:56px;margin-left:auto;padding:4px 7px;display:grid;grid-template-rows:29px 12px;place-items:center;align-content:center;gap:1px;border:0;border-radius:5px;background:#fff;color:#142038;font-size:9px;line-height:1;letter-spacing:.1px;box-shadow:-14px 0 15px 1px #fff}
+  .manage-tool-sticky .icon{width:28px;height:28px;color:inherit}
+  .manage-tool-sticky .icon svg{width:27px;height:27px}
+  .manage-tool-label{white-space:nowrap;font-weight:800}
+  .editor-shell{height:calc(100vh - 236px)}
+  body.manage-mode .manage-dialog{height:calc(100vh - 148px)}
 }
