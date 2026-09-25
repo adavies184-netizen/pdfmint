@@ -307,6 +307,37 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .manage-tool-sticky .icon{width:28px;height:28px;color:inherit}
   .manage-tool-sticky .icon svg{width:27px;height:27px}
   .manage-tool-label{white-space:nowrap;font-weight:800}
-  .editor-shell{height:calc(100vh - 236px)}
+  .context-bar{height:60px;padding:0 14px}
+  .editor-shell{height:calc(100vh - 220px)}
+  .edit-controls,.future-controls{gap:12px}
+  .context-heading{min-width:205px}
+  .context-heading span,.future-controls span{font-size:11px}
+  .edit-controls input{width:320px;height:36px}
+  .button.compact{height:38px;padding:7px 13px;font-size:12px}
+  .add-controls,.draw-controls,.shape-controls,.highlight-controls{gap:8px;padding:5px 0}
+  .add-icon-control{height:40px;padding:2px 7px;border-radius:7px;font-size:11px}
+  .draw-mode,.shape-mode,.highlight-mode{min-width:74px;height:40px;padding:0 8px;gap:5px;border-radius:7px;font-size:11px}
+  .draw-mode svg,.shape-mode svg,.highlight-mode svg{width:18px;height:18px}
+  .draw-select,.draw-custom,.draw-colours,.clear-drawings,.shape-width,.shape-fill,.shape-colours,.highlight-colours,.highlight-custom,.highlight-opacity,.delete-highlight{height:40px;border-radius:7px;font-size:11px}
+  .draw-select,.draw-custom,.shape-width,.shape-fill,.highlight-custom,.highlight-opacity{padding:0 9px}
+  .draw-colours,.shape-colours,.highlight-colours{padding:0 9px;gap:6px}
+  .draw-swatch,.shape-swatch,.highlight-swatch{width:19px;height:19px}
+  .draw-custom input,.shape-colours input,.highlight-custom input{width:25px;height:25px}
+  .clear-drawings,.delete-highlight{padding:0 12px}
+  .annotation-controls,.stamp-controls,.watermark-controls{gap:9px}
+  .annotation-controls>span,.stamp-controls>span{font-size:11px}
+  .annotation-icon,.context-icon{width:36px;height:36px;border-radius:7px}
+  .annotation-icon svg,.context-icon svg{width:19px;height:19px}
+  .annotation-action,.annotation-delete,.context-action{height:36px;padding:0 11px;border-radius:7px;font-size:11px}
+  .icon-field,.watermark-swatches,.wm-align{height:38px;border-radius:7px}
+  .icon-field{padding:0 8px;gap:6px}
+  .icon-field.wide{min-width:200px}
+  .watermark-swatches{padding:0 7px;gap:6px}
+  .wm-swatch{width:19px;height:19px}
+  .wm-align button{width:30px;height:30px;font-size:19px}
+  .redact-controls{min-height:58px;padding:5px 12px;gap:10px}
+  .redact-controls>span:not(.annotation-icon){font-size:11px}
+  .redact-colours{height:36px;padding:3px 8px;gap:7px;border-radius:7px}
+  .redact-swatch{width:19px;height:19px}
   body.manage-mode .manage-dialog{height:calc(100vh - 148px)}
 }
