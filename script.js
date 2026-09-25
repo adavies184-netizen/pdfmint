@@ -35,10 +35,30 @@ tabs.forEach(tab => tab.addEventListener('click', () => {
 const menuButton = document.querySelector('.menu-button');
 const mobileMenu = document.querySelector('.mobile-menu');
 if (menuButton && mobileMenu) {
-  menuButton.addEventListener('click', () => {
+  const closeMobileMenu = () => {
+    menuButton.setAttribute('aria-expanded', 'false');
+    mobileMenu.hidden = true;
+  };
+
+  menuButton.addEventListener('click', event => {
+    event.stopPropagation();
     const open = menuButton.getAttribute('aria-expanded') === 'true';
     menuButton.setAttribute('aria-expanded', String(!open));
     mobileMenu.hidden = open;
+  });
+
+  mobileMenu.addEventListener('click', event => {
+    if (event.target.closest('a')) closeMobileMenu();
+  });
+
+  document.addEventListener('pointerdown', event => {
+    if (!mobileMenu.hidden && !mobileMenu.contains(event.target) && !menuButton.contains(event.target)) {
+      closeMobileMenu();
+    }
+  }, true);
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape') closeMobileMenu();
   });
 }
 
@@ -7504,7 +7524,7 @@ function addUploadPageSupportDetails() {
   const details = document.createElement('div');
   details.className = 'upload-support-details';
   details.setAttribute('aria-label', 'PDFBreeze support');
-  details.innerHTML = '<a href="tel:+442079460182">+44 (0)20 7946 0182</a><span class="support-divider">|</span><span>Phone Support 24/7</span><span class="support-divider">|</span><a href="mailto:support@pdfbreeze.net">Email Support 24/7</a>';
+  details.innerHTML = '<span>Phone Support 24/7</span><span class="support-divider">|</span><a href="mailto:support@pdfbreeze.net">Email Support 24/7</a>';
   heroCopy.appendChild(details);
 }
 
