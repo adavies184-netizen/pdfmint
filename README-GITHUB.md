@@ -183,7 +183,7 @@ Frontend-only update. PDFBreeze Engine unchanged.
   - Compress Image/PDF → Upload to compress
 - Removed the company postal address from the footer across the site.
 - Footer contact details are now limited to:
-  - Northstar Ridge Limited
+  - Blue Ocean Ecom Ltd
   - support@pdfbreeze.net
 
 Frontend-only update. PDFBreeze Engine unchanged.
@@ -193,7 +193,7 @@ Frontend-only update. PDFBreeze Engine unchanged.
 
 - Rebuilt the footer with valid markup.
 - Removed duplicate Contact Us.
-- Footer company contact now shows only Northstar Ridge Limited and support@pdfbreeze.net.
+- Footer company contact now shows only Blue Ocean Ecom Ltd and support@pdfbreeze.net.
 - Removed postal address.
 - OCR upload button now says “Upload PDF for OCR”.
 - Header order is now PDF Editor, PDF Converter, Forms.

@@ -53,6 +53,7 @@
     if (deleteButton) deleteButton.disabled = selected.size === 0;
   }
   let adminSession = null;
+  let stripeModeStatus = {live:null, sandbox:null};
   let funnelLoaded = false;
   let selectedFunnelStage = 0;
   const showView = name => {
@@ -248,7 +249,25 @@
     renderPagedTable('documents', document.querySelector('[data-documents-table]'), data.documents, '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>', doc => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="documents" value="${safe(doc.id)}"><span><b>${safe(doc.name)}</b></span></label>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)]));
     const providersHtml = data.providers.map(provider => `<div class="provider-choice ${provider.is_default ? 'active-provider':''}"><b><span class="stripe-logo">${safe(provider.display_name.slice(0,1))}</span>${safe(provider.display_name)}</b><mark>${provider.configured ? 'Configured ✓' : 'Not connected'}</mark><span>${provider.is_default ? 'Default for new subscriptions' : provider.configured ? `<button data-select-provider="${safe(provider.provider)}">Make default</button>` : 'Available after connection'}</span></div>`).join('');
     document.querySelector('[data-provider-summary]').innerHTML = providersHtml;
-    document.querySelector('[data-providers-list]').innerHTML = `<h2>Provider routing</h2>${providersHtml}<p>Stripe remains the only enabled provider. Future providers use the same internal subscription structure.</p>`;
+    const sandboxActive = localStorage.getItem('pdfbreezeAdminStripeSandbox') === 'true';
+    const modeStatus = mode => stripeModeStatus[mode] === null ? 'Checking…' : stripeModeStatus[mode] ? 'Ready' : 'Needs setup';
+    document.querySelector('[data-providers-list]').innerHTML = `<h2>Provider routing</h2>${providersHtml}<p>Stripe remains the only enabled provider. Future providers use the same internal subscription structure.</p><section class="payment-mode-card"><div><strong>Checkout mode on this browser</strong><small>Public visitors always use live Stripe. Sandbox applies only to your MFA-verified admin session in this browser.</small></div><div class="payment-mode-options" role="group" aria-label="Checkout mode"><button type="button" data-payment-mode="live" class="${sandboxActive ? '' : 'active'}"><b>Live payments</b><span>${modeStatus('live')}</span></button><button type="button" data-payment-mode="sandbox" class="${sandboxActive ? 'active' : ''}"><b>Sandbox testing</b><span>${modeStatus('sandbox')}</span></button></div><em>${sandboxActive ? 'Sandbox is ON for your admin testing. No real charge will be made.' : 'Live mode is active. Your own checkout tests will create real charges.'}</em></section>`;
+  }
+
+  async function loadStripeModeStatus() {
+    const base = window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'');
+    const headers = {Authorization:`Bearer ${adminSession.access_token}`};
+    const [liveResponse, sandboxResponse] = await Promise.all([
+      fetch(`${base}/v1/billing/config`, {cache:'no-store', headers}),
+      fetch(`${base}/v1/billing/config?mode=sandbox`, {cache:'no-store', headers})
+    ]);
+    const live = await liveResponse.json().catch(() => ({}));
+    const sandbox = await sandboxResponse.json().catch(() => ({}));
+    stripeModeStatus = {
+      live: Boolean(liveResponse.ok && live.configured && live.mode === 'live'),
+      sandbox: Boolean(sandboxResponse.ok && sandbox.configured && sandbox.mode === 'sandbox')
+    };
+    if (dashboardData) renderDashboard(dashboardData);
   }
 
   async function loadOverview(day='') {
@@ -295,6 +314,7 @@
     const session = await auth.getSession();
     adminSession = session;
     await loadOverview();
+    loadStripeModeStatus().catch(() => { stripeModeStatus = {live:false, sandbox:false}; if (dashboardData) renderDashboard(dashboardData); });
     document.addEventListener('click', event => {
       const memberRowElement = event.target.closest('[data-member-id]');
       if (memberRowElement && !event.target.closest('input,label')) {
@@ -303,6 +323,17 @@
       }
       const providerButton = event.target.closest('[data-select-provider]');
       if (providerButton) fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/payment-provider`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({provider:providerButton.dataset.selectProvider})}).then(response => { if (!response.ok) throw new Error('Provider could not be changed.'); location.reload(); }).catch(error => alert(error.message));
+      const modeButton = event.target.closest('[data-payment-mode]');
+      if (modeButton) {
+        const mode = modeButton.dataset.paymentMode;
+        if (!stripeModeStatus[mode]) {
+          alert(`${mode === 'live' ? 'Live' : 'Sandbox'} Stripe is not fully configured on the payment server yet.`);
+          return;
+        }
+        if (mode === 'sandbox') localStorage.setItem('pdfbreezeAdminStripeSandbox', 'true');
+        else localStorage.removeItem('pdfbreezeAdminStripeSandbox');
+        renderDashboard(dashboardData);
+      }
       const deleteButton = event.target.closest('[data-delete-selected]');
       if (deleteButton) deleteSelected(deleteButton.dataset.deleteSelected).catch(error => alert(error.message));
     });

@@ -17,7 +17,7 @@ from starlette.background import BackgroundTask
 from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
-from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
+from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, checkout_public_config, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
 from .admin import AdminDeleteRequest, ProviderSelectionRequest, admin_funnel, admin_overview, delete_admin_documents, delete_admin_members, select_payment_provider
 from .analytics import AnalyticsEventRequest, store_analytics_event
 from .support import SupportMessageRequest, send_support_message
@@ -82,6 +82,14 @@ def capabilities() -> dict:
 @app.post("/v1/billing/checkout")
 async def billing_checkout(payload: CheckoutRequest, authorization: str | None = Header(default=None)):
     return await create_checkout(payload, authorization)
+
+
+@app.get("/v1/billing/config")
+async def billing_public_config(
+    mode: str | None = Query(default=None, pattern="^(sandbox|live)$"),
+    authorization: str | None = Header(default=None),
+):
+    return await checkout_public_config(mode, authorization)
 
 
 @app.post("/v1/billing/stripe-webhook")

@@ -4953,6 +4953,7 @@ let stripeIntentType = null;
 let stripeElementPlan = null;
 let stripeCheckoutSubscriptionId = '';
 let stripeClientSecret = '';
+let stripeCheckoutMode = 'live';
 let stripeCardNumberElement = null;
 let stripeCardElements = [];
 const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
@@ -5027,10 +5028,27 @@ function showStripeError(message) {
   error.hidden = !message;
 }
 
+async function loadStripeCheckoutConfig(session) {
+  const adminSandbox = localStorage.getItem('pdfbreezeAdminStripeSandbox') === 'true';
+  const params = new URLSearchParams();
+  if (adminSandbox) params.set('mode', 'sandbox');
+  const query = params.size ? `?${params}` : '';
+  const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl}/v1/billing/config${query}`, {
+    cache: 'no-store',
+    headers: session?.access_token ? {Authorization:`Bearer ${session.access_token}`} : {}
+  });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.detail || 'Stripe checkout configuration could not be loaded.');
+  if (!result.configured || !result.publishableKey) {
+    const label = result.mode === 'sandbox' ? 'Sandbox' : 'Live';
+    throw new Error(`${label} Stripe checkout is not configured yet.`);
+  }
+  return result;
+}
+
 async function prepareStripePaymentElement() {
   const panel = document.getElementById('card-payment-panel');
-  const config = window.PDFMINT_CONFIG?.stripe;
-  if (!panel || !config?.publishableKey) throw new Error('Stripe checkout is not configured.');
+  if (!panel) throw new Error('Stripe checkout is not configured.');
 
   [...panel.querySelectorAll('.payment-field, .payment-field-row, .express-payment-row')]
     .forEach(element => {
@@ -5044,17 +5062,33 @@ async function prepareStripePaymentElement() {
     panel.prepend(mount);
   }
   const plan = stripePlanCode();
-  if (stripeElements && stripeElementPlan === plan) return;
-  showStripeLoadingShell();
   const payButton = document.getElementById('mock-pay-button');
-  if (payButton) payButton.disabled = true;
-  setStripeLoadingStage('Checking your secure session', 'Your document is ready while we connect the payment form.');
-  const stripeReady = loadStripeLibrary();
-  stripeReady.catch(() => {});
   const session = await window.PDFMintAuth?.getSession?.();
   if (!session?.access_token) {
     throw new Error('Your checkout session could not be established. Please return to the email step and try again.');
   }
+  const config = await loadStripeCheckoutConfig(session);
+  stripeCheckoutMode = config.mode || 'live';
+  let sandboxNotice = document.getElementById('stripe-sandbox-notice');
+  if (stripeCheckoutMode === 'sandbox') {
+    if (!sandboxNotice) {
+      sandboxNotice = document.createElement('p');
+      sandboxNotice.id = 'stripe-sandbox-notice';
+      sandboxNotice.className = 'payment-consent-warning';
+      mount.insertAdjacentElement('beforebegin', sandboxNotice);
+    }
+    sandboxNotice.textContent = 'Admin sandbox mode — use a Stripe test card. No real charge will be made.';
+    sandboxNotice.hidden = false;
+  } else if (sandboxNotice) {
+    sandboxNotice.hidden = true;
+  }
+  const checkoutKey = `${stripeCheckoutMode}:${plan}`;
+  if (stripeElements && stripeElementPlan === checkoutKey) return;
+  showStripeLoadingShell();
+  if (payButton) payButton.disabled = true;
+  setStripeLoadingStage('Checking your secure session', 'Your document is ready while we connect the payment form.');
+  const stripeReady = loadStripeLibrary();
+  stripeReady.catch(() => {});
   setStripeLoadingStage('Connecting to secure payment', 'This normally takes only a moment.');
 
   const checkoutController = new AbortController();
@@ -5070,6 +5104,7 @@ async function prepareStripePaymentElement() {
     },
     body: JSON.stringify({
       plan,
+      mode: stripeCheckoutMode,
       document_key: plan === 'document_trial' ? stripeCheckoutDocumentKey : null,
       analytics_session_id: window.PDFBreezeAnalytics?.sessionId?.() || null,
       analytics_landing_page: window.PDFBreezeAnalytics?.landingPage?.() || 'unknown'
@@ -5141,7 +5176,7 @@ async function prepareStripePaymentElement() {
   cardNumber.mount('#stripe-card-number');
   cardExpiry.mount('#stripe-card-expiry');
   cardCvc.mount('#stripe-card-cvc');
-  stripeElementPlan = plan;
+  stripeElementPlan = checkoutKey;
   showStripeError('');
 }
 
@@ -5270,6 +5305,7 @@ async function sendCheckoutWelcomeEmail() {
     },
     body: JSON.stringify({
       subscription_id: stripeCheckoutSubscriptionId,
+      mode: stripeCheckoutMode,
       temporary_password: temporaryPassword,
       plan_name: selectedAccessPlan.name,
       amount: formatPounds(selectedAccessPlan.price)

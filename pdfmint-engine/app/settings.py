@@ -49,3 +49,37 @@ STRIPE_PRICES = {
         "trial_days": 0,
     },
 }
+
+STRIPE_CONFIGS = {
+    "sandbox": {
+        "secret_key": os.getenv("STRIPE_SANDBOX_SECRET_KEY", STRIPE_SECRET_KEY).strip(),
+        "webhook_secret": os.getenv("STRIPE_SANDBOX_WEBHOOK_SECRET", STRIPE_WEBHOOK_SECRET).strip(),
+        "publishable_key": os.getenv(
+            "STRIPE_SANDBOX_PUBLISHABLE_KEY",
+            "pk_test_51U3fJ3JAG10RJqJqAtjGecFZspZzyvKybFL4EUeww7wQp1U9BYEljACHYQ2inyzmnJ7o9foirE7db5QfkvZcTuCH00N3XCS5Gw",
+        ).strip(),
+        "prices": STRIPE_PRICES,
+    },
+    "live": {
+        "secret_key": os.getenv("STRIPE_LIVE_SECRET_KEY", "").strip(),
+        "webhook_secret": os.getenv("STRIPE_LIVE_WEBHOOK_SECRET", "").strip(),
+        "publishable_key": os.getenv("STRIPE_LIVE_PUBLISHABLE_KEY", "").strip(),
+        "prices": {
+            "document_trial": {
+                "initial": os.getenv("STRIPE_LIVE_PRICE_DOCUMENT_TRIAL_GBP", "").strip(),
+                "recurring": os.getenv("STRIPE_LIVE_PRICE_MEMBERSHIP_4WEEK_GBP", "").strip(),
+                "trial_days": 7,
+            },
+            "unlimited_trial": {
+                "initial": os.getenv("STRIPE_LIVE_PRICE_UNLIMITED_TRIAL_GBP", "").strip(),
+                "recurring": os.getenv("STRIPE_LIVE_PRICE_MEMBERSHIP_4WEEK_GBP", "").strip(),
+                "trial_days": 7,
+            },
+            "annual": {
+                "initial": None,
+                "recurring": os.getenv("STRIPE_LIVE_PRICE_ANNUAL_GBP", "").strip(),
+                "trial_days": 0,
+            },
+        },
+    },
+}

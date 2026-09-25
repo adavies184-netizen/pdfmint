@@ -15,18 +15,18 @@ from .settings import (
     BREVO_API_KEY,
     BREVO_SENDER_EMAIL,
     BREVO_SENDER_NAME,
-    STRIPE_PRICES,
-    STRIPE_SECRET_KEY,
-    STRIPE_WEBHOOK_SECRET,
+    STRIPE_CONFIGS,
     SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY,
     SUPABASE_URL,
 )
 from .analytics import store_server_event
+from .payment_modes import checkout_mode_for_user, stripe_config, stripe_mode_configured, subscription_payment_mode
 
 
 class CheckoutRequest(BaseModel):
     plan: str
+    mode: str | None = Field(default=None, pattern="^(sandbox|live)$")
     document_key: str | None = Field(default=None, max_length=200)
     analytics_session_id: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{16,80}$")
     analytics_landing_page: str | None = Field(default=None, max_length=120)
@@ -34,6 +34,7 @@ class CheckoutRequest(BaseModel):
 
 class WelcomeEmailRequest(BaseModel):
     subscription_id: str = Field(min_length=5, max_length=100)
+    mode: str | None = Field(default=None, pattern="^(sandbox|live)$")
     temporary_password: str = Field(min_length=12, max_length=128)
     plan_name: str = Field(min_length=1, max_length=100)
     amount: str = Field(min_length=1, max_length=30)
@@ -45,12 +46,11 @@ class ManageSubscriptionRequest(BaseModel):
 
 class ConsentEvidenceRequest(BaseModel):
     subscription_id: str = Field(min_length=5, max_length=100)
+    mode: str | None = Field(default=None, pattern="^(sandbox|live)$")
     disclosure_version: str = Field(default="checkout-gbp-v1", max_length=50)
 
 
 def _require_server_configuration() -> None:
-    if not STRIPE_SECRET_KEY:
-        raise HTTPException(status_code=503, detail="Stripe is not configured.")
     if not SUPABASE_ANON_KEY:
         raise HTTPException(status_code=503, detail="Authentication is not configured on the payment server.")
 
@@ -69,6 +69,24 @@ async def authenticated_user(authorization: str | None) -> dict[str, Any]:
     if response.status_code != 200:
         raise HTTPException(status_code=401, detail="Your sign-in session has expired.")
     return response.json()
+
+
+async def checkout_public_config(
+    requested_mode: str | None,
+    authorization: str | None,
+) -> dict[str, Any]:
+    mode = "live"
+    if requested_mode == "sandbox":
+        user = await authenticated_user(authorization)
+        mode = checkout_mode_for_user(requested_mode, user, authorization)
+    configured = stripe_mode_configured(mode)
+    config = stripe_config(mode)
+    return {
+        "mode": mode,
+        "configured": configured,
+        "publishableKey": config["publishable_key"] if configured else "",
+        "currency": "gbp",
+    }
 
 
 def _intent_details(subscription: Any) -> tuple[str | None, str | None]:
@@ -93,13 +111,18 @@ async def create_checkout(
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     user = await authenticated_user(authorization)
-    plan = STRIPE_PRICES.get(payload.plan)
+    mode = checkout_mode_for_user(payload.mode, user, authorization)
+    if not stripe_mode_configured(mode):
+        label = "Live" if mode == "live" else "Sandbox"
+        raise HTTPException(status_code=503, detail=f"{label} Stripe checkout is not configured.")
+    config = stripe_config(mode)
+    secret_key = config["secret_key"]
+    plan = config["prices"].get(payload.plan)
     if not plan:
         raise HTTPException(status_code=400, detail="Unknown PDFBreeze plan.")
     if payload.plan == "document_trial" and not payload.document_key:
         raise HTTPException(status_code=400, detail="The document trial must be linked to a document.")
 
-    stripe.api_key = STRIPE_SECRET_KEY
     metadata = {
         "supabase_user_id": user["id"],
         "plan_code": payload.plan,
@@ -107,22 +130,26 @@ async def create_checkout(
         "document_key": payload.document_key or "",
         "analytics_session_id": payload.analytics_session_id or "",
         "analytics_landing_page": payload.analytics_landing_page or "unknown",
+        "provider_mode": mode,
     }
 
     try:
         customers = stripe.Customer.search(
             query=f"metadata['supabase_user_id']:'{user['id']}'",
             limit=1,
+            api_key=secret_key,
         )
         customer = customers.data[0] if customers.data else stripe.Customer.create(
             email=user.get("email"),
             metadata={"supabase_user_id": user["id"]},
+            api_key=secret_key,
         )
 
         existing_subscriptions = stripe.Subscription.list(
             customer=customer.id,
             status="all",
             limit=20,
+            api_key=secret_key,
         )
         for existing in existing_subscriptions.auto_paging_iter():
             if existing.status in {"trialing", "active", "past_due", "unpaid", "paused"}:
@@ -131,7 +158,7 @@ async def create_checkout(
                     detail="This account already has a PDFBreeze membership.",
                 )
             if existing.status == "incomplete":
-                stripe.Subscription.delete(existing.id)
+                stripe.Subscription.delete(existing.id, api_key=secret_key)
 
         subscription_args: dict[str, Any] = {
             "customer": customer.id,
@@ -149,7 +176,7 @@ async def create_checkout(
         if plan["initial"]:
             subscription_args["add_invoice_items"] = [{"price": plan["initial"]}]
 
-        subscription = stripe.Subscription.create(**subscription_args)
+        subscription = stripe.Subscription.create(**subscription_args, api_key=secret_key)
     except HTTPException:
         raise
     except stripe.StripeError as exc:
@@ -171,6 +198,7 @@ async def create_checkout(
         "intent_type": intent_type,
         "client_secret": client_secret,
         "status": subscription.status,
+        "mode": mode,
     }
 
 
@@ -204,9 +232,12 @@ async def record_consent_evidence(
     user = await authenticated_user(authorization)
     if not SUPABASE_SERVICE_ROLE_KEY:
         raise HTTPException(status_code=503, detail="Consent evidence storage is not configured.")
-    stripe.api_key = STRIPE_SECRET_KEY
+    mode = checkout_mode_for_user(payload.mode, user, authorization)
+    secret_key = stripe_config(mode)["secret_key"]
+    if not secret_key:
+        raise HTTPException(status_code=503, detail="Stripe checkout is not configured.")
     try:
-        subscription = stripe.Subscription.retrieve(payload.subscription_id)
+        subscription = stripe.Subscription.retrieve(payload.subscription_id, api_key=secret_key)
     except stripe.StripeError as exc:
         raise HTTPException(status_code=400, detail="The membership could not be verified.") from exc
     metadata = getattr(subscription, "metadata", None) or {}
@@ -220,6 +251,7 @@ async def record_consent_evidence(
     record = {
         "user_id": user["id"],
         "provider": "stripe",
+        "provider_mode": mode,
         "provider_subscription_id": payload.subscription_id,
         "plan_code": plan_code,
         "accepted": True,
@@ -266,9 +298,12 @@ async def send_welcome_email(
     if not BREVO_API_KEY:
         raise HTTPException(status_code=503, detail="Welcome email delivery is not configured.")
 
-    stripe.api_key = STRIPE_SECRET_KEY
+    mode = checkout_mode_for_user(payload.mode, user, authorization)
+    secret_key = stripe_config(mode)["secret_key"]
+    if not secret_key:
+        raise HTTPException(status_code=503, detail="Stripe checkout is not configured.")
     try:
-        subscription = stripe.Subscription.retrieve(payload.subscription_id)
+        subscription = stripe.Subscription.retrieve(payload.subscription_id, api_key=secret_key)
     except stripe.StripeError as exc:
         raise HTTPException(status_code=400, detail="The paid membership could not be verified.") from exc
 
@@ -329,15 +364,19 @@ async def manage_subscription(
     authorization: str | None = Header(default=None),
 ) -> dict[str, Any]:
     user = await authenticated_user(authorization)
-    stripe.api_key = STRIPE_SECRET_KEY
+    mode = await subscription_payment_mode(str(user["id"]))
+    config = stripe_config(mode)
+    secret_key = config["secret_key"]
+    if not secret_key:
+        raise HTTPException(status_code=503, detail="The membership payment mode is not configured.")
     try:
         customers = stripe.Customer.search(
-            query=f"metadata['supabase_user_id']:'{user['id']}'", limit=1
+            query=f"metadata['supabase_user_id']:'{user['id']}'", limit=1, api_key=secret_key
         )
         if not customers.data:
             raise HTTPException(status_code=404, detail="No PDFBreeze membership was found.")
         subscriptions = stripe.Subscription.list(
-            customer=customers.data[0].id, status="all", limit=20
+            customer=customers.data[0].id, status="all", limit=20, api_key=secret_key
         )
         subscription = next((
             item for item in subscriptions.auto_paging_iter()
@@ -348,7 +387,7 @@ async def manage_subscription(
 
         if payload.action == "cancel":
             subscription = stripe.Subscription.modify(
-                subscription.id, cancel_at_period_end=True
+                subscription.id, cancel_at_period_end=True, api_key=secret_key
             )
             effective_at = getattr(subscription, "trial_end", None) or getattr(subscription, "current_period_end", None)
         elif payload.action == "pause":
@@ -357,6 +396,7 @@ async def manage_subscription(
                 subscription.id,
                 cancel_at_period_end=False,
                 pause_collection={"behavior": "void", "resumes_at": resumes_at},
+                api_key=secret_key,
             )
             effective_at = resumes_at
         else:
@@ -365,7 +405,7 @@ async def manage_subscription(
             if not item_data:
                 raise HTTPException(status_code=400, detail="Stripe could not find the current membership price.")
             annual_update: dict[str, Any] = {
-                "items": [{"id": item_data[0]["id"], "price": STRIPE_PRICES["annual"]["recurring"]}],
+                "items": [{"id": item_data[0]["id"], "price": config["prices"]["annual"]["recurring"]}],
                 "billing_cycle_anchor": "now",
                 "proration_behavior": "none",
                 "payment_behavior": "error_if_incomplete",
@@ -377,6 +417,7 @@ async def manage_subscription(
                 annual_update["trial_end"] = "now"
             subscription = stripe.Subscription.modify(
                 subscription.id,
+                api_key=secret_key,
                 **annual_update,
             )
             effective_at = getattr(subscription, "current_period_end", None)
@@ -409,6 +450,7 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
     record = {
         "user_id": user_id,
         "provider": "stripe",
+        "provider_mode": metadata.get("provider_mode", "live"),
         "provider_customer_id": subscription.get("customer"),
         "provider_subscription_id": subscription["id"],
         "plan_code": metadata.get("plan_code", "unlimited_trial"),
@@ -466,16 +508,27 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
 
 
 async def stripe_webhook(request: Request, stripe_signature: str | None = Header(default=None)) -> dict[str, bool]:
-    if not STRIPE_WEBHOOK_SECRET:
+    webhook_secrets = [
+        config["webhook_secret"]
+        for config in STRIPE_CONFIGS.values()
+        if config.get("webhook_secret")
+    ]
+    if not webhook_secrets:
         raise HTTPException(status_code=503, detail="Stripe webhooks are not configured.")
     if not stripe_signature:
         raise HTTPException(status_code=400, detail="Missing Stripe signature.")
     payload = await request.body()
-    try:
-        stripe.Webhook.construct_event(payload, stripe_signature, STRIPE_WEBHOOK_SECRET)
-        event = json.loads(payload)
-    except (ValueError, stripe.SignatureVerificationError) as exc:
-        raise HTTPException(status_code=400, detail="Invalid Stripe webhook.") from exc
+    verified = False
+    for webhook_secret in dict.fromkeys(webhook_secrets):
+        try:
+            stripe.Webhook.construct_event(payload, stripe_signature, webhook_secret)
+            verified = True
+            break
+        except (ValueError, stripe.SignatureVerificationError):
+            continue
+    if not verified:
+        raise HTTPException(status_code=400, detail="Invalid Stripe webhook.")
+    event = json.loads(payload)
 
     if event["type"] in {
         "customer.subscription.created",
@@ -483,6 +536,7 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         "customer.subscription.deleted",
     }:
         subscription = event["data"]["object"]
+        subscription.setdefault("metadata", {})["provider_mode"] = "live" if event.get("livemode") else "sandbox"
         await _upsert_subscription(subscription)
         if subscription.get("status") in {"trialing", "active"} and SUPABASE_SERVICE_ROLE_KEY:
             async with httpx.AsyncClient(timeout=10) as client:
