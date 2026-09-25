@@ -339,5 +339,9 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .redact-controls>span:not(.annotation-icon){font-size:11px}
   .redact-colours{height:36px;padding:3px 8px;gap:7px;border-radius:7px}
   .redact-swatch{width:19px;height:19px}
+  .add-icon-control,.add-align,.draw-mode,.shape-mode,.highlight-mode,.draw-select,.draw-custom,.draw-colours,.clear-drawings,.shape-width,.shape-fill,.shape-colours,.highlight-colours,.highlight-custom,.highlight-opacity,.delete-highlight,.annotation-icon,.annotation-action,.annotation-delete,.context-icon,.context-action,.icon-field,.watermark-swatches,.wm-align,.redact-colours,.edit-controls input,.context-bar .button.compact{border-color:#d4deea;border-radius:10px;background:#fff;box-shadow:0 4px 12px #14203814}
+  .draw-mode.active,.shape-mode.active,.highlight-mode.active,.annotation-icon,.context-icon,.context-bar .button.compact{border-color:#9fdac8;background:#e9f8f3;color:#078c68}
+  .add-align button.active,.wm-align button.active{background:#dff4ec;color:#078c68}
+  .annotation-delete,.delete-highlight,.clear-drawings{border-color:#f0b8b8;color:#d52f2f}
   body.manage-mode .manage-dialog{height:calc(100vh - 148px)}
 }
