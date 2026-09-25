@@ -276,6 +276,9 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 .compression-complete-done{width:100%;height:52px;margin-top:22px;border:1px solid #108b68;border-radius:12px;background:#20aa7d;color:#fff;font-size:15px;font-weight:850;cursor:pointer;box-shadow:0 8px 20px #20aa7d28}
 .download-attention{animation:download-attention 1.2s ease-in-out 2}
 @keyframes download-attention{0%,100%{box-shadow:0 6px 16px #20aa7d28}50%{box-shadow:0 0 0 5px #20aa7d36,0 10px 26px #20aa7d55;transform:translateY(-1px)}}
+.manage-tool-sticky{position:sticky;right:-18px;z-index:8;flex:0 0 auto;margin-left:auto;border-left-color:#b9ddd2;background:#f6fcfa;box-shadow:-18px 0 18px 2px #fff}
+.manage-tool-sticky.manage-attention{animation:manage-attention 1.65s ease-out 1}
+@keyframes manage-attention{0%,100%{border-color:#b9ddd2;background:#f6fcfa;box-shadow:-18px 0 18px 2px #fff}28%{border-color:#078c68;background:#dff8ef;box-shadow:-18px 0 18px 2px #fff,0 0 0 5px #20aa7d38,0 8px 24px #078c6852;transform:translateY(-2px)}58%{border-color:#20aa7d;background:#effbf7;box-shadow:-18px 0 18px 2px #fff,0 0 0 2px #20aa7d24;transform:translateY(0)}}
 @media(max-width:760px){
   .compression-complete-layer{padding:12px}
   .compression-complete-dialog{width:100%;padding:32px 20px 24px;border-radius:20px}
@@ -284,4 +287,5 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .compression-complete-result{margin:20px 0 15px;padding:15px 12px;gap:12px;font-size:15px}
   .compression-complete-result>div strong{font-size:18px}
   .compression-complete-result>div .compression-new-size{font-size:21px}
+  .manage-tool-sticky{right:-8px;margin-left:0;box-shadow:-14px 0 15px 1px #fff}
 }

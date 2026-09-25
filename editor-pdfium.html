@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=compression-complete-2">
+<link rel="stylesheet" href="editor-pdfium.css?v=sticky-manage-1">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16506274922"></script>
 <script>
@@ -53,7 +53,7 @@
     <button class="tool" data-tool="watermark"><span class="icon"><svg viewBox="0 0 24 24"><path d="M12 2.8c-2.2 3.2-6.1 7.4-6.1 11.3A6.1 6.1 0 0 0 12 20.2a6.1 6.1 0 0 0 6.1-6.1C18.1 10.2 14.2 6 12 2.8Z"/><path d="M9 15.2c.5 1.3 1.5 2 3 2.2"/></svg></span>Watermark</button>
     <button class="tool" data-tool="crop"><span class="icon"><svg viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13"/><path d="M2 7h15a2 2 0 0 1 2 2v13"/></svg></span>Crop</button>
     <button class="tool" data-tool="redact"><span class="icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v12M8 17h8"/><path d="M3 20h18" stroke-width="4"/></svg></span>Redact</button>
-    <button class="tool" data-tool="manage"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Manage</button>
+    <button class="tool manage-tool-sticky" data-tool="manage"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span>Manage</button>
   </section>
   <section id="contextBar" class="context-bar">
     <div id="addControls" class="add-controls" hidden>
@@ -182,15 +182,15 @@
       <div class="compression-complete-icon" aria-hidden="true">
         <svg viewBox="0 0 24 24"><path d="m6.5 12.5 3.2 3.2 7.8-8.1"/></svg>
       </div>
-      <span class="compression-complete-kicker">COMPRESSION COMPLETE</span>
+      <span id="completionNoticeKicker" class="compression-complete-kicker">COMPRESSION COMPLETE</span>
       <h2 id="compressionCompleteTitle">Your PDF is now ultra lightweight</h2>
       <p id="compressionCompleteMessage">Your compressed PDF is ready in the editor.</p>
-      <div class="compression-complete-result">
+      <div id="completionNoticeResult" class="compression-complete-result">
         <div><span>Original size</span><strong id="compressionCompleteBefore">—</strong></div>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-5-5 5 5-5 5"/></svg>
         <div><span>New file size</span><strong id="compressionCompleteAfter" class="compression-new-size">—</strong></div>
       </div>
-      <p class="compression-complete-help">Select <strong>Download</strong> in the top-right to get your new lightweight copy.</p>
+      <p id="completionNoticeHelp" class="compression-complete-help">Select <strong>Download</strong> in the top-right to get your new lightweight copy.</p>
       <button id="compressionCompleteDone" class="compression-complete-done" type="button">Got it</button>
     </section>
   </div>
@@ -198,6 +198,6 @@
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
 <script src="analytics.js?v=google-ads-conversions-2"></script>
-<script type="module" src="editor-pdfium.js?v=compression-complete-2"></script>
+<script type="module" src="editor-pdfium.js?v=sticky-manage-1"></script>
 </body>
 </html>

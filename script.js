@@ -7323,7 +7323,7 @@ if (document.body.dataset.mergeFlow === 'true') {
       const bytes=await output.save();
       const firstName=mergeLandingFiles[0].name.replace(/\.pdf$/i,'');
       const mergedFile=new File([bytes],`${firstName}-merged.pdf`,{type:'application/pdf',lastModified:Date.now()});
-      await routeFileToSharedEditor(mergedFile,{});
+      await routeFileToSharedEditor(mergedFile,{completionNotice:{kind:'merge'}});
     }catch(error){console.error('Could not merge PDFs:',error);document.getElementById('file-status').textContent='PDFBreeze could not merge these files. Please try again.';button.disabled=false;button.textContent='Merge PDF'}
   });
   renderMergeLandingFiles();
