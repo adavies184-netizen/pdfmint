@@ -26,8 +26,8 @@ body{background:#f3f7f5;color:#10271f}.admin-sidebar{width:248px;padding:26px 20
 @media(max-width:620px){
   .admin-sidebar{width:min(272px,78vw);padding:17px 12px}
   .admin-brand{margin:0 7px 27px;font-size:16px}
-  .admin-brand>span{width:36px;height:36px}
-  .admin-sidebar nav{gap:5px}
+  .admin-brand>span{width:36px;height:36px;background:#10203f;border:1px solid rgba(255,255,255,.2);box-shadow:0 6px 16px rgba(3,24,19,.22)}
+  .admin-sidebar nav{width:100%;gap:5px;justify-content:stretch;align-content:start}
   .admin-sidebar nav p{margin:20px 7px 5px}
   .admin-sidebar nav button,.admin-sidebar nav a{height:44px;padding-inline:7px;gap:10px}
   .admin-nav-icon{width:30px;height:30px;flex-basis:30px}

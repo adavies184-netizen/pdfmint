@@ -103,7 +103,7 @@
       if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
     } catch (_) {}
     try {
-      await fetch(`${baseUrl.replace(/\/$/, '')}/v1/analytics/events`, {
+      const response = await fetch(`${baseUrl.replace(/\/$/, '')}/v1/analytics/events`, {
         method: 'POST',
         headers,
         keepalive: true,
@@ -115,7 +115,7 @@
           page_path: `${location.pathname}${location.search}`.slice(0, 220)
         })
       });
-      return true;
+      return response.ok;
     } catch (_) {
       return false;
     }
@@ -157,9 +157,17 @@
 
   const currentPage = pageName();
   if (!ignoredPages.has(currentPage) && sessionStorage.getItem(TRACKED_PAGE_KEY) !== currentPage) {
-    sessionStorage.setItem(TRACKED_PAGE_KEY, currentPage);
     sessionStorage.setItem(LANDING_KEY, currentPage);
-    track('landing_view');
+    const recordLandingView = async () => {
+      for (const delay of [0, 1200, 3500]) {
+        if (delay) await new Promise(resolve => window.setTimeout(resolve, delay));
+        if (await track('landing_view', currentPage)) {
+          sessionStorage.setItem(TRACKED_PAGE_KEY, currentPage);
+          return;
+        }
+      }
+    };
+    void recordLandingView();
   }
 
   document.addEventListener('click', event => {

@@ -16,7 +16,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 if (!window.PDFBreezeAnalytics && !document.querySelector('script[data-pdfbreeze-analytics]')) {
   const analyticsScript = document.createElement('script');
-  analyticsScript.src = 'analytics.js?v=google-ads-conversions-2';
+  analyticsScript.src = 'analytics.js?v=funnel-reliability-4';
   analyticsScript.async = true;
   analyticsScript.dataset.pdfbreezeAnalytics = 'true';
   document.head.appendChild(analyticsScript);
