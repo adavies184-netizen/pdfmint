@@ -15,3 +15,43 @@ body{background:#f3f7f5;color:#10271f}.admin-sidebar{width:248px;padding:26px 20
 @media(max-width:620px){.admin-main{margin-left:0}.admin-sidebar{width:min(300px,86vw);padding:20px 14px}.admin-brand b,.admin-sidebar nav p,.admin-sidebar nav span{display:flex}.admin-sidebar nav button,.admin-sidebar nav a{justify-content:flex-start;font-size:12px}.admin-content{padding:20px 14px}.admin-title{display:none}.admin-security-button{margin-left:8px;margin-right:8px}}
 .admin-pagination{min-width:650px;min-height:62px;padding:12px 18px;border-top:1px solid var(--line);background:#fbfdfc;display:flex;align-items:center;justify-content:space-between;gap:18px;color:var(--muted);font-size:10px}.admin-pagination-count{white-space:nowrap;font-weight:500}.admin-pagination nav,.admin-page-numbers{display:flex;align-items:center;gap:6px}.admin-pagination button{height:34px;border:1px solid #dbe6e1;background:#fff;color:#42564e;font:500 10px Poppins;cursor:pointer;transition:border-color .15s,background .15s,color .15s}.admin-page-direction{padding:0 12px;border-radius:9px}.admin-page-number{width:34px;padding:0;border-radius:50%}.admin-pagination button:hover:not(:disabled){border-color:#7bcbb3;color:#087b5e}.admin-pagination button.active{border-color:#0d8f6a;background:#0d8f6a;color:#fff}.admin-pagination button:disabled{cursor:not-allowed;opacity:.38}.admin-page-ellipsis{width:20px;color:#96a69f;text-align:center}
 @media(max-width:620px){.admin-pagination{min-width:650px}.admin-page-numbers{display:none}}
+
+/* PDFBreeze admin shell v4 — balanced mobile drawer and supplied navigation icons. */
+.admin-sidebar nav button,.admin-sidebar nav a{padding-inline:10px;gap:11px}
+.admin-nav-icon{width:30px;height:30px;flex:0 0 30px;border:1px solid #4bd0a7;border-radius:50%;background:#176b58;display:grid;place-items:center;font-style:normal}
+.admin-nav-icon img{display:block;width:14px;height:14px;max-width:14px;max-height:14px;object-fit:contain;filter:brightness(0) invert(1)}
+.admin-nav-arrow{color:#fff;font-size:15px;line-height:1}
+.admin-sidebar nav button.active .admin-nav-icon,.admin-sidebar nav button:hover .admin-nav-icon,.admin-sidebar nav a:hover .admin-nav-icon{border-color:#75e2c0;background:#176b58}
+@media(max-width:900px) and (min-width:621px){.admin-nav-icon{width:30px;height:30px;flex-basis:30px}}
+@media(max-width:620px){
+  .admin-sidebar{width:min(272px,78vw);padding:17px 12px}
+  .admin-brand{margin:0 7px 27px;font-size:16px}
+  .admin-brand>span{width:36px;height:36px}
+  .admin-sidebar nav{gap:5px}
+  .admin-sidebar nav p{margin:20px 7px 5px}
+  .admin-sidebar nav button,.admin-sidebar nav a{height:44px;padding-inline:7px;gap:10px}
+  .admin-nav-icon{width:30px;height:30px;flex-basis:30px}
+}
+
+.overview-date-filter{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.overview-date-filter label{font-size:10px;color:#71847d}
+.overview-date-filter select,.overview-date-filter input{height:40px;padding:0 12px;border:1px solid #d9e5e0;border-radius:10px;background:#fff;color:#10271f;font:500 11px Poppins}
+.overview-date-filter>span{padding:8px 11px;border-radius:999px;background:#e7f8f2;color:#087b5e;font-size:9px;font-weight:600}
+.admin-bulk-toolbar{min-height:56px;padding:10px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px;background:#fbfdfc}
+.admin-bulk-toolbar label{display:flex;align-items:center;gap:8px;font-size:11px;font-weight:500;cursor:pointer}
+.admin-bulk-toolbar input,.admin-select-cell input{width:17px;height:17px;accent-color:#13ad82;cursor:pointer}
+.admin-bulk-toolbar>span{margin-right:auto;color:#71847d;font-size:10px}
+.admin-bulk-toolbar button{padding:9px 13px;border:1px solid #d84444;border-radius:9px;background:#fff;color:#b42318;font:600 10px Poppins;cursor:pointer}
+.admin-bulk-toolbar button:hover:not(:disabled){background:#fff2f2}
+.admin-bulk-toolbar button:disabled{opacity:.4;cursor:not-allowed}
+.admin-select-cell{display:flex;align-items:center;gap:10px;min-width:0;cursor:pointer}
+.admin-select-cell>span{min-width:0;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:620px){
+  .overview-heading{align-items:flex-start;gap:14px;flex-direction:column}
+  .overview-date-filter{width:100%}
+  .overview-date-filter select,.overview-date-filter input{min-width:0;flex:1}
+  .overview-date-filter>span{width:100%;text-align:center}
+  .admin-bulk-toolbar{padding:10px 12px;gap:9px;flex-wrap:wrap}
+  .admin-bulk-toolbar>span{font-size:9px}
+  .admin-bulk-toolbar button{margin-left:auto}
+}

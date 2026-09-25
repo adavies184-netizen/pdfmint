@@ -10,6 +10,8 @@
   const row = (cells, attributes='') => `<div class="admin-row" ${attributes}>${cells.map(cell => `<span>${cell}</span>`).join('')}</div>`;
   const PAGE_SIZE = 20;
   const pagedTables = new Map();
+  const selectedRows = {members:new Set(), documents:new Set()};
+  let dashboardData = null;
   function paginationPages(current, total) {
     if (total <= 7) return Array.from({length:total}, (_,index) => index + 1);
     const visible = new Set([1, total, current - 1, current, current + 1]);
@@ -33,6 +35,22 @@
     const visibleItems = items.slice(start, start + PAGE_SIZE);
     const pages = paginationPages(record.page, pageCount);
     container.innerHTML = header + visibleItems.map(renderItem).join('') + `<div class="admin-pagination"><span class="admin-pagination-count">${items.length ? start + 1 : 0}–${Math.min(start + PAGE_SIZE, items.length)} of ${items.length}</span><nav aria-label="${safe(key)} pages"><button class="admin-page-direction" type="button" data-page-table="${safe(key)}" data-page-number="${record.page - 1}" ${record.page === 1 ? 'disabled':''}><span aria-hidden="true">←</span> Previous</button><div class="admin-page-numbers">${pages.map(page => page === 'ellipsis' ? '<span class="admin-page-ellipsis" aria-hidden="true">…</span>' : `<button type="button" data-page-table="${safe(key)}" data-page-number="${page}" class="admin-page-number ${page === record.page ? 'active':''}" ${page === record.page ? 'aria-current="page"':''}>${page}</button>`).join('')}</div><button class="admin-page-direction" type="button" data-page-table="${safe(key)}" data-page-number="${record.page + 1}" ${record.page === pageCount ? 'disabled':''}>Next <span aria-hidden="true">→</span></button></nav></div>`;
+    syncBulkControls(key);
+  }
+  function syncBulkControls(key) {
+    const selected = selectedRows[key];
+    if (!selected) return;
+    const itemBoxes = [...document.querySelectorAll(`[data-select-item="${key}"]`)];
+    itemBoxes.forEach(box => { box.checked = selected.has(box.value); });
+    const pageToggle = document.querySelector(`[data-select-page="${key}"]`);
+    if (pageToggle) {
+      pageToggle.checked = Boolean(itemBoxes.length) && itemBoxes.every(box => selected.has(box.value));
+      pageToggle.indeterminate = itemBoxes.some(box => selected.has(box.value)) && !pageToggle.checked;
+    }
+    const count = document.querySelector(`[data-selected-count="${key}"]`);
+    if (count) count.textContent = `${selected.size} selected`;
+    const deleteButton = document.querySelector(`[data-delete-selected="${key}"]`);
+    if (deleteButton) deleteButton.disabled = selected.size === 0;
   }
   let adminSession = null;
   let funnelLoaded = false;
@@ -208,6 +226,66 @@
     document.getElementById('member-drawer').hidden = false;
   }
 
+  function renderDashboard(data) {
+    dashboardData = data;
+    const availableSelections = {
+      members:new Set(data.members.map(item => item.id)),
+      documents:new Set(data.documents.map(item => item.id))
+    };
+    Object.entries(selectedRows).forEach(([key,selected]) => {
+      [...selected].forEach(id => { if (!availableSelections[key].has(id)) selected.delete(id); });
+    });
+    document.querySelectorAll('[data-metric]').forEach(element => {
+      const key = element.dataset.metric;
+      element.textContent = ['successful_value','upcoming_revenue'].includes(key) ? money(data.metrics[key]) : Number(data.metrics[key] || 0).toLocaleString('en-GB');
+    });
+    const memberHeader = '<div class="admin-row header"><span>Member</span><span>Plan</span><span>Provider</span><span>Status</span><span>Next payment</span></div>';
+    const recentMemberRow = member => row([`<b>${safe(member.name || member.email)}</b><br><small>${member.name ? safe(member.email) : ''}</small>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
+    const memberRow = member => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="members" value="${safe(member.id)}"><span><b>${safe(member.name || member.email)}</b><br><small>${member.name ? safe(member.email) : ''}</small></span></label>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
+    document.querySelector('[data-recent-members]').innerHTML = memberHeader + data.members.slice(0,5).map(recentMemberRow).join('');
+    renderPagedTable('members', document.querySelector('[data-members-table]'), data.members, memberHeader, memberRow);
+    renderPagedTable('payments', document.querySelector('[data-payments-table]'), data.payments, '<div class="admin-row header"><span>Payment ID</span><span>Type</span><span>Provider</span><span>Status</span><span>Amount</span></div>', payment => row([`<b>${safe(payment.provider_payment_id)}</b>`,safe(payment.payment_type),safe(payment.provider),status(payment.status),money(payment.amount)]));
+    renderPagedTable('documents', document.querySelector('[data-documents-table]'), data.documents, '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>', doc => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="documents" value="${safe(doc.id)}"><span><b>${safe(doc.name)}</b></span></label>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)]));
+    const providersHtml = data.providers.map(provider => `<div class="provider-choice ${provider.is_default ? 'active-provider':''}"><b><span class="stripe-logo">${safe(provider.display_name.slice(0,1))}</span>${safe(provider.display_name)}</b><mark>${provider.configured ? 'Configured ✓' : 'Not connected'}</mark><span>${provider.is_default ? 'Default for new subscriptions' : provider.configured ? `<button data-select-provider="${safe(provider.provider)}">Make default</button>` : 'Available after connection'}</span></div>`).join('');
+    document.querySelector('[data-provider-summary]').innerHTML = providersHtml;
+    document.querySelector('[data-providers-list]').innerHTML = `<h2>Provider routing</h2>${providersHtml}<p>Stripe remains the only enabled provider. Future providers use the same internal subscription structure.</p>`;
+  }
+
+  async function loadOverview(day='') {
+    document.body.classList.add('admin-loading');
+    const params = new URLSearchParams();
+    if (day) params.set('day', day);
+    const query = params.size ? `?${params}` : '';
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/overview${query}`, {headers:{Authorization:`Bearer ${adminSession.access_token}`}});
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.detail || 'The admin dashboard could not be loaded.');
+    renderDashboard(data);
+    document.querySelector('[data-overview-scope]').textContent = day ? new Intl.DateTimeFormat('en-GB',{dateStyle:'long'}).format(new Date(`${day}T12:00:00`)) : 'All-time data';
+    document.body.classList.remove('admin-loading');
+  }
+
+  async function deleteSelected(key) {
+    const ids = [...selectedRows[key]];
+    if (!ids.length) return;
+    const noun = key === 'members' ? 'member accounts' : 'documents';
+    const warning = key === 'members' ? 'This permanently removes the selected test accounts and their saved files. Active or trial subscriptions are protected and will not be deleted.' : 'This permanently removes the selected files from storage.';
+    if (!confirm(`Delete ${ids.length} selected ${noun}?\n\n${warning}`)) return;
+    const button = document.querySelector(`[data-delete-selected="${key}"]`);
+    button.disabled = true;
+    button.textContent = 'Deleting…';
+    try {
+      const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/${key}`, {method:'DELETE',headers:{'Content-Type':'application/json',Authorization:`Bearer ${adminSession.access_token}`},body:JSON.stringify({ids})});
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || `The selected ${key} could not be deleted.`);
+      selectedRows[key].clear();
+      const activeDay = document.getElementById('overview-period').value === 'day' ? document.getElementById('overview-day').value : '';
+      await loadOverview(activeDay);
+    } finally {
+      button.textContent = 'Delete selected';
+      syncBulkControls(key);
+    }
+  }
+
   try {
     await auth.ready;
     const user = await auth.requireUser({returnTo:'/admin.html'});
@@ -216,30 +294,48 @@
     document.getElementById('admin-add-factor').onclick = () => enrollBackupAuthenticator().catch(error => alert(error.message || 'The backup authenticator could not be added.'));
     const session = await auth.getSession();
     adminSession = session;
-    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/overview`, {headers:{Authorization:`Bearer ${session.access_token}`}});
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.detail || 'The admin dashboard could not be loaded.');
-    document.querySelectorAll('[data-metric]').forEach(element => {
-      const key = element.dataset.metric;
-      element.textContent = ['successful_value','upcoming_revenue'].includes(key) ? money(data.metrics[key]) : Number(data.metrics[key] || 0).toLocaleString('en-GB');
-    });
-    const memberHeader = '<div class="admin-row header"><span>Member</span><span>Plan</span><span>Provider</span><span>Status</span><span>Next payment</span></div>';
-    const memberRow = member => row([`<b>${safe(member.name || member.email)}</b><br><small>${member.name ? safe(member.email) : ''}</small>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
-    document.querySelector('[data-recent-members]').innerHTML = memberHeader + data.members.slice(0,5).map(memberRow).join('');
-    renderPagedTable('members', document.querySelector('[data-members-table]'), data.members, memberHeader, memberRow);
-    renderPagedTable('payments', document.querySelector('[data-payments-table]'), data.payments, '<div class="admin-row header"><span>Payment ID</span><span>Type</span><span>Provider</span><span>Status</span><span>Amount</span></div>', payment => row([`<b>${safe(payment.provider_payment_id)}</b>`,safe(payment.payment_type),safe(payment.provider),status(payment.status),money(payment.amount)]));
-    renderPagedTable('documents', document.querySelector('[data-documents-table]'), data.documents, '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>', doc => row([`<b>${safe(doc.name)}</b>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)]));
-    const providersHtml = data.providers.map(provider => `<div class="provider-choice ${provider.is_default ? 'active-provider':''}"><b><span class="stripe-logo">${safe(provider.display_name.slice(0,1))}</span>${safe(provider.display_name)}</b><mark>${provider.configured ? 'Configured ✓' : 'Not connected'}</mark><span>${provider.is_default ? 'Default for new subscriptions' : provider.configured ? `<button data-select-provider="${safe(provider.provider)}">Make default</button>` : 'Available after connection'}</span></div>`).join('');
-    document.querySelector('[data-provider-summary]').innerHTML = providersHtml;
-    document.querySelector('[data-providers-list]').innerHTML = `<h2>Provider routing</h2>${providersHtml}<p>Stripe remains the only enabled provider. Future providers use the same internal subscription structure.</p>`;
+    await loadOverview();
     document.addEventListener('click', event => {
       const memberRowElement = event.target.closest('[data-member-id]');
-      if (memberRowElement) renderMemberDetail(data.members.find(item => item.id === memberRowElement.dataset.memberId), data);
+      if (memberRowElement && !event.target.closest('input,label')) {
+        const member = dashboardData.members.find(item => item.id === memberRowElement.dataset.memberId);
+        if (member) renderMemberDetail(member, dashboardData);
+      }
       const providerButton = event.target.closest('[data-select-provider]');
       if (providerButton) fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/payment-provider`, {method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({provider:providerButton.dataset.selectProvider})}).then(response => { if (!response.ok) throw new Error('Provider could not be changed.'); location.reload(); }).catch(error => alert(error.message));
+      const deleteButton = event.target.closest('[data-delete-selected]');
+      if (deleteButton) deleteSelected(deleteButton.dataset.deleteSelected).catch(error => alert(error.message));
     });
     document.querySelector('.drawer-close').onclick = () => { document.getElementById('member-drawer').hidden = true; };
     document.getElementById('admin-search').addEventListener('input', event => document.querySelectorAll('.admin-row:not(.header)').forEach(item => item.hidden = Boolean(event.target.value.trim()) && !item.textContent.toLowerCase().includes(event.target.value.trim().toLowerCase())));
+    document.addEventListener('change', event => {
+      const item = event.target.closest('[data-select-item]');
+      if (item) {
+        item.checked ? selectedRows[item.dataset.selectItem].add(item.value) : selectedRows[item.dataset.selectItem].delete(item.value);
+        syncBulkControls(item.dataset.selectItem);
+      }
+      const page = event.target.closest('[data-select-page]');
+      if (page) {
+        document.querySelectorAll(`[data-select-item="${page.dataset.selectPage}"]`).forEach(box => {
+          box.checked = page.checked;
+          page.checked ? selectedRows[page.dataset.selectPage].add(box.value) : selectedRows[page.dataset.selectPage].delete(box.value);
+        });
+        syncBulkControls(page.dataset.selectPage);
+      }
+    });
+    const overviewPeriod = document.getElementById('overview-period');
+    const overviewDay = document.getElementById('overview-day');
+    overviewDay.max = new Date().toISOString().slice(0,10);
+    overviewPeriod.addEventListener('change', () => {
+      const selectDay = overviewPeriod.value === 'day';
+      overviewDay.hidden = !selectDay;
+      if (!selectDay) loadOverview().catch(error => alert(error.message));
+      else {
+        overviewDay.value ||= new Date().toISOString().slice(0,10);
+        loadOverview(overviewDay.value).catch(error => alert(error.message));
+      }
+    });
+    overviewDay.addEventListener('change', () => { if (overviewDay.value) loadOverview(overviewDay.value).catch(error => alert(error.message)); });
     document.getElementById('funnel-landing-page').addEventListener('change', () => { selectedFunnelStage = 0; loadFunnel().catch(showFunnelError); });
     document.getElementById('funnel-days').addEventListener('change', () => { selectedFunnelStage = 0; funnelLoaded = false; loadFunnel().catch(showFunnelError); });
     document.querySelectorAll('[data-funnel-tab]').forEach(button => button.addEventListener('click', () => {

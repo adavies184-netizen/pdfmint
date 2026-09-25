@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import date as calendar_date, datetime, timedelta, timezone
 from typing import Any
 import base64
 import json
+from urllib.parse import quote
+from uuid import UUID
 
 import httpx
 from fastapi import Header, HTTPException, Query
@@ -35,6 +37,26 @@ async def _rows(client: httpx.AsyncClient, table: str, select: str) -> list[dict
 
 class ProviderSelectionRequest(BaseModel):
     provider: str = Field(pattern="^[a-z0-9_-]{2,40}$")
+
+
+class AdminDeleteRequest(BaseModel):
+    ids: list[UUID] = Field(min_length=1, max_length=100)
+
+
+def _parsed_datetime(value: str | None) -> datetime | None:
+    if not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _on_day(value: str | None, selected_day: calendar_date | None) -> bool:
+    if selected_day is None:
+        return True
+    parsed = _parsed_datetime(value)
+    return bool(parsed and parsed.date() == selected_day)
 
 
 FUNNEL_STAGES = [
@@ -154,45 +176,59 @@ async def _require_admin(authorization: str | None) -> dict[str, Any]:
     return user
 
 
-async def admin_overview(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+async def admin_overview(
+    authorization: str | None = Header(default=None),
+    day: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+) -> dict[str, Any]:
     await _require_admin(authorization)
+
+    try:
+        selected_day = calendar_date.fromisoformat(day) if day else None
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail="Choose a valid calendar date.") from exc
 
     async with httpx.AsyncClient(timeout=15) as client:
         profiles = await _rows(client, "profiles", "id,email,first_name,last_name,created_at")
         subscriptions = await _rows(client, "subscriptions", "user_id,provider,provider_subscription_id,plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,created_at,updated_at")
         payments = await _rows(client, "payments", "user_id,provider,provider_payment_id,payment_type,status,amount,currency,paid_at,created_at")
-        documents = await _rows(client, "documents", "id,user_id,name,byte_size,source_tool,created_at,updated_at")
+        documents = await _rows(client, "documents", "id,user_id,name,storage_path,byte_size,source_tool,created_at,updated_at")
         consents = await _rows(client, "billing_consents", "id,user_id,provider,provider_subscription_id,plan_code,accepted,accepted_at,disclosure_version,disclosure_text,terms_url,privacy_url,amount_today,renewal_amount,renewal_interval,trial_days,ip_address,user_agent,checkout_origin,evidence_hash,payment_confirmed,confirmed_at,created_at")
         providers = await _rows(client, "payment_provider_settings", "provider,display_name,enabled,is_default,configured,updated_at")
 
+    all_subscriptions = subscriptions
+    profiles = [item for item in profiles if _on_day(item.get("created_at"), selected_day)]
+    payments = [item for item in payments if _on_day(item.get("paid_at") or item.get("created_at"), selected_day)]
+    documents = [item for item in documents if _on_day(item.get("created_at"), selected_day)]
+    consents = [item for item in consents if _on_day(item.get("created_at"), selected_day)]
+    metric_subscriptions = [item for item in subscriptions if _on_day(item.get("created_at"), selected_day)]
+
     subscription_by_user: dict[str, dict[str, Any]] = {}
-    for subscription in subscriptions:
+    for subscription in all_subscriptions:
         subscription_by_user.setdefault(subscription["user_id"], subscription)
 
     now = datetime.now(timezone.utc)
     seven_days = now + timedelta(days=7)
     month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-    def parsed(value: str | None) -> datetime | None:
-        if not value:
-            return None
-        try:
-            return datetime.fromisoformat(value.replace("Z", "+00:00"))
-        except ValueError:
-            return None
-
     active_statuses = {"active", "trialing"}
-    active_subscriptions = [item for item in subscriptions if item.get("status") in active_statuses]
-    renewals_due = [
-        item for item in active_subscriptions
-        if (renewal := parsed(item.get("current_period_ends_at"))) and now <= renewal <= seven_days
-    ]
+    active_subscriptions = [item for item in metric_subscriptions if item.get("status") in active_statuses]
+    if selected_day:
+        renewals_due = [
+            item for item in all_subscriptions
+            if item.get("status") in active_statuses and _on_day(item.get("current_period_ends_at"), selected_day)
+        ]
+    else:
+        renewals_due = [
+            item for item in active_subscriptions
+            if (renewal := _parsed_datetime(item.get("current_period_ends_at"))) and now <= renewal <= seven_days
+        ]
     upcoming_items = []
-    for item in active_subscriptions:
+    for item in (all_subscriptions if selected_day else active_subscriptions):
         if item.get("cancel_at_period_end") or item.get("status") == "paused":
             continue
-        due_at = parsed(item.get("trial_ends_at")) if item.get("status") == "trialing" else parsed(item.get("current_period_ends_at"))
-        if due_at and now <= due_at <= seven_days:
+        due_at = _parsed_datetime(item.get("trial_ends_at")) if item.get("status") == "trialing" else _parsed_datetime(item.get("current_period_ends_at"))
+        due_in_window = bool(due_at and (due_at.date() == selected_day if selected_day else now <= due_at <= seven_days))
+        if due_in_window:
             upcoming_items.append({
                 "user_id": item.get("user_id"),
                 "plan": item.get("plan_code"),
@@ -203,8 +239,11 @@ async def admin_overview(authorization: str | None = Header(default=None)) -> di
     failed = [item for item in payments if item.get("status") in {"failed", "past_due", "unpaid"}]
     refunds = [item for item in payments if item.get("payment_type") == "refund"]
     cancelled_month = [
-        item for item in subscriptions
-        if item.get("cancel_at_period_end") and (parsed(item.get("updated_at")) or now) >= month_start
+        item for item in all_subscriptions
+        if item.get("cancel_at_period_end") and (
+            _on_day(item.get("updated_at"), selected_day)
+            if selected_day else (_parsed_datetime(item.get("updated_at")) or now) >= month_start
+        )
     ]
 
     members = []
@@ -243,6 +282,7 @@ async def admin_overview(authorization: str | None = Header(default=None)) -> di
         "consents": consents,
         "upcoming": upcoming_items,
         "providers": providers,
+        "selected_day": day,
     }
 
 
@@ -286,6 +326,87 @@ async def admin_funnel(
     report["landing_page"] = landing_page or "all"
     report["event_limit_reached"] = len(events) >= 10000
     return report
+
+
+async def _delete_stored_documents(client: httpx.AsyncClient, documents: list[dict[str, Any]]) -> None:
+    for document in documents:
+        storage_path = str(document.get("storage_path") or "").strip()
+        if not storage_path:
+            continue
+        response = await client.delete(
+            f"{SUPABASE_URL}/storage/v1/object/user-documents/{quote(storage_path, safe='/')}",
+            headers=_service_headers(),
+        )
+        if response.is_error and response.status_code != 404:
+            raise HTTPException(status_code=502, detail=f"Could not remove the stored file for {document.get('name') or 'a document'}.")
+
+
+async def delete_admin_documents(payload: AdminDeleteRequest, authorization: str | None) -> dict[str, Any]:
+    await _require_admin(authorization)
+    ids = [str(item) for item in dict.fromkeys(payload.ids)]
+    id_filter = f"in.({','.join(ids)})"
+    async with httpx.AsyncClient(timeout=20) as client:
+        response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/documents",
+            headers=_service_headers(),
+            params={"select": "id,name,storage_path", "id": id_filter},
+        )
+        if response.is_error:
+            raise HTTPException(status_code=502, detail="The selected documents could not be checked.")
+        documents = response.json()
+        await _delete_stored_documents(client, documents)
+        deleted = await client.delete(
+            f"{SUPABASE_URL}/rest/v1/documents",
+            headers={**_service_headers(), "Prefer": "return=representation"},
+            params={"id": id_filter},
+        )
+        if deleted.is_error:
+            raise HTTPException(status_code=502, detail="The selected document records could not be deleted.")
+    return {"deleted": len(deleted.json()), "ids": ids}
+
+
+async def delete_admin_members(payload: AdminDeleteRequest, authorization: str | None) -> dict[str, Any]:
+    admin_user = await _require_admin(authorization)
+    ids = [str(item) for item in dict.fromkeys(payload.ids)]
+    if str(admin_user.get("id") or "") in ids:
+        raise HTTPException(status_code=409, detail="You cannot delete the administrator account you are currently using.")
+    id_filter = f"in.({','.join(ids)})"
+    async with httpx.AsyncClient(timeout=20) as client:
+        profiles_response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/profiles",
+            headers=_service_headers(),
+            params={"select": "id,email", "id": id_filter},
+        )
+        subscriptions_response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/subscriptions",
+            headers=_service_headers(),
+            params={"select": "user_id,status", "user_id": id_filter, "status": "in.(active,trialing)"},
+        )
+        documents_response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/documents",
+            headers=_service_headers(),
+            params={"select": "id,name,storage_path", "user_id": id_filter},
+        )
+        if profiles_response.is_error or subscriptions_response.is_error or documents_response.is_error:
+            raise HTTPException(status_code=502, detail="The selected members could not be checked.")
+        profiles = profiles_response.json()
+        protected_admins = [item for item in profiles if str(item.get("email") or "").lower() in ADMIN_EMAILS]
+        if protected_admins:
+            raise HTTPException(status_code=409, detail="Administrator accounts cannot be deleted from the members list.")
+        active_subscriptions = subscriptions_response.json()
+        if active_subscriptions:
+            raise HTTPException(status_code=409, detail="Cancel active or trial subscriptions before deleting those members.")
+        await _delete_stored_documents(client, documents_response.json())
+        deleted_ids: list[str] = []
+        for member_id in ids:
+            response = await client.delete(
+                f"{SUPABASE_URL}/auth/v1/admin/users/{member_id}",
+                headers=_service_headers(),
+            )
+            if response.is_error and response.status_code != 404:
+                raise HTTPException(status_code=502, detail="A selected member could not be deleted. No further members were removed.")
+            deleted_ids.append(member_id)
+    return {"deleted": len(deleted_ids), "ids": deleted_ids}
 
 
 async def select_payment_provider(payload: ProviderSelectionRequest, authorization: str | None) -> dict[str, Any]:

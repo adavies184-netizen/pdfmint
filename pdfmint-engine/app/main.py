@@ -18,13 +18,13 @@ from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
-from .admin import ProviderSelectionRequest, admin_funnel, admin_overview, select_payment_provider
+from .admin import AdminDeleteRequest, ProviderSelectionRequest, admin_funnel, admin_overview, delete_admin_documents, delete_admin_members, select_payment_provider
 from .analytics import AnalyticsEventRequest, store_analytics_event
 from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.17.0"
+ENGINE_VERSION = "1.18.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -105,8 +105,11 @@ async def billing_consent_evidence(payload: ConsentEvidenceRequest, request: Req
 
 
 @app.get("/v1/admin/overview")
-async def admin_dashboard_overview(authorization: str | None = Header(default=None)):
-    return await admin_overview(authorization)
+async def admin_dashboard_overview(
+    authorization: str | None = Header(default=None),
+    day: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+):
+    return await admin_overview(authorization, day)
 
 
 @app.get("/v1/admin/funnel")
@@ -121,6 +124,16 @@ async def admin_conversion_funnel(
 @app.post("/v1/admin/payment-provider")
 async def admin_payment_provider(payload: ProviderSelectionRequest, authorization: str | None = Header(default=None)):
     return await select_payment_provider(payload, authorization)
+
+
+@app.delete("/v1/admin/documents")
+async def admin_delete_documents(payload: AdminDeleteRequest, authorization: str | None = Header(default=None)):
+    return await delete_admin_documents(payload, authorization)
+
+
+@app.delete("/v1/admin/members")
+async def admin_delete_members(payload: AdminDeleteRequest, authorization: str | None = Header(default=None)):
+    return await delete_admin_members(payload, authorization)
 
 
 @app.post("/v1/support/message")
