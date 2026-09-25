@@ -1,4 +1,30 @@
 (async () => {
+  const googleAdsPendingPurchaseKey = 'pdfbreezeGoogleAdsPendingPurchase';
+  const reportGoogleAdsTrialPurchase = () => {
+    if (new URLSearchParams(location.search).get('payment') !== 'complete') return;
+    let pending = null;
+    try {
+      pending = JSON.parse(sessionStorage.getItem(googleAdsPendingPurchaseKey) || 'null');
+    } catch (_) {
+      sessionStorage.removeItem(googleAdsPendingPurchaseKey);
+      return;
+    }
+    const transactionId = String(pending?.transactionId || '').trim();
+    const value = Number(pending?.value);
+    const isFresh = Number(pending?.createdAt) > Date.now() - (12 * 60 * 60 * 1000);
+    if (!transactionId || !Number.isFinite(value) || value <= 0 || !isFresh || typeof window.gtag !== 'function') return;
+    const dedupeKey = `pdfbreeze-google-trial-purchase:${transactionId}`;
+    sessionStorage.removeItem(googleAdsPendingPurchaseKey);
+    if (localStorage.getItem(dedupeKey) === 'sent') return;
+    localStorage.setItem(dedupeKey, 'sent');
+    window.gtag('event', 'conversion', {
+      send_to: 'AW-16506274922/y4WSCPDa1YQdEOqI5749',
+      value,
+      currency: 'GBP',
+      transaction_id: transactionId
+    });
+    window.PDFBreezeAnalytics?.showGoogleAdsTestMessage?.('Trial purchase conversion fired');
+  };
   const accountAuth = window.PDFMintAuth;
   if (!accountAuth) {
     location.replace('/login.html');
@@ -26,6 +52,7 @@
     user_metadata: {}
   };
   if (!authenticatedUser) return;
+  reportGoogleAdsTrialPurchase();
   const tools = [
     ['Edit PDF','Update text and content','dashboard.html?v=pdfium-dashboard-3&menu=edit','i-edit'],
     ['Convert files','Convert documents, images, audio and more','dashboard.html?v=pdfium-dashboard-3&tool=convert','i-convert'],

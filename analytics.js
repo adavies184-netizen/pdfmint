@@ -4,6 +4,9 @@
   const SESSION_KEY = 'pdfbreezeAnalyticsSessionId';
   const LANDING_KEY = 'pdfbreezeAnalyticsLandingPage';
   const TRACKED_PAGE_KEY = 'pdfbreezeAnalyticsPageTracked';
+  const GOOGLE_ADS_EDITOR_OPENED_SEND_TO = 'AW-16506274922/tmQbCK7t14QdEOqI5749';
+  const GOOGLE_ADS_EDITOR_OPENED_KEY = 'pdfbreeze-google-editor-opened';
+  const GOOGLE_ADS_TEST_MODE_KEY = 'pdfbreezeGoogleAdsTestMode';
   const ignoredPages = new Set([
     'admin', 'auth-callback', 'dashboard', 'editor', 'editor-pdfium',
     'login', 'reset-password', 'cancel-subscription'
@@ -39,7 +42,59 @@
     return value;
   }
 
+  function googleAdsTestMode() {
+    const requestedMode = new URLSearchParams(location.search).get('gtag_test');
+    if (requestedMode === '1' && sessionStorage.getItem(GOOGLE_ADS_TEST_MODE_KEY) !== 'enabled') {
+      sessionStorage.setItem(GOOGLE_ADS_TEST_MODE_KEY, 'enabled');
+      sessionStorage.removeItem(GOOGLE_ADS_EDITOR_OPENED_KEY);
+    }
+    if (requestedMode === '0') sessionStorage.removeItem(GOOGLE_ADS_TEST_MODE_KEY);
+    return sessionStorage.getItem(GOOGLE_ADS_TEST_MODE_KEY) === 'enabled';
+  }
+
+  function showGoogleAdsTestMessage(message) {
+    if (!googleAdsTestMode()) return;
+    let region = document.getElementById('pdfbreeze-google-ads-test-messages');
+    if (!region) {
+      region = document.createElement('div');
+      region.id = 'pdfbreeze-google-ads-test-messages';
+      region.setAttribute('role', 'status');
+      region.setAttribute('aria-live', 'polite');
+      Object.assign(region.style, {
+        position: 'fixed', top: '18px', right: '18px', zIndex: '2147483647',
+        display: 'grid', gap: '8px', width: 'min(360px, calc(100vw - 36px))',
+        pointerEvents: 'none'
+      });
+      document.body.appendChild(region);
+    }
+    const toast = document.createElement('div');
+    toast.textContent = `✓ ${message}`;
+    Object.assign(toast.style, {
+      background: '#0f513f', color: '#fff', border: '1px solid #27c499',
+      borderRadius: '12px', boxShadow: '0 12px 30px rgba(15,81,63,.24)',
+      font: '600 14px/1.4 Inter, Poppins, Arial, sans-serif', padding: '13px 16px',
+      opacity: '1', transition: 'opacity .25s ease, transform .25s ease'
+    });
+    region.appendChild(toast);
+    window.setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transform = 'translateY(-6px)';
+      window.setTimeout(() => toast.remove(), 300);
+    }, 6000);
+  }
+
+  function reportGoogleAdsEditorOpened() {
+    if (typeof window.gtag !== 'function') return;
+    if (sessionStorage.getItem(GOOGLE_ADS_EDITOR_OPENED_KEY) === 'sent') return;
+    sessionStorage.setItem(GOOGLE_ADS_EDITOR_OPENED_KEY, 'sent');
+    window.gtag('event', 'conversion', {
+      send_to: GOOGLE_ADS_EDITOR_OPENED_SEND_TO
+    });
+    showGoogleAdsTestMessage('Editor opened conversion fired');
+  }
+
   async function track(eventName, eventValue = '') {
+    if (eventName === 'editor_opened') reportGoogleAdsEditorOpened();
     const baseUrl = window.PDFMINT_CONFIG?.engineBaseUrl;
     if (!baseUrl) return false;
     const headers = {'Content-Type': 'application/json'};
@@ -81,12 +136,24 @@
     track,
     sessionId,
     landingPage,
+    googleAdsTestMode,
+    showGoogleAdsTestMessage,
     resetJourney() {
       sessionStorage.removeItem(SESSION_KEY);
       sessionStorage.removeItem(LANDING_KEY);
       sessionStorage.removeItem(TRACKED_PAGE_KEY);
     }
   };
+
+  if (googleAdsTestMode()) {
+    window.setTimeout(() => {
+      showGoogleAdsTestMessage(
+        typeof window.gtag === 'function'
+          ? 'Google tag initialised: AW-16506274922'
+          : 'Google tag was not found'
+      );
+    }, 250);
+  }
 
   const currentPage = pageName();
   if (!ignoredPages.has(currentPage) && sessionStorage.getItem(TRACKED_PAGE_KEY) !== currentPage) {

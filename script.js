@@ -16,7 +16,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 if (!window.PDFBreezeAnalytics && !document.querySelector('script[data-pdfbreeze-analytics]')) {
   const analyticsScript = document.createElement('script');
-  analyticsScript.src = 'analytics.js?v=1';
+  analyticsScript.src = 'analytics.js?v=google-ads-conversions-2';
   analyticsScript.async = true;
   analyticsScript.dataset.pdfbreezeAnalytics = 'true';
   document.head.appendChild(analyticsScript);
@@ -4936,35 +4936,20 @@ let stripeClientSecret = '';
 let stripeCardNumberElement = null;
 let stripeCardElements = [];
 const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
-// Set this after Google Ads creates the new trial-purchase conversion label.
-// A base tag ID alone is not a valid purchase conversion destination.
-const googleAdsTrialPurchaseSendTo = '';
+const googleAdsTrialPurchaseSendTo = 'AW-16506274922/y4WSCPDa1YQdEOqI5749';
+const googleAdsPendingPurchaseKey = 'pdfbreezeGoogleAdsPendingPurchase';
 
-async function reportGoogleAdsTrialPurchase(transactionId) {
+function queueGoogleAdsTrialPurchase(transactionId) {
   const cleanTransactionId = String(transactionId || '').trim();
   const value = Number(selectedAccessPlan?.price);
-  if (!googleAdsTrialPurchaseSendTo || !cleanTransactionId || !Number.isFinite(value) || value <= 0 || typeof window.gtag !== 'function') return;
-
-  const dedupeKey = `pdfbreeze-google-trial-purchase:${cleanTransactionId}`;
-  if (sessionStorage.getItem(dedupeKey) === 'sent') return;
-  sessionStorage.setItem(dedupeKey, 'sent');
-
-  await new Promise(resolve => {
-    let finished = false;
-    const finish = () => {
-      if (finished) return;
-      finished = true;
-      resolve();
-    };
-    window.gtag('event', 'conversion', {
-      send_to: googleAdsTrialPurchaseSendTo,
+  if (!googleAdsTrialPurchaseSendTo || !cleanTransactionId || !Number.isFinite(value) || value <= 0) return;
+  sessionStorage.setItem(googleAdsPendingPurchaseKey, JSON.stringify({
+      sendTo: googleAdsTrialPurchaseSendTo,
       value,
       currency: 'GBP',
-      transaction_id: cleanTransactionId,
-      event_callback: finish
-    });
-    window.setTimeout(finish, 1200);
-  });
+      transactionId: cleanTransactionId,
+      createdAt: Date.now()
+  }));
 }
 
 let stripeLibraryPromise = null;
@@ -5223,9 +5208,11 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
       }
       return;
     }
-    const googleTransactionId = paymentIntent?.id || stripeCheckoutSubscriptionId || setupIntent?.id;
-    await window.PDFBreezeAnalytics?.track('purchase_complete', stripePlanCode());
-    await reportGoogleAdsTrialPurchase(googleTransactionId);
+    const paymentSucceeded = paymentIntent?.status === 'succeeded';
+    if (paymentSucceeded) {
+      await window.PDFBreezeAnalytics?.track('purchase_complete', stripePlanCode());
+      queueGoogleAdsTrialPurchase(paymentIntent.id);
+    }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
       const paidFilename = pendingCheckoutFilename;
       await window.PDFMintAuth?.saveDocument?.(pendingCheckoutBlob, paidFilename, 'paid-download');

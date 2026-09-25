@@ -1113,7 +1113,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-<script src="script.js?v=analytics-funnel-1"></script>
+<script src="script.js?v=google-ads-conversions-2"></script>
   <script>
     (async()=>{if(!window.PDFMintAuth)return;await window.PDFMintAuth.ready;const user=await window.PDFMintAuth.getUser();if(!user)return;document.querySelectorAll('[data-auth-nav]').forEach(link=>{link.href='dashboard.html';link.textContent='My account';});})();
     (()=>{const tabs=[...document.querySelectorAll('.feature-tab')];const scenes=[...document.querySelectorAll('.feature-scene')];if(!tabs.length)return;const activate=(tab)=>{tabs.forEach(item=>{const active=item===tab;item.classList.toggle('is-active',active);item.setAttribute('aria-selected',String(active));});scenes.forEach(scene=>{const active=scene.dataset.scene===tab.dataset.feature;scene.classList.toggle('is-active',active);scene.hidden=!active;});};tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activate(tab));tab.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const direction=['ArrowDown','ArrowRight'].includes(event.key)?1:-1;const next=tabs[(index+direction+tabs.length)%tabs.length];next.focus();activate(next);});});})();
