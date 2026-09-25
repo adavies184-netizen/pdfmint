@@ -72,6 +72,11 @@
 .tools-section .tool-card{border-color:rgba(41,166,130,.17);box-shadow:0 8px 24px rgba(25,87,70,.07);background:rgba(255,255,255,.94)}
 .tools-section .tool-card:hover{border-color:rgba(32,185,139,.42);box-shadow:0 15px 34px rgba(25,87,70,.12)}
 .tools-section .tool-icon{background:linear-gradient(145deg,#ddf8ef,#eefaf6)}
+.customer-story-avatar{display:block;width:64px;height:64px;margin:0 0 16px;border-radius:50%;object-fit:cover;border:3px solid #fff;outline:2px solid rgba(32,185,139,.36);box-shadow:0 7px 18px rgba(20,88,69,.15)}
+.upload-button{position:relative;overflow:hidden;isolation:isolate}
+.upload-button::after{content:"";position:absolute;z-index:0;top:-45%;bottom:-45%;left:-34%;width:24%;transform:skewX(-20deg);background:linear-gradient(90deg,transparent,rgba(255,255,255,.34),transparent);animation:upload-button-sheen 4.2s ease-in-out infinite;pointer-events:none}
+@keyframes upload-button-sheen{0%,62%{left:-34%;opacity:0}68%{opacity:1}88%,100%{left:112%;opacity:0}}
+@media(prefers-reduced-motion:reduce){.upload-button::after{animation:none}}
 @media(max-width:600px){
   .tools-section::before{width:210px;height:210px;left:-115px;top:-90px}
   .tools-section::after{width:190px;height:190px;right:-100px;bottom:-90px}
@@ -80,6 +85,17 @@
   .tools-section .tool-icon{width:38px;height:38px;margin-bottom:12px}
   .tools-section .tool-card>span:nth-child(2){font-size:13px;line-height:1.25}
   .tools-section .tool-card small{font-size:11px;line-height:1.35}
+  .tools-section .tool-tabs{width:calc(100% + 14px);margin-right:-14px;padding-right:0;padding-bottom:0;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none}
+  .tools-section .tool-tabs::-webkit-scrollbar{display:none;width:0;height:0}
+  .customer-story-avatar{width:58px;height:58px;margin-bottom:14px}
+  .feature-tabs{display:flex;flex-direction:row;gap:8px;width:calc(100% + 14px);margin:-7px -14px 0 0;padding:7px 0 13px;overflow-x:auto;scrollbar-width:none;-ms-overflow-style:none;scroll-snap-type:x proximity}
+  .feature-tabs::-webkit-scrollbar{display:none;width:0;height:0}
+  .feature-tab,.feature-tab.is-active{flex:0 0 auto;width:auto;min-height:54px;padding:8px 13px;grid-template-columns:34px auto;border-radius:999px;gap:9px;scroll-snap-align:center}
+  .feature-tab.is-active{box-shadow:0 7px 16px rgba(12,121,91,.11)}
+  .feature-tab-icon{width:34px;height:34px;border-radius:10px;font-size:18px}
+  .feature-tab strong{font-size:13px;white-space:nowrap}
+  .feature-tab small,.feature-tab.is-active small,.feature-tab>i{display:none}
+  .feature-stage{margin-top:3px}
 }
 .pdf-workspace[hidden]{display:none}
 .pdf-workspace{position:fixed;inset:0;z-index:200;display:grid;place-items:center;padding:24px}
