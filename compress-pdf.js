@@ -82,21 +82,16 @@
     btn.textContent = 'Starting…';
     $('#compression-options-modal').hidden = true;
     $('#compression-progress-modal').hidden = false;
-    $('#compression-result').hidden = true;
     animateProgress();
 
     try {
       const blob = await window.PDFMintShared.compressPdfThroughEngine(selectedFile, level);
       clearInterval(progressTimer);
-      setProgress(100, 'Complete', 'Your compressed PDF is ready.');
+      setProgress(100, 'Complete', 'Opening your compressed PDF…');
 
       const reduction = selectedFile.size
         ? Math.max(0, Math.round((1 - blob.size / selectedFile.size) * 100))
         : 0;
-
-      $('#compression-result-summary').textContent = reduction ? `${reduction}% smaller` : 'PDF optimised';
-      $('#compression-result-detail').textContent = `${fmt(selectedFile.size)} → ${fmt(blob.size)}`;
-      $('#compression-result').hidden = false;
 
       const output = new File(
         [blob],
@@ -104,7 +99,7 @@
         { type:'application/pdf', lastModified:Date.now() }
       );
 
-      await new Promise(resolve => setTimeout(resolve, 550));
+      await new Promise(resolve => setTimeout(resolve, 250));
       await window.PDFMintShared.openEditorWithExport(output, 'pdf', {
         kind: 'compression',
         reduction,
