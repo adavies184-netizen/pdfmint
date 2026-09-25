@@ -4936,12 +4936,14 @@ let stripeClientSecret = '';
 let stripeCardNumberElement = null;
 let stripeCardElements = [];
 const stripeCheckoutDocumentKey = crypto.randomUUID?.() || `document-${Date.now()}`;
-const googleAdsTrialPurchaseSendTo = 'AW-877738202/uIB3CO2Sq-QcENrxxKID';
+// Set this after Google Ads creates the new trial-purchase conversion label.
+// A base tag ID alone is not a valid purchase conversion destination.
+const googleAdsTrialPurchaseSendTo = '';
 
 async function reportGoogleAdsTrialPurchase(transactionId) {
   const cleanTransactionId = String(transactionId || '').trim();
   const value = Number(selectedAccessPlan?.price);
-  if (!cleanTransactionId || !Number.isFinite(value) || value <= 0 || typeof window.gtag !== 'function') return;
+  if (!googleAdsTrialPurchaseSendTo || !cleanTransactionId || !Number.isFinite(value) || value <= 0 || typeof window.gtag !== 'function') return;
 
   const dedupeKey = `pdfbreeze-google-trial-purchase:${cleanTransactionId}`;
   if (sessionStorage.getItem(dedupeKey) === 'sent') return;
