@@ -5277,7 +5277,7 @@ function preparePaymentPrototypeUi() {
   const orderSummary = document.querySelector('.order-summary-card');
 
   document.querySelectorAll('.recommended-ribbon').forEach(ribbon => {
-    ribbon.textContent = 'Top Choice';
+    ribbon.textContent = 'Most Popular';
   });
   document.querySelectorAll('.secure-payment-note').forEach(note => {
     note.textContent = 'Your payment is secured and the information is encrypted.';
