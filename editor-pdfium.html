@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=compact-secondary-toolbar-raised-cards-1">
+<link rel="stylesheet" href="editor-pdfium.css?v=soft-pill-header-actions-1">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16506274922"></script>
 <script>
@@ -19,10 +19,9 @@
 <body class="no-document transfer-pending">
   <header class="topbar">
     <a class="brand" href="index.html" aria-label="PDFBreeze home"><span class="brand-mark">P</span><span>PDFBreeze</span></a>
-    <span class="preview-badge">PDF editor</span>
     <div class="document-name"><span>Editing</span><strong id="fileName">No document open</strong></div>
     <div class="top-actions">
-      <label class="button secondary">Open another PDF<input id="file" type="file" accept="application/pdf,.pdf"></label>
+      <label class="button secondary open-another-button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7.5h6l2 2h10v9.5H3z"/><path d="M3 7.5V5h7l2 2.5"/></svg><span>Open another PDF</span><input id="file" type="file" accept="application/pdf,.pdf"></label>
       <button id="download" class="button primary download-button" disabled><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 5-5m-5 5-5-5M5 20h14"/></svg><span>Download</span></button>
     </div>
   </header>
@@ -66,9 +65,9 @@
       <div id="addAlignment" class="add-align" aria-label="Text alignment"><button type="button" class="active" data-align="left" aria-label="Align left"><span class="align-lines left"><i></i><i></i><i></i></span></button><button type="button" data-align="center" aria-label="Align centre"><span class="align-lines center"><i></i><i></i><i></i></span></button><button type="button" data-align="right" aria-label="Align right"><span class="align-lines right"><i></i><i></i><i></i></span></button></div>
     </div>
     <div id="editControls" class="edit-controls">
-      <div class="context-heading"><strong>Edit existing text</strong><span>Select text directly on the page or from the sidebar.</span></div>
-      <label><span class="replacement-label"><span>Replacement</span> <span>text</span></span><input id="replacement" type="text" disabled placeholder="Select a text object"></label>
-      <button id="apply" class="button primary compact" disabled><span class="apply-long">Apply replacement</span><span class="apply-short">Replace</span></button><span id="selectionMeta" class="selection-meta">Nothing selected</span>
+      <div class="context-heading"><strong>Replace text in your PDF</strong><span>Select existing text, type your new wording, then choose Replace text.</span></div>
+      <label><span class="replacement-label"><span>New</span> <span>text</span></span><input id="replacement" type="text" disabled placeholder="Select text on the PDF first"></label>
+      <button id="apply" class="button primary compact" disabled><span class="apply-long">Replace text</span><span class="apply-short">Replace</span></button><span id="selectionMeta" class="selection-meta">Select text on the PDF to begin</span>
     </div>
     <div id="drawControls" class="draw-controls" hidden>
       <div class="draw-modes" aria-label="Drawing mode">
@@ -198,6 +197,6 @@
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
 <script src="analytics.js?v=trusted-analytics-1"></script>
-<script type="module" src="editor-pdfium.js?v=sticky-manage-1"></script>
+<script type="module" src="editor-pdfium.js?v=edit-text-guidance-1"></script>
 </body>
 </html>
