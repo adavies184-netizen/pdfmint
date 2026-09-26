@@ -63,6 +63,31 @@ class AdminFunnelTests(unittest.TestCase):
         self.assertEqual(report["tools"], [])
         self.assertEqual(report["journeys"], [])
 
+    def test_later_stages_require_the_previous_stage(self):
+        events = [
+            event("session-000000000001", "landing_view"),
+            event("session-000000000001", "editor_opened"),
+        ]
+        report = build_funnel_report(events, [])
+        counts = {stage["event"]: stage["count"] for stage in report["stages"]}
+        self.assertEqual(counts["landing_view"], 1)
+        self.assertEqual(counts["upload_clicked"], 0)
+        self.assertEqual(counts["editor_opened"], 0)
+
+    def test_email_and_purchase_require_a_real_account(self):
+        events = [
+            event("session-000000000001", "landing_view"),
+            event("session-000000000001", "upload_clicked"),
+            event("session-000000000001", "editor_opened"),
+            event("session-000000000001", "download_clicked"),
+            event("session-000000000001", "email_entered"),
+            event("session-000000000001", "purchase_complete"),
+        ]
+        report = build_funnel_report(events, [])
+        counts = {stage["event"]: stage["count"] for stage in report["stages"]}
+        self.assertEqual(counts["email_entered"], 0)
+        self.assertEqual(counts["purchase_complete"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

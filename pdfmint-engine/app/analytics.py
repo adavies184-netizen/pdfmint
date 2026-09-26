@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+import re
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
 from fastapi import Header, HTTPException, Request
@@ -22,6 +24,12 @@ EVENT_NAMES = {
     "purchase_complete",
 }
 
+LIVE_SITE_HOSTS = {"pdfbreeze.net", "www.pdfbreeze.net"}
+BOT_USER_AGENT = re.compile(
+    r"bot|crawler|spider|slurp|headlesschrome|lighthouse|pagespeed|preview|facebookexternalhit",
+    re.IGNORECASE,
+)
+
 
 class AnalyticsEventRequest(BaseModel):
     session_id: str = Field(pattern=r"^[A-Za-z0-9_-]{16,80}$")
@@ -39,6 +47,16 @@ def _service_headers() -> dict[str, str]:
         "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
         "Content-Type": "application/json",
     }
+
+
+def _is_live_browser_request(request: Request) -> bool:
+    origin = (request.headers.get("origin") or "").strip()
+    referer = (request.headers.get("referer") or "").strip()
+    candidate = origin or referer
+    if not candidate:
+        return False
+    parsed = urlparse(candidate)
+    return parsed.scheme == "https" and (parsed.hostname or "").lower() in LIVE_SITE_HOSTS
 
 
 async def _optional_user_id(authorization: str | None) -> str | None:
@@ -64,6 +82,13 @@ async def store_analytics_event(
 ) -> dict[str, bool]:
     if payload.event_name not in EVENT_NAMES:
         raise HTTPException(status_code=400, detail="Unknown analytics event.")
+    user_agent = (request.headers.get("user-agent") or "")[:300]
+    if (
+        not payload.session_id.startswith("live_")
+        or not _is_live_browser_request(request)
+        or BOT_USER_AGENT.search(user_agent)
+    ):
+        return {"recorded": False}
 
     record: dict[str, Any] = {
         "session_id": payload.session_id,
@@ -71,7 +96,7 @@ async def store_analytics_event(
         "event_value": payload.event_value.strip().lower(),
         "landing_page": payload.landing_page.strip().lower() or "unknown",
         "page_path": payload.page_path.strip(),
-        "user_agent": (request.headers.get("user-agent") or "")[:300],
+        "user_agent": user_agent,
         "created_at": datetime.now(timezone.utc).isoformat(),
     }
     user_id = await _optional_user_id(authorization)
@@ -98,7 +123,11 @@ async def store_server_event(
     page_path: str = "",
     user_id: str | None = None,
 ) -> None:
-    if not session_id or event_name not in EVENT_NAMES or not SUPABASE_SERVICE_ROLE_KEY:
+    if (
+        not session_id.startswith("live_")
+        or event_name not in EVENT_NAMES
+        or not SUPABASE_SERVICE_ROLE_KEY
+    ):
         return
     record: dict[str, Any] = {
         "session_id": session_id[:80],

@@ -7,6 +7,8 @@
   const GOOGLE_ADS_EDITOR_OPENED_SEND_TO = 'AW-16506274922/tmQbCK7t14QdEOqI5749';
   const GOOGLE_ADS_EDITOR_OPENED_KEY = 'pdfbreeze-google-editor-opened';
   const GOOGLE_ADS_TEST_MODE_KEY = 'pdfbreezeGoogleAdsTestMode';
+  const LIVE_HOSTS = new Set(['pdfbreeze.net', 'www.pdfbreeze.net']);
+  const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
   const ignoredPages = new Set([
     'admin', 'auth-callback', 'dashboard', 'editor', 'editor-pdfium',
     'login', 'reset-password', 'cancel-subscription'
@@ -18,18 +20,35 @@
     return Array.from(bytes, value => value.toString(16).padStart(2, '0')).join('');
   }
 
+  function isLiveSite() {
+    return location.protocol === 'https:' && LIVE_HOSTS.has(location.hostname.toLowerCase());
+  }
+
+  function isLiveTrackingContext() {
+    return isLiveSite() && localStorage.getItem('pdfbreezeAdminStripeSandbox') !== 'true';
+  }
+
   function pageName() {
     const filename = location.pathname.split('/').filter(Boolean).pop() || 'home';
     return filename.replace(/\.html$/i, '').toLowerCase() || 'home';
   }
 
   function sessionId() {
-    let value = sessionStorage.getItem(SESSION_KEY);
-    if (!value) {
-      value = randomId();
-      sessionStorage.setItem(SESSION_KEY, value);
+    const now = Date.now();
+    const prefix = isLiveTrackingContext() ? 'live_' : 'preview_';
+    let saved;
+    try {
+      saved = JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+    } catch (_) {
+      saved = null;
     }
-    return value;
+    if (!saved?.id?.startsWith(prefix) || now - Number(saved.lastActivity || 0) > SESSION_TIMEOUT_MS) {
+      saved = {id: `${prefix}${randomId()}`, lastActivity: now};
+    } else {
+      saved.lastActivity = now;
+    }
+    localStorage.setItem(SESSION_KEY, JSON.stringify(saved));
+    return saved.id;
   }
 
   function landingPage() {
@@ -84,6 +103,7 @@
   }
 
   function reportGoogleAdsEditorOpened() {
+    if (!isLiveTrackingContext()) return;
     if (typeof window.gtag !== 'function') return;
     if (sessionStorage.getItem(GOOGLE_ADS_EDITOR_OPENED_KEY) === 'sent') return;
     sessionStorage.setItem(GOOGLE_ADS_EDITOR_OPENED_KEY, 'sent');
@@ -95,6 +115,8 @@
 
   async function track(eventName, eventValue = '') {
     if (eventName === 'editor_opened') reportGoogleAdsEditorOpened();
+    // Preview, localhost and staging activity must never enter live reporting.
+    if (!isLiveTrackingContext()) return false;
     const baseUrl = window.PDFMINT_CONFIG?.engineBaseUrl;
     if (!baseUrl) return false;
     const headers = {'Content-Type': 'application/json'};
@@ -136,10 +158,12 @@
     track,
     sessionId,
     landingPage,
+    isLiveSite,
+    isLiveTrackingContext,
     googleAdsTestMode,
     showGoogleAdsTestMessage,
     resetJourney() {
-      sessionStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(SESSION_KEY);
       sessionStorage.removeItem(LANDING_KEY);
       sessionStorage.removeItem(TRACKED_PAGE_KEY);
     }

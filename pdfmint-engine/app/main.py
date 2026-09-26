@@ -24,7 +24,7 @@ from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.18.0"
+ENGINE_VERSION = "1.19.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -125,8 +125,9 @@ async def admin_conversion_funnel(
     authorization: str | None = Header(default=None),
     days: int = Query(default=7, ge=1, le=90),
     landing_page: str | None = Query(default=None, max_length=120),
+    day: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
 ):
-    return await admin_funnel(authorization, days, landing_page)
+    return await admin_funnel(authorization, days, landing_page, day)
 
 
 @app.post("/v1/admin/payment-provider")

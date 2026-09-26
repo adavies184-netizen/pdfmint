@@ -12,6 +12,73 @@
   const pagedTables = new Map();
   const selectedRows = {members:new Set(), documents:new Set()};
   let dashboardData = null;
+  const sectionDates = {members:'', documents:'', payments:''};
+  const sectionSources = {members:'live', documents:'live'};
+  const londonDateKey = value => {
+    if (!value) return '';
+    const parts = new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Europe/London', year:'numeric', month:'2-digit', day:'2-digit'
+    }).formatToParts(new Date(value));
+    const part = type => parts.find(item => item.type === type)?.value || '';
+    return `${part('year')}-${part('month')}-${part('day')}`;
+  };
+  const londonToday = () => londonDateKey(new Date());
+  const scopeText = value => value
+    ? new Intl.DateTimeFormat('en-GB',{dateStyle:'long',timeZone:'Europe/London'}).format(new Date(`${value}T12:00:00Z`))
+    : 'All-time data';
+  const filterForDay = (items, value, fields) => !value ? items : items.filter(item => fields.some(field => londonDateKey(item[field]) === value));
+
+  function installSectionDateFilters() {
+    ['members','documents','payments'].forEach(key => {
+      const heading = document.querySelector(`[data-view-panel="${key}"] .page-heading`);
+      if (!heading || heading.querySelector(`[data-section-date-filter="${key}"]`)) return;
+      const filter = document.createElement('div');
+      filter.className = 'overview-date-filter';
+      filter.dataset.sectionDateFilter = key;
+      const sourceControl = key === 'payments' ? '' : `<select data-record-source aria-label="${key} record source"><option value="live">Live only</option><option value="all">All including tests</option></select>`;
+      filter.innerHTML = `<label>Show</label>${sourceControl}<select data-date-range aria-label="${key} date range"><option value="all">All time</option><option value="day">Specific day</option></select><input type="date" aria-label="${key} date" hidden><span>Live · all-time data</span>`;
+      heading.appendChild(filter);
+      const select = filter.querySelector('[data-date-range]');
+      const source = filter.querySelector('[data-record-source]');
+      const input = filter.querySelector('input');
+      const label = filter.querySelector('span');
+      input.max = londonToday();
+      select.addEventListener('change', () => {
+        const selectingDay = select.value === 'day';
+        input.hidden = !selectingDay;
+        if (selectingDay) input.value ||= londonToday();
+        sectionDates[key] = selectingDay ? input.value : '';
+        label.textContent = `${sectionSources[key] === 'all' ? 'All records' : 'Live'} · ${scopeText(sectionDates[key]).toLowerCase()}`;
+        if (dashboardData) renderDashboard(dashboardData);
+      });
+      input.addEventListener('change', () => {
+        sectionDates[key] = input.value;
+        label.textContent = `${sectionSources[key] === 'all' ? 'All records' : 'Live'} · ${scopeText(input.value).toLowerCase()}`;
+        if (dashboardData) renderDashboard(dashboardData);
+      });
+      source?.addEventListener('change', () => {
+        sectionSources[key] = source.value;
+        label.textContent = `${source.value === 'all' ? 'All records' : 'Live'} · ${scopeText(sectionDates[key]).toLowerCase()}`;
+        if (dashboardData) renderDashboard(dashboardData);
+      });
+    });
+
+    const funnelRange = document.getElementById('funnel-days');
+    if (funnelRange && !funnelRange.querySelector('option[value="day"]')) {
+      funnelRange.insertAdjacentHTML('afterbegin', '<option value="day">Specific day</option>');
+      const funnelDay = document.createElement('input');
+      funnelDay.id = 'funnel-day';
+      funnelDay.type = 'date';
+      funnelDay.hidden = true;
+      funnelDay.max = londonToday();
+      funnelRange.after(funnelDay);
+      funnelDay.addEventListener('change', () => {
+        selectedFunnelStage = 0;
+        funnelLoaded = false;
+        loadFunnel().catch(showFunnelError);
+      });
+    }
+  }
   function paginationPages(current, total) {
     if (total <= 7) return Array.from({length:total}, (_,index) => index + 1);
     const visible = new Set([1, total, current - 1, current, current + 1]);
@@ -188,11 +255,17 @@
   async function loadFunnel() {
     const panel = document.querySelector('[data-view-panel="funnel"]');
     panel.classList.add('funnel-loading');
-    const days = document.getElementById('funnel-days').value;
+    const range = document.getElementById('funnel-days').value;
     const landing = document.getElementById('funnel-landing-page').value;
-    const params = new URLSearchParams({days});
+    const params = new URLSearchParams();
+    if (range === 'day') {
+      const day = document.getElementById('funnel-day')?.value || londonToday();
+      params.set('day', day);
+    } else {
+      params.set('days', range);
+    }
     if (landing !== 'all') params.set('landing_page', landing);
-    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/funnel?${params}`, {headers:{Authorization:`Bearer ${adminSession.access_token}`}});
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/funnel?${params}`, {cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}});
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.detail || 'Conversion analytics could not be loaded.');
     selectedFunnelStage = Math.min(selectedFunnelStage, Math.max(0,(data.stages || []).length-1));
@@ -241,12 +314,20 @@
       element.textContent = ['successful_value','upcoming_revenue'].includes(key) ? money(data.metrics[key]) : Number(data.metrics[key] || 0).toLocaleString('en-GB');
     });
     const memberHeader = '<div class="admin-row header"><span>Member</span><span>Plan</span><span>Provider</span><span>Status</span><span>Next payment</span></div>';
-    const recentMemberRow = member => row([`<b>${safe(member.name || member.email)}</b><br><small>${member.name ? safe(member.email) : ''}</small>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
-    const memberRow = member => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="members" value="${safe(member.id)}"><span><b>${safe(member.name || member.email)}</b><br><small>${member.name ? safe(member.email) : ''}</small></span></label>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
-    document.querySelector('[data-recent-members]').innerHTML = memberHeader + data.members.slice(0,5).map(recentMemberRow).join('');
-    renderPagedTable('members', document.querySelector('[data-members-table]'), data.members, memberHeader, memberRow);
-    renderPagedTable('payments', document.querySelector('[data-payments-table]'), data.payments, '<div class="admin-row header"><span>Payment ID</span><span>Type</span><span>Provider</span><span>Status</span><span>Amount</span></div>', payment => row([`<b>${safe(payment.provider_payment_id)}</b>`,safe(payment.payment_type),safe(payment.provider),status(payment.status),money(payment.amount)]));
-    renderPagedTable('documents', document.querySelector('[data-documents-table]'), data.documents, '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>', doc => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="documents" value="${safe(doc.id)}"><span><b>${safe(doc.name)}</b></span></label>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)]));
+    const memberSubtitle = member => member.trusted ? (member.name ? safe(member.email) : '') : `${member.name ? `${safe(member.email)} · ` : ''}Test or legacy account`;
+    const recentMemberRow = member => row([`<b>${safe(member.name || member.email)}</b><br><small>${memberSubtitle(member)}</small>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
+    const memberRow = member => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="members" value="${safe(member.id)}"><span><b>${safe(member.name || member.email)}</b><br><small>${memberSubtitle(member)}</small></span></label>`,planName(member.plan),safe(member.provider || '—'),status(member.status),date(member.next_payment)], `data-member-id="${safe(member.id)}"`);
+    const liveMembers = data.members.filter(item => item.trusted);
+    const scopedMembers = sectionSources.members === 'all' ? data.members : liveMembers;
+    const scopedDocuments = sectionSources.documents === 'all' ? data.documents : data.documents.filter(item => item.trusted);
+    const overviewMembers = filterForDay(liveMembers, data.selected_day || '', ['joined_at']);
+    const visibleMembers = filterForDay(scopedMembers, sectionDates.members, ['joined_at']);
+    const visiblePayments = filterForDay(data.payments, sectionDates.payments, ['paid_at','created_at']);
+    const visibleDocuments = filterForDay(scopedDocuments, sectionDates.documents, ['created_at']);
+    document.querySelector('[data-recent-members]').innerHTML = memberHeader + overviewMembers.slice(0,5).map(recentMemberRow).join('');
+    renderPagedTable('members', document.querySelector('[data-members-table]'), visibleMembers, memberHeader, memberRow);
+    renderPagedTable('payments', document.querySelector('[data-payments-table]'), visiblePayments, '<div class="admin-row header"><span>Payment ID</span><span>Type</span><span>Provider</span><span>Status</span><span>Amount</span></div>', payment => row([`<b>${safe(payment.provider_payment_id)}</b>`,safe(payment.payment_type),safe(payment.provider),status(payment.status),money(payment.amount)]));
+    renderPagedTable('documents', document.querySelector('[data-documents-table]'), visibleDocuments, '<div class="admin-row header"><span>Document</span><span>Tool</span><span>Size</span><span>Owner</span><span>Updated</span></div>', doc => row([`<label class="admin-select-cell"><input type="checkbox" data-select-item="documents" value="${safe(doc.id)}"><span><b>${safe(doc.name)}</b></span></label>`,safe(doc.source_tool || 'Editor'),`${Math.max(1,Math.round(Number(doc.byte_size||0)/1024))} KB`,safe(doc.user_id.slice(0,8)),date(doc.updated_at)]));
     const providersHtml = data.providers.map(provider => `<div class="provider-choice ${provider.is_default ? 'active-provider':''}"><b><span class="stripe-logo">${safe(provider.display_name.slice(0,1))}</span>${safe(provider.display_name)}</b><mark>${provider.configured ? 'Configured ✓' : 'Not connected'}</mark><span>${provider.is_default ? 'Default for new subscriptions' : provider.configured ? `<button data-select-provider="${safe(provider.provider)}">Make default</button>` : 'Available after connection'}</span></div>`).join('');
     document.querySelector('[data-provider-summary]').innerHTML = providersHtml;
     const sandboxActive = localStorage.getItem('pdfbreezeAdminStripeSandbox') === 'true';
@@ -275,7 +356,7 @@
     const params = new URLSearchParams();
     if (day) params.set('day', day);
     const query = params.size ? `?${params}` : '';
-    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/overview${query}`, {headers:{Authorization:`Bearer ${adminSession.access_token}`}});
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/overview${query}`, {cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}});
     const data = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(data.detail || 'The admin dashboard could not be loaded.');
     renderDashboard(data);
@@ -313,6 +394,7 @@
     document.getElementById('admin-add-factor').onclick = () => enrollBackupAuthenticator().catch(error => alert(error.message || 'The backup authenticator could not be added.'));
     const session = await auth.getSession();
     adminSession = session;
+    installSectionDateFilters();
     await loadOverview();
     loadStripeModeStatus().catch(() => { stripeModeStatus = {live:false, sandbox:false}; if (dashboardData) renderDashboard(dashboardData); });
     document.addEventListener('click', event => {
@@ -356,19 +438,27 @@
     });
     const overviewPeriod = document.getElementById('overview-period');
     const overviewDay = document.getElementById('overview-day');
-    overviewDay.max = new Date().toISOString().slice(0,10);
+    overviewDay.max = londonToday();
     overviewPeriod.addEventListener('change', () => {
       const selectDay = overviewPeriod.value === 'day';
       overviewDay.hidden = !selectDay;
       if (!selectDay) loadOverview().catch(error => alert(error.message));
       else {
-        overviewDay.value ||= new Date().toISOString().slice(0,10);
+        overviewDay.value ||= londonToday();
         loadOverview(overviewDay.value).catch(error => alert(error.message));
       }
     });
     overviewDay.addEventListener('change', () => { if (overviewDay.value) loadOverview(overviewDay.value).catch(error => alert(error.message)); });
     document.getElementById('funnel-landing-page').addEventListener('change', () => { selectedFunnelStage = 0; loadFunnel().catch(showFunnelError); });
-    document.getElementById('funnel-days').addEventListener('change', () => { selectedFunnelStage = 0; funnelLoaded = false; loadFunnel().catch(showFunnelError); });
+    document.getElementById('funnel-days').addEventListener('change', event => {
+      const funnelDay = document.getElementById('funnel-day');
+      const selectingDay = event.currentTarget.value === 'day';
+      funnelDay.hidden = !selectingDay;
+      if (selectingDay) funnelDay.value ||= londonToday();
+      selectedFunnelStage = 0;
+      funnelLoaded = false;
+      loadFunnel().catch(showFunnelError);
+    });
     document.querySelectorAll('[data-funnel-tab]').forEach(button => button.addEventListener('click', () => {
       document.querySelectorAll('[data-funnel-tab]').forEach(item => item.classList.toggle('active', item === button));
       document.querySelectorAll('[data-funnel-tab-panel]').forEach(panel => { panel.hidden = panel.dataset.funnelTabPanel !== button.dataset.funnelTab; });

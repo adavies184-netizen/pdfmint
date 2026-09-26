@@ -550,13 +550,79 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
                     params={"provider": "eq.stripe", "provider_subscription_id": f"eq.{subscription['id']}"},
                     json={"payment_confirmed": True, "confirmed_at": datetime.now(timezone.utc).isoformat()},
                 )
-            metadata = subscription.get("metadata") or {}
-            await store_server_event(
-                session_id=str(metadata.get("analytics_session_id") or ""),
-                event_name="purchase_complete",
-                event_value=str(metadata.get("plan_code") or ""),
-                landing_page=str(metadata.get("analytics_landing_page") or "unknown"),
-                page_path="/checkout/complete",
-                user_id=str(metadata.get("supabase_user_id") or "") or None,
-            )
+    if event["type"] in {"invoice.paid", "invoice.payment_failed"}:
+        invoice = event["data"]["object"]
+        mode = "live" if event.get("livemode") else "sandbox"
+        subscription_reference = invoice.get("subscription")
+        if isinstance(subscription_reference, dict):
+            subscription_reference = subscription_reference.get("id")
+        if not subscription_reference:
+            subscription_reference = (
+                (invoice.get("parent") or {}).get("subscription_details") or {}
+            ).get("subscription")
+        if isinstance(subscription_reference, dict):
+            subscription_reference = subscription_reference.get("id")
+
+        subscription = None
+        if subscription_reference:
+            try:
+                subscription = stripe.Subscription.retrieve(
+                    subscription_reference,
+                    api_key=stripe_config(mode)["secret_key"],
+                )
+                await _upsert_subscription(subscription)
+            except stripe.StripeError as exc:
+                raise HTTPException(status_code=502, detail="Stripe invoice membership verification failed.") from exc
+
+        metadata = (subscription or {}).get("metadata") or {}
+        user_id = str(metadata.get("supabase_user_id") or "")
+        if user_id and SUPABASE_SERVICE_ROLE_KEY:
+            plan_code = str(metadata.get("plan_code") or "unlimited_trial")
+            paid = event["type"] == "invoice.paid"
+            payment_reference = invoice.get("payment_intent")
+            if isinstance(payment_reference, dict):
+                payment_reference = payment_reference.get("id")
+            provider_payment_id = str(payment_reference or invoice.get("id") or "")
+            paid_at_unix = ((invoice.get("status_transitions") or {}).get("paid_at") if paid else None)
+            payment = {
+                "user_id": user_id,
+                "provider": "stripe",
+                "provider_mode": mode,
+                "provider_payment_id": provider_payment_id,
+                "provider_invoice_id": str(invoice.get("id") or ""),
+                "payment_type": (
+                    "annual" if plan_code == "annual"
+                    else "trial" if invoice.get("billing_reason") == "subscription_create"
+                    else "renewal"
+                ),
+                "status": "paid" if paid else "failed",
+                "amount": int((invoice.get("amount_paid") if paid else invoice.get("amount_due")) or 0),
+                "currency": str(invoice.get("currency") or "gbp").lower(),
+                "paid_at": _iso_from_unix(paid_at_unix) if paid_at_unix else None,
+            }
+            async with httpx.AsyncClient(timeout=10) as client:
+                payment_response = await client.post(
+                    f"{SUPABASE_URL}/rest/v1/payments?on_conflict=provider,provider_payment_id",
+                    headers={
+                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
+                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
+                        "Content-Type": "application/json",
+                        "Prefer": "resolution=merge-duplicates,return=minimal",
+                    },
+                    json=payment,
+                )
+            if payment_response.is_error:
+                raise HTTPException(status_code=502, detail="The verified Stripe payment could not be stored.")
+
+            # A purchase is a verified, paid live Stripe invoice—not a browser click
+            # and not an active sandbox subscription.
+            if paid and mode == "live":
+                await store_server_event(
+                    session_id=str(metadata.get("analytics_session_id") or ""),
+                    event_name="purchase_complete",
+                    event_value=plan_code,
+                    landing_page=str(metadata.get("analytics_landing_page") or "unknown"),
+                    page_path="/checkout/complete",
+                    user_id=user_id,
+                )
     return {"received": True}

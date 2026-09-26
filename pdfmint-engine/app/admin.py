@@ -6,6 +6,7 @@ import base64
 import json
 from urllib.parse import quote
 from uuid import UUID
+from zoneinfo import ZoneInfo
 
 import httpx
 from fastapi import Header, HTTPException, Query
@@ -13,6 +14,9 @@ from pydantic import BaseModel, Field
 
 from .billing import authenticated_user
 from .settings import ADMIN_EMAILS, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+
+
+REPORTING_TIMEZONE = ZoneInfo("Europe/London")
 
 
 def _service_headers() -> dict[str, str]:
@@ -56,7 +60,15 @@ def _on_day(value: str | None, selected_day: calendar_date | None) -> bool:
     if selected_day is None:
         return True
     parsed = _parsed_datetime(value)
-    return bool(parsed and parsed.date() == selected_day)
+    return bool(parsed and parsed.astimezone(REPORTING_TIMEZONE).date() == selected_day)
+
+
+def _calendar_window(days: int, now: datetime | None = None) -> tuple[datetime, datetime]:
+    local_now = (now or datetime.now(timezone.utc)).astimezone(REPORTING_TIMEZONE)
+    first_day = local_now.date() - timedelta(days=days - 1)
+    start = datetime.combine(first_day, datetime.min.time(), REPORTING_TIMEZONE)
+    end = datetime.combine(local_now.date() + timedelta(days=1), datetime.min.time(), REPORTING_TIMEZONE)
+    return start.astimezone(timezone.utc), end.astimezone(timezone.utc)
 
 
 FUNNEL_STAGES = [
@@ -89,7 +101,8 @@ def build_funnel_report(
         event_value = str(event.get("event_value") or "")
         landing_page = str(event.get("landing_page") or "unknown")
         created_at = str(event.get("created_at") or "")
-        if event_name in sessions_by_event:
+        verified_account_stage = event_name not in {"email_entered", "purchase_complete"} or bool(event.get("user_id"))
+        if event_name in sessions_by_event and verified_account_stage:
             sessions_by_event[event_name].add(session_id)
         if event_name == "editor_tool_used" and event_value:
             tools.setdefault(event_value, set()).add(session_id)
@@ -121,8 +134,12 @@ def build_funnel_report(
     stages = []
     first_count = len(sessions_by_event["landing_view"])
     previous_count = first_count
+    previous_sessions = set(sessions_by_event["landing_view"])
     for event_name, label in FUNNEL_STAGES:
-        count = len(sessions_by_event[event_name])
+        stage_sessions = set(sessions_by_event[event_name])
+        if event_name != "landing_view":
+            stage_sessions.intersection_update(previous_sessions)
+        count = len(stage_sessions)
         stages.append({
             "event": event_name,
             "label": label,
@@ -132,9 +149,12 @@ def build_funnel_report(
             "dropped": max(0, previous_count - count),
         })
         previous_count = count
+        previous_sessions = stage_sessions
 
     journey_rows = []
-    for journey in sorted(journeys.values(), key=lambda item: item["last_event_at"], reverse=True)[:50]:
+    trusted_sessions = sessions_by_event["landing_view"]
+    trusted_journeys = (item for item in journeys.values() if item["session_id"] in trusted_sessions)
+    for journey in sorted(trusted_journeys, key=lambda item: item["last_event_at"], reverse=True)[:50]:
         user_id = journey.get("user_id")
         journey_rows.append({
             "session_id": journey["session_id"],
@@ -148,8 +168,9 @@ def build_funnel_report(
     return {
         "stages": stages,
         "tools": [
-            {"name": name, "sessions": len(session_ids)}
+            {"name": name, "sessions": len(session_ids & trusted_sessions)}
             for name, session_ids in sorted(tools.items(), key=lambda item: (-len(item[1]), item[0]))
+            if session_ids & trusted_sessions
         ],
         "landing_pages": [
             {"name": name, "sessions": len(session_ids)}
@@ -189,18 +210,48 @@ async def admin_overview(
 
     async with httpx.AsyncClient(timeout=15) as client:
         profiles = await _rows(client, "profiles", "id,email,first_name,last_name,created_at")
-        subscriptions = await _rows(client, "subscriptions", "user_id,provider,provider_subscription_id,plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,created_at,updated_at")
-        payments = await _rows(client, "payments", "user_id,provider,provider_payment_id,payment_type,status,amount,currency,paid_at,created_at")
+        subscriptions = await _rows(client, "subscriptions", "user_id,provider,provider_mode,provider_subscription_id,plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,created_at,updated_at")
+        payments = await _rows(client, "payments", "user_id,provider,provider_mode,provider_payment_id,payment_type,status,amount,currency,paid_at,created_at")
         documents = await _rows(client, "documents", "id,user_id,name,storage_path,byte_size,source_tool,created_at,updated_at")
-        consents = await _rows(client, "billing_consents", "id,user_id,provider,provider_subscription_id,plan_code,accepted,accepted_at,disclosure_version,disclosure_text,terms_url,privacy_url,amount_today,renewal_amount,renewal_interval,trial_days,ip_address,user_agent,checkout_origin,evidence_hash,payment_confirmed,confirmed_at,created_at")
+        consents = await _rows(client, "billing_consents", "id,user_id,provider,provider_mode,provider_subscription_id,plan_code,accepted,accepted_at,disclosure_version,disclosure_text,terms_url,privacy_url,amount_today,renewal_amount,renewal_interval,trial_days,ip_address,user_agent,checkout_origin,evidence_hash,payment_confirmed,confirmed_at,created_at")
         providers = await _rows(client, "payment_provider_settings", "provider,display_name,enabled,is_default,configured,updated_at")
+        live_member_response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/analytics_events",
+            headers={**_service_headers(), "Range": "0-9999"},
+            params={
+                "select": "user_id,created_at",
+                "event_name": "eq.email_entered",
+                "session_id": "like.live_*",
+                "user_id": "not.is.null",
+                "order": "created_at.desc",
+            },
+        )
+        if live_member_response.is_error:
+            raise HTTPException(status_code=502, detail="Could not verify live members for the admin dashboard.")
+        live_member_events = live_member_response.json()
 
-    all_subscriptions = subscriptions
-    profiles = [item for item in profiles if _on_day(item.get("created_at"), selected_day)]
-    payments = [item for item in payments if _on_day(item.get("paid_at") or item.get("created_at"), selected_day)]
-    documents = [item for item in documents if _on_day(item.get("created_at"), selected_day)]
-    consents = [item for item in consents if _on_day(item.get("created_at"), selected_day)]
-    metric_subscriptions = [item for item in subscriptions if _on_day(item.get("created_at"), selected_day)]
+    all_profiles = profiles
+    live_member_joined_at: dict[str, str] = {}
+    for event in live_member_events:
+        user_id = str(event.get("user_id") or "")
+        if user_id:
+            live_member_joined_at[user_id] = str(event.get("created_at") or "")
+    live_member_ids = set(live_member_joined_at)
+    all_documents = [{**item, "trusted": str(item.get("user_id") or "") in live_member_ids} for item in documents]
+    all_consents = [item for item in consents if item.get("provider_mode") == "live"]
+    all_subscriptions = [item for item in subscriptions if item.get("provider_mode") == "live"]
+    all_payments = [item for item in payments if item.get("provider_mode") == "live"]
+    live_profiles = [item for item in all_profiles if str(item.get("id") or "") in live_member_ids]
+    metric_profiles = [
+        item for item in live_profiles
+        if _on_day(live_member_joined_at.get(str(item.get("id") or "")), selected_day)
+    ]
+    metric_payments = [item for item in all_payments if _on_day(item.get("paid_at") or item.get("created_at"), selected_day)]
+    metric_documents = [
+        item for item in all_documents
+        if item.get("trusted") and _on_day(item.get("created_at"), selected_day)
+    ]
+    metric_subscriptions = [item for item in all_subscriptions if _on_day(item.get("created_at"), selected_day)]
 
     subscription_by_user: dict[str, dict[str, Any]] = {}
     for subscription in all_subscriptions:
@@ -235,9 +286,9 @@ async def admin_overview(
                 "due_at": due_at.isoformat(),
                 "amount": 29999 if item.get("plan_code") == "annual" else 4999,
             })
-    successful = [item for item in payments if item.get("status") in {"succeeded", "paid"}]
-    failed = [item for item in payments if item.get("status") in {"failed", "past_due", "unpaid"}]
-    refunds = [item for item in payments if item.get("payment_type") == "refund"]
+    successful = [item for item in metric_payments if item.get("status") in {"succeeded", "paid"}]
+    failed = [item for item in metric_payments if item.get("status") in {"failed", "past_due", "unpaid"}]
+    refunds = [item for item in metric_payments if item.get("payment_type") == "refund"]
     cancelled_month = [
         item for item in all_subscriptions
         if item.get("cancel_at_period_end") and (
@@ -247,13 +298,15 @@ async def admin_overview(
     ]
 
     members = []
-    for profile in profiles:
+    for profile in all_profiles:
         subscription = subscription_by_user.get(profile["id"], {})
+        is_live_member = profile["id"] in live_member_ids
         members.append({
             "id": profile["id"],
             "email": profile.get("email"),
             "name": " ".join(filter(None, [profile.get("first_name"), profile.get("last_name")])).strip(),
-            "joined_at": profile.get("created_at"),
+            "joined_at": live_member_joined_at.get(profile["id"]) or profile.get("created_at"),
+            "trusted": is_live_member,
             "plan": subscription.get("plan_code"),
             "provider": subscription.get("provider"),
             "status": subscription.get("status", "no_plan"),
@@ -264,7 +317,7 @@ async def admin_overview(
 
     return {
         "metrics": {
-            "total_members": len(profiles),
+            "total_members": len(metric_profiles),
             "active_subscriptions": len(active_subscriptions),
             "successful_payments": len(successful),
             "successful_value": sum(int(item.get("amount") or 0) for item in successful),
@@ -272,14 +325,14 @@ async def admin_overview(
             "refunds": len(refunds),
             "cancelled_this_month": len(cancelled_month),
             "renewals_due": len(renewals_due),
-            "documents": len(documents),
+            "documents": len(metric_documents),
             "upcoming_revenue": sum(item["amount"] for item in upcoming_items),
             "upcoming_revenue_count": len(upcoming_items),
         },
         "members": members,
-        "payments": payments,
-        "documents": documents,
-        "consents": consents,
+        "payments": all_payments,
+        "documents": all_documents,
+        "consents": all_consents,
         "upcoming": upcoming_items,
         "providers": providers,
         "selected_day": day,
@@ -290,12 +343,23 @@ async def admin_funnel(
     authorization: str | None = Header(default=None),
     days: int = Query(default=7, ge=1, le=90),
     landing_page: str | None = Query(default=None, max_length=120),
+    day: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
 ) -> dict[str, Any]:
     await _require_admin(authorization)
-    since = datetime.now(timezone.utc) - timedelta(days=days)
+    if day:
+        try:
+            selected_day = calendar_date.fromisoformat(day)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="Choose a valid calendar date.") from exc
+        local_start = datetime.combine(selected_day, datetime.min.time(), REPORTING_TIMEZONE)
+        local_end = datetime.combine(selected_day + timedelta(days=1), datetime.min.time(), REPORTING_TIMEZONE)
+        since, before = local_start.astimezone(timezone.utc), local_end.astimezone(timezone.utc)
+    else:
+        since, before = _calendar_window(days)
     params: dict[str, str] = {
         "select": "session_id,user_id,event_name,event_value,landing_page,page_path,created_at",
         "created_at": f"gte.{since.isoformat()}",
+        "session_id": "like.live_*",
         "order": "created_at.desc",
     }
     if landing_page and landing_page != "all":
@@ -309,7 +373,10 @@ async def admin_funnel(
         )
         if response.is_error:
             raise HTTPException(status_code=502, detail="Could not load conversion analytics.")
-        events = response.json()
+        events = [
+            row for row in response.json()
+            if (created := _parsed_datetime(row.get("created_at"))) and created < before
+        ]
         user_ids = sorted({str(row.get("user_id")) for row in events if row.get("user_id")})
         profiles: list[dict[str, Any]] = []
         if user_ids:
@@ -323,7 +390,11 @@ async def admin_funnel(
 
     report = build_funnel_report(events, profiles)
     report["days"] = days
+    report["selected_day"] = day
     report["landing_page"] = landing_page or "all"
+    report["period_start"] = since.isoformat()
+    report["period_end"] = before.isoformat()
+    report["timezone"] = "Europe/London"
     report["event_limit_reached"] = len(events) >= 10000
     return report
 

@@ -16,7 +16,7 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 if (!window.PDFBreezeAnalytics && !document.querySelector('script[data-pdfbreeze-analytics]')) {
   const analyticsScript = document.createElement('script');
-  analyticsScript.src = 'analytics.js?v=funnel-reliability-4';
+  analyticsScript.src = 'analytics.js?v=trusted-analytics-1';
   analyticsScript.async = true;
   analyticsScript.dataset.pdfbreezeAnalytics = 'true';
   document.head.appendChild(analyticsScript);
@@ -4961,6 +4961,7 @@ const googleAdsTrialPurchaseSendTo = 'AW-16506274922/y4WSCPDa1YQdEOqI5749';
 const googleAdsPendingPurchaseKey = 'pdfbreezeGoogleAdsPendingPurchase';
 
 function queueGoogleAdsTrialPurchase(transactionId) {
+  if (stripeCheckoutMode !== 'live' || !window.PDFBreezeAnalytics?.isLiveTrackingContext?.()) return;
   const cleanTransactionId = String(transactionId || '').trim();
   const value = Number(selectedAccessPlan?.price);
   if (!googleAdsTrialPurchaseSendTo || !cleanTransactionId || !Number.isFinite(value) || value <= 0) return;
@@ -5265,7 +5266,6 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     }
     const paymentSucceeded = paymentIntent?.status === 'succeeded';
     if (paymentSucceeded) {
-      await window.PDFBreezeAnalytics?.track('purchase_complete', stripePlanCode());
       queueGoogleAdsTrialPurchase(paymentIntent.id);
     }
     if (pendingCheckoutBlob && pendingCheckoutFilename) {
@@ -6205,7 +6205,6 @@ document.getElementById('final-download').addEventListener('click', async () => 
 
   if (error) error.hidden = true;
   sessionStorage.setItem('pdfmintPendingEmail', email);
-  await window.PDFBreezeAnalytics?.track('email_entered');
 
   const button = document.getElementById('final-download');
   const selectedFormat = document.querySelector('input[name="export-format"]:checked')?.value || 'pdf';
@@ -6219,6 +6218,8 @@ document.getElementById('final-download').addEventListener('click', async () => 
 
   try {
     await ensureCheckoutAccount(email);
+    // Only count an email after it has produced a real, authenticated member.
+    await window.PDFBreezeAnalytics?.track('email_entered');
     await exportEditedDocument(selectedFormat);
   } catch (exportError) {
     console.error('Export failed:', exportError);
@@ -6277,7 +6278,6 @@ function showOAuthSetupMessage(provider) {
 }
 
 document.getElementById('continue-google')?.addEventListener('click', () => {
-  window.PDFBreezeAnalytics?.track('email_entered', 'google');
   openAccessPage();
 });
 
