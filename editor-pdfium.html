@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=text-markup-production-1">
+<link rel="stylesheet" href="editor-pdfium.css?v=note-drag-1">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16506274922"></script>
 <script>
@@ -54,6 +54,14 @@
     <button class="tool" data-tool="redact"><span class="icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v12M8 17h8"/><path d="M3 20h18" stroke-width="4"/></svg></span>Redact</button>
     <button class="tool manage-tool-sticky" data-tool="manage"><span class="icon"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></span><span class="manage-tool-label">Manage</span></button>
   </section>
+  <aside id="noteTutorial" class="note-tutorial" role="status" hidden>
+    <button id="noteTutorialClose" class="note-tutorial-close" type="button" aria-label="Close note tutorial">×</button>
+    <strong>Add a note</strong>
+    <p>Click anywhere on your document to place a note, then type your message in the box that opens.</p>
+    <footer class="note-tutorial-footer">
+      <button id="noteTutorialDone" class="note-tutorial-done" type="button">Got it</button>
+    </footer>
+  </aside>
   <section id="contextBar" class="context-bar">
     <div id="addControls" class="add-controls" hidden>
       <label class="add-icon-control colour-control"><span>Text</span><span id="addTextSwatch" class="colour-swatch"></span><input id="addTextColor" class="native-colour" type="color" value="#142038" aria-label="Text colour"></label>
@@ -197,6 +205,6 @@
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
 <script src="analytics.js?v=trusted-analytics-1"></script>
-<script type="module" src="editor-pdfium.js?v=text-markup-production-1"></script>
+<script type="module" src="editor-pdfium.js?v=note-drag-1"></script>
 </body>
 </html>
