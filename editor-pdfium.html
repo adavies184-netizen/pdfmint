@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=note-drag-1">
+<link rel="stylesheet" href="editor-pdfium.css?v=note-actions-sidebar-3">
 <!-- Google tag (gtag.js) -->
 <script async src="https://www.googletagmanager.com/gtag/js?id=AW-16506274922"></script>
 <script>
@@ -102,7 +102,7 @@
       <button id="deleteHighlight" class="delete-highlight" disabled>Delete selected</button>
     </div>
     <div id="linkControls" class="annotation-controls" hidden><span class="annotation-icon"><svg viewBox="0 0 24 24"><path d="M10.5 13.5 13.5 10.5M8.2 16.8 6.4 18.6a3.5 3.5 0 0 1-5-5l3.2-3.2a3.5 3.5 0 0 1 5 0m6.2-3.2 1.8-1.8a3.5 3.5 0 0 1 5 5l-3.2 3.2a3.5 3.5 0 0 1-5 0"/></svg></span><strong>Add link</strong><span>Drag a box over the text or area that should open the link.</span><button id="editLink" class="annotation-action" disabled>Edit selected</button><button id="deleteLink" class="annotation-delete" disabled>Delete selected</button></div>
-    <div id="noteControls" class="annotation-controls" hidden><span class="annotation-icon"><svg viewBox="0 0 24 24"><path d="M4 3.5h16v12l-5 5H4zM15 20.5v-5h5M7.5 8h9M7.5 11.5h7"/></svg></span><strong>Add note</strong><span>Click the PDF where the note marker should appear.</span><button id="editNote" class="annotation-action" disabled>Edit selected</button><button id="deleteNote" class="annotation-delete" disabled>Delete selected</button></div>
+    <div id="noteControls" class="annotation-controls" hidden><span class="annotation-icon"><svg viewBox="0 0 24 24"><path d="M4 3.5h16v12l-5 5H4zM15 20.5v-5h5M7.5 8h9M7.5 11.5h7"/></svg></span><strong>Add note</strong><span>Click the PDF to add a note. To edit an existing note, click its marker.</span><button id="editNote" class="annotation-action" disabled hidden>Edit note</button><button id="deleteNote" class="annotation-delete" disabled hidden>Delete note</button></div>
     <div id="stampControls" class="stamp-controls" hidden><span class="context-icon"><svg viewBox="0 0 24 24"><circle cx="12" cy="5.2" r="3.2"/><path d="M9.2 8.2v3.9c0 1.5-.8 2.7-2.2 3.4H5.5v3h13v-3H17c-1.4-.7-2.2-1.9-2.2-3.4V8.2M5 21h14"/></svg></span><strong>Stamp</strong><button id="openStampLibrary" class="context-action">Choose stamp</button><button id="openCustomStamp" class="context-action secondary-action">Custom stamp</button><span>Stamps remain movable and resizable after insertion.</span></div>
     <div id="watermarkControls" class="watermark-controls" hidden><label class="icon-field wide"><span class="field-icon">T</span><input id="watermarkText" value="HELLO WORLD!" maxlength="160" aria-label="Watermark text"></label><label class="icon-field"><span class="field-icon">↔</span><input id="watermarkSize" type="range" min="10" max="100" value="65"><output id="watermarkSizeValue">65%</output></label><label class="icon-field"><span class="field-icon">◐</span><input id="watermarkOpacity" type="range" min="5" max="100" value="35"><output id="watermarkOpacityValue">35%</output></label><div class="watermark-swatches" aria-label="Watermark colour"><button class="wm-swatch active" data-wm-colour="#ef4444" style="--swatch:#ef4444"></button><button class="wm-swatch" data-wm-colour="#f97316" style="--swatch:#f97316"></button><button class="wm-swatch" data-wm-colour="#eab308" style="--swatch:#eab308"></button><button class="wm-swatch" data-wm-colour="#22c55e" style="--swatch:#22c55e"></button><button class="wm-swatch" data-wm-colour="#3b82f6" style="--swatch:#3b82f6"></button><button class="wm-swatch" data-wm-colour="#111827" style="--swatch:#111827"></button><input id="watermarkColour" type="color" value="#ef4444" aria-label="Custom watermark colour"></div><label class="icon-field compact"><span class="field-icon">↕</span><input id="watermarkVertical" type="range" min="0" max="100" value="50" aria-label="Watermark height"></label><label class="icon-field angle"><span class="field-icon">↻</span><input id="watermarkAngle" type="number" min="-180" max="180" value="-45" aria-label="Watermark angle"><output>°</output></label><div class="wm-align"><button data-wm-align="left">≡</button><button class="active" data-wm-align="center">≡</button><button data-wm-align="right">≡</button></div><button id="applyWatermark" class="context-action">Apply watermark</button></div>
     <div id="cropControls" class="annotation-controls" hidden><span class="annotation-icon"><svg viewBox="0 0 24 24"><path d="M7 2v15a2 2 0 0 0 2 2h13M2 7h15a2 2 0 0 1 2 2v13"/></svg></span><strong>Crop page</strong><span>Drag over the area of the page you want to keep.</span><button id="resetCrop" class="annotation-action">Reset crop</button></div>
@@ -205,6 +205,6 @@
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
 <script src="analytics.js?v=trusted-analytics-1"></script>
-<script type="module" src="editor-pdfium.js?v=note-drag-1"></script>
+<script type="module" src="editor-pdfium.js?v=note-actions-7"></script>
 </body>
 </html>

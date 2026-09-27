@@ -297,6 +297,12 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 }
 
 @media(min-width:761px){
+  .editor-shell{grid-template-columns:205px 1fr}
+  .sidebar{display:flex;flex-direction:column;overflow:hidden}
+  .sidebar-title{height:54px;min-height:54px;padding:0 16px;gap:8px}
+  .page-thumbnails{min-height:0;padding:12px 20px 24px;gap:11px;overflow-x:hidden;overflow-y:auto;scrollbar-gutter:auto}
+  .sidebar-page{width:145px;justify-self:center;padding:6px;gap:5px;border-radius:8px}
+  .sidebar-page span{padding:4px 10px;font-size:10px}
   .tool-ribbon{height:64px;margin-top:8px;padding:0 10px;gap:1px;scrollbar-width:none}
   .tool-ribbon::-webkit-scrollbar{display:none}
   .tool{height:44px;padding:0 7px;gap:5px;border-radius:8px;color:#142038;font-size:12px;font-weight:750}
