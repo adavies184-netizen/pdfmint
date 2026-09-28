@@ -437,29 +437,39 @@ def _iso_from_unix(value: int | None) -> str | None:
     return datetime.fromtimestamp(value, tz=timezone.utc).isoformat()
 
 
-async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
+def _stripe_field(value: Any, key: str, default: Any = None) -> Any:
+    """Read fields from dictionaries and StripeObject instances uniformly."""
+    if value is None:
+        return default
+    try:
+        return value[key]
+    except (KeyError, TypeError, AttributeError):
+        return getattr(value, key, default)
+
+
+async def _upsert_subscription(subscription: Any) -> str | None:
     if not SUPABASE_SERVICE_ROLE_KEY:
         raise RuntimeError("SUPABASE_SERVICE_ROLE_KEY is missing")
-    metadata = subscription.get("metadata") or {}
-    user_id = metadata.get("supabase_user_id")
+    metadata = _stripe_field(subscription, "metadata", {}) or {}
+    user_id = _stripe_field(metadata, "supabase_user_id")
     if not user_id:
         return None
 
-    pause_collection = subscription.get("pause_collection") or {}
-    pause_ends_at = pause_collection.get("resumes_at")
+    pause_collection = _stripe_field(subscription, "pause_collection", {}) or {}
+    pause_ends_at = _stripe_field(pause_collection, "resumes_at")
     record = {
         "user_id": user_id,
         "provider": "stripe",
-        "provider_mode": metadata.get("provider_mode", "live"),
-        "provider_customer_id": subscription.get("customer"),
+        "provider_mode": _stripe_field(metadata, "provider_mode", "live"),
+        "provider_customer_id": _stripe_field(subscription, "customer"),
         "provider_subscription_id": subscription["id"],
-        "plan_code": metadata.get("plan_code", "unlimited_trial"),
-        "currency": metadata.get("currency", "gbp"),
-        "status": "paused" if pause_ends_at else subscription.get("status", "incomplete"),
-        "trial_ends_at": _iso_from_unix(subscription.get("trial_end")),
-        "current_period_ends_at": _iso_from_unix(pause_ends_at or subscription.get("current_period_end")),
-        "cancel_at_period_end": bool(subscription.get("cancel_at_period_end")),
-        "cancelled_at": _iso_from_unix(subscription.get("canceled_at")),
+        "plan_code": _stripe_field(metadata, "plan_code", "unlimited_trial"),
+        "currency": _stripe_field(metadata, "currency", "gbp"),
+        "status": "paused" if pause_ends_at else _stripe_field(subscription, "status", "incomplete"),
+        "trial_ends_at": _iso_from_unix(_stripe_field(subscription, "trial_end")),
+        "current_period_ends_at": _iso_from_unix(pause_ends_at or _stripe_field(subscription, "current_period_end")),
+        "cancel_at_period_end": bool(_stripe_field(subscription, "cancel_at_period_end")),
+        "cancelled_at": _iso_from_unix(_stripe_field(subscription, "canceled_at")),
     }
     headers = {
         "apikey": SUPABASE_SERVICE_ROLE_KEY,
@@ -479,11 +489,11 @@ async def _upsert_subscription(subscription: dict[str, Any]) -> str | None:
         )
     rows = response.json()
     subscription_id = rows[0]["id"] if rows else None
-    document_key = metadata.get("document_key")
-    trial_end = subscription.get("trial_end")
+    document_key = _stripe_field(metadata, "document_key")
+    trial_end = _stripe_field(subscription, "trial_end")
     if (
         subscription_id
-        and metadata.get("plan_code") == "document_trial"
+        and _stripe_field(metadata, "plan_code") == "document_trial"
         and document_key
         and trial_end
     ):
@@ -574,10 +584,10 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
             except stripe.StripeError as exc:
                 raise HTTPException(status_code=502, detail="Stripe invoice membership verification failed.") from exc
 
-        metadata = (subscription or {}).get("metadata") or {}
-        user_id = str(metadata.get("supabase_user_id") or "")
+        metadata = _stripe_field(subscription, "metadata", {}) or {}
+        user_id = str(_stripe_field(metadata, "supabase_user_id") or "")
         if user_id and SUPABASE_SERVICE_ROLE_KEY:
-            plan_code = str(metadata.get("plan_code") or "unlimited_trial")
+            plan_code = str(_stripe_field(metadata, "plan_code") or "unlimited_trial")
             paid = event["type"] == "invoice.paid"
             payment_reference = invoice.get("payment_intent")
             if isinstance(payment_reference, dict):
@@ -618,10 +628,10 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
             # and not an active sandbox subscription.
             if paid and mode == "live":
                 await store_server_event(
-                    session_id=str(metadata.get("analytics_session_id") or ""),
+                    session_id=str(_stripe_field(metadata, "analytics_session_id") or ""),
                     event_name="purchase_complete",
                     event_value=plan_code,
-                    landing_page=str(metadata.get("analytics_landing_page") or "unknown"),
+                    landing_page=str(_stripe_field(metadata, "analytics_landing_page") or "unknown"),
                     page_path="/checkout/complete",
                     user_id=user_id,
                 )
