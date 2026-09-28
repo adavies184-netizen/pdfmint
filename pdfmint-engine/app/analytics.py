@@ -39,6 +39,13 @@ class AnalyticsEventRequest(BaseModel):
     page_path: str = Field(default="", max_length=220)
 
 
+class CookieConsentEventRequest(BaseModel):
+    visitor_id: str = Field(pattern=r"^consent_[A-Za-z0-9_-]{16,64}$")
+    event_name: str = Field(pattern=r"^(banner_shown|accept_all|reject_all|settings_opened|preferences_saved)$")
+    statistics: bool | None = None
+    marketing: bool | None = None
+
+
 def _service_headers() -> dict[str, str]:
     if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
         raise HTTPException(status_code=503, detail="Analytics storage is not configured.")
@@ -145,3 +152,40 @@ async def store_server_event(
             headers={**_service_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
             json=record,
         )
+
+
+async def store_cookie_consent_event(payload: CookieConsentEventRequest, request: Request) -> dict[str, bool]:
+    """Record anonymous, aggregate consent interactions without loading analytics tags."""
+    user_agent = (request.headers.get("user-agent") or "")[:300]
+    if not _is_live_browser_request(request) or BOT_USER_AGENT.search(user_agent):
+        return {"recorded": False}
+
+    now = datetime.now(timezone.utc).isoformat()
+    record: dict[str, Any] = {"visitor_id": payload.visitor_id, "last_seen_at": now}
+    if payload.event_name == "banner_shown":
+        record["banner_shown"] = True
+    elif payload.event_name == "settings_opened":
+        record["settings_opened"] = True
+    elif payload.event_name == "accept_all":
+        record.update({"accepted_all": True, "statistics": True, "marketing": True, "decided_at": now})
+    elif payload.event_name == "reject_all":
+        record.update({"rejected_all": True, "statistics": False, "marketing": False, "decided_at": now})
+    else:
+        if payload.statistics is None or payload.marketing is None:
+            raise HTTPException(status_code=400, detail="Saved preferences require category choices.")
+        record.update({
+            "preferences_saved": True,
+            "statistics": payload.statistics,
+            "marketing": payload.marketing,
+            "decided_at": now,
+        })
+
+    async with httpx.AsyncClient(timeout=8) as client:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/cookie_consent_visitors?on_conflict=visitor_id",
+            headers={**_service_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+            json=record,
+        )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="The consent interaction could not be stored.")
+    return {"recorded": True}

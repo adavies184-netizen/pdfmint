@@ -24,8 +24,12 @@
     return location.protocol === 'https:' && LIVE_HOSTS.has(location.hostname.toLowerCase());
   }
 
-  function isLiveTrackingContext() {
+  function isLiveSiteContext() {
     return isLiveSite() && localStorage.getItem('pdfbreezeAdminStripeSandbox') !== 'true';
+  }
+
+  function isLiveTrackingContext() {
+    return isLiveSiteContext();
   }
 
   function pageName() {
@@ -103,7 +107,7 @@
   }
 
   function reportGoogleAdsEditorOpened() {
-    if (!isLiveTrackingContext()) return;
+    if (!isLiveSiteContext()) return;
     if (typeof window.gtag !== 'function') return;
     if (sessionStorage.getItem(GOOGLE_ADS_EDITOR_OPENED_KEY) === 'sent') return;
     sessionStorage.setItem(GOOGLE_ADS_EDITOR_OPENED_KEY, 'sent');
@@ -114,7 +118,9 @@
   }
 
   async function track(eventName, eventValue = '') {
-    if (eventName === 'editor_opened') reportGoogleAdsEditorOpened();
+    if (eventName === 'editor_opened') {
+      reportGoogleAdsEditorOpened();
+    }
     // Preview, localhost and staging activity must never enter live reporting.
     if (!isLiveTrackingContext()) return false;
     const baseUrl = window.PDFMINT_CONFIG?.engineBaseUrl;
@@ -180,19 +186,22 @@
   }
 
   const currentPage = pageName();
-  if (!ignoredPages.has(currentPage) && sessionStorage.getItem(TRACKED_PAGE_KEY) !== currentPage) {
+  const recordLandingView = async () => {
+    if (ignoredPages.has(currentPage) || sessionStorage.getItem(TRACKED_PAGE_KEY) === currentPage) return;
     sessionStorage.setItem(LANDING_KEY, currentPage);
-    const recordLandingView = async () => {
-      for (const delay of [0, 1200, 3500]) {
-        if (delay) await new Promise(resolve => window.setTimeout(resolve, delay));
-        if (await track('landing_view', currentPage)) {
-          sessionStorage.setItem(TRACKED_PAGE_KEY, currentPage);
-          return;
-        }
+    for (const delay of [0, 1200, 3500]) {
+      if (delay) await new Promise(resolve => window.setTimeout(resolve, delay));
+      if (await track('landing_view', currentPage)) {
+        sessionStorage.setItem(TRACKED_PAGE_KEY, currentPage);
+        return;
       }
-    };
+    }
+  };
+  void recordLandingView();
+
+  document.addEventListener('pdfbreeze:consentchange', () => {
     void recordLandingView();
-  }
+  });
 
   document.addEventListener('click', event => {
     const upload = event.target.closest('.upload-button, [data-upload-trigger], label[for="file-input"]');

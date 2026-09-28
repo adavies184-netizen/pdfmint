@@ -14,14 +14,6 @@ https://github.com/nodeca/pako/blob/main/LICENSE
 
 /* ---- PDFBreeze application code ---- */
 
-if (!window.PDFBreezeAnalytics && !document.querySelector('script[data-pdfbreeze-analytics]')) {
-  const analyticsScript = document.createElement('script');
-  analyticsScript.src = 'analytics.js?v=trusted-analytics-1';
-  analyticsScript.async = true;
-  analyticsScript.dataset.pdfbreezeAnalytics = 'true';
-  document.head.appendChild(analyticsScript);
-}
-
 const tabs = document.querySelectorAll('.tool-tab');
 const panels = document.querySelectorAll('.tool-panel');
 tabs.forEach(tab => tab.addEventListener('click', () => {

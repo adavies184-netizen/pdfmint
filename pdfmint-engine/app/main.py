@@ -18,8 +18,8 @@ from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, checkout_public_config, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
-from .admin import AdminDeleteRequest, ProviderSelectionRequest, admin_funnel, admin_overview, delete_admin_documents, delete_admin_members, select_payment_provider
-from .analytics import AnalyticsEventRequest, store_analytics_event
+from .admin import AdminDeleteRequest, CookieConsentSettingRequest, ProviderSelectionRequest, admin_cookie_consent_setting, admin_cookie_consent_stats, admin_funnel, admin_overview, cookie_consent_setting, delete_admin_documents, delete_admin_members, select_payment_provider, update_cookie_consent_setting
+from .analytics import AnalyticsEventRequest, CookieConsentEventRequest, store_analytics_event, store_cookie_consent_event
 from .support import SupportMessageRequest, send_support_message
 
 
@@ -133,6 +133,31 @@ async def admin_conversion_funnel(
 @app.post("/v1/admin/payment-provider")
 async def admin_payment_provider(payload: ProviderSelectionRequest, authorization: str | None = Header(default=None)):
     return await select_payment_provider(payload, authorization)
+
+
+@app.get("/v1/site/cookie-consent")
+async def website_cookie_consent_setting():
+    return await cookie_consent_setting()
+
+
+@app.post("/v1/site/cookie-consent/event")
+async def website_cookie_consent_event(payload: CookieConsentEventRequest, request: Request):
+    return await store_cookie_consent_event(payload, request)
+
+
+@app.get("/v1/admin/cookie-consent")
+async def get_admin_cookie_consent_setting(authorization: str | None = Header(default=None)):
+    return await admin_cookie_consent_setting(authorization)
+
+
+@app.get("/v1/admin/cookie-consent/stats")
+async def get_admin_cookie_consent_stats(authorization: str | None = Header(default=None)):
+    return await admin_cookie_consent_stats(authorization)
+
+
+@app.post("/v1/admin/cookie-consent")
+async def set_admin_cookie_consent_setting(payload: CookieConsentSettingRequest, authorization: str | None = Header(default=None)):
+    return await update_cookie_consent_setting(payload, authorization)
 
 
 @app.delete("/v1/admin/documents")

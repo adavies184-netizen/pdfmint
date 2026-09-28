@@ -43,6 +43,10 @@ class ProviderSelectionRequest(BaseModel):
     provider: str = Field(pattern="^[a-z0-9_-]{2,40}$")
 
 
+class CookieConsentSettingRequest(BaseModel):
+    enabled: bool
+
+
 class AdminDeleteRequest(BaseModel):
     ids: list[UUID] = Field(min_length=1, max_length=100)
 
@@ -177,6 +181,48 @@ def build_funnel_report(
             for name, session_ids in sorted(landing_pages.items(), key=lambda item: (-len(item[1]), item[0]))
         ],
         "journeys": journey_rows,
+    }
+
+
+def build_cookie_consent_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    visitors = sum(1 for row in rows if row.get("banner_shown") is True)
+    decided_rows = [
+        row for row in rows
+        if isinstance(row.get("statistics"), bool) and isinstance(row.get("marketing"), bool)
+    ]
+    decided = len(decided_rows)
+
+    def percentage(count: int, base: int = visitors) -> float:
+        return round((count / base * 100) if base else 0, 1)
+
+    def action(field: str) -> dict[str, int | float]:
+        count = sum(1 for row in rows if row.get(field) is True)
+        return {"count": count, "percentage": percentage(count)}
+
+    def category(field: str, always_on: bool = False) -> dict[str, int | float]:
+        on_count = decided if always_on else sum(1 for row in decided_rows if row.get(field) is True)
+        off_count = 0 if always_on else decided - on_count
+        return {
+            "on": on_count,
+            "off": off_count,
+            "on_percentage": percentage(on_count, decided),
+            "off_percentage": percentage(off_count, decided),
+        }
+
+    return {
+        "visitors": visitors,
+        "decided": decided,
+        "actions": {
+            "accepted_all": action("accepted_all"),
+            "opened_settings": action("settings_opened"),
+            "rejected_all": action("rejected_all"),
+            "saved_preferences": action("preferences_saved"),
+        },
+        "categories": {
+            "necessary": category("necessary", always_on=True),
+            "statistics": category("statistics"),
+            "marketing": category("marketing"),
+        },
     }
 
 
@@ -334,7 +380,7 @@ async def admin_overview(
         "documents": all_documents,
         "consents": all_consents,
         "upcoming": upcoming_items,
-        "providers": providers,
+        "providers": [provider for provider in providers if provider.get("provider") != COOKIE_CONSENT_SETTING_KEY],
         "selected_day": day,
     }
 
@@ -506,3 +552,71 @@ async def select_payment_provider(payload: ProviderSelectionRequest, authorizati
     if clear.is_error or selected.is_error:
         raise HTTPException(status_code=502, detail="The payment provider could not be updated.")
     return {"updated": True, "provider": payload.provider}
+
+
+COOKIE_CONSENT_SETTING_KEY = "site_cookie_consent"
+
+
+async def cookie_consent_setting() -> dict[str, bool]:
+    """Public feature state. Missing configuration deliberately defaults to enabled."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return {"enabled": True}
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+                headers=_service_headers(),
+                params={"provider": f"eq.{COOKIE_CONSENT_SETTING_KEY}", "select": "enabled", "limit": "1"},
+            )
+        if response.is_error or not response.json():
+            return {"enabled": True}
+        return {"enabled": response.json()[0].get("enabled") is not False}
+    except (httpx.HTTPError, ValueError, TypeError):
+        return {"enabled": True}
+
+
+async def admin_cookie_consent_setting(authorization: str | None) -> dict[str, bool]:
+    await _require_admin(authorization)
+    return await cookie_consent_setting()
+
+
+async def admin_cookie_consent_stats(authorization: str | None) -> dict[str, Any]:
+    await _require_admin(authorization)
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/cookie_consent_visitors",
+            headers=_service_headers(),
+            params={
+                "select": "banner_shown,accepted_all,rejected_all,settings_opened,preferences_saved,statistics,marketing",
+            },
+        )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="Cookie consent statistics could not be loaded.")
+    return build_cookie_consent_report(response.json())
+
+
+async def update_cookie_consent_setting(payload: CookieConsentSettingRequest, authorization: str | None) -> dict[str, bool]:
+    await _require_admin(authorization)
+    headers = {
+        **_service_headers(),
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=representation",
+    }
+    row = {
+        "provider": COOKIE_CONSENT_SETTING_KEY,
+        "display_name": "Cookie consent",
+        "enabled": payload.enabled,
+        "is_default": False,
+        "configured": True,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+            headers=headers,
+            params={"on_conflict": "provider"},
+            json=row,
+        )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="The cookie consent setting could not be updated.")
+    return {"enabled": payload.enabled}

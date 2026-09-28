@@ -386,6 +386,78 @@
     }
   }
 
+  function renderCookieConsentSetting(enabled, message='') {
+    const toggle = document.getElementById('admin-cookie-consent-enabled');
+    const state = document.querySelector('[data-cookie-consent-state]');
+    const feedback = document.querySelector('[data-cookie-consent-feedback]');
+    toggle.checked = enabled;
+    state.textContent = enabled ? 'On' : 'Off';
+    feedback.textContent = message || (enabled
+      ? 'Visitors are shown the consent banner until they make a choice.'
+      : 'Banner hidden. Statistics and Marketing tracking are allowed without consent prompts.');
+  }
+
+  async function loadCookieConsentSetting() {
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/cookie-consent`, {
+      cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.detail || 'Cookie consent setting could not be loaded.');
+    renderCookieConsentSetting(result.enabled !== false);
+  }
+
+  function renderCookieConsentStats(report) {
+    const root = document.querySelector('[data-cookie-consent-stats]');
+    const action = (key) => report.actions?.[key] || {count:0,percentage:0};
+    const category = (key) => report.categories?.[key] || {on:0,off:0,on_percentage:0,off_percentage:0};
+    const accepted = action('accepted_all');
+    const settings = action('opened_settings');
+    const rejected = action('rejected_all');
+    root.innerHTML = `
+      <div><h2>Consent activity</h2><p>Approximate unique browsers since this reporting was enabled.</p></div>
+      <div class="cookie-stat-summary">
+        <div class="cookie-stat-card"><small>Banner shown</small><strong>${Number(report.visitors || 0).toLocaleString()}</strong><small>Unique browsers</small></div>
+        <div class="cookie-stat-card"><small>Accepted all</small><strong>${Number(accepted.count).toLocaleString()}</strong><small>${accepted.percentage}% of banner visitors</small></div>
+        <div class="cookie-stat-card"><small>Opened settings</small><strong>${Number(settings.count).toLocaleString()}</strong><small>${settings.percentage}% of banner visitors</small></div>
+        <div class="cookie-stat-card"><small>Rejected all</small><strong>${Number(rejected.count).toLocaleString()}</strong><small>${rejected.percentage}% of banner visitors</small></div>
+      </div>
+      <div><h2>Latest category choices</h2><p>Based on ${Number(report.decided || 0).toLocaleString()} browsers that completed a choice.</p></div>
+      <div class="cookie-category-stats">
+        ${[['Necessary',category('necessary')],['Statistics',category('statistics')],['Marketing',category('marketing')]].map(([label,item]) => `
+          <div class="cookie-category-row"><b>${label}</b><span>On <b>${Number(item.on).toLocaleString()} (${item.on_percentage}%)</b></span><span>Off <b>${Number(item.off).toLocaleString()} (${item.off_percentage}%)</b></span></div>`).join('')}
+      </div>
+      <p class="cookie-stat-note">Necessary is always on and cannot be disabled. Percentages may not total visitor actions because a visitor can open settings and later accept or reject.</p>`;
+  }
+
+  async function loadCookieConsentStats() {
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/cookie-consent/stats`, {
+      cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.detail || 'Cookie consent statistics could not be loaded.');
+    renderCookieConsentStats(result);
+  }
+
+  async function updateCookieConsentSetting(enabled) {
+    const toggle = document.getElementById('admin-cookie-consent-enabled');
+    toggle.disabled = true;
+    renderCookieConsentSetting(enabled, 'Saving…');
+    try {
+      const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/cookie-consent`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${adminSession.access_token}`},
+        body:JSON.stringify({enabled})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Cookie consent setting could not be saved.');
+      localStorage.setItem('pdfbreeze_cookie_feature_v1', JSON.stringify({enabled:result.enabled !== false, cachedAt:Date.now()}));
+      window.PDFBreezeConsent?.setFeatureEnabled?.(result.enabled !== false);
+      renderCookieConsentSetting(result.enabled !== false, 'Saved. New page loads reflect the change within one minute.');
+    } finally {
+      toggle.disabled = false;
+    }
+  }
+
   try {
     await auth.ready;
     const user = await auth.requireUser({returnTo:'/admin.html'});
@@ -396,6 +468,10 @@
     adminSession = session;
     installSectionDateFilters();
     await loadOverview();
+    loadCookieConsentSetting().catch(error => renderCookieConsentSetting(true, `${error.message} Defaulting to On.`));
+    loadCookieConsentStats().catch(error => {
+      document.querySelector('[data-cookie-consent-stats]').innerHTML = `<p>${error.message || 'Cookie consent statistics could not be loaded.'}</p>`;
+    });
     loadStripeModeStatus().catch(() => { stripeModeStatus = {live:false, sandbox:false}; if (dashboardData) renderDashboard(dashboardData); });
     document.addEventListener('click', event => {
       const memberRowElement = event.target.closest('[data-member-id]');
@@ -434,6 +510,11 @@
           page.checked ? selectedRows[page.dataset.selectPage].add(box.value) : selectedRows[page.dataset.selectPage].delete(box.value);
         });
         syncBulkControls(page.dataset.selectPage);
+      }
+      if (event.target.id === 'admin-cookie-consent-enabled') {
+        updateCookieConsentSetting(event.target.checked).catch(error => {
+          renderCookieConsentSetting(!event.target.checked, error.message || 'The setting could not be saved.');
+        });
       }
     });
     const overviewPeriod = document.getElementById('overview-period');
