@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=note-actions-sidebar-3">
+<link rel="stylesheet" href="editor-pdfium.css?v=page-sidebar-reorder-2">
 <link rel="stylesheet" href="cookie-consent.css?v=consent-4">
 <script src="cookie-consent.js?v=consent-7"></script>
 <script src="analytics.js?v=advanced-consent-1"></script>
@@ -114,7 +114,12 @@
   </section>
   <main class="editor-shell">
     <aside class="sidebar">
-      <div class="sidebar-title"><span class="drag-dots">⠿</span><strong>Pages</strong></div>
+      <div class="sidebar-title"><span class="drag-dots">⠿</span><span class="sidebar-title-copy"><strong>Pages</strong><small>Drag to reorder</small></span></div>
+      <aside id="sidebarReorderTip" class="sidebar-reorder-tip" aria-labelledby="sidebarReorderTipTitle" hidden>
+        <button id="sidebarReorderTipClose" type="button" aria-label="Dismiss page reordering tip">×</button>
+        <span class="sidebar-tip-icon" aria-hidden="true">⠿</span>
+        <span><strong id="sidebarReorderTipTitle">Put pages in the right order</strong><small>Drag a page using the six-dot handle to move it.</small></span>
+      </aside>
       <div id="pageThumbnails" class="page-thumbnails"></div>
       <div hidden><canvas id="thumbnail"></canvas><span id="thumbLabel">No PDF</span><span id="objectCount">0 objects</span><select id="objects"></select></div>
     </aside>
@@ -208,6 +213,6 @@
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
 <script src="analytics.js?v=trusted-analytics-1"></script>
-<script type="module" src="editor-pdfium.js?v=note-actions-7"></script>
+<script type="module" src="editor-pdfium.js?v=page-sidebar-reorder-2"></script>
 </body>
 </html>
