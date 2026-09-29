@@ -10,6 +10,11 @@
     y = l.getElementsByTagName(r)[0];
     y.parentNode.insertBefore(t, y);
   })(window, document, 'clarity', 'script', 'ypud36bmlu');
+  // Temporary standalone configuration: allow Clarity to link page views.
+  window.clarity('consentv2', {
+    ad_Storage: 'granted',
+    analytics_Storage: 'granted'
+  });
 
   const STORAGE_KEY = 'pdfbreeze_cookie_consent_v1';
   const FEATURE_KEY = 'pdfbreeze_cookie_feature_v1';
