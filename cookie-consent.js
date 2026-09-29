@@ -189,7 +189,7 @@
     wrapper.innerHTML = `
       <section id="pdfbreeze-cookie-banner" class="pdfbreeze-cookie-banner" role="dialog" aria-modal="true" aria-describedby="pdfbreeze-cookie-description" hidden>
         <div class="pdfbreeze-cookie-copy">
-          <p id="pdfbreeze-cookie-description">Cookies allow us to personalize content and ads, to provide social media features and to analyze our traffic. We also share information about your use of our site with our social media, advertising and analytics partners.</p>
+          <p id="pdfbreeze-cookie-description"><strong>Cookies</strong> allow us to personalize content and ads, to provide social media features and to analyze our traffic. We also share information about your use of our site with our social media, advertising and analytics partners.</p>
           <a href="privacy-policy.html">View our privacy policy</a>
         </div>
         <div class="pdfbreeze-cookie-actions">
