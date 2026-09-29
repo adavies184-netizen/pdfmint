@@ -1,6 +1,16 @@
 (() => {
   if (window.PDFBreezeConsent) return;
 
+  // Microsoft Clarity is currently installed independently of cookie consent.
+  (function(c, l, a, r, i, t, y) {
+    c[a] = c[a] || function() {(c[a].q = c[a].q || []).push(arguments);};
+    t = l.createElement(r);
+    t.async = 1;
+    t.src = 'https://www.clarity.ms/tag/' + i;
+    y = l.getElementsByTagName(r)[0];
+    y.parentNode.insertBefore(t, y);
+  })(window, document, 'clarity', 'script', 'ypud36bmlu');
+
   const STORAGE_KEY = 'pdfbreeze_cookie_consent_v1';
   const FEATURE_KEY = 'pdfbreeze_cookie_feature_v1';
   const METRICS_KEY = 'pdfbreeze_cookie_metrics_id_v1';
@@ -179,7 +189,7 @@
     wrapper.innerHTML = `
       <section id="pdfbreeze-cookie-banner" class="pdfbreeze-cookie-banner" role="dialog" aria-modal="true" aria-describedby="pdfbreeze-cookie-description" hidden>
         <div class="pdfbreeze-cookie-copy">
-          <p id="pdfbreeze-cookie-description">Cookies allow us to personalize content and ads, to provide social media features and to analyze our traffic. We also share information about your use of our site with our social media, advertising and analytics partners who may combine it with other information that you have provided to them or that they have collected from your use of their services.</p>
+          <p id="pdfbreeze-cookie-description">Cookies allow us to personalize content and ads, to provide social media features and to analyze our traffic. We also share information about your use of our site with our social media, advertising and analytics partners.</p>
           <a href="privacy-policy.html">View our privacy policy</a>
         </div>
         <div class="pdfbreeze-cookie-actions">
