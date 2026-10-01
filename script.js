@@ -4771,6 +4771,7 @@ let selectedAccessPlan = {
 const paymentWallStyleCacheKey = 'pdfbreeze_payment_wall_style_v1';
 const trialDisclosureCopy = "Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 3 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.";
 let activePaymentWallStyle = 'zendocs';
+let paymentWallStyleRequest = null;
 
 function formatPounds(value) {
   return new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP'}).format(value);
@@ -4856,20 +4857,33 @@ async function loadPaymentWallStyle() {
       return cached.style;
     }
   } catch (_) {}
+  if (paymentWallStyleRequest) return paymentWallStyleRequest;
   const engineBaseUrl = String(window.PDFMINT_CONFIG?.engineBaseUrl || 'https://pdfmint-engine-5dfdx.sevalla.app').replace(/\/+$/, '');
-  try {
-    const response = await fetch(`${engineBaseUrl}/v1/site/payment-wall`, {cache:'no-store'});
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.detail || 'Payment wall setting unavailable.');
-    const style = result.style === 'zendocs' ? 'zendocs' : 'standard';
-    localStorage.setItem(paymentWallStyleCacheKey, JSON.stringify({style, cachedAt:Date.now()}));
-    applyPaymentWallStyle(style);
-    return style;
-  } catch (_) {
-    applyPaymentWallStyle('zendocs');
-    return 'zendocs';
-  }
+  paymentWallStyleRequest = (async () => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 2500);
+    try {
+      const response = await fetch(`${engineBaseUrl}/v1/site/payment-wall`, {cache:'no-store', signal:controller.signal});
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.detail || 'Payment wall setting unavailable.');
+      const style = result.style === 'zendocs' ? 'zendocs' : 'standard';
+      localStorage.setItem(paymentWallStyleCacheKey, JSON.stringify({style, cachedAt:Date.now()}));
+      applyPaymentWallStyle(style);
+      return style;
+    } catch (_) {
+      applyPaymentWallStyle('zendocs');
+      return 'zendocs';
+    } finally {
+      window.clearTimeout(timeout);
+      paymentWallStyleRequest = null;
+    }
+  })();
+  return paymentWallStyleRequest;
 }
+
+// Start this small settings request while the customer is editing so checkout
+// never waits on it after they enter their email.
+void loadPaymentWallStyle();
 
 async function openAccessPage() {
   closeEditorCheckoutOverlays();
@@ -6278,7 +6292,8 @@ document.getElementById('final-download').addEventListener('click', async () => 
   try {
     await ensureCheckoutAccount(email);
     // Only count an email after it has produced a real, authenticated member.
-    await window.PDFBreezeAnalytics?.track('email_entered');
+    // Analytics must never delay or block the customer's checkout journey.
+    void window.PDFBreezeAnalytics?.track('email_entered');
     await exportEditedDocument(selectedFormat);
   } catch (exportError) {
     console.error('Export failed:', exportError);

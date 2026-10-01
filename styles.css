@@ -2335,13 +2335,13 @@ html,body{max-width:100%;overflow-x:hidden}
 #payment-page.payment-wall-zendocs .zendocs-document-card>h2,#payment-page.payment-wall-zendocs .zendocs-download-title{margin:0 0 12px;color:#111;font:700 28px/1.2 Poppins,Inter,sans-serif}
 #payment-page.payment-wall-zendocs .zendocs-download-title{display:block;grid-area:title;text-align:center}
 #payment-page.payment-wall-zendocs .zendocs-preview-shell{height:420px;padding:32px 40px 0;border-radius:20px;background:linear-gradient(135deg,#ebf8f3,#f2faf7);overflow:hidden}
-#payment-page.payment-wall-zendocs .zendocs-file-row{height:44px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:10px 10px 0 0;text-align:left;font-size:11px}
+#payment-page.payment-wall-zendocs .zendocs-file-row{position:relative;z-index:1;height:44px;padding:0 15px;display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:10px 10px 0 0;text-align:left;font-size:11px;box-shadow:0 8px 24px rgba(22,70,54,.1)}
 #payment-page.payment-wall-zendocs .zendocs-file-row strong{max-width:82%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-#payment-page.payment-wall-zendocs .zendocs-file-row span{padding:3px 8px;border-radius:6px;background:#f2f3f3;color:#707977}
-#payment-page.payment-wall-zendocs .zendocs-preview-frame{height:370px;background:#fff;display:flex;justify-content:center;overflow:hidden}
+#payment-page.payment-wall-zendocs .zendocs-file-row span{padding:4px 8px;border-radius:6px;background:#ef3434;color:#fff;font-weight:700}
+#payment-page.payment-wall-zendocs .zendocs-preview-frame{position:relative;height:370px;background:#fff;display:flex;justify-content:center;overflow:hidden;box-shadow:0 14px 28px rgba(22,70,54,.13)}
 #payment-page.payment-wall-zendocs #zendocs-preview-canvas{width:auto;max-width:100%;height:auto;object-fit:contain;object-position:top center;box-shadow:0 2px 10px rgba(15,23,42,.08)}
 #payment-page.payment-wall-zendocs .zendocs-document-card>p{margin:14px 0 0;color:#69746f;font-size:10px;letter-spacing:.06em}
-#payment-page.payment-wall-zendocs .order-summary-card{grid-area:summary;position:static;padding:20px;border:1px solid #dfe7e4;border-radius:14px;background:#fff;box-shadow:none}
+#payment-page.payment-wall-zendocs .order-summary-card{grid-area:summary;position:static;padding:20px;border:1px solid #dfe7e4;border-radius:14px;background:#fff;box-shadow:0 10px 26px rgba(23,61,49,.1)}
 #payment-page.payment-wall-zendocs .order-summary-card>h2{margin:0 0 14px;color:#7a8581;font-size:11px;text-transform:uppercase;letter-spacing:.04em}
 #payment-page.payment-wall-zendocs .zendocs-order-lines{display:grid}
 #payment-page.payment-wall-zendocs .zendocs-order-lines>div{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:8px 0;border-bottom:1px solid #e8eeeb;font-size:12px}
