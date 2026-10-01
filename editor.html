@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://js.stripe.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=f62a0aeea0ff">
+<link rel="stylesheet" href="styles.css?v=payment-wall-1">
 <script>if(new URLSearchParams(location.search).get('pdfiumCheckout')==='1')document.documentElement.classList.add('pdfium-checkout-route')</script>
 <style>
 body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}
@@ -900,14 +900,14 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
               <label class="plan-option">
                 <input type="radio" name="access-plan" value="limited" data-price="0.50">
                 <span class="plan-check"></span>
-                <span class="plan-copy"><strong>7-day limited access</strong><small>Edit and download this document</small></span>
+                <span class="plan-copy"><strong>3-day limited access</strong><small>Edit and download this document</small></span>
                 <span class="plan-price">£0.50</span>
               </label>
 
               <label class="plan-option selected recommended">
                 <input type="radio" name="access-plan" value="full" data-price="1.00" checked>
                 <span class="plan-check"></span>
-                <span class="plan-copy"><strong>7-day full access</strong><small>Use every PDFBreeze tool for seven days</small></span>
+                <span class="plan-copy"><strong>3-day full access</strong><small>Use every PDFBreeze tool for three days</small></span>
                 <span class="plan-price">£1</span>
                 <span class="recommended-ribbon">Most Popular</span>
               </label>
@@ -929,10 +929,11 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
               <div><span>✓</span> Add text, images and fillable fields</div>
             </div>
 
-            <div class="plan-disclosure" id="plan-disclosure">
-              Seven-day full access costs £1 today. Unless cancelled, it renews at £24.90 every four weeks after the trial. Cancel at any time before renewal.
-            </div>
           </section>
+        </div>
+
+        <div class="plan-disclosure checkout-disclaimer-row" id="plan-disclosure">
+          Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 3 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.
         </div>
 
         <section class="checkout-reviews">
@@ -972,10 +973,22 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
       </header>
 
       <main class="payment-main">
+        <div class="zendocs-offer-strip">Limited time offer! <strong>Access now for £1.00!</strong></div>
         <button class="back-to-plans" id="back-to-plans" type="button">← Back to plans</button>
         <h1 id="payment-title">Complete your payment</h1>
 
         <div class="payment-layout">
+          <section class="zendocs-document-card" aria-label="Your completed document">
+            <h2>Your File is Ready!</h2>
+            <div class="zendocs-preview-shell">
+              <div class="zendocs-file-row"><strong id="zendocs-filename">Document.pdf</strong><span>PDF</span></div>
+              <div class="zendocs-preview-frame"><canvas id="zendocs-preview-canvas"></canvas></div>
+            </div>
+            <p>YOUR DOCUMENT IS READY TO DOWNLOAD</p>
+          </section>
+
+          <h2 class="zendocs-download-title">Download Now!</h2>
+
           <section class="payment-form-card">
             <div class="payment-method-tabs">
               <button class="payment-method active" type="button" data-payment-method="card">Card</button>
@@ -983,7 +996,7 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
             </div>
 
             <div class="card-payment-panel" id="card-payment-panel">
-              <label class="payment-field full">
+              <label class="payment-field payment-field-name full">
                 <span>Name on card</span>
                 <input type="text" placeholder="Andrew Davies">
               </label>
@@ -1004,7 +1017,7 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
                   <input type="text" inputmode="numeric" placeholder="CVC" maxlength="4">
                 </label>
               </div>
-              <label class="payment-field full">
+              <label class="payment-field payment-field-postcode full">
                 <span>Billing postcode</span>
                 <input type="text" placeholder="L39 7HG">
               </label>
@@ -1027,15 +1040,23 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
 
           <aside class="order-summary-card">
             <h2>Order summary</h2>
+            <div class="zendocs-order-lines" aria-label="Order summary details">
+              <div><span>Your file</span><strong><s>£4.99</s> £1.00</strong></div>
+              <div><span>Unlimited PDF editing</span><strong>Included</strong></div>
+              <div><span>Merge, split, compress PDFs</span><strong>Included</strong></div>
+              <div><span>Convert and sign PDFs</span><strong>Included</strong></div>
+            </div>
+            <div class="zendocs-promo"><span aria-hidden="true">♧</span><strong>Promo Code PDFBREEZE-80 Applied</strong><em>You save 80%</em></div>
+            <div class="zendocs-total"><strong>Total Due:</strong><span><s>£4.99</s> <b>£1.00</b></span></div>
             <div class="summary-document">
               <canvas id="payment-preview-canvas"></canvas>
               <div><strong id="summary-filename">Document.pdf</strong><small>Edited PDF document</small></div>
             </div>
-            <div class="summary-line"><span id="summary-plan-name">7-day full access</span><strong id="summary-plan-price">£1.00</strong></div>
+            <div class="summary-line"><span id="summary-plan-name">3-day full access</span><strong id="summary-plan-price">£1.00</strong></div>
             <div class="summary-line muted"><span>Due today</span><strong id="summary-due-today">£1.00</strong></div>
             <div class="summary-total"><span>Total today</span><strong id="summary-total">£1.00</strong></div>
             <div class="renewal-box" id="summary-renewal">
-              Renews at £24.90 every four weeks after seven days unless cancelled beforehand.
+              Renews at £49.99 every four weeks after three days unless cancelled beforehand.
             </div>
             <div class="summary-guarantees">
               <div><span>✓</span><p><strong>Secure checkout</strong><br>Your payment is protected.</p></div>
@@ -1044,6 +1065,17 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
             </div>
           </aside>
         </div>
+        <div class="checkout-disclaimer-row payment-disclaimer-row">
+          Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 3 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.
+        </div>
+        <section class="checkout-reviews zendocs-checkout-reviews">
+          <h2>What PDFBreeze users are saying</h2>
+          <div class="checkout-review-grid">
+            <article><div class="review-stars">★★★★★</div><strong>Simple and quick to use</strong><p>The editor made updating my document straightforward and the layout was easy to understand.</p><small>Laura M.</small></article>
+            <article><div class="review-stars">★★★★★</div><strong>Exactly what I needed</strong><p>I added text, rearranged a page and prepared the final PDF without installing any software.</p><small>Daniel R.</small></article>
+            <article><div class="review-stars">★★★★★</div><strong>A polished PDF editor</strong><p>Everything worked in my browser and the finished document looked professional.</p><small>Helen C.</small></article>
+          </div>
+        </section>
       </main>
 
       <footer class="checkout-footer compact-footer">
@@ -1222,7 +1254,7 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
 <script src="analytics.js?v=trusted-analytics-1"></script>
-<script src="script.js?v=trusted-analytics-1"></script>
+<script src="script.js?v=payment-wall-1"></script>
   <script src="from-pdf-converter.js?v=4600"></script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>

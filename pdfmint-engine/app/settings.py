@@ -36,12 +36,12 @@ STRIPE_PRICES = {
     "document_trial": {
         "initial": os.getenv("STRIPE_PRICE_DOCUMENT_TRIAL_GBP", "price_1U3fRnJAG10RJqJq6EEF89De"),
         "recurring": os.getenv("STRIPE_PRICE_MEMBERSHIP_4WEEK_GBP", "price_1U3fLOJAG10RJqJq0wxaDdFQ"),
-        "trial_days": 7,
+        "trial_days": 3,
     },
     "unlimited_trial": {
         "initial": os.getenv("STRIPE_PRICE_UNLIMITED_TRIAL_GBP", "price_1U3fOfJAG10RJqJq3QzBl76x"),
         "recurring": os.getenv("STRIPE_PRICE_MEMBERSHIP_4WEEK_GBP", "price_1U3fLOJAG10RJqJq0wxaDdFQ"),
-        "trial_days": 7,
+        "trial_days": 3,
     },
     "annual": {
         "initial": None,
@@ -68,12 +68,12 @@ STRIPE_CONFIGS = {
             "document_trial": {
                 "initial": os.getenv("STRIPE_LIVE_PRICE_DOCUMENT_TRIAL_GBP", "").strip(),
                 "recurring": os.getenv("STRIPE_LIVE_PRICE_MEMBERSHIP_4WEEK_GBP", "").strip(),
-                "trial_days": 7,
+                "trial_days": 3,
             },
             "unlimited_trial": {
                 "initial": os.getenv("STRIPE_LIVE_PRICE_UNLIMITED_TRIAL_GBP", "").strip(),
                 "recurring": os.getenv("STRIPE_LIVE_PRICE_MEMBERSHIP_4WEEK_GBP", "").strip(),
-                "trial_days": 7,
+                "trial_days": 3,
             },
             "annual": {
                 "initial": None,

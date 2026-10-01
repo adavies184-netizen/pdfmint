@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date as calendar_date, datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Literal
 import base64
 import json
 from urllib.parse import quote
@@ -45,6 +45,10 @@ class ProviderSelectionRequest(BaseModel):
 
 class CookieConsentSettingRequest(BaseModel):
     enabled: bool
+
+
+class PaymentWallSettingRequest(BaseModel):
+    style: Literal["standard", "zendocs"]
 
 
 class AdminDeleteRequest(BaseModel):
@@ -95,6 +99,7 @@ def build_funnel_report(
     tools: dict[str, set[str]] = {}
     landing_pages: dict[str, set[str]] = {}
     journeys: dict[str, dict[str, Any]] = {}
+    payment_wall_by_session: dict[str, str] = {}
     profile_email = {row.get("id"): row.get("email") for row in profiles}
 
     for event in events:
@@ -112,6 +117,8 @@ def build_funnel_report(
             tools.setdefault(event_value, set()).add(session_id)
         if event_name == "landing_view":
             landing_pages.setdefault(landing_page, set()).add(session_id)
+        if event_name == "payment_plan_viewed" and event_value in {"standard", "zendocs"}:
+            payment_wall_by_session.setdefault(session_id, event_value)
 
         journey = journeys.setdefault(session_id, {
             "session_id": session_id,
@@ -169,6 +176,24 @@ def build_funnel_report(
             "last_event_at": journey["last_event_at"],
         })
 
+    payment_walls = []
+    for style, label in (("standard", "Standard"), ("zendocs", "Zendocs style")):
+        wall_sessions = {
+            session_id for session_id, selected_style in payment_wall_by_session.items()
+            if selected_style == style
+        }
+        members = len(wall_sessions & sessions_by_event["email_entered"])
+        reached_card = len(wall_sessions & sessions_by_event["payment_card_viewed"])
+        payments = len(wall_sessions & sessions_by_event["purchase_complete"])
+        payment_walls.append({
+            "style": style,
+            "label": label,
+            "members": members,
+            "reached_card": reached_card,
+            "payments": payments,
+            "conversion_rate": round((payments / members * 100) if members else 0, 1),
+        })
+
     return {
         "stages": stages,
         "tools": [
@@ -181,6 +206,7 @@ def build_funnel_report(
             for name, session_ids in sorted(landing_pages.items(), key=lambda item: (-len(item[1]), item[0]))
         ],
         "journeys": journey_rows,
+        "payment_walls": payment_walls,
     }
 
 
@@ -261,6 +287,10 @@ async def admin_overview(
         documents = await _rows(client, "documents", "id,user_id,name,storage_path,byte_size,source_tool,created_at,updated_at")
         consents = await _rows(client, "billing_consents", "id,user_id,provider,provider_mode,provider_subscription_id,plan_code,accepted,accepted_at,disclosure_version,disclosure_text,terms_url,privacy_url,amount_today,renewal_amount,renewal_interval,trial_days,ip_address,user_agent,checkout_origin,evidence_hash,payment_confirmed,confirmed_at,created_at")
         providers = await _rows(client, "payment_provider_settings", "provider,display_name,enabled,is_default,configured,updated_at")
+        providers = [
+            item for item in providers
+            if item.get("provider") not in {"site_cookie_consent", "site_payment_wall_zendocs"}
+        ]
         live_member_response = await client.get(
             f"{SUPABASE_URL}/rest/v1/analytics_events",
             headers={**_service_headers(), "Range": "0-9999"},
@@ -555,6 +585,7 @@ async def select_payment_provider(payload: ProviderSelectionRequest, authorizati
 
 
 COOKIE_CONSENT_SETTING_KEY = "site_cookie_consent"
+PAYMENT_WALL_SETTING_KEY = "site_payment_wall_zendocs"
 
 
 async def cookie_consent_setting() -> dict[str, bool]:
@@ -620,3 +651,53 @@ async def update_cookie_consent_setting(payload: CookieConsentSettingRequest, au
     if response.is_error:
         raise HTTPException(status_code=502, detail="The cookie consent setting could not be updated.")
     return {"enabled": payload.enabled}
+
+
+async def payment_wall_setting() -> dict[str, str]:
+    """Public payment-wall style. Missing configuration deliberately defaults to Zendocs style."""
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return {"style": "zendocs"}
+    try:
+        async with httpx.AsyncClient(timeout=5) as client:
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+                headers=_service_headers(),
+                params={"provider": f"eq.{PAYMENT_WALL_SETTING_KEY}", "select": "enabled", "limit": "1"},
+            )
+        if response.is_error or not response.json():
+            return {"style": "zendocs"}
+        return {"style": "zendocs" if response.json()[0].get("enabled") is True else "standard"}
+    except (httpx.HTTPError, ValueError, TypeError):
+        return {"style": "zendocs"}
+
+
+async def admin_payment_wall_setting(authorization: str | None) -> dict[str, str]:
+    await _require_admin(authorization)
+    return await payment_wall_setting()
+
+
+async def update_payment_wall_setting(payload: PaymentWallSettingRequest, authorization: str | None) -> dict[str, str]:
+    await _require_admin(authorization)
+    headers = {
+        **_service_headers(),
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=representation",
+    }
+    row = {
+        "provider": PAYMENT_WALL_SETTING_KEY,
+        "display_name": "Payment wall style",
+        "enabled": payload.style == "zendocs",
+        "is_default": False,
+        "configured": True,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    async with httpx.AsyncClient(timeout=10) as client:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+            headers=headers,
+            params={"on_conflict": "provider"},
+            json=row,
+        )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="The payment wall setting could not be updated.")
+    return {"style": payload.style}

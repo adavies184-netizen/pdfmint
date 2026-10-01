@@ -62,6 +62,35 @@ class AdminFunnelTests(unittest.TestCase):
         self.assertTrue(all(stage["count"] == 0 for stage in report["stages"]))
         self.assertEqual(report["tools"], [])
         self.assertEqual(report["journeys"], [])
+        self.assertEqual(report["payment_walls"][0]["conversion_rate"], 0)
+
+    def test_payment_wall_conversion_is_split_by_design(self):
+        events = [
+            event("session-000000000001", "landing_view"),
+            event("session-000000000001", "email_entered", user_id="user-1"),
+            event("session-000000000001", "payment_plan_viewed", "standard"),
+            event("session-000000000001", "payment_card_viewed", "standard"),
+            event("session-000000000001", "purchase_complete", "full", user_id="user-1"),
+            event("session-000000000002", "landing_view"),
+            event("session-000000000002", "email_entered", user_id="user-2"),
+            event("session-000000000002", "payment_plan_viewed", "zendocs"),
+            event("session-000000000002", "payment_card_viewed", "zendocs"),
+            event("session-000000000003", "landing_view"),
+            event("session-000000000003", "email_entered", user_id="user-3"),
+            event("session-000000000003", "payment_plan_viewed", "standard"),
+        ]
+
+        report = build_funnel_report(events, [])
+        walls = {item["style"]: item for item in report["payment_walls"]}
+
+        self.assertEqual(walls["standard"]["members"], 2)
+        self.assertEqual(walls["standard"]["reached_card"], 1)
+        self.assertEqual(walls["standard"]["payments"], 1)
+        self.assertEqual(walls["standard"]["conversion_rate"], 50.0)
+        self.assertEqual(walls["zendocs"]["members"], 1)
+        self.assertEqual(walls["zendocs"]["reached_card"], 1)
+        self.assertEqual(walls["zendocs"]["payments"], 0)
+        self.assertEqual(walls["zendocs"]["conversion_rate"], 0.0)
 
     def test_later_stages_require_the_previous_stage(self):
         events = [

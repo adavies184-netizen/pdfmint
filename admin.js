@@ -1,11 +1,15 @@
 (async () => {
+  const refreshedStyles = document.createElement('link');
+  refreshedStyles.rel = 'stylesheet';
+  refreshedStyles.href = 'admin.css?v=payment-wall-admin-2';
+  document.head.append(refreshedStyles);
   const auth = window.PDFMintAuth;
   const api = auth.client;
   const errorBox = document.getElementById('admin-error');
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = value => new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'}).format((Number(value)||0)/100);
   const date = value => value ? new Intl.DateTimeFormat('en-GB',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
-  const planName = value => ({document_trial:'7-day single-document access',unlimited_trial:'7-day unlimited access',annual:'Annual unlimited membership'}[value] || 'No plan');
+  const planName = value => ({document_trial:'3-day single-document access',unlimited_trial:'3-day unlimited access',annual:'Annual unlimited membership'}[value] || 'No plan');
   const status = value => `<i class="status ${safe(value)}">${safe(String(value || '').replaceAll('_',' '))}</i>`;
   const row = (cells, attributes='') => `<div class="admin-row" ${attributes}>${cells.map(cell => `<span>${cell}</span>`).join('')}</div>`;
   const PAGE_SIZE = 20;
@@ -458,6 +462,91 @@
     }
   }
 
+  function renderPaymentWallSetting(style, message='') {
+    const selectedStyle = style === 'zendocs' ? 'zendocs' : 'standard';
+    document.querySelectorAll('input[name="admin-payment-wall"]').forEach(input => {
+      input.checked = input.value === selectedStyle;
+    });
+    const feedback = document.querySelector('[data-payment-wall-feedback]');
+    if (feedback) feedback.textContent = message || (selectedStyle === 'zendocs'
+      ? 'Zendocs-style single-offer payment wall is active.'
+      : 'Standard three-plan payment wall is active.');
+  }
+
+  async function loadPaymentWallSetting() {
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/payment-wall`, {
+      cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.detail || 'Payment wall setting could not be loaded.');
+    renderPaymentWallSetting(result.style);
+  }
+
+  function paymentWallStatsContainer() {
+    let container = document.querySelector('[data-payment-wall-stats]');
+    if (container) return container;
+    const card = document.querySelector('.payment-wall-admin-card');
+    if (!card) return null;
+    container = document.createElement('div');
+    container.className = 'payment-wall-stats';
+    container.dataset.paymentWallStats = '';
+    container.innerHTML = '<p>Loading conversion rates…</p>';
+    card.append(container);
+    return container;
+  }
+
+  function renderPaymentWallStats(paymentWalls = []) {
+    const container = paymentWallStatsContainer();
+    if (!container) return;
+    const byStyle = Object.fromEntries(paymentWalls.map(item => [item.style, item]));
+    container.innerHTML = `
+      <div class="payment-wall-stats-heading">
+        <div><h2>Email-to-payment conversion</h2><p>Last 30 days · verified live customers and payments</p></div>
+      </div>
+      <div class="payment-wall-stat-grid">
+        ${['standard', 'zendocs'].map(style => {
+          const item = byStyle[style] || {label:style === 'zendocs' ? 'Zendocs style' : 'Standard', members:0, reached_card:0, payments:0, conversion_rate:0};
+          return `<article class="payment-wall-stat-card">
+            <div><b>${item.label}</b><strong>${Number(item.conversion_rate || 0).toFixed(1)}%</strong></div>
+            <dl>
+              <div><dt>Members</dt><dd>${Number(item.members || 0).toLocaleString('en-GB')}</dd></div>
+              <div><dt>Reached payment</dt><dd>${Number(item.reached_card || 0).toLocaleString('en-GB')}</dd></div>
+              <div><dt>Paid</dt><dd>${Number(item.payments || 0).toLocaleString('en-GB')}</dd></div>
+            </dl>
+          </article>`;
+        }).join('')}
+      </div>
+      <p class="payment-wall-stat-note">Conversion rate = completed live payments ÷ customers who entered their email.</p>`;
+  }
+
+  async function loadPaymentWallStats() {
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/funnel?days=30`, {
+      cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.detail || 'Payment-wall conversion rates could not be loaded.');
+    renderPaymentWallStats(result.payment_walls || []);
+  }
+
+  async function updatePaymentWallSetting(style) {
+    const inputs = [...document.querySelectorAll('input[name="admin-payment-wall"]')];
+    inputs.forEach(input => { input.disabled = true; });
+    renderPaymentWallSetting(style, 'Saving…');
+    try {
+      const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/payment-wall`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${adminSession.access_token}`},
+        body:JSON.stringify({style})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Payment wall setting could not be saved.');
+      localStorage.setItem('pdfbreeze_payment_wall_style_v1', JSON.stringify({style:result.style, cachedAt:Date.now()}));
+      renderPaymentWallSetting(result.style, 'Saved. New payment-wall visits reflect this design within one minute.');
+    } finally {
+      inputs.forEach(input => { input.disabled = false; });
+    }
+  }
+
   try {
     await auth.ready;
     const user = await auth.requireUser({returnTo:'/admin.html'});
@@ -471,6 +560,11 @@
     loadCookieConsentSetting().catch(error => renderCookieConsentSetting(true, `${error.message} Defaulting to On.`));
     loadCookieConsentStats().catch(error => {
       document.querySelector('[data-cookie-consent-stats]').innerHTML = `<p>${error.message || 'Cookie consent statistics could not be loaded.'}</p>`;
+    });
+    loadPaymentWallSetting().catch(error => renderPaymentWallSetting('zendocs', `${error.message} Defaulting to Zendocs style.`));
+    loadPaymentWallStats().catch(error => {
+      const container = paymentWallStatsContainer();
+      if (container) container.innerHTML = `<p>${error.message || 'Payment-wall conversion rates could not be loaded.'}</p>`;
     });
     loadStripeModeStatus().catch(() => { stripeModeStatus = {live:false, sandbox:false}; if (dashboardData) renderDashboard(dashboardData); });
     document.addEventListener('click', event => {
@@ -514,6 +608,11 @@
       if (event.target.id === 'admin-cookie-consent-enabled') {
         updateCookieConsentSetting(event.target.checked).catch(error => {
           renderCookieConsentSetting(!event.target.checked, error.message || 'The setting could not be saved.');
+        });
+      }
+      if (event.target.matches('input[name="admin-payment-wall"]')) {
+        updatePaymentWallSetting(event.target.value).catch(error => {
+          loadPaymentWallSetting().catch(() => renderPaymentWallSetting('zendocs', error.message || 'The setting could not be saved.'));
         });
       }
     });

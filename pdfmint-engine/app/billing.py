@@ -216,9 +216,9 @@ def _consent_terms(plan_code: str) -> dict[str, Any]:
         "amount_today": initial,
         "renewal_amount": 4999,
         "renewal_interval": "28 days",
-        "trial_days": 7,
+        "trial_days": 3,
         "disclosure": (
-            f"A £{initial / 100:.2f} seven-day trial starts today. Unless cancelled at least 24 hours "
+            f"A £{initial / 100:.2f} three-day trial starts today. Unless cancelled at least 24 hours "
             "before the trial ends, £49.99 is charged every 28 days until cancelled."
         ),
     }

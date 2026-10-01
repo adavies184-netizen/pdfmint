@@ -18,13 +18,13 @@ from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
 from .registry import OPERATIONS, execute_operation
 from .settings import ALLOWED_ORIGINS
 from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, checkout_public_config, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
-from .admin import AdminDeleteRequest, CookieConsentSettingRequest, ProviderSelectionRequest, admin_cookie_consent_setting, admin_cookie_consent_stats, admin_funnel, admin_overview, cookie_consent_setting, delete_admin_documents, delete_admin_members, select_payment_provider, update_cookie_consent_setting
+from .admin import AdminDeleteRequest, CookieConsentSettingRequest, PaymentWallSettingRequest, ProviderSelectionRequest, admin_cookie_consent_setting, admin_cookie_consent_stats, admin_funnel, admin_overview, admin_payment_wall_setting, cookie_consent_setting, delete_admin_documents, delete_admin_members, payment_wall_setting, select_payment_provider, update_cookie_consent_setting, update_payment_wall_setting
 from .analytics import AnalyticsEventRequest, CookieConsentEventRequest, store_analytics_event, store_cookie_consent_event
 from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.19.0"
+ENGINE_VERSION = "1.20.0"
 
 app = FastAPI(
     title="PDFBreeze Engine",
@@ -158,6 +158,21 @@ async def get_admin_cookie_consent_stats(authorization: str | None = Header(defa
 @app.post("/v1/admin/cookie-consent")
 async def set_admin_cookie_consent_setting(payload: CookieConsentSettingRequest, authorization: str | None = Header(default=None)):
     return await update_cookie_consent_setting(payload, authorization)
+
+
+@app.get("/v1/site/payment-wall")
+async def website_payment_wall_setting():
+    return await payment_wall_setting()
+
+
+@app.get("/v1/admin/payment-wall")
+async def get_admin_payment_wall_setting(authorization: str | None = Header(default=None)):
+    return await admin_payment_wall_setting(authorization)
+
+
+@app.post("/v1/admin/payment-wall")
+async def set_admin_payment_wall_setting(payload: PaymentWallSettingRequest, authorization: str | None = Header(default=None)):
+    return await update_payment_wall_setting(payload, authorization)
 
 
 @app.delete("/v1/admin/documents")

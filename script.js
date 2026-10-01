@@ -4763,10 +4763,14 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
 
 let selectedAccessPlan = {
   value: 'full',
-  name: '7-day full access',
+  name: '3-day full access',
   price: 1.00,
-  disclosure: 'Renews at £49.99 every four weeks after seven days unless cancelled beforehand.'
+  disclosure: 'Renews at £49.99 every four weeks after three days unless cancelled beforehand.'
 };
+
+const paymentWallStyleCacheKey = 'pdfbreeze_payment_wall_style_v1';
+const trialDisclosureCopy = "Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 3 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.";
+let activePaymentWallStyle = 'zendocs';
 
 function formatPounds(value) {
   return new Intl.NumberFormat('en-GB', {style: 'currency', currency: 'GBP'}).format(value);
@@ -4779,7 +4783,7 @@ async function renderCheckoutPreview(canvasId) {
   const state = editor.pages[0];
   const page = await editor.pdfjs.getPage(state.sourceIndex + 1);
   const base = page.getViewport({scale: 1, rotation: state.rotation});
-  const targetWidth = canvasId === 'plan-preview-canvas' ? 430 : 70;
+  const targetWidth = canvasId === 'plan-preview-canvas' || canvasId === 'zendocs-preview-canvas' ? 430 : 70;
   const viewport = page.getViewport({scale: targetWidth / base.width, rotation: state.rotation});
   canvas.width = Math.floor(viewport.width);
   canvas.height = Math.floor(viewport.height);
@@ -4822,10 +4826,63 @@ function setStripeLoadingStage(title, detail) {
   if (detailNode) detailNode.textContent = detail;
 }
 
+function applyPaymentWallStyle(style) {
+  activePaymentWallStyle = style === 'zendocs' ? 'zendocs' : 'standard';
+  const paymentPage = document.getElementById('payment-page');
+  paymentPage?.classList.toggle('payment-wall-zendocs', activePaymentWallStyle === 'zendocs');
+  const paymentTitle = document.getElementById('payment-title');
+  const payButton = document.getElementById('mock-pay-button');
+  if (paymentTitle) paymentTitle.textContent = activePaymentWallStyle === 'zendocs'
+    ? 'Download Now!'
+    : "You're on the last step before receiving your document";
+  if (payButton) payButton.textContent = activePaymentWallStyle === 'zendocs' ? 'Pay now' : 'Download my document';
+}
+
+async function loadPaymentWallStyle() {
+  const params = new URLSearchParams(location.search);
+  const forced = params.get('paymentWall');
+  if (forced === 'standard' || forced === 'zendocs') {
+    applyPaymentWallStyle(forced);
+    return forced;
+  }
+  if (params.get('preview') === 'zendocs-payment') {
+    applyPaymentWallStyle('zendocs');
+    return 'zendocs';
+  }
+  try {
+    const cached = JSON.parse(localStorage.getItem(paymentWallStyleCacheKey) || 'null');
+    if (cached && Date.now() - Number(cached.cachedAt || 0) < 60000 && ['standard','zendocs'].includes(cached.style)) {
+      applyPaymentWallStyle(cached.style);
+      return cached.style;
+    }
+  } catch (_) {}
+  const engineBaseUrl = String(window.PDFMINT_CONFIG?.engineBaseUrl || 'https://pdfmint-engine-5dfdx.sevalla.app').replace(/\/+$/, '');
+  try {
+    const response = await fetch(`${engineBaseUrl}/v1/site/payment-wall`, {cache:'no-store'});
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.detail || 'Payment wall setting unavailable.');
+    const style = result.style === 'zendocs' ? 'zendocs' : 'standard';
+    localStorage.setItem(paymentWallStyleCacheKey, JSON.stringify({style, cachedAt:Date.now()}));
+    applyPaymentWallStyle(style);
+    return style;
+  } catch (_) {
+    applyPaymentWallStyle('zendocs');
+    return 'zendocs';
+  }
+}
+
 async function openAccessPage() {
   closeEditorCheckoutOverlays();
+  const paymentWallStyle = await loadPaymentWallStyle();
+  if (paymentWallStyle === 'zendocs') {
+    const fullPlan = document.querySelector('input[name="access-plan"][value="full"]');
+    if (fullPlan) fullPlan.checked = true;
+    window.PDFBreezeAnalytics?.track('payment_plan_viewed', 'zendocs');
+    await openPaymentPage();
+    return;
+  }
   document.getElementById('access-page').hidden = false;
-  window.PDFBreezeAnalytics?.track('payment_plan_viewed');
+  window.PDFBreezeAnalytics?.track('payment_plan_viewed', 'standard');
   loadStripeLibrary().catch(() => {});
   window.PDFMintAuth?.getSession?.().catch?.(() => {});
   await renderCheckoutPreview('plan-preview-canvas');
@@ -4843,7 +4900,7 @@ async function openPaymentPage(options = {}) {
   const price = Number(checked.dataset.price);
 
   let disclosure = 'One-time access with no automatic renewal.';
-  if (checked.value === 'limited' || checked.value === 'full') disclosure = 'Renews at £49.99 every four weeks after seven days unless cancelled beforehand.';
+  if (checked.value === 'limited' || checked.value === 'full') disclosure = 'Renews at £49.99 every four weeks after three days unless cancelled beforehand.';
   if (checked.value === 'annual') disclosure = 'Billed £299.99 annually until cancelled.';
 
   selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
@@ -4854,7 +4911,8 @@ async function openPaymentPage(options = {}) {
     'summary-due-today': formatPounds(price),
     'summary-total': formatPounds(price),
     'summary-renewal': disclosure,
-    'summary-filename': preparedExportFilename || editor.file?.name || 'document.pdf'
+    'summary-filename': preparedExportFilename || editor.file?.name || 'document.pdf',
+    'zendocs-filename': preparedExportFilename || editor.file?.name || 'document.pdf'
   };
   Object.entries(summaryValues).forEach(([id, value]) => {
     const element = document.getElementById(id);
@@ -4863,7 +4921,7 @@ async function openPaymentPage(options = {}) {
 
   closeAccessPage();
   document.getElementById('payment-page').hidden = false;
-  window.PDFBreezeAnalytics?.track('payment_card_viewed', checked.value);
+  window.PDFBreezeAnalytics?.track('payment_card_viewed', activePaymentWallStyle);
   if (!options.fromHistory && history.state?.pdfbreezeCheckout !== 'payment') {
     history.pushState({...history.state, pdfbreezeCheckout:'payment'}, '', location.href);
   }
@@ -4876,6 +4934,9 @@ async function openPaymentPage(options = {}) {
   const previewPromise = renderCheckoutPreview('payment-preview-canvas').catch(error => {
     console.warn('Checkout preview could not be rendered.', error);
   });
+  const zendocsPreviewPromise = renderCheckoutPreview('zendocs-preview-canvas').catch(error => {
+    console.warn('Zendocs-style checkout preview could not be rendered.', error);
+  });
   try {
     await prepareStripePaymentElement();
   } catch (error) {
@@ -4884,6 +4945,7 @@ async function openPaymentPage(options = {}) {
     if (payButton) payButton.disabled = true;
   }
   await previewPromise;
+  await zendocsPreviewPromise;
 }
 
 function closePaymentPage() {
@@ -4898,11 +4960,11 @@ document.querySelectorAll('input[name="access-plan"]').forEach(input => {
 
     const disclosure = document.getElementById('plan-disclosure');
     if (event.currentTarget.value === 'limited') {
-      disclosure.textContent = 'Seven-day access to this document costs £0.50 today, then renews at £49.99 every four weeks unless cancelled.';
+      disclosure.textContent = trialDisclosureCopy;
     } else if (event.currentTarget.value === 'annual') {
       disclosure.textContent = 'Annual unlimited access is charged at £299.99 today and every year until cancelled.';
     } else {
-      disclosure.textContent = 'Seven-day unlimited access costs £1 today. Unless cancelled, it renews at £49.99 every four weeks after the trial.';
+      disclosure.textContent = trialDisclosureCopy;
     }
   });
 });
@@ -5399,10 +5461,11 @@ function preparePaymentPrototypeUi() {
 
   const planDisclosure = document.getElementById('plan-disclosure');
   if (planDisclosure) {
-    const disclosureCopy = 'After 7 days and when your trial period expires, your monthly subscription will be renewed at £49.99, billed every 4 weeks. You can cancel at any time. 7 days refund guarantee.';
-    planDisclosure.textContent = disclosureCopy;
+    planDisclosure.textContent = trialDisclosureCopy;
     document.querySelectorAll('input[name="access-plan"]').forEach(input => input.addEventListener('change', () => {
-      planDisclosure.textContent = disclosureCopy;
+      planDisclosure.textContent = input.value === 'annual'
+        ? 'Annual unlimited access is charged at £299.99 today and every year until cancelled.'
+        : trialDisclosureCopy;
     }));
   }
 
@@ -5502,6 +5565,10 @@ function preparePaymentPrototypeUi() {
   const params = new URLSearchParams(window.location.search);
   if (params.get('preview') === 'plans') document.getElementById('access-page').hidden = false;
   if (params.get('preview') === 'payment') document.getElementById('payment-page').hidden = false;
+  if (params.get('preview') === 'zendocs-payment') {
+    applyPaymentWallStyle('zendocs');
+    document.getElementById('payment-page').hidden = false;
+  }
 }
 
 preparePaymentPrototypeUi();
@@ -7224,6 +7291,11 @@ async function initialiseSharedEditorRoute() {
   try {
     const file = await takePdfForSharedEditor();
     if (!file) {
+      const previewMode = new URLSearchParams(window.location.search).get('preview');
+      if (['plans', 'payment', 'zendocs-payment'].includes(previewMode)) {
+        document.body.classList.remove('editor-route-loading');
+        return;
+      }
       window.location.replace('index.html');
       return;
     }
