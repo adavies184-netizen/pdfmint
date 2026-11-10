@@ -9,6 +9,9 @@ JOB_TIMEOUT_SECONDS = int(os.getenv("JOB_TIMEOUT_SECONDS", "180"))
 # jobs are waiting new ones get a fast "busy, try again" instead of piling up.
 JOB_CONCURRENCY = max(1, int(os.getenv("JOB_CONCURRENCY", "1")))
 JOB_QUEUE_LIMIT = max(0, int(os.getenv("JOB_QUEUE_LIMIT", "6")))
+# Hard stop for a whole conversion (individual tools have their own, shorter
+# timeouts; media/archive tools allow up to 600 s).
+JOB_HARD_TIMEOUT_SECONDS = max(60, int(os.getenv("JOB_HARD_TIMEOUT_SECONDS", "720")))
 
 ALLOWED_ORIGINS = sorted({
     "https://pdfbreeze.net",

@@ -4,7 +4,8 @@ Run from pdfmint-engine/:  python -m unittest tests.test_engine_runtime
 (needs the engine requirements, e.g. inside the engine container).
 """
 import asyncio
-import threading
+import subprocess
+import tempfile
 import time
 import unittest
 from pathlib import Path
@@ -14,7 +15,7 @@ import httpx
 
 from app import admin, http_client, main
 from app.operations import process
-from app.registry import OperationResult
+from app.results import OperationResult
 
 
 class JobConcurrencyTests(unittest.IsolatedAsyncioTestCase):
@@ -22,52 +23,30 @@ class JobConcurrencyTests(unittest.IsolatedAsyncioTestCase):
         main._job_slots = asyncio.Semaphore(1)
         main._jobs_waiting = 0
 
-    async def test_conversion_does_not_block_event_loop(self):
-        started = threading.Event()
-
-        def slow_job(*_):
-            started.set()
-            time.sleep(0.4)
-            return OperationResult(Path("x"), "x", "text/plain")
-
-        with mock.patch.object(main, "execute_operation", slow_job):
-            job = asyncio.create_task(main._run_operation("pdf-to-docx", Path("in"), Path("."), "doc"))
-            await asyncio.to_thread(started.wait, 2)
-            # While the conversion runs, the loop must still answer other requests quickly.
-            before = time.monotonic()
-            main.health()
-            await asyncio.sleep(0)
-            self.assertLess(time.monotonic() - before, 0.1)
-            self.assertFalse(job.done())
-            await job
-
     async def test_jobs_run_one_at_a_time(self):
         running = 0
         peak = 0
-        lock = threading.Lock()
 
-        def job(*_):
+        async def job(*_):
             nonlocal running, peak
-            with lock:
-                running += 1
-                peak = max(peak, running)
-            time.sleep(0.05)
-            with lock:
-                running -= 1
+            running += 1
+            peak = max(peak, running)
+            await asyncio.sleep(0.05)
+            running -= 1
             return OperationResult(Path("x"), "x", "text/plain")
 
-        with mock.patch.object(main, "execute_operation", job):
+        with mock.patch.object(main, "_execute", job):
             await asyncio.gather(*(main._run_operation("pdf-to-docx", Path("in"), Path("."), "d") for _ in range(4)))
         self.assertEqual(peak, 1)
 
     async def test_queue_limit_returns_busy(self):
-        release = threading.Event()
+        release = asyncio.Event()
 
-        def blocking_job(*_):
-            release.wait(2)
+        async def blocking_job(*_):
+            await release.wait()
             return OperationResult(Path("x"), "x", "text/plain")
 
-        with mock.patch.object(main, "execute_operation", blocking_job), mock.patch.object(main, "JOB_QUEUE_LIMIT", 1):
+        with mock.patch.object(main, "_execute", blocking_job), mock.patch.object(main, "JOB_QUEUE_LIMIT", 1):
             first = asyncio.create_task(main._run_operation("pdf-to-docx", Path("in"), Path("."), "d"))
             await asyncio.sleep(0.05)
             second = asyncio.create_task(main._run_operation("pdf-to-docx", Path("in"), Path("."), "d"))
@@ -78,6 +57,52 @@ class JobConcurrencyTests(unittest.IsolatedAsyncioTestCase):
             release.set()
             await asyncio.gather(first, second)
 
+
+class IsolatedWorkerTests(unittest.IsolatedAsyncioTestCase):
+    """These start real child processes."""
+
+    async def test_validation_error_comes_back_from_worker(self):
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / "input.txt"
+            source.write_text("hello")
+            with self.assertRaises(ValueError) as caught:
+                await main._execute_isolated("docx-to-doc", source, Path(folder), "sample")
+            self.assertIn("This converter accepts", str(caught.exception))
+
+    async def test_killed_worker_is_reported_and_engine_survives(self):
+        # Simulates the kernel's out-of-memory killer (SIGKILL) hitting a conversion.
+        with tempfile.TemporaryDirectory() as folder:
+            module_dir = Path(folder) / "fakepkg"
+            module_dir.mkdir()
+            (module_dir / "__init__.py").write_text("")
+            (module_dir / "oom.py").write_text("import os, signal\nos.kill(os.getpid(), signal.SIGKILL)\n")
+            with mock.patch.object(main, "APP_ROOT", Path(folder)):
+                with self.assertRaises(main.ConversionOutOfMemory):
+                    await main._execute_isolated("pdf-to-docx", Path(folder) / "in.pdf", Path(folder), "d", module="fakepkg.oom")
+        message = main._customer_message("pdf-to-docx", "PM-9", main.ConversionOutOfMemory())
+        self.assertIn("more memory", message)
+        self.assertIn("PM-9", message)
+
+    async def test_stuck_worker_is_stopped(self):
+        with tempfile.TemporaryDirectory() as folder:
+            module_dir = Path(folder) / "fakepkg"
+            module_dir.mkdir()
+            (module_dir / "__init__.py").write_text("")
+            (module_dir / "hang.py").write_text("import time\ntime.sleep(60)\n")
+            with mock.patch.object(main, "APP_ROOT", Path(folder)), mock.patch.object(main, "JOB_HARD_TIMEOUT_SECONDS", 1):
+                started = time.monotonic()
+                with self.assertRaises(subprocess.TimeoutExpired):
+                    await main._execute_isolated("pdf-to-docx", Path(folder) / "in.pdf", Path(folder), "d", module="fakepkg.hang")
+                self.assertLess(time.monotonic() - started, 10)
+
+
+class WebProcessMemoryTests(unittest.TestCase):
+    def test_web_server_does_not_load_conversion_libraries(self):
+        import sys
+        heavy = {"fitz", "pdf2docx", "cv2", "numpy", "openpyxl", "pptx", "pytesseract"}
+        self.assertFalse(heavy & set(sys.modules), heavy & set(sys.modules))
+        self.assertIn("pdf-to-docx", main.OPERATIONS)
+        self.assertGreater(len(main.OPERATIONS), 90)
 
 class CustomerMessageTests(unittest.TestCase):
     def test_tool_output_is_not_shown_to_customers(self):

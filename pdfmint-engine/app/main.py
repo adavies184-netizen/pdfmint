@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
+import os
 import shutil
+import signal
 import subprocess
+import sys
 import tempfile
 import time
 import uuid
@@ -49,13 +53,27 @@ from .billing import (
 )
 from .files import save_uploaded_file, save_uploaded_pdf
 from .http_client import close_http
-from .registry import OPERATIONS, execute_operation
-from .settings import ALLOWED_ORIGINS, JOB_CONCURRENCY, JOB_QUEUE_LIMIT
+from .results import OperationResult
+from .settings import ALLOWED_ORIGINS, JOB_CONCURRENCY, JOB_HARD_TIMEOUT_SECONDS, JOB_QUEUE_LIMIT
 from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
 ENGINE_VERSION = "1.21.0"
+APP_ROOT = Path(__file__).resolve().parents[1]
+
+
+def _load_operation_names() -> frozenset[str]:
+    """Ask a worker process for the operation list so the web server never has
+    to import the conversion libraries itself (saves a lot of memory)."""
+    completed = subprocess.run(
+        [sys.executable, "-m", "app.worker", "--list"],
+        cwd=str(APP_ROOT), capture_output=True, text=True, timeout=180, check=True,
+    )
+    return frozenset(json.loads(completed.stdout.strip().splitlines()[-1]))
+
+
+OPERATIONS = _load_operation_names()
 
 REQUIRED_TOOLS = {
     "libreoffice": ("soffice",),
@@ -68,9 +86,10 @@ REQUIRED_TOOLS = {
     "libredwg": ("dwg2dxf", "dxf2dwg"),
 }
 
-# Conversions run in worker threads so a long LibreOffice/OCR job never freezes
-# checkout, the Stripe webhook, admin or health checks. The semaphore caps how
-# many heavy jobs run at once (memory is the engine's tightest resource).
+# Each conversion runs in its own child process (app/worker.py), so a long or
+# memory-hungry LibreOffice/OCR job never freezes or kills checkout, the Stripe
+# webhook, admin or health checks. The semaphore caps how many run at once
+# (memory is the engine's tightest resource).
 _job_slots = asyncio.Semaphore(JOB_CONCURRENCY)
 _jobs_waiting = 0
 
@@ -256,9 +275,73 @@ def _customer_message(operation: str, job_id: str, exc: Exception) -> str:
     customer-readable messages (wrong file type, unsafe archive, ...); raw tool
     output (LibreOffice/Ghostscript stderr, server paths) stays in the logs."""
     label = operation.replace("-", " ").upper()
+    if isinstance(exc, ConversionOutOfMemory):
+        return (
+            f"{label} could not be completed because this file needs more memory than the converter has. "
+            f"Try a smaller file or fewer pages. Reference: {job_id}."
+        )
     if isinstance(exc, ValueError) and str(exc):
         return f"{label} could not be completed. {str(exc)[:300]} Reference: {job_id}."
     return f"{label} could not be completed. Please check the file and try again. Reference: {job_id}."
+
+
+class ConversionOutOfMemory(Exception):
+    """The conversion process was killed by the system (normally out of memory)."""
+
+
+def _kill_process_group(process: asyncio.subprocess.Process) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)  # includes soffice/gs children
+    except (ProcessLookupError, PermissionError):
+        pass
+
+
+async def _execute_isolated(
+    operation: str,
+    input_path: Path,
+    workspace: Path,
+    base_name: str,
+    *,
+    module: str = "app.worker",
+) -> OperationResult:
+    """Run the conversion in a child process (see app/worker.py)."""
+    result_file = workspace / ".pdfmint-result.json"
+    process = await asyncio.create_subprocess_exec(
+        sys.executable, "-m", module, operation, str(input_path), str(workspace), base_name, str(result_file),
+        cwd=str(APP_ROOT),
+        start_new_session=True,
+    )
+    try:
+        await asyncio.wait_for(process.wait(), timeout=JOB_HARD_TIMEOUT_SECONDS)
+    except asyncio.TimeoutError:
+        _kill_process_group(process)
+        await process.wait()
+        raise subprocess.TimeoutExpired(operation, JOB_HARD_TIMEOUT_SECONDS)
+    except asyncio.CancelledError:  # client went away / server shutting down
+        _kill_process_group(process)
+        raise
+    finally:
+        _kill_process_group(process)  # tidy up anything the worker left behind
+
+    if process.returncode in (-signal.SIGKILL, 137) or not result_file.is_file():
+        logger.error("Conversion process for %s ended without a result (exit %s); likely out of memory",
+                     operation, process.returncode)
+        raise ConversionOutOfMemory()
+    payload = json.loads(result_file.read_text(encoding="utf-8"))
+    result_file.unlink(missing_ok=True)
+    if payload.get("ok"):
+        return OperationResult(Path(payload["path"]), payload["filename"], payload["media_type"])
+    kind = payload.get("kind")
+    if kind == "timeout":
+        raise subprocess.TimeoutExpired(operation, JOB_HARD_TIMEOUT_SECONDS)
+    if kind == "memory":
+        raise ConversionOutOfMemory()
+    if kind == "value":
+        raise ValueError(payload.get("message") or "")
+    raise RuntimeError(payload.get("message") or "Conversion failed.")
+
+
+_execute = _execute_isolated
 
 
 async def _run_operation(operation: str, input_path: Path, workspace: Path, base_name: str):
@@ -271,7 +354,7 @@ async def _run_operation(operation: str, input_path: Path, workspace: Path, base
     finally:
         _jobs_waiting -= 1
     try:
-        return await asyncio.to_thread(execute_operation, operation, input_path, workspace, base_name)
+        return await _execute(operation, input_path, workspace, base_name)
     finally:
         _job_slots.release()
 

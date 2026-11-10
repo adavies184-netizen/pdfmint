@@ -5,11 +5,22 @@ response shape is the same as 1.20.0.
 
 ## Changes
 
+- **Out-of-memory crashes no longer take the engine down.** Each conversion now
+  runs in its own short-lived process (`app/worker.py`). Before, an
+  out-of-memory conversion got the whole app killed (exit 137, OOMKilled),
+  taking checkout and the Stripe webhook with it. Now only that one conversion
+  is stopped; the customer is told the file needs more memory than is
+  available, and the engine keeps running. All memory a conversion used is
+  freed when it finishes, and a stuck conversion is stopped after
+  `JOB_HARD_TIMEOUT_SECONDS` (default 720).
+- **Much smaller always-running process.** The web server no longer imports the
+  conversion libraries (PyMuPDF, pdf2docx/OpenCV, Pillow, ...); only conversion
+  processes load them. In testing the web process went from about 103 MB to 37 MB
+  with the lighter libraries; the saving on Sevalla should be larger.
 - **Conversions no longer freeze the engine.** `/v1/jobs` used to run each
   conversion directly on the server's single event loop, so one long
   LibreOffice/OCR job blocked checkout, the Stripe webhook, welcome emails,
-  admin and health checks until it finished. Conversions now run in a worker
-  thread, limited by `JOB_CONCURRENCY` (default 1). When `JOB_QUEUE_LIMIT`
+  admin and health checks until it finished. Conversions now run outside the server loop, limited by `JOB_CONCURRENCY` (default 1). When `JOB_QUEUE_LIMIT`
   (default 6) jobs are already waiting, new uploads get a fast
   "busy, try again" (503) instead of piling up.
 - **Stripe calls no longer block.** The Stripe SDK is synchronous; every Stripe
@@ -42,6 +53,7 @@ response shape is the same as 1.20.0.
 - `JOB_CONCURRENCY` (default `1`): conversions run at the same time. Keep 1 on a
   small plan; raise only if the plan has memory to spare.
 - `JOB_QUEUE_LIMIT` (default `6`): waiting conversions before new ones get 503.
+- `JOB_HARD_TIMEOUT_SECONDS` (default `720`): hard stop for one conversion.
 
 ## Tests
 

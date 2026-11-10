@@ -1,7 +1,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable
 
@@ -16,13 +15,7 @@ from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
 from .operations.office_conversions import ROUTES as OFFICE_ROUTES, convert_office_document
 from .operations.media_conversions import ROUTES as MEDIA_ROUTES, convert_media
 from .operations.archive_cad_conversions import ROUTES as ARCHIVE_CAD_ROUTES, convert_archive_cad
-
-
-@dataclass(frozen=True)
-class OperationResult:
-    path: Path
-    filename: str
-    media_type: str
+from .results import OperationResult
 
 
 def run_pdf_to_docx(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
