@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import hashlib
+import logging
+from functools import partial
 from html import escape
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Callable
 
-import httpx
 import stripe
 from fastapi import Header, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -18,10 +20,20 @@ from .settings import (
     STRIPE_CONFIGS,
     SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY,
-    SUPABASE_URL,
 )
 from .analytics import store_server_event
+from .http_client import http
 from .payment_modes import checkout_mode_for_user, stripe_config, stripe_mode_configured, subscription_payment_mode
+from .supabase import bearer_token, fetch_auth_user, rest_url, service_headers
+
+logger = logging.getLogger("pdfmint.billing")
+MEMBERSHIP_STATUSES = {"trialing", "active", "past_due", "unpaid", "paused"}
+
+
+async def _stripe(call: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+    """The Stripe SDK is blocking; run each call in a worker thread so one slow
+    Stripe request never stalls the rest of the engine."""
+    return await asyncio.to_thread(partial(call, *args, **kwargs))
 
 
 class CheckoutRequest(BaseModel):
@@ -57,18 +69,62 @@ def _require_server_configuration() -> None:
 
 async def authenticated_user(authorization: str | None) -> dict[str, Any]:
     _require_server_configuration()
-    if not authorization or not authorization.lower().startswith("bearer "):
+    token = bearer_token(authorization)
+    if not token:
         raise HTTPException(status_code=401, detail="Sign in before starting checkout.")
-
-    token = authorization.split(" ", 1)[1].strip()
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.get(
-            f"{SUPABASE_URL}/auth/v1/user",
-            headers={"apikey": SUPABASE_ANON_KEY, "Authorization": f"Bearer {token}"},
-        )
-    if response.status_code != 200:
+    user = await fetch_auth_user(token)
+    if not user:
         raise HTTPException(status_code=401, detail="Your sign-in session has expired.")
-    return response.json()
+    return user
+
+
+def _stripe_message(exc: stripe.StripeError, fallback: str) -> str:
+    stripe_error = getattr(exc, "error", None)
+    return (
+        getattr(exc, "user_message", None)
+        or getattr(stripe_error, "message", None)
+        or str(exc)
+        or fallback
+    )
+
+
+async def _known_customer_id(user_id: str, mode: str) -> str | None:
+    """Stripe customer search is eventually consistent (it can lag ~1 minute),
+    so a quick retry could create a second customer. Check our own records first."""
+    if not SUPABASE_SERVICE_ROLE_KEY:
+        return None
+    try:
+        response = await http().get(
+            rest_url("subscriptions"),
+            headers=service_headers(),
+            params={
+                "user_id": f"eq.{user_id}",
+                "provider": "eq.stripe",
+                "provider_mode": f"eq.{mode}",
+                "provider_customer_id": "not.is.null",
+                "select": "provider_customer_id",
+                "order": "created_at.desc",
+                "limit": "1",
+            },
+            timeout=6,
+        )
+        rows = response.json() if not response.is_error else []
+    except Exception:  # never block checkout on this optimisation
+        logger.warning("Customer lookup in Supabase failed; falling back to Stripe search", exc_info=True)
+        return None
+    return str(rows[0]["provider_customer_id"]) if rows else None
+
+
+def _prepare_customer_subscriptions(customer_id: str, secret_key: str) -> None:
+    """Refuse a second membership and clear abandoned incomplete ones (sync; runs in a thread)."""
+    existing_subscriptions = stripe.Subscription.list(
+        customer=customer_id, status="all", limit=20, api_key=secret_key
+    )
+    for existing in existing_subscriptions.auto_paging_iter():
+        if existing.status in MEMBERSHIP_STATUSES:
+            raise HTTPException(status_code=409, detail="This account already has a PDFBreeze membership.")
+        if existing.status == "incomplete":
+            stripe.Subscription.delete(existing.id, api_key=secret_key)
 
 
 async def checkout_public_config(
@@ -134,34 +190,33 @@ async def create_checkout(
     }
 
     try:
-        customers = stripe.Customer.search(
-            query=f"metadata['supabase_user_id']:'{user['id']}'",
-            limit=1,
-            api_key=secret_key,
-        )
-        customer = customers.data[0] if customers.data else stripe.Customer.create(
-            email=user.get("email"),
-            metadata={"supabase_user_id": user["id"]},
-            api_key=secret_key,
-        )
-
-        existing_subscriptions = stripe.Subscription.list(
-            customer=customer.id,
-            status="all",
-            limit=20,
-            api_key=secret_key,
-        )
-        for existing in existing_subscriptions.auto_paging_iter():
-            if existing.status in {"trialing", "active", "past_due", "unpaid", "paused"}:
-                raise HTTPException(
-                    status_code=409,
-                    detail="This account already has a PDFBreeze membership.",
+        customer_id = await _known_customer_id(str(user["id"]), mode)
+        if not customer_id:
+            customers = await _stripe(
+                stripe.Customer.search,
+                query=f"metadata['supabase_user_id']:'{user['id']}'",
+                limit=1,
+                api_key=secret_key,
+            )
+            if customers.data:
+                customer_id = customers.data[0].id
+            else:
+                customer = await _stripe(
+                    stripe.Customer.create,
+                    email=user.get("email"),
+                    metadata={"supabase_user_id": user["id"]},
+                    api_key=secret_key,
+                    # Same user + email within 24h returns the same customer instead of a duplicate.
+                    idempotency_key="pdfbreeze-customer-{}-{}-{}".format(
+                        mode, user["id"], hashlib.sha256(str(user.get("email") or "").lower().encode()).hexdigest()[:12]
+                    ),
                 )
-            if existing.status == "incomplete":
-                stripe.Subscription.delete(existing.id, api_key=secret_key)
+                customer_id = customer.id
+
+        await _stripe(_prepare_customer_subscriptions, customer_id, secret_key)
 
         subscription_args: dict[str, Any] = {
-            "customer": customer.id,
+            "customer": customer_id,
             "items": [{"price": plan["recurring"]}],
             "payment_behavior": "default_incomplete",
             "payment_settings": {"save_default_payment_method": "on_subscription"},
@@ -176,18 +231,11 @@ async def create_checkout(
         if plan["initial"]:
             subscription_args["add_invoice_items"] = [{"price": plan["initial"]}]
 
-        subscription = stripe.Subscription.create(**subscription_args, api_key=secret_key)
+        subscription = await _stripe(stripe.Subscription.create, **subscription_args, api_key=secret_key)
     except HTTPException:
         raise
     except stripe.StripeError as exc:
-        stripe_error = getattr(exc, "error", None)
-        message = (
-            getattr(exc, "user_message", None)
-            or getattr(stripe_error, "message", None)
-            or str(exc)
-            or "Stripe could not start checkout."
-        )
-        raise HTTPException(status_code=400, detail=message) from exc
+        raise HTTPException(status_code=400, detail=_stripe_message(exc, "Stripe could not start checkout.")) from exc
 
     intent_type, client_secret = _intent_details(subscription)
     if not client_secret:
@@ -237,14 +285,15 @@ async def record_consent_evidence(
     if not secret_key:
         raise HTTPException(status_code=503, detail="Stripe checkout is not configured.")
     try:
-        subscription = stripe.Subscription.retrieve(payload.subscription_id, api_key=secret_key)
+        subscription = await _stripe(stripe.Subscription.retrieve, payload.subscription_id, api_key=secret_key)
     except stripe.StripeError as exc:
         raise HTTPException(status_code=400, detail="The membership could not be verified.") from exc
-    metadata = getattr(subscription, "metadata", None) or {}
-    if metadata.get("supabase_user_id") != user.get("id"):
+    # StripeObject has no dict .get() in stripe-python 13+; read it like the webhook does.
+    metadata = _stripe_field(subscription, "metadata", {}) or {}
+    if _stripe_field(metadata, "supabase_user_id") != user.get("id"):
         raise HTTPException(status_code=403, detail="This membership does not belong to this account.")
 
-    plan_code = metadata.get("plan_code", "unlimited_trial")
+    plan_code = str(_stripe_field(metadata, "plan_code") or "unlimited_trial")
     terms = _consent_terms(plan_code)
     forwarded = request.headers.get("x-forwarded-for", "")
     client_ip = forwarded.split(",", 1)[0].strip() or (request.client.host if request.client else None)
@@ -272,18 +321,12 @@ async def record_consent_evidence(
     record["evidence_hash"] = hashlib.sha256(
         json.dumps(record, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
-    headers = {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=representation",
-    }
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.post(
-            f"{SUPABASE_URL}/rest/v1/billing_consents?on_conflict=provider,provider_subscription_id",
-            headers=headers,
-            json=record,
-        )
+    response = await http().post(
+        rest_url("billing_consents"),
+        params={"on_conflict": "provider,provider_subscription_id"},
+        headers=service_headers(json_body=True, prefer="resolution=merge-duplicates,return=representation"),
+        json=record,
+    )
     if response.is_error:
         raise HTTPException(status_code=502, detail="PDFBreeze could not securely record consent.")
     rows = response.json()
@@ -303,15 +346,14 @@ async def send_welcome_email(
     if not secret_key:
         raise HTTPException(status_code=503, detail="Stripe checkout is not configured.")
     try:
-        subscription = stripe.Subscription.retrieve(payload.subscription_id, api_key=secret_key)
+        subscription = await _stripe(stripe.Subscription.retrieve, payload.subscription_id, api_key=secret_key)
     except stripe.StripeError as exc:
         raise HTTPException(status_code=400, detail="The paid membership could not be verified.") from exc
 
-    stripe_metadata = getattr(subscription, "metadata", None)
-    metadata_user_id = getattr(stripe_metadata, "supabase_user_id", None) if stripe_metadata else None
-    if metadata_user_id != user.get("id"):
+    metadata = _stripe_field(subscription, "metadata", {}) or {}
+    if _stripe_field(metadata, "supabase_user_id") != user.get("id"):
         raise HTTPException(status_code=403, detail="This membership does not belong to this account.")
-    if getattr(subscription, "status", None) not in {"trialing", "active"}:
+    if _stripe_field(subscription, "status") not in {"trialing", "active"}:
         raise HTTPException(status_code=409, detail="The membership is not active yet.")
 
     email = user.get("email")
@@ -339,21 +381,21 @@ async def send_welcome_email(
 <p style="font-size:13px;line-height:1.5;color:#687386;margin:24px 0 0">For security, you can change this password from your account settings after signing in.</p>
 </td></tr></table></td></tr></table></body></html>"""
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.post(
-            "https://api.brevo.com/v3/smtp/email",
-            headers={
-                "api-key": BREVO_API_KEY,
-                "accept": "application/json",
-                "content-type": "application/json",
-            },
-            json={
-                "sender": {"name": BREVO_SENDER_NAME, "email": BREVO_SENDER_EMAIL},
-                "to": [{"email": email}],
-                "subject": "Welcome to PDFBreeze - your account details",
-                "htmlContent": html_content,
-            },
-        )
+    response = await http().post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={
+            "api-key": BREVO_API_KEY,
+            "accept": "application/json",
+            "content-type": "application/json",
+        },
+        json={
+            "sender": {"name": BREVO_SENDER_NAME, "email": BREVO_SENDER_EMAIL},
+            "to": [{"email": email}],
+            "subject": "Welcome to PDFBreeze - your account details",
+            "htmlContent": html_content,
+        },
+        timeout=15,
+    )
     if response.status_code != 201:
         raise HTTPException(status_code=502, detail="Brevo could not send the welcome email.")
     return {"sent": True}
@@ -370,65 +412,61 @@ async def manage_subscription(
     if not secret_key:
         raise HTTPException(status_code=503, detail="The membership payment mode is not configured.")
     try:
-        customers = stripe.Customer.search(
-            query=f"metadata['supabase_user_id']:'{user['id']}'", limit=1, api_key=secret_key
-        )
-        if not customers.data:
-            raise HTTPException(status_code=404, detail="No PDFBreeze membership was found.")
-        subscriptions = stripe.Subscription.list(
-            customer=customers.data[0].id, status="all", limit=20, api_key=secret_key
-        )
-        subscription = next((
-            item for item in subscriptions.auto_paging_iter()
-            if item.status in {"trialing", "active", "past_due", "unpaid", "paused"}
-        ), None)
-        if not subscription:
-            raise HTTPException(status_code=404, detail="No active PDFBreeze membership was found.")
-
-        if payload.action == "cancel":
-            subscription = stripe.Subscription.modify(
-                subscription.id, cancel_at_period_end=True, api_key=secret_key
-            )
-            effective_at = getattr(subscription, "trial_end", None) or getattr(subscription, "current_period_end", None)
-        elif payload.action == "pause":
-            resumes_at = int((datetime.now(timezone.utc) + timedelta(days=30)).timestamp())
-            subscription = stripe.Subscription.modify(
-                subscription.id,
-                cancel_at_period_end=False,
-                pause_collection={"behavior": "void", "resumes_at": resumes_at},
-                api_key=secret_key,
-            )
-            effective_at = resumes_at
-        else:
-            subscription_items = subscription["items"]
-            item_data = subscription_items["data"]
-            if not item_data:
-                raise HTTPException(status_code=400, detail="Stripe could not find the current membership price.")
-            annual_update: dict[str, Any] = {
-                "items": [{"id": item_data[0]["id"], "price": config["prices"]["annual"]["recurring"]}],
-                "billing_cycle_anchor": "now",
-                "proration_behavior": "none",
-                "payment_behavior": "error_if_incomplete",
-                "cancel_at_period_end": False,
-                "pause_collection": "",
-                "metadata": {"plan_code": "annual"},
-            }
-            if subscription["status"] == "trialing":
-                annual_update["trial_end"] = "now"
-            subscription = stripe.Subscription.modify(
-                subscription.id,
-                api_key=secret_key,
-                **annual_update,
-            )
-            effective_at = getattr(subscription, "current_period_end", None)
+        effective_at = await _stripe(_apply_membership_action, str(user["id"]), payload.action, config, secret_key)
     except HTTPException:
         raise
     except stripe.StripeError as exc:
-        stripe_error = getattr(exc, "error", None)
-        message = getattr(exc, "user_message", None) or getattr(stripe_error, "message", None) or str(exc)
-        raise HTTPException(status_code=400, detail=message or "Stripe could not update the membership.") from exc
+        raise HTTPException(status_code=400, detail=_stripe_message(exc, "Stripe could not update the membership.")) from exc
 
     return {"updated": True, "action": payload.action, "effective_at": _iso_from_unix(effective_at)}
+
+
+def _apply_membership_action(user_id: str, action: str, config: dict[str, Any], secret_key: str) -> int | None:
+    """Cancel, pause or switch a member to annual (sync; runs in a worker thread)."""
+    customers = stripe.Customer.search(
+        query=f"metadata['supabase_user_id']:'{user_id}'", limit=1, api_key=secret_key
+    )
+    if not customers.data:
+        raise HTTPException(status_code=404, detail="No PDFBreeze membership was found.")
+    subscriptions = stripe.Subscription.list(
+        customer=customers.data[0].id, status="all", limit=20, api_key=secret_key
+    )
+    subscription = next(
+        (item for item in subscriptions.auto_paging_iter() if item.status in MEMBERSHIP_STATUSES),
+        None,
+    )
+    if not subscription:
+        raise HTTPException(status_code=404, detail="No active PDFBreeze membership was found.")
+
+    if action == "cancel":
+        subscription = stripe.Subscription.modify(subscription.id, cancel_at_period_end=True, api_key=secret_key)
+        return getattr(subscription, "trial_end", None) or getattr(subscription, "current_period_end", None)
+    if action == "pause":
+        resumes_at = int((datetime.now(timezone.utc) + timedelta(days=30)).timestamp())
+        stripe.Subscription.modify(
+            subscription.id,
+            cancel_at_period_end=False,
+            pause_collection={"behavior": "void", "resumes_at": resumes_at},
+            api_key=secret_key,
+        )
+        return resumes_at
+
+    item_data = subscription["items"]["data"]
+    if not item_data:
+        raise HTTPException(status_code=400, detail="Stripe could not find the current membership price.")
+    annual_update: dict[str, Any] = {
+        "items": [{"id": item_data[0]["id"], "price": config["prices"]["annual"]["recurring"]}],
+        "billing_cycle_anchor": "now",
+        "proration_behavior": "none",
+        "payment_behavior": "error_if_incomplete",
+        "cancel_at_period_end": False,
+        "pause_collection": "",
+        "metadata": {"plan_code": "annual"},
+    }
+    if subscription["status"] == "trialing":
+        annual_update["trial_end"] = "now"
+    subscription = stripe.Subscription.modify(subscription.id, api_key=secret_key, **annual_update)
+    return getattr(subscription, "current_period_end", None)
 
 
 def _iso_from_unix(value: int | None) -> str | None:
@@ -471,18 +509,12 @@ async def _upsert_subscription(subscription: Any) -> str | None:
         "cancel_at_period_end": bool(_stripe_field(subscription, "cancel_at_period_end")),
         "cancelled_at": _iso_from_unix(_stripe_field(subscription, "canceled_at")),
     }
-    headers = {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-        "Content-Type": "application/json",
-        "Prefer": "resolution=merge-duplicates,return=representation",
-    }
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.post(
-            f"{SUPABASE_URL}/rest/v1/subscriptions?on_conflict=provider,provider_subscription_id",
-            headers=headers,
-            json=record,
-        )
+    response = await http().post(
+        rest_url("subscriptions"),
+        params={"on_conflict": "provider,provider_subscription_id"},
+        headers=service_headers(json_body=True, prefer="resolution=merge-duplicates,return=representation"),
+        json=record,
+    )
     if response.is_error:
         raise RuntimeError(
             f"Supabase subscription sync failed ({response.status_code}): {response.text[:500]}"
@@ -503,12 +535,12 @@ async def _upsert_subscription(subscription: Any) -> str | None:
             "checkout_document_key": document_key,
             "ends_at": _iso_from_unix(trial_end),
         }
-        async with httpx.AsyncClient(timeout=10) as client:
-            entitlement_response = await client.post(
-                f"{SUPABASE_URL}/rest/v1/document_trial_entitlements?on_conflict=subscription_id",
-                headers={**headers, "Prefer": "resolution=merge-duplicates,return=minimal"},
-                json=entitlement,
-            )
+        entitlement_response = await http().post(
+            rest_url("document_trial_entitlements"),
+            params={"on_conflict": "subscription_id"},
+            headers=service_headers(json_body=True, prefer="resolution=merge-duplicates,return=minimal"),
+            json=entitlement,
+        )
         if entitlement_response.is_error:
             raise RuntimeError(
                 "Supabase document entitlement sync failed "
@@ -549,17 +581,14 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         subscription.setdefault("metadata", {})["provider_mode"] = "live" if event.get("livemode") else "sandbox"
         await _upsert_subscription(subscription)
         if subscription.get("status") in {"trialing", "active"} and SUPABASE_SERVICE_ROLE_KEY:
-            async with httpx.AsyncClient(timeout=10) as client:
-                await client.patch(
-                    f"{SUPABASE_URL}/rest/v1/billing_consents",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                        "Content-Type": "application/json",
-                    },
-                    params={"provider": "eq.stripe", "provider_subscription_id": f"eq.{subscription['id']}"},
-                    json={"payment_confirmed": True, "confirmed_at": datetime.now(timezone.utc).isoformat()},
-                )
+            consent_response = await http().patch(
+                rest_url("billing_consents"),
+                headers=service_headers(json_body=True),
+                params={"provider": "eq.stripe", "provider_subscription_id": f"eq.{subscription['id']}"},
+                json={"payment_confirmed": True, "confirmed_at": datetime.now(timezone.utc).isoformat()},
+            )
+            if consent_response.is_error:
+                logger.warning("Consent confirmation update failed (%s) for %s", consent_response.status_code, subscription["id"])
     if event["type"] in {"invoice.paid", "invoice.payment_failed"}:
         invoice = event["data"]["object"]
         mode = "live" if event.get("livemode") else "sandbox"
@@ -576,7 +605,8 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
         subscription = None
         if subscription_reference:
             try:
-                subscription = stripe.Subscription.retrieve(
+                subscription = await _stripe(
+                    stripe.Subscription.retrieve,
                     subscription_reference,
                     api_key=stripe_config(mode)["secret_key"],
                 )
@@ -610,17 +640,12 @@ async def stripe_webhook(request: Request, stripe_signature: str | None = Header
                 "currency": str(invoice.get("currency") or "gbp").lower(),
                 "paid_at": _iso_from_unix(paid_at_unix) if paid_at_unix else None,
             }
-            async with httpx.AsyncClient(timeout=10) as client:
-                payment_response = await client.post(
-                    f"{SUPABASE_URL}/rest/v1/payments?on_conflict=provider,provider_payment_id",
-                    headers={
-                        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-                        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-                        "Content-Type": "application/json",
-                        "Prefer": "resolution=merge-duplicates,return=minimal",
-                    },
-                    json=payment,
-                )
+            payment_response = await http().post(
+                rest_url("payments"),
+                params={"on_conflict": "provider,provider_payment_id"},
+                headers=service_headers(json_body=True, prefer="resolution=merge-duplicates,return=minimal"),
+                json=payment,
+            )
             if payment_response.is_error:
                 raise HTTPException(status_code=502, detail="The verified Stripe payment could not be stored.")
 

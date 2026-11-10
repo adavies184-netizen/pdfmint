@@ -21,9 +21,6 @@
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://js.stripe.com" crossorigin>
-  <link rel="preconnect" href="https://api.stripe.com" crossorigin>
-  <script async src="https://js.stripe.com/v3/" data-pdfbreeze-stripe="true"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=f62a0aeea0ff">
 <link rel="stylesheet" href="cookie-consent.css?v=consent-4">
@@ -961,8 +958,6 @@
     </section>
   </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 <div class="signature-modal-shell" id="signature-modal" hidden>
     <div class="signature-modal-backdrop" data-close-signature></div>
     <section class="signature-modal" role="dialog" aria-modal="true" aria-labelledby="signature-modal-title">
@@ -1116,7 +1111,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
-<script src="script.js?v=trusted-analytics-1"></script>
+<script src="site-nav.js?v=1"></script>
+<script src="script.js?v=lean-1"></script>
   <script>
     (async()=>{if(!window.PDFMintAuth)return;await window.PDFMintAuth.ready;const user=await window.PDFMintAuth.getUser();if(!user)return;document.querySelectorAll('[data-auth-nav]').forEach(link=>{link.href='dashboard.html';link.textContent='My account';});})();
     (()=>{const tabs=[...document.querySelectorAll('.feature-tab')];const scenes=[...document.querySelectorAll('.feature-scene')];if(!tabs.length)return;const activate=tab=>{tabs.forEach(item=>{const active=item===tab;item.classList.toggle('is-active',active);item.setAttribute('aria-selected',String(active));});scenes.forEach(scene=>{const active=scene.dataset.scene===tab.dataset.feature;scene.classList.toggle('is-active',active);scene.hidden=!active;});};tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activate(tab));tab.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const direction=['ArrowDown','ArrowRight'].includes(event.key)?1:-1;const next=tabs[(index+direction+tabs.length)%tabs.length];next.focus();activate(next);});});})();

@@ -15,6 +15,7 @@ from openpyxl.styles import Alignment, Font
 from openpyxl.utils import get_column_letter
 
 from ..settings import JOB_TIMEOUT_SECONDS
+from . import process
 
 logger = logging.getLogger("pdfmint.spreadsheet")
 
@@ -220,7 +221,7 @@ def xlsx_to_xls(xlsx_path: Path, output_dir: Path) -> Path:
 
         logger.info("LibreOffice XLS attempt convert_to=%s", convert_to)
 
-        result = subprocess.run(
+        result = process.run(
             command,
             capture_output=True,
             text=True,

@@ -6,6 +6,7 @@ import subprocess
 import zlib
 import zipfile
 from pathlib import Path, PurePosixPath
+from . import process
 
 
 ROUTES: dict[str, tuple[set[str], str]] = {
@@ -18,7 +19,7 @@ ROUTES: dict[str, tuple[set[str], str]] = {
 
 
 def _run(args: list[str], *, cwd: Path | None = None) -> None:
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=600)
+    result = process.run(args, cwd=cwd, capture_output=True, text=True, timeout=600)
     if result.returncode:
         detail = (result.stderr or result.stdout or "Conversion failed.").strip()
         raise RuntimeError(detail[-1600:])
@@ -98,7 +99,7 @@ def _create_rar5(entries: list[tuple[str, Path]], output: Path) -> None:
 
 
 def _archive_to_zip(input_path: Path, workspace: Path, output: Path) -> None:
-    listing = subprocess.run(
+    listing = process.run(
         ["7z", "l", "-slt", str(input_path)], capture_output=True, text=True, timeout=120
     )
     if listing.returncode:

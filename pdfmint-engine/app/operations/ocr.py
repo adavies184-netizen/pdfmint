@@ -8,6 +8,7 @@ import fitz
 
 from ..settings import JOB_TIMEOUT_SECONDS
 from .word import pdf_to_docx
+from . import process
 
 logger = logging.getLogger("pdfmint.ocr")
 
@@ -25,7 +26,7 @@ def create_searchable_pdf(pdf_path: Path, output_path: Path) -> Path:
         str(output_path),
     ]
     logger.info("OCR command: %s", " ".join(command))
-    result = subprocess.run(
+    result = process.run(
         command,
         capture_output=True,
         text=True,

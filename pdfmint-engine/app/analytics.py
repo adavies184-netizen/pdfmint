@@ -5,11 +5,16 @@ import re
 from typing import Any
 from urllib.parse import urlparse
 
-import httpx
+import logging
+
 from fastapi import Header, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from .http_client import http
 from .settings import SUPABASE_ANON_KEY, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from .supabase import bearer_token, fetch_auth_user, rest_url, service_headers
+
+logger = logging.getLogger("pdfmint.analytics")
 
 
 EVENT_NAMES = {
@@ -47,13 +52,11 @@ class CookieConsentEventRequest(BaseModel):
 
 
 def _service_headers() -> dict[str, str]:
-    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-        raise HTTPException(status_code=503, detail="Analytics storage is not configured.")
-    return {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-        "Content-Type": "application/json",
-    }
+    return service_headers(
+        json_body=True,
+        prefer="resolution=merge-duplicates,return=minimal",
+        missing_detail="Analytics storage is not configured.",
+    )
 
 
 def _is_live_browser_request(request: Request) -> bool:
@@ -67,19 +70,11 @@ def _is_live_browser_request(request: Request) -> bool:
 
 
 async def _optional_user_id(authorization: str | None) -> str | None:
-    if not authorization or not authorization.lower().startswith("bearer "):
+    token = bearer_token(authorization)
+    if not token or not SUPABASE_URL or not SUPABASE_ANON_KEY:
         return None
-    if not SUPABASE_URL or not SUPABASE_ANON_KEY:
-        return None
-    token = authorization.split(" ", 1)[1].strip()
-    async with httpx.AsyncClient(timeout=5) as client:
-        response = await client.get(
-            f"{SUPABASE_URL}/auth/v1/user",
-            headers={"apikey": SUPABASE_ANON_KEY, "Authorization": f"Bearer {token}"},
-        )
-    if response.status_code != 200:
-        return None
-    return response.json().get("id")
+    user = await fetch_auth_user(token, timeout=5)
+    return user.get("id") if user else None
 
 
 async def store_analytics_event(
@@ -110,12 +105,13 @@ async def store_analytics_event(
     if user_id:
         record["user_id"] = user_id
 
-    async with httpx.AsyncClient(timeout=8) as client:
-        response = await client.post(
-            f"{SUPABASE_URL}/rest/v1/analytics_events?on_conflict=session_id,event_name,event_value",
-            headers={**_service_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
-            json=record,
-        )
+    response = await http().post(
+        rest_url("analytics_events"),
+        params={"on_conflict": "session_id,event_name,event_value"},
+        headers=_service_headers(),
+        json=record,
+        timeout=8,
+    )
     if response.is_error:
         raise HTTPException(status_code=502, detail="The analytics event could not be stored.")
     return {"recorded": True}
@@ -146,12 +142,19 @@ async def store_server_event(
     }
     if user_id:
         record["user_id"] = user_id
-    async with httpx.AsyncClient(timeout=8) as client:
-        await client.post(
-            f"{SUPABASE_URL}/rest/v1/analytics_events?on_conflict=session_id,event_name,event_value",
-            headers={**_service_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
+    # Called from the Stripe webhook: reporting must never make Stripe retry a paid event.
+    try:
+        response = await http().post(
+            rest_url("analytics_events"),
+            params={"on_conflict": "session_id,event_name,event_value"},
+            headers=_service_headers(),
             json=record,
+            timeout=8,
         )
+        if response.is_error:
+            logger.warning("Server analytics event %s not stored (%s)", event_name, response.status_code)
+    except Exception:
+        logger.warning("Server analytics event %s not stored", event_name, exc_info=True)
 
 
 async def store_cookie_consent_event(payload: CookieConsentEventRequest, request: Request) -> dict[str, bool]:
@@ -180,12 +183,13 @@ async def store_cookie_consent_event(payload: CookieConsentEventRequest, request
             "decided_at": now,
         })
 
-    async with httpx.AsyncClient(timeout=8) as client:
-        response = await client.post(
-            f"{SUPABASE_URL}/rest/v1/cookie_consent_visitors?on_conflict=visitor_id",
-            headers={**_service_headers(), "Prefer": "resolution=merge-duplicates,return=minimal"},
-            json=record,
-        )
+    response = await http().post(
+        rest_url("cookie_consent_visitors"),
+        params={"on_conflict": "visitor_id"},
+        headers=_service_headers(),
+        json=record,
+        timeout=8,
+    )
     if response.is_error:
         raise HTTPException(status_code=502, detail="The consent interaction could not be stored.")
     return {"recorded": True}

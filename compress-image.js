@@ -127,6 +127,7 @@
 
   async function makePdfFromImage(blob, sourceName) {
     const bytes = await blob.arrayBuffer();
+    if (!window.PDFLib && window.PDFBreezeVendors) await window.PDFBreezeVendors.ensure('pdflib');
     const pdf = await PDFLib.PDFDocument.create();
 
     let embedded;

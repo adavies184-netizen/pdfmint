@@ -12,6 +12,7 @@ from pptx import Presentation
 from pptx.util import Inches
 
 from ..settings import JOB_TIMEOUT_SECONDS
+from . import process
 
 
 def _remove_default_slide(prs: Presentation) -> None:
@@ -103,7 +104,7 @@ def pptx_to_ppt(pptx_path: Path, output_dir: Path) -> Path:
             str(pptx_path),
         ]
 
-        result = subprocess.run(
+        result = process.run(
             command,
             capture_output=True,
             text=True,

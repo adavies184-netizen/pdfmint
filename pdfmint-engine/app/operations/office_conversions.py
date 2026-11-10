@@ -8,6 +8,7 @@ from pathlib import Path
 from .powerpoint import pdf_to_ppt
 from .spreadsheet import pdf_to_xlsx
 from .word import pdf_to_doc, pdf_to_docx
+from . import process
 
 
 ROUTES: dict[str, tuple[set[str], str]] = {
@@ -27,7 +28,7 @@ ROUTES: dict[str, tuple[set[str], str]] = {
 
 
 def _run(args: list[str], timeout: int = 300) -> None:
-    result = subprocess.run(args, capture_output=True, text=True, timeout=timeout)
+    result = process.run(args, capture_output=True, text=True, timeout=timeout)
     if result.returncode:
         detail = (result.stderr or result.stdout or "Conversion command failed.").strip()
         raise RuntimeError(detail[-1200:])

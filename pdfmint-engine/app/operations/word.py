@@ -10,6 +10,7 @@ from typing import Iterable
 from pdf2docx import Converter
 
 from ..settings import JOB_TIMEOUT_SECONDS
+from . import process
 from .word_vectors import (
     parsed_table_bboxes,
     needs_positioned_text,
@@ -94,7 +95,7 @@ def _run_libreoffice_export(
     logger.info("LibreOffice attempt convert_to=%s", convert_to)
     logger.info("Command: %s", " ".join(command))
 
-    result = subprocess.run(
+    result = process.run(
         command,
         capture_output=True,
         text=True,

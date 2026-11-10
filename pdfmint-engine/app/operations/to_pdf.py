@@ -9,6 +9,7 @@ from pathlib import Path
 import markdown
 from PIL import Image, ImageSequence
 from pillow_heif import register_heif_opener
+from . import process
 
 register_heif_opener()
 
@@ -27,7 +28,7 @@ ROUTES: dict[str, set[str]] = {
 
 
 def _run(args: list[str], cwd: Path | None = None, timeout: int = 300) -> None:
-    result = subprocess.run(args, cwd=cwd, capture_output=True, text=True, timeout=timeout)
+    result = process.run(args, cwd=cwd, capture_output=True, text=True, timeout=timeout)
     if result.returncode:
         detail = (result.stderr or result.stdout or "Conversion command failed.").strip()
         raise RuntimeError(detail[-1200:])

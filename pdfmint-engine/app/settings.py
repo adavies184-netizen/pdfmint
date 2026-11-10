@@ -4,6 +4,11 @@ import os
 
 MAX_UPLOAD_BYTES = int(os.getenv("MAX_UPLOAD_BYTES", str(100 * 1024 * 1024)))
 JOB_TIMEOUT_SECONDS = int(os.getenv("JOB_TIMEOUT_SECONDS", "180"))
+# Conversions are CPU/memory heavy (LibreOffice, Ghostscript, OCR). Run at most
+# JOB_CONCURRENCY at once; further jobs wait in line, and once JOB_QUEUE_LIMIT
+# jobs are waiting new ones get a fast "busy, try again" instead of piling up.
+JOB_CONCURRENCY = max(1, int(os.getenv("JOB_CONCURRENCY", "1")))
+JOB_QUEUE_LIMIT = max(0, int(os.getenv("JOB_QUEUE_LIMIT", "6")))
 
 ALLOWED_ORIGINS = sorted({
     "https://pdfbreeze.net",

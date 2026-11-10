@@ -1,12 +1,14 @@
-
 from __future__ import annotations
 
+import asyncio
+import logging
 import shutil
 import subprocess
 import tempfile
-import logging
 import time
 import uuid
+from contextlib import asynccontextmanager
+from functools import lru_cache
 from pathlib import Path
 
 from fastapi import FastAPI, File, Form, Header, HTTPException, Query, Request, UploadFile
@@ -14,23 +16,77 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from starlette.background import BackgroundTask
 
-from .files import create_download_copy, save_uploaded_file, save_uploaded_pdf
-from .registry import OPERATIONS, execute_operation
-from .settings import ALLOWED_ORIGINS
-from .billing import ConsentEvidenceRequest, ManageSubscriptionRequest, CheckoutRequest, WelcomeEmailRequest, checkout_public_config, create_checkout, manage_subscription, record_consent_evidence, send_welcome_email, stripe_webhook
-from .admin import AdminDeleteRequest, CookieConsentSettingRequest, PaymentWallSettingRequest, ProviderSelectionRequest, admin_cookie_consent_setting, admin_cookie_consent_stats, admin_funnel, admin_overview, admin_payment_wall_setting, cookie_consent_setting, delete_admin_documents, delete_admin_members, payment_wall_setting, select_payment_provider, update_cookie_consent_setting, update_payment_wall_setting
+from .admin import (
+    AdminDeleteRequest,
+    CookieConsentSettingRequest,
+    PaymentWallSettingRequest,
+    ProviderSelectionRequest,
+    admin_cookie_consent_setting,
+    admin_cookie_consent_stats,
+    admin_funnel,
+    admin_overview,
+    admin_payment_wall_setting,
+    cookie_consent_setting,
+    delete_admin_documents,
+    delete_admin_members,
+    payment_wall_setting,
+    select_payment_provider,
+    update_cookie_consent_setting,
+    update_payment_wall_setting,
+)
 from .analytics import AnalyticsEventRequest, CookieConsentEventRequest, store_analytics_event, store_cookie_consent_event
+from .billing import (
+    CheckoutRequest,
+    ConsentEvidenceRequest,
+    ManageSubscriptionRequest,
+    WelcomeEmailRequest,
+    checkout_public_config,
+    create_checkout,
+    manage_subscription,
+    record_consent_evidence,
+    send_welcome_email,
+    stripe_webhook,
+)
+from .files import save_uploaded_file, save_uploaded_pdf
+from .http_client import close_http
+from .registry import OPERATIONS, execute_operation
+from .settings import ALLOWED_ORIGINS, JOB_CONCURRENCY, JOB_QUEUE_LIMIT
 from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.20.0"
+ENGINE_VERSION = "1.21.0"
+
+REQUIRED_TOOLS = {
+    "libreoffice": ("soffice",),
+    "tesseract": ("tesseract",),
+    "ocrmypdf": ("ocrmypdf",),
+    "ebook_convert": ("ebook-convert",),
+    "pstoedit": ("pstoedit",),
+    "ffmpeg": ("ffmpeg",),
+    "7zip": ("7z",),
+    "libredwg": ("dwg2dxf", "dxf2dwg"),
+}
+
+# Conversions run in worker threads so a long LibreOffice/OCR job never freezes
+# checkout, the Stripe webhook, admin or health checks. The semaphore caps how
+# many heavy jobs run at once (memory is the engine's tightest resource).
+_job_slots = asyncio.Semaphore(JOB_CONCURRENCY)
+_jobs_waiting = 0
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    yield
+    await close_http()
+
 
 app = FastAPI(
     title="PDFBreeze Engine",
     version=ENGINE_VERSION,
     docs_url="/docs",
     redoc_url=None,
+    lifespan=lifespan,
 )
 
 app.add_middleware(
@@ -40,27 +96,28 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
     expose_headers=["Content-Disposition"],
+    max_age=86400,
 )
+
+
+@lru_cache(maxsize=1)
+def _tool_checks() -> dict[str, bool]:
+    # Installed tools only change with a new image, so check them once.
+    return {
+        name: all(shutil.which(binary) is not None for binary in binaries)
+        for name, binaries in REQUIRED_TOOLS.items()
+    }
 
 
 @app.get("/v1/health")
 def health() -> dict:
-    checks = {
-        "libreoffice": shutil.which("soffice") is not None,
-        "tesseract": shutil.which("tesseract") is not None,
-        "ocrmypdf": shutil.which("ocrmypdf") is not None,
-        "ebook_convert": shutil.which("ebook-convert") is not None,
-        "pstoedit": shutil.which("pstoedit") is not None,
-        "ffmpeg": shutil.which("ffmpeg") is not None,
-        "7zip": shutil.which("7z") is not None,
-        "libredwg": shutil.which("dwg2dxf") is not None and shutil.which("dxf2dwg") is not None,
-        "operations": sorted(OPERATIONS.keys()),
-    }
+    tools = _tool_checks()
     return {
-        "status": "ok" if all(checks[name] for name in ("libreoffice", "tesseract", "ocrmypdf", "ebook_convert", "pstoedit", "ffmpeg", "7zip", "libredwg")) else "degraded",
+        "status": "ok" if all(tools.values()) else "degraded",
         "service": "pdfmint-engine",
         "version": ENGINE_VERSION,
-        "checks": checks,
+        "checks": {**tools, "operations": sorted(OPERATIONS)},
+        "jobs": {"concurrency": JOB_CONCURRENCY, "waiting": _jobs_waiting},
     }
 
 
@@ -69,13 +126,8 @@ def capabilities() -> dict:
     return {
         "service": "pdfmint-engine",
         "version": ENGINE_VERSION,
-        "operations": sorted(OPERATIONS.keys()),
-        "planned": [
-            "merge-pdf",
-            "split-pdf",
-            "rotate-pdf",
-            "watermark-pdf",
-        ],
+        "operations": sorted(OPERATIONS),
+        "planned": ["merge-pdf", "split-pdf", "rotate-pdf", "watermark-pdf"],
     }
 
 
@@ -199,79 +251,82 @@ async def website_analytics_event(
     return await store_analytics_event(payload, request, authorization)
 
 
+def _customer_message(operation: str, job_id: str, exc: Exception) -> str:
+    """Message shown to the customer. ValueError is reserved for our own
+    customer-readable messages (wrong file type, unsafe archive, ...); raw tool
+    output (LibreOffice/Ghostscript stderr, server paths) stays in the logs."""
+    label = operation.replace("-", " ").upper()
+    if isinstance(exc, ValueError) and str(exc):
+        return f"{label} could not be completed. {str(exc)[:300]} Reference: {job_id}."
+    return f"{label} could not be completed. Please check the file and try again. Reference: {job_id}."
+
+
+async def _run_operation(operation: str, input_path: Path, workspace: Path, base_name: str):
+    global _jobs_waiting
+    if _job_slots.locked() and _jobs_waiting >= JOB_QUEUE_LIMIT:
+        raise HTTPException(status_code=503, detail="PDFBreeze is busy right now. Please try again in a minute.")
+    _jobs_waiting += 1
+    try:
+        await _job_slots.acquire()
+    finally:
+        _jobs_waiting -= 1
+    try:
+        return await asyncio.to_thread(execute_operation, operation, input_path, workspace, base_name)
+    finally:
+        _job_slots.release()
+
+
 @app.post("/v1/jobs")
 async def create_job(
     file: UploadFile = File(...),
     operation: str = Form(...),
 ):
     if operation not in OPERATIONS:
-        raise HTTPException(
-            status_code=400,
-            detail=f"Unsupported operation '{operation}'."
-        )
+        raise HTTPException(status_code=400, detail=f"Unsupported operation '{operation}'.")
 
     job_id = f"PM-{uuid.uuid4().hex[:8].upper()}"
     started_at = time.monotonic()
     original_name = Path(file.filename or "document.pdf").name
     base_name = Path(original_name).stem or "document"
+    logger.info("JOB START id=%s operation=%s filename=%s", job_id, operation, original_name)
 
-    logger.info(
-        "JOB START id=%s operation=%s filename=%s",
-        job_id,
-        operation,
-        original_name,
-    )
-
-    with tempfile.TemporaryDirectory(prefix=f"pdfmint-job-{job_id.lower()}-") as temporary_name:
-        workspace = Path(temporary_name)
+    workspace = Path(tempfile.mkdtemp(prefix=f"pdfmint-job-{job_id.lower()}-"))
+    try:
         if operation.startswith(("pdf-to-", "compress-pdf", "ocr-")):
             input_path = await save_uploaded_pdf(file, workspace)
         else:
             input_path = await save_uploaded_file(file, workspace)
 
         try:
-            result = execute_operation(operation, input_path, workspace, base_name)
+            result = await _run_operation(operation, input_path, workspace, base_name)
+        except HTTPException:
+            raise
         except subprocess.TimeoutExpired as exc:
             logger.exception("JOB TIMEOUT id=%s operation=%s", job_id, operation)
-            raise HTTPException(
-                status_code=504,
-                detail=f"Conversion timed out. Reference: {job_id}"
-            ) from exc
+            raise HTTPException(status_code=504, detail=f"Conversion timed out. Reference: {job_id}") from exc
         except Exception as exc:
-            logger.exception(
-                "JOB FAILED id=%s operation=%s error=%s",
-                job_id,
-                operation,
-                exc,
-            )
-            raise HTTPException(
-                status_code=422,
-                detail=(
-                    f"{operation.replace('-', ' ').upper()} could not be completed. "
-                    f"Reference: {job_id}. {exc}"
-                )
-            ) from exc
+            logger.exception("JOB FAILED id=%s operation=%s error=%s", job_id, operation, exc)
+            raise HTTPException(status_code=422, detail=_customer_message(operation, job_id, exc)) from exc
 
-        download_path, download_dir = create_download_copy(
-            result.path,
-            result.filename,
-        )
+        if not result.path.is_file():
+            logger.error("JOB FAILED id=%s operation=%s missing output %s", job_id, operation, result.path)
+            raise HTTPException(status_code=422, detail=_customer_message(operation, job_id, RuntimeError()))
 
         logger.info(
             "JOB COMPLETE id=%s operation=%s duration_seconds=%.2f output_bytes=%s",
             job_id,
             operation,
             time.monotonic() - started_at,
-            download_path.stat().st_size,
+            result.path.stat().st_size,
         )
+    except BaseException:
+        shutil.rmtree(workspace, ignore_errors=True)
+        raise
 
-        return FileResponse(
-            path=download_path,
-            filename=result.filename,
-            media_type=result.media_type,
-            background=BackgroundTask(
-                shutil.rmtree,
-                download_dir,
-                ignore_errors=True,
-            ),
-        )
+    # Serve straight from the job folder (no extra copy) and delete it once sent.
+    return FileResponse(
+        path=result.path,
+        filename=result.filename,
+        media_type=result.media_type,
+        background=BackgroundTask(shutil.rmtree, workspace, ignore_errors=True),
+    )

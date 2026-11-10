@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import subprocess
 from pathlib import Path
+from . import process
 
 
 ROUTES: dict[str, tuple[set[str], str]] = {
@@ -17,7 +18,7 @@ ROUTES: dict[str, tuple[set[str], str]] = {
 
 
 def _run(args: list[str]) -> None:
-    result = subprocess.run(args, capture_output=True, text=True, timeout=600)
+    result = process.run(args, capture_output=True, text=True, timeout=600)
     if result.returncode:
         detail = (result.stderr or result.stdout or "Media conversion failed.").strip()
         raise RuntimeError(detail[-1600:])
@@ -33,7 +34,7 @@ def convert_media(operation: str, input_path: Path, workspace: Path, base_name: 
     if target == "gif":
         _run(common + ["-vf", "fps=12,scale='min(960,iw)':-1:flags=lanczos", "-loop", "0", str(output)])
     elif operation == "mov-to-mp4":
-        _run(common + ["-c:v", "libx264", "-preset", "medium", "-crf", "23", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(output)])
+        _run(common + ["-c:v", "libx264", "-preset", "veryfast", "-crf", "23", "-c:a", "aac", "-b:a", "160k", "-movflags", "+faststart", str(output)])
     elif target == "mp3":
         _run(common + ["-vn", "-c:a", "libmp3lame", "-q:a", "2", str(output)])
     elif target == "wav":

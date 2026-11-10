@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+import time
 from datetime import date as calendar_date, datetime, timedelta, timezone
 from typing import Any, Literal
-import base64
-import json
 from urllib.parse import quote
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -13,19 +13,16 @@ from fastapi import Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from .billing import authenticated_user
+from .http_client import http
 from .settings import ADMIN_EMAILS, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from .supabase import has_aal2, service_headers
 
 
 REPORTING_TIMEZONE = ZoneInfo("Europe/London")
 
 
 def _service_headers() -> dict[str, str]:
-    if not SUPABASE_SERVICE_ROLE_KEY:
-        raise HTTPException(status_code=503, detail="Admin reporting is not configured.")
-    return {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-    }
+    return service_headers(missing_detail="Admin reporting is not configured.")
 
 
 async def _rows(client: httpx.AsyncClient, table: str, select: str) -> list[dict[str, Any]]:
@@ -33,6 +30,7 @@ async def _rows(client: httpx.AsyncClient, table: str, select: str) -> list[dict
         f"{SUPABASE_URL}/rest/v1/{table}",
         headers=_service_headers(),
         params={"select": select, "order": "created_at.desc"},
+        timeout=15,
     )
     if response.is_error:
         raise HTTPException(status_code=502, detail=f"Could not load {table} for the admin dashboard.")
@@ -257,14 +255,7 @@ async def _require_admin(authorization: str | None) -> dict[str, Any]:
     email = str(user.get("email") or "").lower()
     if email not in ADMIN_EMAILS:
         raise HTTPException(status_code=403, detail="This account is not a PDFBreeze administrator.")
-    try:
-        token = authorization.split(" ", 1)[1]
-        encoded_claims = token.split(".")[1]
-        encoded_claims += "=" * (-len(encoded_claims) % 4)
-        claims = json.loads(base64.urlsafe_b64decode(encoded_claims))
-    except (ValueError, IndexError, json.JSONDecodeError):
-        claims = {}
-    if claims.get("aal") != "aal2":
+    if not has_aal2(authorization):
         raise HTTPException(status_code=403, detail="Administrator two-factor authentication is required.")
     return user
 
@@ -280,18 +271,10 @@ async def admin_overview(
     except ValueError as exc:
         raise HTTPException(status_code=422, detail="Choose a valid calendar date.") from exc
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        profiles = await _rows(client, "profiles", "id,email,first_name,last_name,created_at")
-        subscriptions = await _rows(client, "subscriptions", "user_id,provider,provider_mode,provider_subscription_id,plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,created_at,updated_at")
-        payments = await _rows(client, "payments", "user_id,provider,provider_mode,provider_payment_id,payment_type,status,amount,currency,paid_at,created_at")
-        documents = await _rows(client, "documents", "id,user_id,name,storage_path,byte_size,source_tool,created_at,updated_at")
-        consents = await _rows(client, "billing_consents", "id,user_id,provider,provider_mode,provider_subscription_id,plan_code,accepted,accepted_at,disclosure_version,disclosure_text,terms_url,privacy_url,amount_today,renewal_amount,renewal_interval,trial_days,ip_address,user_agent,checkout_origin,evidence_hash,payment_confirmed,confirmed_at,created_at")
-        providers = await _rows(client, "payment_provider_settings", "provider,display_name,enabled,is_default,configured,updated_at")
-        providers = [
-            item for item in providers
-            if item.get("provider") not in {"site_cookie_consent", "site_payment_wall_zendocs"}
-        ]
-        live_member_response = await client.get(
+    client = http()
+
+    async def live_member_events() -> list[dict[str, Any]]:
+        response = await client.get(
             f"{SUPABASE_URL}/rest/v1/analytics_events",
             headers={**_service_headers(), "Range": "0-9999"},
             params={
@@ -301,10 +284,26 @@ async def admin_overview(
                 "user_id": "not.is.null",
                 "order": "created_at.desc",
             },
+            timeout=15,
         )
-        if live_member_response.is_error:
+        if response.is_error:
             raise HTTPException(status_code=502, detail="Could not verify live members for the admin dashboard.")
-        live_member_events = live_member_response.json()
+        return response.json()
+
+    # Independent reads: run them together instead of one after another.
+    profiles, subscriptions, payments, documents, consents, providers, live_member_events = await asyncio.gather(
+        _rows(client, "profiles", "id,email,first_name,last_name,created_at"),
+        _rows(client, "subscriptions", "user_id,provider,provider_mode,provider_subscription_id,plan_code,status,trial_ends_at,current_period_ends_at,cancel_at_period_end,created_at,updated_at"),
+        _rows(client, "payments", "user_id,provider,provider_mode,provider_payment_id,payment_type,status,amount,currency,paid_at,created_at"),
+        _rows(client, "documents", "id,user_id,name,storage_path,byte_size,source_tool,created_at,updated_at"),
+        _rows(client, "billing_consents", "id,user_id,provider,provider_mode,provider_subscription_id,plan_code,accepted,accepted_at,disclosure_version,disclosure_text,terms_url,privacy_url,amount_today,renewal_amount,renewal_interval,trial_days,ip_address,user_agent,checkout_origin,evidence_hash,payment_confirmed,confirmed_at,created_at"),
+        _rows(client, "payment_provider_settings", "provider,display_name,enabled,is_default,configured,updated_at"),
+        live_member_events(),
+    )
+    providers = [
+        item for item in providers
+        if item.get("provider") not in {COOKIE_CONSENT_SETTING_KEY, PAYMENT_WALL_SETTING_KEY}
+    ]
 
     all_profiles = profiles
     live_member_joined_at: dict[str, str] = {}
@@ -410,7 +409,7 @@ async def admin_overview(
         "documents": all_documents,
         "consents": all_consents,
         "upcoming": upcoming_items,
-        "providers": [provider for provider in providers if provider.get("provider") != COOKIE_CONSENT_SETTING_KEY],
+        "providers": providers,
         "selected_day": day,
     }
 
@@ -441,28 +440,28 @@ async def admin_funnel(
     if landing_page and landing_page != "all":
         params["landing_page"] = f"eq.{landing_page}"
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/analytics_events",
-            headers={**_service_headers(), "Range": "0-9999"},
-            params=params,
+    client = http()
+    response = await client.get(
+        f"{SUPABASE_URL}/rest/v1/analytics_events",
+        headers={**_service_headers(), "Range": "0-9999"},
+        params=params,
+    )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="Could not load conversion analytics.")
+    events = [
+        row for row in response.json()
+        if (created := _parsed_datetime(row.get("created_at"))) and created < before
+    ]
+    user_ids = sorted({str(row.get("user_id")) for row in events if row.get("user_id")})
+    profiles: list[dict[str, Any]] = []
+    if user_ids:
+        profile_response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/profiles",
+            headers=_service_headers(),
+            params={"select": "id,email", "id": f"in.({','.join(user_ids)})"},
         )
-        if response.is_error:
-            raise HTTPException(status_code=502, detail="Could not load conversion analytics.")
-        events = [
-            row for row in response.json()
-            if (created := _parsed_datetime(row.get("created_at"))) and created < before
-        ]
-        user_ids = sorted({str(row.get("user_id")) for row in events if row.get("user_id")})
-        profiles: list[dict[str, Any]] = []
-        if user_ids:
-            profile_response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/profiles",
-                headers=_service_headers(),
-                params={"select": "id,email", "id": f"in.({','.join(user_ids)})"},
-            )
-            if not profile_response.is_error:
-                profiles = profile_response.json()
+        if not profile_response.is_error:
+            profiles = profile_response.json()
 
     report = build_funnel_report(events, profiles)
     report["days"] = days
@@ -492,23 +491,23 @@ async def delete_admin_documents(payload: AdminDeleteRequest, authorization: str
     await _require_admin(authorization)
     ids = [str(item) for item in dict.fromkeys(payload.ids)]
     id_filter = f"in.({','.join(ids)})"
-    async with httpx.AsyncClient(timeout=20) as client:
-        response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/documents",
-            headers=_service_headers(),
-            params={"select": "id,name,storage_path", "id": id_filter},
-        )
-        if response.is_error:
-            raise HTTPException(status_code=502, detail="The selected documents could not be checked.")
-        documents = response.json()
-        await _delete_stored_documents(client, documents)
-        deleted = await client.delete(
-            f"{SUPABASE_URL}/rest/v1/documents",
-            headers={**_service_headers(), "Prefer": "return=representation"},
-            params={"id": id_filter},
-        )
-        if deleted.is_error:
-            raise HTTPException(status_code=502, detail="The selected document records could not be deleted.")
+    client = http()
+    response = await client.get(
+        f"{SUPABASE_URL}/rest/v1/documents",
+        headers=_service_headers(),
+        params={"select": "id,name,storage_path", "id": id_filter},
+    )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="The selected documents could not be checked.")
+    documents = response.json()
+    await _delete_stored_documents(client, documents)
+    deleted = await client.delete(
+        f"{SUPABASE_URL}/rest/v1/documents",
+        headers={**_service_headers(), "Prefer": "return=representation"},
+        params={"id": id_filter},
+    )
+    if deleted.is_error:
+        raise HTTPException(status_code=502, detail="The selected document records could not be deleted.")
     return {"deleted": len(deleted.json()), "ids": ids}
 
 
@@ -518,67 +517,67 @@ async def delete_admin_members(payload: AdminDeleteRequest, authorization: str |
     if str(admin_user.get("id") or "") in ids:
         raise HTTPException(status_code=409, detail="You cannot delete the administrator account you are currently using.")
     id_filter = f"in.({','.join(ids)})"
-    async with httpx.AsyncClient(timeout=20) as client:
-        profiles_response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/profiles",
+    client = http()
+    profiles_response = await client.get(
+        f"{SUPABASE_URL}/rest/v1/profiles",
+        headers=_service_headers(),
+        params={"select": "id,email", "id": id_filter},
+    )
+    subscriptions_response = await client.get(
+        f"{SUPABASE_URL}/rest/v1/subscriptions",
+        headers=_service_headers(),
+        params={"select": "user_id,status", "user_id": id_filter, "status": "in.(active,trialing)"},
+    )
+    documents_response = await client.get(
+        f"{SUPABASE_URL}/rest/v1/documents",
+        headers=_service_headers(),
+        params={"select": "id,name,storage_path", "user_id": id_filter},
+    )
+    if profiles_response.is_error or subscriptions_response.is_error or documents_response.is_error:
+        raise HTTPException(status_code=502, detail="The selected members could not be checked.")
+    profiles = profiles_response.json()
+    protected_admins = [item for item in profiles if str(item.get("email") or "").lower() in ADMIN_EMAILS]
+    if protected_admins:
+        raise HTTPException(status_code=409, detail="Administrator accounts cannot be deleted from the members list.")
+    active_subscriptions = subscriptions_response.json()
+    if active_subscriptions:
+        raise HTTPException(status_code=409, detail="Cancel active or trial subscriptions before deleting those members.")
+    await _delete_stored_documents(client, documents_response.json())
+    deleted_ids: list[str] = []
+    for member_id in ids:
+        response = await client.delete(
+            f"{SUPABASE_URL}/auth/v1/admin/users/{member_id}",
             headers=_service_headers(),
-            params={"select": "id,email", "id": id_filter},
         )
-        subscriptions_response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/subscriptions",
-            headers=_service_headers(),
-            params={"select": "user_id,status", "user_id": id_filter, "status": "in.(active,trialing)"},
-        )
-        documents_response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/documents",
-            headers=_service_headers(),
-            params={"select": "id,name,storage_path", "user_id": id_filter},
-        )
-        if profiles_response.is_error or subscriptions_response.is_error or documents_response.is_error:
-            raise HTTPException(status_code=502, detail="The selected members could not be checked.")
-        profiles = profiles_response.json()
-        protected_admins = [item for item in profiles if str(item.get("email") or "").lower() in ADMIN_EMAILS]
-        if protected_admins:
-            raise HTTPException(status_code=409, detail="Administrator accounts cannot be deleted from the members list.")
-        active_subscriptions = subscriptions_response.json()
-        if active_subscriptions:
-            raise HTTPException(status_code=409, detail="Cancel active or trial subscriptions before deleting those members.")
-        await _delete_stored_documents(client, documents_response.json())
-        deleted_ids: list[str] = []
-        for member_id in ids:
-            response = await client.delete(
-                f"{SUPABASE_URL}/auth/v1/admin/users/{member_id}",
-                headers=_service_headers(),
-            )
-            if response.is_error and response.status_code != 404:
-                raise HTTPException(status_code=502, detail="A selected member could not be deleted. No further members were removed.")
-            deleted_ids.append(member_id)
+        if response.is_error and response.status_code != 404:
+            raise HTTPException(status_code=502, detail="A selected member could not be deleted. No further members were removed.")
+        deleted_ids.append(member_id)
     return {"deleted": len(deleted_ids), "ids": deleted_ids}
 
 
 async def select_payment_provider(payload: ProviderSelectionRequest, authorization: str | None) -> dict[str, Any]:
     await _require_admin(authorization)
     headers = {**_service_headers(), "Content-Type": "application/json"}
-    async with httpx.AsyncClient(timeout=10) as client:
-        available = await client.get(
-            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-            headers=headers,
-            params={"provider": f"eq.{payload.provider}", "configured": "eq.true", "select": "provider"},
-        )
-        if available.is_error or not available.json():
-            raise HTTPException(status_code=409, detail="Connect and verify this provider before selecting it.")
-        clear = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-            headers=headers,
-            params={"is_default": "eq.true"},
-            json={"is_default": False},
-        )
-        selected = await client.patch(
-            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-            headers=headers,
-            params={"provider": f"eq.{payload.provider}"},
-            json={"is_default": True, "enabled": True, "updated_at": datetime.now(timezone.utc).isoformat()},
-        )
+    client = http()
+    available = await client.get(
+        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+        headers=headers,
+        params={"provider": f"eq.{payload.provider}", "configured": "eq.true", "select": "provider"},
+    )
+    if available.is_error or not available.json():
+        raise HTTPException(status_code=409, detail="Connect and verify this provider before selecting it.")
+    clear = await client.patch(
+        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+        headers=headers,
+        params={"is_default": "eq.true"},
+        json={"is_default": False},
+    )
+    selected = await client.patch(
+        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+        headers=headers,
+        params={"provider": f"eq.{payload.provider}"},
+        json={"is_default": True, "enabled": True, "updated_at": datetime.now(timezone.utc).isoformat()},
+    )
     if clear.is_error or selected.is_error:
         raise HTTPException(status_code=502, detail="The payment provider could not be updated.")
     return {"updated": True, "provider": payload.provider}
@@ -588,39 +587,59 @@ COOKIE_CONSENT_SETTING_KEY = "site_cookie_consent"
 PAYMENT_WALL_SETTING_KEY = "site_payment_wall_zendocs"
 
 
+# Public site settings are read on every visitor's page load but change only
+# when an admin flips them, so keep each for a minute (cleared on update).
+SETTING_CACHE_SECONDS = 60.0
+_MISSING = object()
+_setting_cache: dict[str, tuple[float, Any]] = {}
+
+
+async def _site_flag(key: str) -> Any:
+    """The `enabled` value of a site-setting row, or _MISSING when there is no row
+    or the database cannot be reached (callers then use their safe default)."""
+    cached = _setting_cache.get(key)
+    if cached and time.monotonic() - cached[0] < SETTING_CACHE_SECONDS:
+        return cached[1]
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return _MISSING
+    try:
+        response = await http().get(
+            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+            headers=_service_headers(),
+            params={"provider": f"eq.{key}", "select": "enabled", "limit": "1"},
+            timeout=5,
+        )
+        if response.is_error:
+            return _MISSING  # transient failure: don't cache, try again next request
+        rows = response.json()
+    except (httpx.HTTPError, ValueError, TypeError):
+        return _MISSING
+    value = rows[0].get("enabled") if rows else _MISSING
+    _setting_cache[key] = (time.monotonic(), value)
+    return value
+
+
 async def cookie_consent_setting() -> dict[str, bool]:
     """Public feature state. Missing configuration deliberately defaults to enabled."""
-    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
-        return {"enabled": True}
-    try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-                headers=_service_headers(),
-                params={"provider": f"eq.{COOKIE_CONSENT_SETTING_KEY}", "select": "enabled", "limit": "1"},
-            )
-        if response.is_error or not response.json():
-            return {"enabled": True}
-        return {"enabled": response.json()[0].get("enabled") is not False}
-    except (httpx.HTTPError, ValueError, TypeError):
-        return {"enabled": True}
+    return {"enabled": await _site_flag(COOKIE_CONSENT_SETTING_KEY) is not False}
 
 
 async def admin_cookie_consent_setting(authorization: str | None) -> dict[str, bool]:
     await _require_admin(authorization)
+    _setting_cache.pop(COOKIE_CONSENT_SETTING_KEY, None)
     return await cookie_consent_setting()
 
 
 async def admin_cookie_consent_stats(authorization: str | None) -> dict[str, Any]:
     await _require_admin(authorization)
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/cookie_consent_visitors",
-            headers=_service_headers(),
-            params={
-                "select": "banner_shown,accepted_all,rejected_all,settings_opened,preferences_saved,statistics,marketing",
-            },
-        )
+    client = http()
+    response = await client.get(
+        f"{SUPABASE_URL}/rest/v1/cookie_consent_visitors",
+        headers=_service_headers(),
+        params={
+            "select": "banner_shown,accepted_all,rejected_all,settings_opened,preferences_saved,statistics,marketing",
+        },
+    )
     if response.is_error:
         raise HTTPException(status_code=502, detail="Cookie consent statistics could not be loaded.")
     return build_cookie_consent_report(response.json())
@@ -641,38 +660,30 @@ async def update_cookie_consent_setting(payload: CookieConsentSettingRequest, au
         "configured": True,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.post(
-            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-            headers=headers,
-            params={"on_conflict": "provider"},
-            json=row,
-        )
+    client = http()
+    response = await client.post(
+        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+        headers=headers,
+        params={"on_conflict": "provider"},
+        json=row,
+    )
     if response.is_error:
         raise HTTPException(status_code=502, detail="The cookie consent setting could not be updated.")
+    _setting_cache.pop(COOKIE_CONSENT_SETTING_KEY, None)
     return {"enabled": payload.enabled}
 
 
 async def payment_wall_setting() -> dict[str, str]:
     """Public payment-wall style. Missing configuration deliberately defaults to Zendocs style."""
-    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+    flag = await _site_flag(PAYMENT_WALL_SETTING_KEY)
+    if flag is _MISSING:
         return {"style": "zendocs"}
-    try:
-        async with httpx.AsyncClient(timeout=5) as client:
-            response = await client.get(
-                f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-                headers=_service_headers(),
-                params={"provider": f"eq.{PAYMENT_WALL_SETTING_KEY}", "select": "enabled", "limit": "1"},
-            )
-        if response.is_error or not response.json():
-            return {"style": "zendocs"}
-        return {"style": "zendocs" if response.json()[0].get("enabled") is True else "standard"}
-    except (httpx.HTTPError, ValueError, TypeError):
-        return {"style": "zendocs"}
+    return {"style": "zendocs" if flag is True else "standard"}
 
 
 async def admin_payment_wall_setting(authorization: str | None) -> dict[str, str]:
     await _require_admin(authorization)
+    _setting_cache.pop(PAYMENT_WALL_SETTING_KEY, None)
     return await payment_wall_setting()
 
 
@@ -691,13 +702,14 @@ async def update_payment_wall_setting(payload: PaymentWallSettingRequest, author
         "configured": True,
         "updated_at": datetime.now(timezone.utc).isoformat(),
     }
-    async with httpx.AsyncClient(timeout=10) as client:
-        response = await client.post(
-            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-            headers=headers,
-            params={"on_conflict": "provider"},
-            json=row,
-        )
+    client = http()
+    response = await client.post(
+        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+        headers=headers,
+        params={"on_conflict": "provider"},
+        json=row,
+    )
     if response.is_error:
         raise HTTPException(status_code=502, detail="The payment wall setting could not be updated.")
+    _setting_cache.pop(PAYMENT_WALL_SETTING_KEY, None)
     return {"style": payload.style}

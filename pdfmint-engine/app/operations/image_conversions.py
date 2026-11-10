@@ -11,6 +11,7 @@ from docx import Document
 from openpyxl import Workbook
 from PIL import Image, ImageSequence
 from pillow_heif import register_heif_opener
+from . import process
 
 register_heif_opener()
 
@@ -41,7 +42,7 @@ SOURCE_SUFFIXES = {
 
 
 def _run(args: list[str], cwd: Path | None = None) -> None:
-    subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True, timeout=180)
+    process.run(args, cwd=cwd, check=True, capture_output=True, text=True, timeout=180)
 
 
 def _flatten(image: Image.Image) -> Image.Image:
@@ -61,7 +62,7 @@ def _readable_image(input_path: Path) -> Path:
 
 def _raster(input_path: Path, output: Path, target: str) -> None:
     with Image.open(_readable_image(input_path)) as opened:
-        image = ImageSequence.Iterator(opened).__next__()
+        image = next(ImageSequence.Iterator(opened))
         if target in {"jpg", "jpeg", "eps"}:
             image = _flatten(image)
         elif target == "png":
@@ -76,10 +77,10 @@ def _image_to_svg(input_path: Path, output: Path) -> None:
     if input_path.suffix.lower() == ".svg":
         shutil.copy2(input_path, output)
         return
-    mime = Image.MIME.get(Image.open(input_path).format, "image/png")
-    data = base64.b64encode(input_path.read_bytes()).decode("ascii")
     with Image.open(input_path) as image:
+        mime = Image.MIME.get(image.format, "image/png")
         width, height = image.size
+    data = base64.b64encode(input_path.read_bytes()).decode("ascii")
     output.write_text(
         f'<svg xmlns="http://www.w3.org/2000/svg" width="{width}" height="{height}" viewBox="0 0 {width} {height}">'
         f'<image width="{width}" height="{height}" href="data:{mime};base64,{data}"/></svg>',
@@ -88,7 +89,8 @@ def _image_to_svg(input_path: Path, output: Path) -> None:
 
 
 def _ocr_docx(input_path: Path, output: Path) -> None:
-    text = pytesseract.image_to_string(Image.open(_readable_image(input_path)))
+    with Image.open(_readable_image(input_path)) as image:
+        text = pytesseract.image_to_string(image)
     document = Document()
     for block in text.split("\n\n"):
         if block.strip():
@@ -97,7 +99,8 @@ def _ocr_docx(input_path: Path, output: Path) -> None:
 
 
 def _ocr_xlsx(input_path: Path, output: Path) -> None:
-    data = pytesseract.image_to_data(Image.open(_readable_image(input_path)), output_type=pytesseract.Output.DICT)
+    with Image.open(_readable_image(input_path)) as image:
+        data = pytesseract.image_to_data(image, output_type=pytesseract.Output.DICT)
     workbook = Workbook()
     sheet = workbook.active
     sheet.title = "Extracted text"

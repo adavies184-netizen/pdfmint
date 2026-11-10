@@ -11,6 +11,7 @@ from PIL import Image
 
 from .spreadsheet import pdf_to_xlsx, pdf_to_xls
 from .word import pdf_to_docx
+from . import process
 
 
 FORMATS = {
@@ -21,7 +22,7 @@ FORMATS = {
 
 
 def _run(args: list[str], cwd: Path | None = None) -> None:
-    subprocess.run(args, cwd=cwd, check=True, capture_output=True, text=True, timeout=300)
+    process.run(args, cwd=cwd, check=True, capture_output=True, text=True, timeout=300)
 
 
 def _archive(paths: list[Path], output: Path) -> Path:
@@ -32,23 +33,27 @@ def _archive(paths: list[Path], output: Path) -> Path:
     return archive
 
 
-def _render_pages(pdf: Path, workspace: Path, extension: str) -> list[Path]:
-    document = fitz.open(pdf)
+PIL_FORMATS = {"jpg": "JPEG", "jpeg": "JPEG", "bmp": "BMP", "webp": "WEBP"}
+
+
+def _render_pages(pdf: Path, workspace: Path, extension: str, max_pages: int | None = None) -> list[Path]:
+    """Render pages at 2x. Non-PNG formats are encoded straight from the pixel
+    buffer instead of writing and re-reading an intermediate PNG per page."""
     outputs: list[Path] = []
-    for number, page in enumerate(document, 1):
-        pixmap = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
-        png = workspace / f"page-{number}.png"
-        pixmap.save(png)
-        if extension == "png":
-            outputs.append(png)
-            continue
-        target = workspace / f"page-{number}.{extension}"
-        with Image.open(png) as image:
-            if extension in {"jpg", "jpeg", "bmp"}:
-                image = image.convert("RGB")
-            image.save(target, format={"jpg": "JPEG", "jpeg": "JPEG", "bmp": "BMP", "webp": "WEBP"}[extension], quality=92)
-        outputs.append(target)
-    document.close()
+    with fitz.open(pdf) as document:
+        for number, page in enumerate(document, 1):
+            if max_pages is not None and number > max_pages:
+                break
+            pixmap = page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+            target = workspace / f"page-{number}.{extension}"
+            if extension == "png":
+                pixmap.save(target)
+            else:
+                image = Image.frombytes("RGB", (pixmap.width, pixmap.height), pixmap.samples)
+                image.save(target, format=PIL_FORMATS[extension], quality=92)
+                image.close()
+            del pixmap
+            outputs.append(target)
     return outputs
 
 
@@ -84,10 +89,11 @@ def _svg_pages(pdf: Path, workspace: Path, compressed: bool = False) -> list[Pat
     return outputs
 
 
-def _eps_pages(pdf: Path, workspace: Path) -> list[Path]:
+def _eps_pages(pdf: Path, workspace: Path, max_pages: int | None = None) -> list[Path]:
     document = fitz.open(pdf)
     outputs: list[Path] = []
-    for number in range(document.page_count):
+    page_total = document.page_count if max_pages is None else min(document.page_count, max_pages)
+    for number in range(page_total):
         single = workspace / f"source-{number + 1}.pdf"
         selected = fitz.open()
         selected.insert_pdf(document, from_page=number, to_page=number)
@@ -101,7 +107,7 @@ def _eps_pages(pdf: Path, workspace: Path) -> list[Path]:
 
 
 def _cad(pdf: Path, output: Path, workspace: Path) -> Path:
-    eps = _eps_pages(pdf, workspace)[0]
+    eps = _eps_pages(pdf, workspace, max_pages=1)[0]
     _run(["pstoedit", "-f", "dxf:-polyaslines", str(eps), str(output)])
     return output
 
@@ -143,11 +149,12 @@ def convert_pdf_output(pdf: Path, workspace: Path, base: str, target: str) -> Pa
     if target in {"dxf", "dwg"}:
         return _cad(pdf, output, workspace)
     if target == "psd":
-        png = _render_pages(pdf, workspace, "png")[0]
+        png = _render_pages(pdf, workspace, "png", max_pages=1)[0]
         _run(["convert", str(png), str(output)])
         return output
     if target in {"txt", "md"}:
-        text = "\n\n".join(page.get_text("text") for page in fitz.open(pdf))
+        with fitz.open(pdf) as document:
+            text = "\n\n".join(page.get_text("text") for page in document)
         output.write_text(text, encoding="utf-8")
         return output
     if target == "html":

@@ -6,6 +6,7 @@ import subprocess
 from pathlib import Path
 
 from ..settings import JOB_TIMEOUT_SECONDS
+from . import process
 
 logger = logging.getLogger("pdfbreeze.netpress")
 
@@ -74,7 +75,7 @@ def compress_pdf(
             input_size,
         )
         try:
-            result = subprocess.run(
+            result = process.run(
                 command,
                 capture_output=True,
                 text=True,

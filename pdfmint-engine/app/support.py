@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from html import escape
 
-import httpx
 from fastapi import HTTPException
 from pydantic import BaseModel, Field
 
+from .http_client import http
 from .settings import BREVO_API_KEY, BREVO_SENDER_EMAIL, BREVO_SENDER_NAME
 
 
@@ -34,18 +34,18 @@ async def send_support_message(payload: SupportMessageRequest) -> dict[str, bool
         f"<p><b>Name:</b> {name}<br><b>Email:</b> {email}<br><b>Source:</b> {source}</p>"
         f"<p>{message}</p>"
     )
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.post(
-            "https://api.brevo.com/v3/smtp/email",
-            headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
-            json={
-                "sender": {"name": BREVO_SENDER_NAME, "email": BREVO_SENDER_EMAIL},
-                "to": [{"name": "PDFBreeze Support", "email": "support@pdfbreeze.net"}],
-                "replyTo": {"name": payload.name.strip(), "email": str(payload.email)},
-                "subject": f"[PDFBreeze Support] {subject}",
-                "htmlContent": html,
-            },
-        )
+    response = await http().post(
+        "https://api.brevo.com/v3/smtp/email",
+        headers={"api-key": BREVO_API_KEY, "Content-Type": "application/json"},
+        json={
+            "sender": {"name": BREVO_SENDER_NAME, "email": BREVO_SENDER_EMAIL},
+            "to": [{"name": "PDFBreeze Support", "email": "support@pdfbreeze.net"}],
+            "replyTo": {"name": payload.name.strip(), "email": str(payload.email)},
+            "subject": f"[PDFBreeze Support] {subject}",
+            "htmlContent": html,
+        },
+        timeout=15,
+    )
     if response.status_code >= 300:
         raise HTTPException(status_code=502, detail="PDFBreeze could not send your message.")
     return {"sent": True}

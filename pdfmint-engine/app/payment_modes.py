@@ -1,13 +1,12 @@
 from __future__ import annotations
 
-import base64
-import json
 from typing import Any
 
-import httpx
 from fastapi import HTTPException
 
-from .settings import ADMIN_EMAILS, STRIPE_CONFIGS, SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL
+from .http_client import http
+from .settings import ADMIN_EMAILS, STRIPE_CONFIGS, SUPABASE_SERVICE_ROLE_KEY
+from .supabase import has_aal2, rest_url, service_headers
 
 
 VALID_PAYMENT_MODES = {"sandbox", "live"}
@@ -41,19 +40,6 @@ def stripe_mode_configured(mode: str) -> bool:
     )
 
 
-def _has_aal2(authorization: str | None) -> bool:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        return False
-    try:
-        token = authorization.split(" ", 1)[1].strip()
-        payload = token.split(".")[1]
-        payload += "=" * (-len(payload) % 4)
-        claims = json.loads(base64.urlsafe_b64decode(payload.encode()).decode())
-        return claims.get("aal") == "aal2"
-    except (ValueError, IndexError, json.JSONDecodeError):
-        return False
-
-
 def checkout_mode_for_user(
     requested_mode: str | None,
     user: dict[str, Any],
@@ -63,7 +49,7 @@ def checkout_mode_for_user(
     if (
         requested_mode == "sandbox"
         and str(user.get("email") or "").lower() in ADMIN_EMAILS
-        and _has_aal2(authorization)
+        and has_aal2(authorization)
     ):
         return "sandbox"
     return "live"
@@ -72,24 +58,21 @@ def checkout_mode_for_user(
 async def subscription_payment_mode(user_id: str) -> str:
     if not SUPABASE_SERVICE_ROLE_KEY:
         return "live"
-    headers = {
-        "apikey": SUPABASE_SERVICE_ROLE_KEY,
-        "Authorization": f"Bearer {SUPABASE_SERVICE_ROLE_KEY}",
-    }
-    async with httpx.AsyncClient(timeout=8) as client:
-        response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/subscriptions",
-            headers=headers,
-            params={
-                "user_id": f"eq.{user_id}",
-                "provider": "eq.stripe",
-                "status": "in.(trialing,active,past_due,unpaid,paused)",
-                "select": "provider_mode",
-                "order": "created_at.desc",
-                "limit": "1",
-            },
-        )
-    if response.is_error or not response.json():
+    response = await http().get(
+        rest_url("subscriptions"),
+        headers=service_headers(),
+        params={
+            "user_id": f"eq.{user_id}",
+            "provider": "eq.stripe",
+            "status": "in.(trialing,active,past_due,unpaid,paused)",
+            "select": "provider_mode",
+            "order": "created_at.desc",
+            "limit": "1",
+        },
+        timeout=8,
+    )
+    rows = [] if response.is_error else response.json()
+    if not rows:
         return "live"
-    mode = str(response.json()[0].get("provider_mode") or "live")
+    mode = str(rows[0].get("provider_mode") or "live")
     return mode if mode in VALID_PAYMENT_MODES else "live"
