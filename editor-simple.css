@@ -848,3 +848,16 @@ body.ui-simple .ui-toast.is-good{z-index:2000!important;background:#14241f!impor
 /* More tools button shows the tool in use */
 .ui-dock-more .ui-dock-icon{position:relative}
 .ui-more-dot{position:absolute;right:-6px;bottom:-5px;padding:0 3px;border-radius:999px;background:#fff;border:1px solid #d6e1dc;font:700 7px/10px Inter,sans-serif;font-style:normal;letter-spacing:-.5px;color:#5d6f69}
+
+/* Scanned-page bar (same look as the snackbar, stays until closed) */
+.ui-scanbar{position:fixed;z-index:96;left:16px;top:96px;display:flex;align-items:center;gap:12px;max-width:min(760px,calc(100vw - 32px));padding:8px 6px 8px 14px;border-radius:12px;background:#fff;color:#14241f;border:1px solid #dbe6e1;box-shadow:0 12px 30px rgba(15,34,28,.14);font:500 14px/1.35 Inter,system-ui,sans-serif;opacity:0;transform:translateY(-6px);visibility:hidden;pointer-events:none;transition:opacity .2s,transform .2s}
+.ui-scanbar.is-on{opacity:1;transform:none;visibility:visible;pointer-events:auto}
+body:not(.ui-simple) .ui-scanbar,body.no-document .ui-scanbar{display:none}
+.ui-scanbar .ui-snack-i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#1fa97b;color:#fff;font:700 12px Georgia,serif}
+.ui-scanbar .ui-snack-text b{font-weight:700;margin-right:7px}
+.ui-scanbar .ui-snack-x{flex:none;width:30px;height:30px;display:grid;place-items:center;border:0;border-left:1px solid #e6eeea;background:none;color:#7d8f89;cursor:pointer}
+.ui-scanbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.ui-scan-go{flex:none;height:36px;padding:0 14px;border:0;border-radius:9px;background:#1fa97b;color:#fff;font:700 13.5px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.ui-scan-go:disabled{opacity:.85;cursor:default}
+.ui-scan-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:uiBootSpin .8s linear infinite}
+@media (max-width:900px){.ui-scanbar{font-size:13px;flex-wrap:wrap}.ui-scan-go{order:5}}

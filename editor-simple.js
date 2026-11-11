@@ -171,7 +171,7 @@
       stamp: 'Choose a stamp. You can move and resize it afterwards.',
       watermark: 'Type your text, then pick its size, colour and angle.',
       crop: 'Drag over the part of the page you want to keep.',
-      redact: 'Drag across the text you want to black out.'
+      redact: 'Drag across text to black it out, or drag a box over any area (scans too).'
     };
     const tip = document.createElement('div');
     tip.className = 'ui-snack';
@@ -209,6 +209,54 @@
     tip.addEventListener('mouseleave', () => { snackHover = false; });
     tip.addEventListener('click', event => { if (event.target.closest('.ui-snack-x')) hideTip(); });
     window.addEventListener('resize', () => { if (tip.classList.contains('is-on')) placeSnack(); });
+
+    // Scanned pages: offer to recognise the text so it can be edited.
+    const scanBar = document.createElement('div');
+    scanBar.className = 'ui-scanbar';
+    scanBar.setAttribute('role', 'status');
+    document.body.append(scanBar);
+    const scanDismissed = new Set();
+    const placeScanBar = () => {
+      const bar = $('.ui-topfloat');
+      if (!bar || !bar.getClientRects().length) return;
+      const r = bar.getBoundingClientRect();
+      scanBar.style.left = `${Math.round(r.left)}px`;
+      scanBar.style.top = `${Math.round(r.bottom + 10)}px`;
+    };
+    const hideScanBar = () => scanBar.classList.remove('is-on');
+    const showScanBar = html => { scanBar.innerHTML = html; placeScanBar(); hideTip(); scanBar.classList.add('is-on'); };
+    const docKey = () => $('#fileName')?.textContent || '';
+    window.addEventListener('pdfbreeze:pagekind', event => {
+      const kind = event.detail?.kind;
+      if (!body.classList.contains('ui-simple') || kind === 'text' || scanDismissed.has(`${docKey()}:${kind}`)) { hideScanBar(); return; }
+      if (kind === 'scan') {
+        showScanBar(`<span class="ui-snack-i" aria-hidden="true">i</span><span class="ui-snack-text"><b>Scanned page</b>This page is a picture, so its text can't be edited yet.</span><button type="button" class="ui-scan-go" data-scan="go">Make text editable</button><button type="button" class="ui-snack-x" data-scan="close" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button>`);
+      } else if (kind === 'scan-ocr') {
+        showScanBar(`<span class="ui-snack-i" aria-hidden="true">i</span><span class="ui-snack-text"><b>Scanned page</b>${body.classList.contains('ui-mobile') ? 'Tap' : 'Click'} any text to edit it. Your new wording is placed over the scan.</span><button type="button" class="ui-snack-x" data-scan="close" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button>`);
+        scanDismissed.add(`${docKey()}:scan-ocr`);
+      }
+    });
+    scanBar.addEventListener('click', async event => {
+      const action = event.target.closest('[data-scan]')?.dataset.scan;
+      if (action === 'close') { scanDismissed.add(`${docKey()}:scan`); hideScanBar(); return; }
+      if (action !== 'go' || !window.pdfbreezeOcrDocument) return;
+      const go = event.target.closest('[data-scan]');
+      go.disabled = true;
+      go.innerHTML = '<span class="ui-scan-spin" aria-hidden="true"></span>Recognising text…';
+      scanBar.querySelector('.ui-snack-text').innerHTML = '<b>Scanned page</b>Reading the words on your pages. This can take up to a minute.';
+      const result = await window.pdfbreezeOcrDocument();
+      if (result?.ok) {
+        hideScanBar();
+        toast.textContent = `Text recognised. ${body.classList.contains('ui-mobile') ? 'Tap' : 'Click'} any text to edit it.`;
+        toast.classList.add('is-on', 'is-good'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('is-on', 'is-good'), 4500);
+      } else {
+        go.disabled = false;
+        go.textContent = 'Try again';
+        scanBar.querySelector('.ui-snack-text').innerHTML = `<b>Scanned page</b>${result?.message || 'Text recognition failed.'}`;
+      }
+    });
+    window.addEventListener('resize', () => { if (scanBar.classList.contains('is-on')) placeScanBar(); });
+    setTimeout(() => { const kind = document.body.dataset.pageKind; if (kind) window.dispatchEvent(new CustomEvent('pdfbreeze:pagekind', { detail: { kind } })); }, 300);
     let lastTool = '';
     let thumbsDecided = false;
 
@@ -590,7 +638,7 @@
       noteControls: 'Click on the page where the note should go.',
       linkControls: 'Drag a box over the text or area that should open the link.',
       cropControls: 'Drag over the part of the page you want to keep.',
-      redactControls: 'Drag across the text to black it out. Box colour:',
+      redactControls: 'Drag across text, or drag a box over any area. Box colour:',
       stampControls: 'Choose a stamp. You can move and resize it afterwards.'
     };
     for (const [id, text] of Object.entries(HINTS)) {
