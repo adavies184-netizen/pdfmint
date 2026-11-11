@@ -2682,3 +2682,74 @@ html,body{max-width:100%;overflow-x:hidden}
 .brand-light .brand-word{color:#fff}
 .brand-light .brand-word b{color:#5fd8b0}
 .checkout-brand-mark.brand-mark-plane{width:40px;height:40px;padding:0;border-radius:0;background:none;box-shadow:none;display:block}
+
+/* Mega-menu header dropdowns (November 2026) */
+.site-header .nav-wrap{position:static}
+.site-header .desktop-nav.mega-nav{gap:2px}
+.site-header .desktop-nav.mega-nav .nav-dropdown{position:static}
+.site-header .mega-nav .nav-dropdown-toggle,.site-header .mega-nav .plain-nav-link{border-radius:8px;margin:auto 0;height:40px;padding:0 12px;color:#172033;font-weight:600}
+.site-header .mega-dropdown.is-open .nav-dropdown-toggle{background:#e8f8f1;color:#106b4d}
+.site-header .mega-dropdown.is-open .nav-dropdown-toggle span{transform:rotate(180deg)}
+.mega-panel{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border-top:1px solid #e1ece7;border-bottom:1px solid #e1ece7;box-shadow:0 24px 48px rgba(15,42,34,.10);z-index:60;cursor:default}
+.mega-dropdown.is-open .mega-panel{display:block}
+@media (hover:hover) and (min-width:901px){
+  .mega-nav .mega-dropdown:hover .mega-panel{display:block}
+  .mega-nav:hover .mega-dropdown.is-open:not(:hover) .mega-panel{display:none}
+  .mega-nav .mega-dropdown:hover .nav-dropdown-toggle,.mega-nav .plain-nav-link:hover{background:#e8f8f1;color:#106b4d}
+}
+.mega-inner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 36px;padding:26px 0 30px}
+.mega-section{grid-column:span var(--mega-cols);min-width:0}
+.mega-heading{display:block;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#5b6b65;margin:0 0 10px 12px}
+.mega-grid{display:grid;grid-template-columns:repeat(var(--mega-cols),minmax(0,1fr));gap:2px 36px}
+.mega-link{display:flex;align-items:flex-start;gap:12px;padding:10px 12px;border-radius:10px;color:#0f2a22;text-decoration:none}
+.mega-link:hover,.mega-link:focus-visible{background:#f2faf6}
+.mega-icon{flex-shrink:0;width:36px;height:36px;border-radius:9px;background:#eef6f2;border:1px solid #e1ece7;color:#12865f;display:grid;place-items:center;font-size:10px;font-weight:800;letter-spacing:.2px;box-sizing:border-box}
+.mega-icon svg{width:18px;height:18px}
+.mega-icon.mega-word{background:#2b5797;border-color:#2b5797;color:#fff}.mega-icon.mega-excel{background:#1d7044;border-color:#1d7044;color:#fff}.mega-icon.mega-ppt{background:#c4401d;border-color:#c4401d;color:#fff}.mega-icon.mega-img{background:#b7791f;border-color:#b7791f;color:#fff}.mega-icon.mega-txt{background:#4b5b66;border-color:#4b5b66;color:#fff}
+.mega-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1}
+.mega-text strong{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:14px;font-weight:650;line-height:1.3}
+.mega-text small{font-size:12.5px;line-height:1.4;color:#5b6b65;font-weight:400}
+.mega-popular{font-style:normal;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#0f2a22;color:#fff;white-space:nowrap}
+.mega-popular.mega-recommended{background:#12865f}
+/* Mobile accordion menu */
+.mobile-menu .mega-mobile-group{border:0;margin:0}
+.mobile-menu .mega-mobile-group>summary{display:flex;align-items:center;gap:12px;padding:12px 0;font-weight:650;font-size:15px;cursor:pointer;list-style:none}
+.mobile-menu .mega-mobile-group>summary::-webkit-details-marker{display:none}
+.mobile-menu .mega-mobile-group>summary::after{content:'';margin-left:auto;width:8px;height:8px;border-right:2px solid #5b6b65;border-bottom:2px solid #5b6b65;transform:rotate(45deg) translateY(-3px);transition:transform .15s}
+.mobile-menu .mega-mobile-group[open]>summary::after{transform:rotate(-135deg) translateY(-1px)}
+.mega-mobile-top{width:32px;height:32px;border-radius:9px;background:#5b6b65;color:#fff;display:grid;place-items:center;flex-shrink:0}
+.mega-mobile-top svg{width:18px;height:18px}
+.mega-mobile-list{display:flex;flex-direction:column;padding:0 0 10px 44px}
+.mega-mobile-heading{font-size:11.5px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#5b6b65;margin:10px 0 4px}
+.mobile-menu .mega-mobile-list .mega-link{display:flex;padding:7px 0;align-items:center;font-weight:400}
+.mega-mobile-list .mega-icon{width:32px;height:32px}
+.mega-mobile-list .mega-icon svg{width:16px;height:16px}
+.mega-mobile-list .mega-text strong{font-size:14px}
+.mega-mobile-list .mega-text small{font-size:12px}
+.mobile-menu .mega-mobile-plain{display:block;padding:13px 0;font-weight:500;color:#41524b}
+
+/* Coloured tool icon tiles (menu + homepage grid) */
+.mega-icon.tile-edit,.home-v2 .home-tool-icon.tile-edit{background:#2563eb;border-color:#2563eb;color:#fff}
+.mega-icon.tile-rotate,.home-v2 .home-tool-icon.tile-rotate{background:#0891b2;border-color:#0891b2;color:#fff}
+.mega-icon.tile-merge,.home-v2 .home-tool-icon.tile-merge{background:#7c3aed;border-color:#7c3aed;color:#fff}
+.mega-icon.tile-crop,.home-v2 .home-tool-icon.tile-crop{background:#db2777;border-color:#db2777;color:#fff}
+.mega-icon.tile-split,.home-v2 .home-tool-icon.tile-split{background:#ea580c;border-color:#ea580c;color:#fff}
+.mega-icon.tile-delete,.home-v2 .home-tool-icon.tile-delete{background:#dc2626;border-color:#dc2626;color:#fff}
+.mega-icon.tile-trash,.home-v2 .home-tool-icon.tile-trash{background:#dc2626;border-color:#dc2626;color:#fff}
+.mega-icon.tile-compress,.home-v2 .home-tool-icon.tile-compress{background:#059669;border-color:#059669;color:#fff}
+.mega-icon.tile-sign,.home-v2 .home-tool-icon.tile-sign{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.mega-icon.tile-imageplus,.home-v2 .home-tool-icon.tile-imageplus{background:#d97706;border-color:#d97706;color:#fff}
+.mega-icon.tile-watermark,.home-v2 .home-tool-icon.tile-watermark{background:#0284c7;border-color:#0284c7;color:#fff}
+.mega-icon.tile-ocr,.home-v2 .home-tool-icon.tile-ocr{background:#9333ea;border-color:#9333ea;color:#fff}
+.mega-icon.tile-image,.home-v2 .home-tool-icon.tile-image{background:#c2410c;border-color:#c2410c;color:#fff}
+.mega-icon.tile-grid,.home-v2 .home-tool-icon.tile-grid{background:#12865f;border-color:#12865f;color:#fff}
+.mega-icon.tile-help,.home-v2 .home-tool-icon.tile-help{background:#475569;border-color:#475569;color:#fff}
+.mega-icon.tile-pages,.home-v2 .home-tool-icon.tile-pages{background:#0d9488;border-color:#0d9488;color:#fff}
+.mega-icon.fmt-jpg,.home-v2 .home-tool-badge.fmt-jpg{background:#d97706;border-color:#d97706}
+.mega-icon.fmt-png,.home-v2 .home-tool-badge.fmt-png{background:#0284c7;border-color:#0284c7}
+.mega-icon.fmt-tiff,.home-v2 .home-tool-badge.fmt-tiff{background:#9333ea;border-color:#9333ea}
+.mega-icon.fmt-svg,.home-v2 .home-tool-badge.fmt-svg{background:#db2777;border-color:#db2777}
+.mega-icon.fmt-heic,.home-v2 .home-tool-badge.fmt-heic{background:#0d9488;border-color:#0d9488}
+.mega-icon.fmt-txt,.home-v2 .home-tool-badge.fmt-txt{background:#475569;border-color:#475569}
+.mega-icon.fmt-epub,.home-v2 .home-tool-badge.fmt-epub{background:#7c3aed;border-color:#7c3aed}
+.mega-icon.fmt-html,.home-v2 .home-tool-badge.fmt-html{background:#ea580c;border-color:#ea580c}

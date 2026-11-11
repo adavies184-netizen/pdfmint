@@ -192,3 +192,58 @@
   .home-v2 .home-checks{order:5;margin-top:22px;max-width:none}
   .home-v2 .home-hero-copy .upload-support-details{order:6;margin-top:16px}
 }
+
+/* About page */
+.home-v2 .about-hero .home-eyebrow{margin-bottom:14px}
+.home-v2 .about-actions{justify-content:flex-start;margin-top:4px}
+.home-v2 .about-art{display:flex;justify-content:center}
+.home-v2 .about-art-card{width:100%;max-width:460px;aspect-ratio:1/1;border-radius:24px;background:linear-gradient(160deg,#d9f1e7,#c4e6d8);border:1px solid #bfe0d2;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:28px;box-shadow:0 18px 50px rgba(16,60,44,.08)}
+.home-v2 .about-art-plane{width:120px;height:120px;filter:drop-shadow(0 10px 18px rgba(16,60,44,.18))}
+.home-v2 .about-art-tiles{display:grid;grid-template-columns:repeat(4,56px);gap:14px}
+.home-v2 .about-tile{width:56px;height:56px;border-radius:14px;display:grid;place-items:center;color:#fff;box-shadow:0 8px 18px rgba(16,60,44,.15)}
+.home-v2 .about-tile .home-icon{width:26px;height:26px}
+.home-v2 .about-values{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.home-v2 .about-values article{border:1px solid var(--hm-line);border-radius:16px;background:var(--hm-soft);padding:26px}
+.home-v2 .about-values h3{font-size:22px;margin:16px 0 8px}
+.home-v2 .about-values p{margin:0;color:var(--hm-text);font-size:15px;line-height:1.6}
+.home-v2 .about-values a,.home-v2 .contact-v2 a{color:var(--hm-accent-ink);text-decoration:underline}
+.home-v2 .about-value-icon{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;color:#fff}
+.home-v2 .about-value-icon .home-icon{width:22px;height:22px}
+
+/* Contact page */
+.home-v2 .contact-v2-hero{padding:56px 0 48px}
+.home-v2 .contact-v2-hero .home-heading{margin-bottom:0}
+.home-v2 .contact-v2-hero h1{font-size:40px;letter-spacing:-1.2px;margin:0 0 12px}
+.home-v2 .contact-v2{padding-top:48px}
+.home-v2 .contact-v2-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:40px}
+.home-v2 .contact-v2-cards>div{border:1px solid var(--hm-line);border-radius:14px;background:#fff;padding:22px 18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px}
+.home-v2 .contact-v2-cards strong{font-size:15px;margin-top:4px}
+.home-v2 .contact-v2-cards span,.home-v2 .contact-v2-cards>div>a{font-size:14px;color:var(--hm-text)}
+.home-v2 .contact-v2-grid{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.1fr);gap:32px;align-items:start}
+.home-v2 .contact-v2-info{border:1px solid var(--hm-line);border-radius:16px;background:var(--hm-soft);padding:28px}
+.home-v2 .contact-v2-info h2{margin:0 0 10px;font-size:24px}
+.home-v2 .contact-v2-info p{margin:0 0 18px;color:var(--hm-text)}
+.home-v2 .contact-v2-info ul{list-style:none;margin:0 0 22px;padding:0;display:grid;gap:10px}
+.home-v2 .contact-v2-info li{display:flex;align-items:center;gap:10px;font-weight:600;color:var(--hm-text);font-size:14px}
+.home-v2 .contact-v2-info li .home-icon{width:20px;height:20px;padding:3px;border-radius:50%;background:var(--hm-accent-strong);color:#fff;stroke-width:3;box-sizing:border-box}
+.home-v2 .contact-v2-email{border-top:1px solid var(--hm-line);padding-top:16px;display:flex;flex-direction:column;gap:4px}
+.home-v2 .contact-v2-email span{font-size:12px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--hm-muted)}
+.home-v2 .contact-v2-email a{font-size:18px;font-weight:700}
+.home-v2 .contact-v2-form{border:1px solid var(--hm-line);border-radius:16px;background:#fff;padding:28px;box-shadow:0 18px 40px rgba(16,60,44,.06)}
+.home-v2 .contact-v2-form .contact-submit-button{width:100%;min-height:50px;font-size:16px}
+
+@media (max-width:900px){
+  .home-v2 .about-values{grid-template-columns:1fr}
+  .home-v2 .contact-v2-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .home-v2 .contact-v2-grid{grid-template-columns:1fr}
+  .home-v2 .about-art-card{max-width:360px}
+}
+@media (max-width:600px){
+  .home-v2 .about-art{order:6;margin-top:28px}
+  .home-v2 .about-actions{order:4}
+  .home-v2 .about-art-tiles{grid-template-columns:repeat(4,48px);gap:10px}
+  .home-v2 .about-tile{width:48px;height:48px}
+  .home-v2 .contact-v2-hero h1{font-size:30px}
+  .home-v2 .contact-v2-cards{grid-template-columns:1fr}
+  .home-v2 .about-hero .home-eyebrow{order:1}
+}
