@@ -2759,3 +2759,37 @@ html,body{max-width:100%;overflow-x:hidden}
 .mega-icon.fmt-txt,.home-v2 .home-tool-badge.fmt-txt{background:#475569;border-color:#475569}
 .mega-icon.fmt-epub,.home-v2 .home-tool-badge.fmt-epub{background:#7c3aed;border-color:#7c3aed}
 .mega-icon.fmt-html,.home-v2 .home-tool-badge.fmt-html{background:#ea580c;border-color:#ea580c}
+
+/* Upload processing popup (landing page -> editor) */
+.upload-progress{position:fixed;inset:0;z-index:2147483647;display:grid;place-items:center;padding:20px;background:rgba(15,34,28,.48);backdrop-filter:blur(2px);animation:upFade .18s ease-out}
+.upload-progress[hidden]{display:none}
+html.upload-progress-open{overflow:hidden}
+.upload-progress-card{width:min(500px,100%);background:#fff;border-radius:16px;box-shadow:0 24px 60px rgba(15,34,28,.28);overflow:hidden;animation:upRise .22s ease-out}
+.upload-progress-card h2{margin:0;padding:22px 30px;font-size:1.2rem;font-weight:700;color:#14241f;border-bottom:1px solid #e8efec}
+.upload-progress-body{padding:30px 30px 28px}
+.upload-progress-file{display:flex;align-items:center;gap:12px;padding:14px;border:1px solid #e3ece8;border-radius:12px;background:#f7faf9}
+.upload-progress-file-icon{flex:none;width:38px;height:38px;display:grid;place-items:center;border:1px solid #e3ece8;border-radius:9px;background:#fff;color:#299b78}
+.upload-progress-file-icon svg{width:20px;height:20px}
+.upload-progress-name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:.94rem;color:#14241f}
+.upload-progress-spinner{width:68px;height:68px;margin:24px auto 12px;display:grid;place-items:center;border-radius:50%;background:#e9f8f2}
+.upload-progress-spinner span{width:32px;height:32px;border-radius:50%;border:3px solid rgba(52,199,154,.22);border-top-color:#34c79a;border-right-color:#34c79a;animation:upSpin .8s linear infinite}
+.upload-progress-label{margin:0 0 22px;text-align:center;font-size:1.15rem;font-weight:600;color:#14241f}
+.upload-progress-meta{display:flex;justify-content:space-between;font-size:.84rem;color:#5d6f69;margin-bottom:7px}
+.upload-progress-meta span:last-child{color:#14241f;font-weight:600}
+.upload-progress-track{height:10px;border-radius:99px;background:#edf2f0;overflow:hidden}
+.upload-progress-bar{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#34c79a,#299b78);transition:width .35s ease}
+.upload-progress-steps{list-style:none;margin:22px 0 0;padding:0;display:grid;gap:13px}
+.upload-progress-steps li{display:flex;align-items:center;gap:12px;font-size:.98rem;color:#8a9a94}
+.upload-progress-steps li.is-active,.upload-progress-steps li.is-done{color:#14241f}
+.upload-progress-dot{flex:none;position:relative;width:24px;height:24px;border-radius:50%;background:#eef2f1}
+.upload-progress-dot::after{content:"";position:absolute;inset:8px;border-radius:50%;background:#a9b6b1}
+.is-active .upload-progress-dot{background:#e9f8f2}
+.is-active .upload-progress-dot::after{inset:5px;background:none;border:2px solid rgba(52,199,154,.25);border-top-color:#34c79a;animation:upSpin .8s linear infinite}
+.is-done .upload-progress-dot{background:#e3f6ee}
+.is-done .upload-progress-dot::after{inset:6px 5px 7px 7px;background:none;border:solid #299b78;border-width:0 0 2px 2px;border-radius:0;transform:rotate(-45deg);width:10px;height:5px}
+.upload-progress-foot{margin:0;padding:18px 30px;background:#f7faf9;border-top:1px solid #e8efec;font-size:.92rem;color:#4b5d57}
+@keyframes upSpin{to{transform:rotate(360deg)}}
+@keyframes upFade{from{opacity:0}}
+@keyframes upRise{from{opacity:0;transform:translateY(8px) scale(.98)}}
+@media (max-width:600px){.upload-progress-card h2,.upload-progress-body,.upload-progress-foot{padding-left:20px;padding-right:20px}.upload-progress-body{padding-top:22px}}
+@media (prefers-reduced-motion:reduce){.upload-progress,.upload-progress-card{animation:none}.upload-progress-spinner span,.is-active .upload-progress-dot::after{animation-duration:2.4s}}

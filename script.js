@@ -6991,9 +6991,10 @@ function openPdfMintTransferDb() {
   });
 }
 
-async function storePdfForSharedEditor(file, completionNotice = null) {
+async function storePdfForSharedEditor(file, completionNotice = null, progress = () => {}) {
   const db = await openPdfMintTransferDb();
   const bytes = await file.arrayBuffer();
+  await progress('process', 62, 'Processing document');
   await new Promise((resolve, reject) => {
     const tx = db.transaction(PDFMINT_TRANSFER_STORE, 'readwrite');
     tx.objectStore(PDFMINT_TRANSFER_STORE).put({
@@ -7012,7 +7013,10 @@ async function storePdfForSharedEditor(file, completionNotice = null) {
 async function routeFileToSharedEditor(file, options = {}) {
   if (!file) throw new Error('No file was provided for the editor.');
 
-  await storePdfForSharedEditor(file, options.completionNotice || null);
+  const progress = typeof options.onProgress === 'function' ? options.onProgress : () => {};
+  await progress('upload', 34, 'Uploading file');
+  await storePdfForSharedEditor(file, options.completionNotice || null, progress);
+  await progress('open', 86, 'Opening editor');
 
   const params = new URLSearchParams();
   if (options.tool && options.tool !== 'none') params.set('tool', options.tool);
@@ -7037,6 +7041,7 @@ async function routeFileToSharedEditor(file, options = {}) {
     : editorChoice === 'legacy'
       ? 'editor.html'
       : 'editor-pdfium.html';
+  if (typeof options.beforeNavigate === 'function') await options.beforeNavigate();
   window.location.href = `${editorRoute}${query ? `?${query}` : ''}`;
 }
 
@@ -7078,10 +7083,79 @@ function sharedEditorUrl(tool) {
   return `editor-pdfium.html?tool=${encodeURIComponent(tool)}`;
 }
 
+// Processing popup shown while a landing-page upload is handed to the editor.
+// Built on first use; progress follows the real steps (read file, store it, open editor).
+const uploadProgress = (() => {
+  let root = null;
+  let lastStepAt = 0;
+  const STEP_MS = 320; // each step stays visible briefly, so the whole popup lasts about a second
+  const steps = ['upload', 'process', 'open'];
+  const build = () => {
+    root = document.createElement('div');
+    root.className = 'upload-progress';
+    root.hidden = true;
+    root.innerHTML = `
+      <div class="upload-progress-card" role="dialog" aria-modal="true" aria-labelledby="upload-progress-title">
+        <h2 id="upload-progress-title">Processing your document</h2>
+        <div class="upload-progress-body">
+          <div class="upload-progress-file">
+            <span class="upload-progress-file-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg></span>
+            <span class="upload-progress-name" data-up-name></span>
+          </div>
+          <div class="upload-progress-spinner" aria-hidden="true"><span></span></div>
+          <p class="upload-progress-label" data-up-label>Uploading file</p>
+          <div class="upload-progress-meter">
+            <div class="upload-progress-meta"><span>Progress</span><span data-up-pct>0%</span></div>
+            <div class="upload-progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><div class="upload-progress-bar" data-up-bar></div></div>
+          </div>
+          <ol class="upload-progress-steps">
+            <li data-up-step="upload"><span class="upload-progress-dot"></span>Upload file</li>
+            <li data-up-step="process"><span class="upload-progress-dot"></span>Process document</li>
+            <li data-up-step="open"><span class="upload-progress-dot"></span>Open in editor</li>
+          </ol>
+        </div>
+        <p class="upload-progress-foot">This may take a few moments. Please don't close this window.</p>
+      </div>`;
+    document.body.appendChild(root);
+  };
+  const set = async (step, pct, label) => {
+    const wait = STEP_MS - (performance.now() - lastStepAt);
+    if (wait > 0) await new Promise(resolve => setTimeout(resolve, wait));
+    lastStepAt = performance.now();
+    const index = steps.indexOf(step);
+    root.querySelectorAll('[data-up-step]').forEach((item, i) => {
+      item.classList.toggle('is-done', i < index || pct >= 100);
+      item.classList.toggle('is-active', i === index && pct < 100);
+    });
+    root.querySelector('[data-up-label]').textContent = label;
+    root.querySelector('[data-up-pct]').textContent = `${Math.round(pct)}%`;
+    root.querySelector('[data-up-bar]').style.width = `${pct}%`;
+    root.querySelector('[role="progressbar"]').setAttribute('aria-valuenow', String(Math.round(pct)));
+  };
+  // Back/forward cache: hide the popup if the visitor returns to this page.
+  window.addEventListener('pageshow', () => { if (root) root.hidden = true; document.documentElement.classList.remove('upload-progress-open'); });
+  return {
+    open(name) {
+      if (!root) build();
+      root.querySelector('[data-up-name]').textContent = name;
+      lastStepAt = 0;
+      set('upload', 8, 'Uploading file');
+      root.hidden = false;
+      document.documentElement.classList.add('upload-progress-open');
+    },
+    set,
+    close() {
+      if (root) root.hidden = true;
+      document.documentElement.classList.remove('upload-progress-open');
+    }
+  };
+})();
+
 async function routeLandingUploadToEditor(file) {
   if (!file) return;
   const status = document.getElementById('file-status');
-  if (status) status.textContent = `${file.name} selected — opening editor…`;
+  if (status) status.textContent = '';
+  uploadProgress.open(file.name);
 
   try {
     let tool = document.body.dataset.landingTool || 'edit';
@@ -7113,9 +7187,14 @@ async function routeLandingUploadToEditor(file) {
     if (/(?:^|\/)delete-pdf-pages\.html$/.test(path)) managerAction = 'delete';
     if (/(?:^|\/)split-pdf\.html$/.test(path)) managerAction = 'split';
     if (managerAction) tool = 'manage';
-    await routeFileToSharedEditor(file, { tool, managerAction, imageConvertFormat, documentConvertType, exportFormat });
+    await routeFileToSharedEditor(file, {
+      tool, managerAction, imageConvertFormat, documentConvertType, exportFormat,
+      onProgress: (step, pct, label) => uploadProgress.set(step, pct, label),
+      beforeNavigate: () => uploadProgress.set('open', 100, 'Opening editor')
+    });
   } catch (error) {
     console.error('Could not transfer PDF to editor:', error);
+    uploadProgress.close();
     if (status) status.textContent = 'Could not open the editor. Please try again.';
   }
 }
