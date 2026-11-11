@@ -253,7 +253,7 @@
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDockMenu(); });
     modeSwitch.addEventListener('click', () => apply(simpleLayout));
 
-    // "More options": opens the full editor, for tools whose extra settings are hidden here.
+    // "More options": shows this tool's extra settings in the bar (click again to hide them).
     const EXTRAS = { addControls: 'Fill colour, opacity, alignment', drawControls: 'Custom colour, clear page drawings', shapeControls: 'Fill colour', highlightControls: 'Squiggly, custom colour, opacity', watermarkControls: 'Size, opacity, angle, position' };
     for (const [id, extra] of Object.entries(EXTRAS)) {
       const box = document.getElementById(id);
@@ -261,11 +261,31 @@
       const more = document.createElement('button');
       more.type = 'button';
       more.className = 'ui-more-options';
-      more.title = `More options (full editor): ${extra}`;
+      more.title = `More options: ${extra}`;
       more.innerHTML = `${svg(ICON.sliders)}`;
       more.setAttribute('aria-label', `More options: ${extra}`);
-      more.addEventListener('click', () => apply('advanced'));
+      more.setAttribute('aria-pressed', 'false');
+      more.addEventListener('click', () => {
+        const on = !box.classList.contains('ui-extras-on');
+        box.classList.toggle('ui-extras-on', on);
+        more.classList.toggle('is-on', on);
+        more.setAttribute('aria-pressed', String(on));
+        requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
+      });
       box.appendChild(more);
+    }
+
+    // Short instructions shown in the bar for tools with few settings.
+    const HINTS = {
+      noteControls: 'Click on the page where the note should go.',
+      linkControls: 'Drag a box over the text or area that should open the link.',
+      cropControls: 'Drag over the part of the page you want to keep.',
+      redactControls: 'Drag across the text to black it out. Box colour:',
+      stampControls: 'Choose a stamp. You can move and resize it afterwards.'
+    };
+    for (const [id, text] of Object.entries(HINTS)) {
+      const hint = document.querySelector(`#${id} > span:not(.annotation-icon):not(.context-icon)`);
+      if (hint) hint.textContent = text;
     }
 
     // Bold as a single B button (drives the editor's own Regular/Bold menu).

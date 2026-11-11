@@ -633,3 +633,41 @@ html.ui-boot body.transfer-pending{background:#eef3f1!important}
 html.ui-boot body.transfer-pending>*:not(script):not(style){visibility:hidden!important}
 html.ui-boot body.transfer-pending:after{content:"";position:fixed;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid #cfe9dd;border-top-color:#1fa97b;border-radius:50%;animation:uiBootSpin .8s linear infinite}
 @keyframes uiBootSpin{to{transform:rotate(360deg)}}
+
+/* The full editor is no longer offered in the simple editor (still reachable with ?ui=advanced) */
+body.ui-simple [data-ui-advanced],body.ui-simple .ui-more-full{display:none!important}
+body.ui-trial:not(.ui-simple) .ui-mode-switch{display:inline-flex}
+
+/* "More options" now opens the extra settings inline */
+body.ui-simple .ui-more-options.is-on{background:#1fa97b!important;border-color:#1fa97b!important;color:#fff!important}
+body.ui-simple #addControls.ui-extras-on .colour-control:has(#addFillColor),
+body.ui-simple #addControls.ui-extras-on .opacity-control,
+body.ui-simple #addControls.ui-extras-on #addAlignment,
+body.ui-simple #drawControls.ui-extras-on .draw-custom,
+body.ui-simple #shapeControls.ui-extras-on #shapeFillControl,
+body.ui-simple #highlightControls.ui-extras-on .highlight-custom,
+body.ui-simple #highlightControls.ui-extras-on .highlight-opacity,
+body.ui-simple #watermarkControls.ui-extras-on > label:not(.wide){display:flex!important;align-items:center;gap:6px}
+body.ui-simple #drawControls.ui-extras-on #clearDrawings,
+body.ui-simple #highlightControls.ui-extras-on [data-highlight-mode="squiggly"]{display:inline-flex!important}
+body.ui-simple #watermarkControls.ui-extras-on .wm-align > :not(#applyWatermark){display:inline-flex!important}
+body.ui-simple .ui-tf-slot .context-bar>div.ui-extras-on:not([hidden]){flex-wrap:wrap!important;row-gap:8px!important;justify-content:flex-start!important}
+
+/* Tools with little to set (note, link, crop, redact, stamp): a short instruction in the bar */
+body.ui-simple #linkControls > span:not(.annotation-icon),
+body.ui-simple #noteControls > span:not(.annotation-icon),
+body.ui-simple #cropControls > span:not(.annotation-icon),
+body.ui-simple #redactControls > span:not(.annotation-icon),
+body.ui-simple #stampControls > span:not(.context-icon){display:inline-flex!important;align-items:center;gap:8px;height:40px;padding:0 14px 0 12px;border-radius:10px;background:#f1f8f5;color:#3d5a50;font:500 13.5px Inter,sans-serif;white-space:nowrap}
+body.ui-simple #linkControls > span:not(.annotation-icon):before,
+body.ui-simple #noteControls > span:not(.annotation-icon):before,
+body.ui-simple #cropControls > span:not(.annotation-icon):before,
+body.ui-simple #redactControls > span:not(.annotation-icon):before,
+body.ui-simple #stampControls > span:not(.context-icon):before{content:"i";flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#1fa97b;color:#fff;font:700 11px Georgia,serif}
+body.ui-simple #redactControls .redact-colours{margin-left:0}
+body.ui-simple #watermarkControls label:has(#watermarkSize):before{content:"Size"}
+body.ui-simple #watermarkControls label:has(#watermarkOpacity):before{content:"Opacity"}
+body.ui-simple #watermarkControls label:has(#watermarkVertical):before{content:"Position"}
+body.ui-simple #watermarkControls label:has(#watermarkAngle):before{content:"Angle"}
+body.ui-simple #watermarkControls label:has(#watermarkSize):before,body.ui-simple #watermarkControls label:has(#watermarkOpacity):before,body.ui-simple #watermarkControls label:has(#watermarkVertical):before,body.ui-simple #watermarkControls label:has(#watermarkAngle):before{font:500 13px Inter,sans-serif;color:#5d6f69;margin-right:2px}
+body.ui-simple #watermarkControls.ui-extras-on input[type=range]{width:80px!important;min-width:0!important}body.ui-simple #watermarkControls.ui-extras-on > label{width:auto!important;flex:none!important;padding:0 10px!important}
