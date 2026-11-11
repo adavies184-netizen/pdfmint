@@ -489,6 +489,74 @@
     thicknessPicker(document.getElementById('drawThickness'));
     thicknessPicker(document.getElementById('shapeThickness'));
 
+    // Pages window (simple mode): friendly heading, drag demo, a short toolbar; undo, redo and size at the bottom.
+    const manage = document.getElementById('manageModal');
+    if (manage) {
+      const dialog = manage.querySelector('.manage-dialog');
+      const title = document.getElementById('manageTitle');
+      const intro = title?.nextElementSibling;
+      const simpleOn = () => body.classList.contains('ui-simple');
+      const originalTitle = title?.textContent, originalIntro = intro?.textContent;
+      const applyBtn = document.getElementById('manageApply');
+      const originalApply = applyBtn?.textContent;
+      const words = () => {
+        const on = simpleOn();
+        if (title) title.textContent = on ? 'Arrange your pages' : originalTitle;
+        if (intro) intro.textContent = on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it.' : 'Drag pages to reorder. Select pages to rotate, copy or delete them.') : originalIntro;
+        if (applyBtn) applyBtn.textContent = on ? 'Save page changes' : originalApply;
+      };
+      const icon = d => `<svg class="ui-mp-ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+      const demo = document.createElement('div');
+      demo.className = 'ui-mp-demo';
+      demo.innerHTML = `<div class="ui-mp-stage" aria-hidden="true"><div class="ui-mp-p a">1</div><div class="ui-mp-p b">2</div><div class="ui-mp-p c">3</div><svg class="ui-mp-hand" viewBox="0 0 24 24"><path d="M9 11V5.5a1.5 1.5 0 0 1 3 0V10m0-1.5a1.5 1.5 0 0 1 3 0V11m0-1a1.5 1.5 0 0 1 3 0v4.5c0 3.6-2.4 6.5-6 6.5h-.6c-2 0-3.4-.8-4.6-2.4l-2.6-3.6a1.5 1.5 0 0 1 2.3-1.9L9 15V11"/></svg></div><div><b>Drag a page to move it</b><span>Pick it up, slide it left or right, and let go.</span></div>`;
+      const tools = document.createElement('div');
+      tools.className = 'ui-mp-tools';
+      const proxy = (id, label, art, cls = '') => `<button type="button" class="ui-mp-tool ${cls}" data-mp="${id}">${icon(art)}<span>${label}</span></button>`;
+      tools.innerHTML = `<span class="ui-mp-count"></span>
+        ${proxy('manageRotateRight', 'Rotate', '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>')}
+        ${proxy('manageDuplicate', 'Duplicate', '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/>')}
+        ${proxy('manageDelete', 'Delete', '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>', 'is-danger')}
+        ${proxy('manageMoveLeft', 'Move left', '<path d="M15 18l-6-6 6-6"/>', 'is-phone')}
+        ${proxy('manageMoveRight', 'Move right', '<path d="M9 18l6-6-6-6"/>', 'is-phone')}
+        <span class="ui-mp-sep"></span>
+        <button type="button" class="ui-mp-tool" data-mp="manageSelectAll"><span>Select all</span></button>
+        <button type="button" class="ui-mp-tool" data-mp="manageSelectNone"><span>Clear selection</span></button>`;
+      const footExtras = document.createElement('div');
+      footExtras.className = 'ui-mp-foot';
+      footExtras.innerHTML = `${proxy('manageUndo', 'Undo', '<path d="M9 14 4 9l5-5M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/>')}${proxy('manageRedo', 'Redo', '<path d="m15 14 5-5-5-5M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/>')}<label class="ui-mp-size">Size <input type="range" min="0" max="8" step="1" value="3" aria-label="Page size"></label>`;
+      const head = manage.querySelector('.signature-head');
+      head?.after(demo);
+      demo.after(tools);
+      manage.querySelector('.signature-foot')?.prepend(footExtras);
+      const count = document.getElementById('manageSelectionCount');
+      const syncTools = () => {
+        manage.querySelectorAll('[data-mp]').forEach(button => { const target = document.getElementById(button.dataset.mp); button.disabled = Boolean(target?.disabled); });
+        const n = parseInt(count?.textContent || '0', 10) || 0;
+        tools.querySelector('.ui-mp-count').textContent = n ? `${n} page${n === 1 ? '' : 's'} selected` : (body.classList.contains('ui-mobile') ? 'Tap a page to select it' : 'Click a page to select it');
+        tools.classList.toggle('has-selection', n > 0);
+      };
+      manage.addEventListener('click', event => {
+        const button = event.target.closest('[data-mp]');
+        if (!button) return;
+        document.getElementById(button.dataset.mp)?.click();
+        setTimeout(syncTools, 0);
+      });
+      // Size slider: steps the editor's zoom buttons (70% to 150%).
+      const size = footExtras.querySelector('input');
+      let sizeStep = 3;
+      size.addEventListener('input', () => {
+        const target = Number(size.value);
+        while (sizeStep < target) { document.getElementById('manageZoomIn')?.click(); sizeStep++; }
+        while (sizeStep > target) { document.getElementById('manageZoomOut')?.click(); sizeStep--; }
+      });
+      const watch = new MutationObserver(syncTools);
+      ['manageDelete', 'manageDuplicate', 'manageRotateRight', 'manageMoveLeft', 'manageMoveRight', 'manageUndo', 'manageRedo'].forEach(id => { const el = document.getElementById(id); if (el) watch.observe(el, { attributes: true, attributeFilter: ['disabled'] }); });
+      if (count) watch.observe(count, { childList: true, characterData: true, subtree: true });
+      new MutationObserver(() => { if (!manage.hidden) { words(); syncTools(); const z = parseFloat(document.getElementById('manageGrid')?.style.getPropertyValue('--manage-zoom')) || 1; sizeStep = Math.round((z - 0.7) / 0.1); size.value = String(sizeStep); } }).observe(manage, { attributes: true, attributeFilter: ['hidden'] });
+      words();
+      syncTools();
+    }
+
     // Short instructions shown in the bar for tools with few settings.
     const HINTS = {
       noteControls: 'Click on the page where the note should go.',
