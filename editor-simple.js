@@ -400,7 +400,7 @@
     const DRAW_ICONS = {
       marker: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><rect x="3.5" y="15" width="9" height="30" rx="2.6" fill="#eef1f4" stroke="#9aa4ae" stroke-width=".9"/><rect x="3.5" y="15" width="3" height="30" rx="1.4" fill="#fff"/><rect x="10.2" y="15" width="2.3" height="30" rx="1" fill="#d5dbe1"/><rect x="3.5" y="18" width="9" height="1.8" fill="#c6ced6"/><path d="M3.8 15.2 L6.6 7.8 Q8 6.6 9.4 7.8 L12.2 15.2 Z" fill="#e3e8ec" stroke="#9aa4ae" stroke-width=".9" stroke-linejoin="round"/><path d="M6.2 9.6 L8 4.6 L9.8 9.6 Z" fill="var(--ink,#2f7ae5)"/></svg>',
       highlighter: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><rect x="2.5" y="19" width="11" height="26" rx="2.4" fill="#f6c343" stroke="#b8891a" stroke-width=".9"/><rect x="2.5" y="19" width="3.4" height="26" rx="1.6" fill="#ffe08a"/><rect x="10.6" y="19" width="2.9" height="26" rx="1.2" fill="#e0a92a"/><rect x="2.5" y="15.5" width="11" height="4.5" rx="1" fill="#e9eef2" stroke="#9aa4ae" stroke-width=".8"/><path d="M3.6 15.6 L5.4 9.8 L10.6 9.8 L12.4 15.6 Z" fill="#dfe5ea" stroke="#9aa4ae" stroke-width=".9" stroke-linejoin="round"/><path d="M5.4 9.8 L6 4.6 L10.6 6.4 L10.6 9.8 Z" fill="var(--ink,#f6c343)" stroke="#b8891a" stroke-width=".7" stroke-linejoin="round"/></svg>',
-      rubber: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><rect x="1.8" y="12" width="12.4" height="33" rx="3" fill="#f4a6b4" stroke="#c76b7e" stroke-width=".9"/><rect x="1.8" y="12" width="4" height="33" rx="2" fill="#ffd0d8"/><rect x="11" y="12" width="3.2" height="33" rx="1.5" fill="#e48799"/><rect x="1.8" y="22" width="12.4" height="7" fill="#fff" stroke="#c76b7e" stroke-width=".7"/></svg>'
+      rubber: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><path d="M2.4 13.5 L4.6 8.2 Q5 7.4 5.9 7.4 L10.1 7.4 Q11 7.4 11.4 8.2 L13.6 13.5 Z" fill="#f48ea0" stroke="#c45a70" stroke-width=".9" stroke-linejoin="round"/><path d="M4.4 9.4 L5.4 8.2 L8 8.2 L7 9.4 Z" fill="#ffc6d0"/><rect x="2.4" y="13.5" width="11.2" height="14" fill="#f48ea0" stroke="#c45a70" stroke-width=".9"/><rect x="2.4" y="13.5" width="3.2" height="14" fill="#ffb3c0"/><rect x="11" y="13.5" width="2.6" height="14" fill="#e07489"/><rect x="2.4" y="27.5" width="11.2" height="17.5" fill="#3b6fd8" stroke="#274fa3" stroke-width=".9"/><rect x="2.4" y="27.5" width="3.2" height="17.5" fill="#6d97ec"/><rect x="11" y="27.5" width="2.6" height="17.5" fill="#2a58b8"/><path d="M4 32 H12 M4 35 H12" stroke="#a9c3f7" stroke-width=".7"/></svg>'
     };
     document.querySelectorAll('#drawControls .draw-mode').forEach(button => {
       const art = DRAW_ICONS[button.dataset.mode];
@@ -418,6 +418,29 @@
       button.setAttribute('aria-label', button.title || button.textContent.trim());
       button.classList.add('ui-art-tool');
     });
+    // Draw colours: four quick colours plus a full colour picker.
+    const drawColours = document.querySelector('#drawControls .draw-colours');
+    if (drawColours) {
+      const keep = ['#142038', '#ef4444', '#16a34a', '#2563eb'];
+      drawColours.querySelectorAll('.draw-swatch').forEach(swatch => { if (!keep.includes(swatch.dataset.colour)) swatch.classList.add('ui-extra-swatch'); });
+      const custom = document.getElementById('drawColour');
+      const rgb = document.createElement('label');
+      rgb.className = 'ui-rgb';
+      rgb.title = 'Any colour';
+      rgb.innerHTML = '<input type="color" aria-label="Pick any colour">';
+      const picker = rgb.querySelector('input');
+      picker.value = custom?.value || '#142038';
+      picker.addEventListener('input', () => {
+        if (!custom) return;
+        custom.value = picker.value;
+        custom.dispatchEvent(new Event('input', { bubbles: true }));
+        custom.dispatchEvent(new Event('change', { bubbles: true }));
+        rgb.classList.add('is-on');
+        rgb.style.setProperty('--picked', picker.value);
+      });
+      drawColours.addEventListener('click', event => { if (event.target.closest('.draw-swatch')) rgb.classList.remove('is-on'); });
+      drawColours.append(rgb);
+    }
     const drawBox = document.getElementById('drawControls');
     const drawColourInput = document.getElementById('drawColour');
     const inkSync = () => { if (drawBox && drawColourInput) drawBox.style.setProperty('--ink', drawColourInput.value); };
@@ -539,7 +562,7 @@
     });
 
     // Colour rows collapse to one colour dot; click it to open the palette.
-    document.querySelectorAll('.draw-colours, .shape-colours, .highlight-colours, .watermark-swatches, .redact-colours').forEach(group => {
+    document.querySelectorAll('.shape-colours, .highlight-colours, .watermark-swatches, .redact-colours').forEach(group => {
       group.classList.add('ui-colour-dd');
       group.addEventListener('click', event => {
         if (!body.classList.contains('ui-simple')) return;

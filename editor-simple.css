@@ -749,3 +749,18 @@ body.ui-simple .ui-thick-row output{font-weight:600;color:#2f413b}
 body.ui-simple .ui-thick-pop input{display:block!important;width:100%;accent-color:#1fa97b;margin:0}
 body.ui-simple .ui-thick-preview{height:26px;display:flex;align-items:center;margin-top:6px;padding:0 4px}
 body.ui-simple .ui-thick-preview i{display:block;width:100%;border-radius:20px;background:var(--ink,#142038)}
+
+/* Draw bar v3: no borders on the controls, four colours + any-colour picker */
+body.ui-simple #drawControls .ui-thick-btn,body.ui-simple #drawControls .ui-more-options,body.ui-simple #shapeControls .ui-thick-btn{border-color:transparent!important;background:transparent!important}
+body.ui-simple #drawControls .ui-thick-btn:hover,body.ui-simple #drawControls .ui-more-options:hover,body.ui-simple #shapeControls .ui-thick-btn:hover{background:#f1f6f4!important}
+body.ui-simple #drawControls .ui-thick-btn.is-on,body.ui-simple #shapeControls .ui-thick-btn.is-on,body.ui-simple #drawControls .ui-more-options.is-on{background:#e7f7f0!important;color:#1f7d60!important}
+body.ui-simple #drawControls .ui-more-options{color:#4b5d57!important}
+body.ui-simple #contextBar #drawControls .draw-colours{display:flex!important;align-items:center;gap:6px!important;height:40px!important;width:auto!important;padding:0 4px!important;border:0!important;background:transparent!important;box-shadow:none!important;margin:0!important}
+body.ui-simple #drawControls .draw-colours>legend,body.ui-simple #drawControls .draw-swatch.ui-extra-swatch{display:none!important}
+body.ui-simple #drawControls .draw-swatch{display:block!important;width:24px!important;height:24px!important;min-width:0!important;padding:0!important;margin:0!important;border-radius:50%!important;border:2px solid #fff!important;box-shadow:0 0 0 1px #d0dbd6!important;background:var(--swatch)!important;cursor:pointer}
+body.ui-simple #drawControls .draw-swatch.active{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa97b!important}
+body.ui-simple .ui-rgb{position:relative;display:block;width:24px;height:24px;border-radius:50%;cursor:pointer;background:conic-gradient(#ef4444,#f59e0b,#facc15,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#ec4899,#ef4444);box-shadow:0 0 0 1px #d0dbd6;flex:none}
+body.ui-simple .ui-rgb:after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--picked,#fff);box-shadow:0 0 0 1.5px #fff}
+body.ui-simple .ui-rgb.is-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa97b}
+body.ui-simple .ui-rgb input{position:absolute;inset:0;width:100%!important;height:100%!important;opacity:0;cursor:pointer;border:0;padding:0;display:block!important}
+body.ui-simple #drawControls .draw-custom{display:none!important}
