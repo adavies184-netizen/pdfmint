@@ -834,3 +834,14 @@ body.ui-simple #manageModal #manageClose{display:grid!important;place-items:cent
   .ui-mp-foot .ui-mp-tool{width:40px;padding:0;justify-content:center}
   body.ui-simple #manageModal #manageCancel,body.ui-simple #manageModal #manageApply{padding:0 14px!important;font-size:14px!important}
 }
+/* Pages window: add pages from another PDF */
+.ui-mp-tool.is-add{background:#1fa97b;border-color:#1fa97b;color:#fff}
+.ui-mp-tool.is-add:hover:not(:disabled){background:#178f68!important;border-color:#178f68!important}
+.ui-mp-addtile{display:none}
+body.ui-simple #manageModal .ui-mp-addtile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;align-self:start;width:calc(205px * var(--manage-zoom,1));height:calc(278px * var(--manage-zoom,1));border:2px dashed #b9cfc5;border-radius:10px;background:#f7fbf9;color:#178f68;cursor:pointer;font-family:Inter,system-ui,sans-serif;padding:0}
+body.ui-simple #manageModal .ui-mp-addtile:hover{border-color:#1fa97b;background:#eef9f4}
+body.ui-simple #manageModal .ui-mp-addtile svg{width:30px;height:30px;stroke-width:2}
+body.ui-simple #manageModal .ui-mp-addtile b{font-size:14.5px}
+body.ui-simple #manageModal .ui-mp-addtile small{font-size:12.5px;color:#5d6f69}
+body.ui-simple .ui-toast.is-good{z-index:2000!important;background:#14241f!important;color:#fff!important}
+@media (max-width:900px){body.ui-simple #manageModal .ui-mp-addtile{width:calc(150px * var(--manage-zoom,1));height:calc(200px * var(--manage-zoom,1))}}

@@ -502,7 +502,7 @@
       const words = () => {
         const on = simpleOn();
         if (title) title.textContent = on ? 'Arrange your pages' : originalTitle;
-        if (intro) intro.textContent = on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it.' : 'Drag pages to reorder. Select pages to rotate, copy or delete them.') : originalIntro;
+        if (intro) intro.textContent = on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
         if (applyBtn) applyBtn.textContent = on ? 'Save page changes' : originalApply;
       };
       const icon = d => `<svg class="ui-mp-ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
@@ -512,7 +512,7 @@
       const tools = document.createElement('div');
       tools.className = 'ui-mp-tools';
       const proxy = (id, label, art, cls = '') => `<button type="button" class="ui-mp-tool ${cls}" data-mp="${id}">${icon(art)}<span>${label}</span></button>`;
-      tools.innerHTML = `<span class="ui-mp-count"></span>
+      tools.innerHTML = `<button type="button" class="ui-mp-tool is-add" data-mp-add>${icon('<path d="M12 5v14M5 12h14"/>')}<span>Add pages</span></button><span class="ui-mp-sep"></span><span class="ui-mp-count"></span>
         ${proxy('manageRotateRight', 'Rotate', '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>')}
         ${proxy('manageDuplicate', 'Duplicate', '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/>')}
         ${proxy('manageDelete', 'Delete', '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>', 'is-danger')}
@@ -535,7 +535,34 @@
         tools.querySelector('.ui-mp-count').textContent = n ? `${n} page${n === 1 ? '' : 's'} selected` : (body.classList.contains('ui-mobile') ? 'Tap a page to select it' : 'Click a page to select it');
         tools.classList.toggle('has-selection', n > 0);
       };
+      // Add pages from other PDFs (merge): button in the toolbar and a tile after the last page.
+      const addInput = document.createElement('input');
+      addInput.type = 'file';
+      addInput.accept = 'application/pdf,.pdf';
+      addInput.multiple = true;
+      addInput.hidden = true;
+      manage.append(addInput);
+      addInput.addEventListener('change', async () => {
+        const files = [...addInput.files];
+        addInput.value = '';
+        if (!files.length || !window.pdfbreezeManagerAddPdf) return;
+        const added = await window.pdfbreezeManagerAddPdf(files);
+        if (added) { toast.textContent = added === 1 ? '1 page added. Drag it into place, then press Save page changes.' : `${added} pages added. Drag them into place, then press Save page changes.`; toast.classList.add('is-on', 'is-good'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('is-on', 'is-good'), 4500); }
+        syncTools();
+      });
+      const grid = document.getElementById('manageGrid');
+      const addTile = () => {
+        if (!grid || grid.querySelector('.ui-mp-addtile')) return;
+        const tile = document.createElement('button');
+        tile.type = 'button';
+        tile.className = 'ui-mp-addtile';
+        tile.dataset.mpAdd = '';
+        tile.innerHTML = `${icon('<path d="M12 5v14M5 12h14"/>')}<b>Add pages</b><small>from another PDF</small>`;
+        grid.append(tile);
+      };
+      if (grid) new MutationObserver(addTile).observe(grid, { childList: true });
       manage.addEventListener('click', event => {
+        if (event.target.closest('[data-mp-add]')) { addInput.click(); return; }
         const button = event.target.closest('[data-mp]');
         if (!button) return;
         document.getElementById(button.dataset.mp)?.click();
