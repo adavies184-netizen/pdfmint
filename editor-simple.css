@@ -692,3 +692,15 @@ body.ui-simple .ui-dial-needle{position:absolute;left:50%;top:50%;width:11px;hei
 body.ui-simple .ui-dial-needle:after{content:"";position:absolute;right:-3px;top:-2px;width:6px;height:6px;border-radius:50%;background:#1fa97b}
 body.ui-simple .ui-dial-hub{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;border:2px solid #1fa97b;background:#fff}
 body.ui-simple .ui-wm-angle output{min-width:38px;font:600 14px Inter,sans-serif;color:#2f413b;text-align:right}
+/* Opacity slider inside the watermark colour picker */
+body.ui-simple .ui-dd-opacity{display:none!important}
+body.ui-simple .watermark-swatches.is-open .ui-dd-opacity{display:flex!important;align-items:center;gap:8px;flex-basis:100%;margin-top:4px;padding:6px 4px 2px;border-top:1px solid #eef3f1;font:500 12.5px Inter,sans-serif;color:#5d6f69}
+body.ui-simple .watermark-swatches.is-open .ui-dd-opacity input{display:block!important;flex:1;min-width:90px;accent-color:#1fa97b}
+body.ui-simple .watermark-swatches.is-open .ui-dd-opacity output{min-width:34px;text-align:right;font-weight:600;color:#2f413b}
+body.ui-simple .watermark-swatches:not(.is-open)>button.active{opacity:max(.35,var(--wm-alpha,1))}
+body.ui-simple .watermark-swatches.is-open{width:230px!important}
+body.ui-simple .ui-wm-colour-holder{position:relative;display:inline-block;width:40px;height:40px;flex:none}
+body.ui-simple .ui-wm-colour-holder .watermark-swatches.is-open{position:absolute!important;left:0;top:0;z-index:90;width:236px!important;background:#fff!important;border:1px solid #d6e1dc!important;border-radius:12px!important;padding:8px!important;justify-content:flex-start!important}
+body.ui-simple .ui-wm-colour-holder .watermark-swatches:not(.is-open){width:40px!important}
+body.ui-simple #contextBar .ui-wm-colour-holder .watermark-swatches.is-open{height:auto!important;min-height:0!important;flex-wrap:wrap!important;box-shadow:0 14px 34px rgba(15,34,28,.16)!important}
+body.ui-simple .watermark-swatches.is-open .ui-dd-opacity span{display:inline!important}

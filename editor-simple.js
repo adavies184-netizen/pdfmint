@@ -306,7 +306,28 @@
         return group;
       };
       const size = segmented('Size', 'watermarkSize', [['40', 'Small', '<span style="font-size:11px">A</span>'], ['65', 'Medium', '<span style="font-size:15px">A</span>'], ['90', 'Large', '<span style="font-size:20px">A</span>']], 'is-size');
-      const opacity = segmented('Opacity', 'watermarkOpacity', [['18', 'Faint', '<i style="opacity:.25"></i>'], ['35', 'Light', '<i style="opacity:.5"></i>'], ['60', 'Strong', '<i style="opacity:.9"></i>']], 'is-opacity');
+      // Opacity lives inside the colour picker: one small slider under the swatches.
+      const opacityInput = document.getElementById('watermarkOpacity');
+      const swatchBox = wmBox.querySelector('.watermark-swatches');
+      if (opacityInput && swatchBox) {
+        const row = document.createElement('label');
+        row.className = 'ui-dd-opacity';
+        row.innerHTML = '<span>Opacity</span><input type="range" min="10" max="100" step="5" aria-label="Watermark opacity"><output></output>';
+        const range = row.querySelector('input'), out = row.querySelector('output');
+        const show = () => { range.value = opacityInput.value; out.textContent = `${opacityInput.value}%`; swatchBox.style.setProperty('--wm-alpha', String(Number(opacityInput.value) / 100)); };
+        range.addEventListener('input', () => { opacityInput.value = range.value; opacityInput.dispatchEvent(new Event('input', { bubbles: true })); show(); });
+        range.addEventListener('change', () => opacityInput.dispatchEvent(new Event('change', { bubbles: true })));
+        row.addEventListener('click', event => event.stopPropagation());
+        opacityInput.addEventListener('input', show);
+        swatchBox.append(row);
+        // Keep the dot's place in the bar; the open picker floats over the page.
+        const holder = document.createElement('span');
+        holder.className = 'ui-wm-colour-holder';
+        swatchBox.before(holder);
+        holder.append(swatchBox);
+        show();
+      }
+      const opacity = null;
       // Angle dial: a circle with a needle; drag (or click) to set the angle.
       const angleInput = document.getElementById('watermarkAngle');
       let angle = null;
@@ -344,14 +365,8 @@
       }
       const text = wmBox.querySelector('label.wide');
       const swatches = wmBox.querySelector('.watermark-swatches');
-      if (text) text.after(...[size, opacity].filter(Boolean));
-      if (swatches && angle) swatches.after(angle);
-      // Opacity dots use the chosen watermark colour.
-      const colourInput = document.getElementById('watermarkColour');
-      const tint = () => { if (opacity && colourInput) opacity.style.setProperty('--wm-colour', colourInput.value); };
-      colourInput?.addEventListener('input', tint);
-      wmBox.addEventListener('click', () => setTimeout(tint, 0));
-      tint();
+      if (text && size) text.after(size);
+      if (swatches && angle) (swatches.closest('.ui-wm-colour-holder') || swatches).after(angle);
     }
 
     // Short instructions shown in the bar for tools with few settings.
