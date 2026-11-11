@@ -586,3 +586,4 @@ svg.ui-plane{stroke:none!important;fill:none}
   body.ui-trial:not(.ui-simple) .brand{font-size:0;gap:0}
   body.ui-trial:not(.ui-simple) .ui-mode-switch{height:40px;padding:0 12px;font-size:13px;flex:none}
 }
+.ui-layout-switch{display:none!important}

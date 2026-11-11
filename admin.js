@@ -473,6 +473,41 @@
       : 'Standard three-plan payment wall is active.');
   }
 
+  function renderEditorLayoutSetting(layout, message='') {
+    const selected = layout === 'dock' ? 'dock' : 'rail';
+    document.querySelectorAll('input[name="admin-editor-layout"]').forEach(input => { input.checked = input.value === selected; });
+    const feedback = document.querySelector('[data-editor-layout-feedback]');
+    if (feedback) feedback.textContent = message || (selected === 'dock' ? 'Bottom bar is active.' : 'Left toolbar is active.');
+  }
+
+  async function loadEditorLayoutSetting() {
+    const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/editor-layout`, {
+      cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}
+    });
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(result.detail || 'Editor layout setting could not be loaded.');
+    renderEditorLayoutSetting(result.layout);
+  }
+
+  async function updateEditorLayoutSetting(layout) {
+    const inputs = [...document.querySelectorAll('input[name="admin-editor-layout"]')];
+    inputs.forEach(input => { input.disabled = true; });
+    renderEditorLayoutSetting(layout, 'Saving…');
+    try {
+      const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/editor-layout`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${adminSession.access_token}`},
+        body:JSON.stringify({layout})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'Editor layout setting could not be saved.');
+      localStorage.setItem('pdfbreeze_editor_layout_v1', JSON.stringify({layout:result.layout, cachedAt:Date.now()}));
+      renderEditorLayoutSetting(result.layout, 'Saved. Newly opened editors use this layout within one minute.');
+    } finally {
+      inputs.forEach(input => { input.disabled = false; });
+    }
+  }
+
   async function loadPaymentWallSetting() {
     const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/payment-wall`, {
       cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}
@@ -562,6 +597,7 @@
       document.querySelector('[data-cookie-consent-stats]').innerHTML = `<p>${error.message || 'Cookie consent statistics could not be loaded.'}</p>`;
     });
     loadPaymentWallSetting().catch(error => renderPaymentWallSetting('zendocs', `${error.message} Defaulting to Zendocs style.`));
+    loadEditorLayoutSetting().catch(error => renderEditorLayoutSetting('rail', `${error.message} Defaulting to the left toolbar.`));
     loadPaymentWallStats().catch(error => {
       const container = paymentWallStatsContainer();
       if (container) container.innerHTML = `<p>${error.message || 'Payment-wall conversion rates could not be loaded.'}</p>`;
@@ -608,6 +644,11 @@
       if (event.target.id === 'admin-cookie-consent-enabled') {
         updateCookieConsentSetting(event.target.checked).catch(error => {
           renderCookieConsentSetting(!event.target.checked, error.message || 'The setting could not be saved.');
+        });
+      }
+      if (event.target.matches('input[name="admin-editor-layout"]')) {
+        updateEditorLayoutSetting(event.target.value).catch(error => {
+          loadEditorLayoutSetting().catch(() => renderEditorLayoutSetting('rail', error.message || 'The setting could not be saved.'));
         });
       }
       if (event.target.matches('input[name="admin-payment-wall"]')) {

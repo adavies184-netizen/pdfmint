@@ -49,6 +49,10 @@ class PaymentWallSettingRequest(BaseModel):
     style: Literal["standard", "zendocs"]
 
 
+class EditorLayoutSettingRequest(BaseModel):
+    layout: Literal["rail", "dock"]
+
+
 class AdminDeleteRequest(BaseModel):
     ids: list[UUID] = Field(min_length=1, max_length=100)
 
@@ -302,7 +306,7 @@ async def admin_overview(
     )
     providers = [
         item for item in providers
-        if item.get("provider") not in {COOKIE_CONSENT_SETTING_KEY, PAYMENT_WALL_SETTING_KEY}
+        if item.get("provider") not in {COOKIE_CONSENT_SETTING_KEY, PAYMENT_WALL_SETTING_KEY, EDITOR_LAYOUT_SETTING_KEY}
     ]
 
     all_profiles = profiles
@@ -585,6 +589,7 @@ async def select_payment_provider(payload: ProviderSelectionRequest, authorizati
 
 COOKIE_CONSENT_SETTING_KEY = "site_cookie_consent"
 PAYMENT_WALL_SETTING_KEY = "site_payment_wall_zendocs"
+EDITOR_LAYOUT_SETTING_KEY = "site_editor_bottom_bar"
 
 
 # Public site settings are read on every visitor's page load but change only
@@ -713,3 +718,42 @@ async def update_payment_wall_setting(payload: PaymentWallSettingRequest, author
         raise HTTPException(status_code=502, detail="The payment wall setting could not be updated.")
     _setting_cache.pop(PAYMENT_WALL_SETTING_KEY, None)
     return {"style": payload.style}
+
+
+async def editor_layout_setting() -> dict[str, str]:
+    """Public desktop editor layout. Missing configuration defaults to the left toolbar ("rail")."""
+    flag = await _site_flag(EDITOR_LAYOUT_SETTING_KEY)
+    return {"layout": "dock" if flag is True else "rail"}
+
+
+async def admin_editor_layout_setting(authorization: str | None) -> dict[str, str]:
+    await _require_admin(authorization)
+    _setting_cache.pop(EDITOR_LAYOUT_SETTING_KEY, None)
+    return await editor_layout_setting()
+
+
+async def update_editor_layout_setting(payload: EditorLayoutSettingRequest, authorization: str | None) -> dict[str, str]:
+    await _require_admin(authorization)
+    headers = {
+        **_service_headers(),
+        "Content-Type": "application/json",
+        "Prefer": "resolution=merge-duplicates,return=representation",
+    }
+    row = {
+        "provider": EDITOR_LAYOUT_SETTING_KEY,
+        "display_name": "Editor bottom bar layout",
+        "enabled": payload.layout == "dock",
+        "is_default": False,
+        "configured": True,
+        "updated_at": datetime.now(timezone.utc).isoformat(),
+    }
+    response = await http().post(
+        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+        headers=headers,
+        params={"on_conflict": "provider"},
+        json=row,
+    )
+    if response.is_error:
+        raise HTTPException(status_code=502, detail="The editor layout setting could not be updated.")
+    _setting_cache.pop(EDITOR_LAYOUT_SETTING_KEY, None)
+    return {"layout": payload.layout}

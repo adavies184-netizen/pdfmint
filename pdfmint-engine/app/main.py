@@ -23,19 +23,23 @@ from starlette.background import BackgroundTask
 from .admin import (
     AdminDeleteRequest,
     CookieConsentSettingRequest,
+    EditorLayoutSettingRequest,
     PaymentWallSettingRequest,
     ProviderSelectionRequest,
     admin_cookie_consent_setting,
     admin_cookie_consent_stats,
+    admin_editor_layout_setting,
     admin_funnel,
     admin_overview,
     admin_payment_wall_setting,
     cookie_consent_setting,
     delete_admin_documents,
     delete_admin_members,
+    editor_layout_setting,
     payment_wall_setting,
     select_payment_provider,
     update_cookie_consent_setting,
+    update_editor_layout_setting,
     update_payment_wall_setting,
 )
 from .analytics import AnalyticsEventRequest, CookieConsentEventRequest, store_analytics_event, store_cookie_consent_event
@@ -244,6 +248,21 @@ async def get_admin_payment_wall_setting(authorization: str | None = Header(defa
 @app.post("/v1/admin/payment-wall")
 async def set_admin_payment_wall_setting(payload: PaymentWallSettingRequest, authorization: str | None = Header(default=None)):
     return await update_payment_wall_setting(payload, authorization)
+
+
+@app.get("/v1/site/editor-layout")
+async def website_editor_layout_setting():
+    return await editor_layout_setting()
+
+
+@app.get("/v1/admin/editor-layout")
+async def get_admin_editor_layout_setting(authorization: str | None = Header(default=None)):
+    return await admin_editor_layout_setting(authorization)
+
+
+@app.post("/v1/admin/editor-layout")
+async def set_admin_editor_layout_setting(payload: EditorLayoutSettingRequest, authorization: str | None = Header(default=None)):
+    return await update_editor_layout_setting(payload, authorization)
 
 
 @app.delete("/v1/admin/documents")

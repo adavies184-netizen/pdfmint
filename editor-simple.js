@@ -1,20 +1,40 @@
-/* PDFBreeze simple editor (desktop default, November 2026).
-   Every upload opens the simple editor. "Full editor" switches to today's full editor for the
-   document that's open; "Simple mode" comes back. The layout icon swaps bottom dock <-> task panel
-   and that choice is remembered. Phones keep the existing phone editor.
+/* PDFBreeze simple editor (default on desktop and phones, November 2026).
+   Every upload opens the simple editor. "Full editor" (bottom of More tools) switches to the full
+   editor for the document that's open; "Simple mode" comes back.
+   The desktop layout is set in Admin: left toolbar (default) or centred bottom bar.
+   ?ui=rail / ?ui=dock / ?ui=panel previews a layout for one visit; ?ui=advanced opens the full editor.
    Every simple-mode button clicks the editor's own button, so behaviour is identical. */
 (() => {
-  // Simple editor is the default on desktop. "Full editor" opens today's editor for this tab;
-  // the next upload starts in simple again. The layout icon swaps dock <-> panel and is remembered.
-  const KEY = 'pdfbreezeEditorUiLast';
   const LAYOUTS = ['rail', 'dock', 'panel'];
-  const readLocal = key => { try { return localStorage.getItem(key) || ''; } catch (_) { return ''; } };
+  const SETTING_CACHE = 'pdfbreeze_editor_layout_v1';
   const params = new URLSearchParams(location.search);
   const asked = params.get('ui');
-  if (asked && LAYOUTS.includes(asked)) { try { localStorage.setItem(KEY, asked); } catch (_) {} }
-  let simpleLayout = LAYOUTS.includes(readLocal(KEY)) ? readLocal(KEY) : 'rail';
+  const preview = LAYOUTS.includes(asked) ? asked : '';
+  const cachedLayout = (() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(SETTING_CACHE) || 'null');
+      return cached && ['rail', 'dock'].includes(cached.layout) ? cached : null;
+    } catch (_) { return null; }
+  })();
+  let simpleLayout = preview || (cachedLayout ? cachedLayout.layout : 'rail');
   let layout = asked === 'advanced' ? 'advanced' : simpleLayout;
-  const save = value => { if (LAYOUTS.includes(value)) { try { localStorage.setItem(KEY, value); } catch (_) {} } };
+  try { localStorage.removeItem('pdfbreezeEditorUiLast'); } catch (_) {}
+  // Admin setting (cached for a minute). Missing or unreachable means the left toolbar.
+  const fetchLayoutSetting = async () => {
+    if (preview || (cachedLayout && Date.now() - Number(cachedLayout.cachedAt || 0) < 60000)) return null;
+    const base = String(window.PDFMINT_CONFIG?.engineBaseUrl || '').replace(/\/+$/, '');
+    if (!base) return null;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 2500);
+    try {
+      const response = await fetch(`${base}/v1/site/editor-layout`, { cache: 'no-store', signal: controller.signal });
+      const result = await response.json();
+      if (!response.ok) return null;
+      const value = result.layout === 'dock' ? 'dock' : 'rail';
+      try { localStorage.setItem(SETTING_CACHE, JSON.stringify({ layout: value, cachedAt: Date.now() })); } catch (_) {}
+      return value;
+    } catch (_) { return null; } finally { clearTimeout(timer); }
+  };
 
   const svg = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const ICON = {
@@ -413,7 +433,6 @@
     const desktop = window.matchMedia('(min-width: 901px)');
     function apply(next) {
       layout = next;
-      save(next);
       if (LAYOUTS.includes(next)) simpleLayout = next;
       // Phones get the bottom-dock layout (styled for small screens); Full editor stays available.
       const shown = desktop.matches ? next : (next === 'advanced' ? 'advanced' : 'mobile');
@@ -449,6 +468,11 @@
     }
     apply(layout);
     desktop.addEventListener('change', () => apply(layout));
+    fetchLayoutSetting().then(value => {
+      if (!value || value === simpleLayout) return;
+      simpleLayout = value;
+      if (layout !== 'advanced') apply(value);
+    });
 
     // Simple layouts open on Add text, unless the tool page asked for a specific tool.
     const askedTool = new URLSearchParams(location.search).get('tool');
