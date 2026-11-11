@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=simple-email-4">
-<link rel="stylesheet" href="editor-simple.css?v=23">
+<link rel="stylesheet" href="editor-pdfium.css?v=bui-1">
+<link rel="stylesheet" href="editor-simple.css?v=29">
 <link rel="stylesheet" href="cookie-consent.css?v=consent-4">
 <script src="cookie-consent.js?v=consent-7"></script>
 <script src="analytics.js?v=advanced-consent-1"></script>
@@ -74,6 +74,7 @@
       <label class="add-icon-control"><span class="control-icon"><svg viewBox="0 0 24 24"><path d="M5 5h14M12 5v14M8 19h8"/></svg></span><select id="addFont" aria-label="Font"><option value="Helvetica">Helvetica</option><option value="Times-Roman">Times Roman</option><option value="Courier">Courier</option></select></label>
       <label class="add-icon-control size-control"><span class="control-icon"><svg viewBox="0 0 24 24"><path d="M5 7V4h14v3M12 4v16M8 20h8"/></svg></span><input id="addFontSize" type="number" min="6" max="96" value="18" aria-label="Font size"></label>
       <label class="add-icon-control weight-control"><span class="control-icon weight-icon">B</span><select id="addFontWeight" aria-label="Font weight"><option value="400">Regular</option><option value="700">Bold</option></select></label>
+      <div class="add-style-toggles" aria-label="Text style"><button type="button" id="addUnderline" class="add-style-toggle" aria-pressed="false" title="Underline" aria-label="Underline"><u>U</u></button><button type="button" id="addItalic" class="add-style-toggle" aria-pressed="false" title="Italic" aria-label="Italic"><i>I</i></button></div>
       <div id="addAlignment" class="add-align" aria-label="Text alignment"><button type="button" class="active" data-align="left" aria-label="Align left"><span class="align-lines left"><i></i><i></i><i></i></span></button><button type="button" data-align="center" aria-label="Align centre"><span class="align-lines center"><i></i><i></i><i></i></span></button><button type="button" data-align="right" aria-label="Align right"><span class="align-lines right"><i></i><i></i><i></i></span></button></div>
     </div>
     <div id="editControls" class="edit-controls">
@@ -221,7 +222,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
-<script type="module" src="editor-pdfium.js?v=simple-email-2"></script>
-<script defer src="editor-simple.js?v=17"></script>
+<script type="module" src="editor-pdfium.js?v=bui-2"></script>
+<script defer src="editor-simple.js?v=19"></script>
 </body>
 </html>

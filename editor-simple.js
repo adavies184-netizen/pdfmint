@@ -192,9 +192,9 @@
     // Layout B: bottom dock, with one floating bar at the top (file, tool settings, actions)
     const topFloat = mount(document.createElement('div'));
     topFloat.className = 'ui-topfloat';
-    topFloat.innerHTML = `<div class="ui-tf-left">${fileHtml}</div><span class="ui-tf-sep"></span>
-      <div class="ui-tf-mid"><span class="ui-tf-name" data-ui-tool-name></span><div class="ui-tf-slot"></div></div><span class="ui-tf-sep"></span>
-      <div class="ui-tf-right"><button type="button" class="ui-layout-switch" data-ui-layout="panel" title="Switch to the task panel layout" aria-label="Switch to the task panel layout">${svg(ICON.layoutPanel)}</button>${historyHtml}<button type="button" class="ui-full-btn" data-ui-advanced>${svg(ICON.sliders)}<span>Full editor</span></button><button type="button" class="ui-download ui-download-sm" data-proxy="download">${svg(ICON.download)}<span>Download</span></button></div>`;
+    topFloat.innerHTML = `<div class="ui-tf-left">${fileHtml}<button type="button" class="ui-layout-switch" data-ui-layout="panel" title="Switch layout" aria-label="Switch layout">${svg(ICON.layoutPanel)}</button>${historyHtml}</div>
+      <div class="ui-tf-mid"><span class="ui-tf-name" data-ui-tool-name></span><div class="ui-tf-slot"></div></div>
+      <div class="ui-tf-right"><button type="button" class="ui-full-btn" data-ui-advanced>${svg(ICON.sliders)}<span>Full editor</span></button><button type="button" class="ui-download ui-download-sm" data-proxy="download">${svg(ICON.download)}<span>Download</span></button></div>`;
     const dock = mount(document.createElement('nav'));
     dock.className = 'ui-dock';
     dock.setAttribute('aria-label', 'Editing tools');
@@ -215,7 +215,11 @@
       if (swap) { apply(swap.dataset.uiLayout); return; }
       if (event.target.closest('.ui-thumbs-toggle')) { const open = !body.classList.contains('ui-thumbs-open'); body.classList.toggle('ui-thumbs-open', open); $('.ui-thumbs-toggle').setAttribute('aria-pressed', String(open)); window.dispatchEvent(new Event('resize')); return; }
       const pick = event.target.closest('[data-ui-tool]');
-      if (pick) { clickTool(pick.dataset.uiTool); closeDockMenu(); return; }
+      if (pick) {
+        const live = document.getElementById('liveTextEditor');
+        if (live && !live.hidden) document.getElementById('textOverlay')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: -9999, clientY: -9999 }));
+        clickTool(pick.dataset.uiTool); closeDockMenu(); return;
+      }
       if (!event.target.closest('.ui-dock-more,.ui-dock-menu')) closeDockMenu();
     });
     const moreToggle = $('.ui-more-toggle', panel), moreList = $('.ui-more-list', panel);
@@ -317,6 +321,16 @@
         sizeInput.closest('label')?.after(sizeSel);
       }
     }
+
+    // Clicking the grey area around the page finishes a text box (the editor only listens on the page).
+    const stageEl = document.getElementById('stage');
+    stageEl?.addEventListener('mousedown', event => {
+      if (!body.classList.contains('ui-simple')) return;
+      const live = document.getElementById('liveTextEditor');
+      if (!live || live.hidden) return;
+      if (event.target.closest('#pageWrap')) return;
+      document.getElementById('textOverlay')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: -9999, clientY: -9999 }));
+    });
 
     // Colour rows collapse to one colour dot; click it to open the palette.
     document.querySelectorAll('.draw-colours, .shape-colours, .highlight-colours, .watermark-swatches, .redact-colours').forEach(group => {

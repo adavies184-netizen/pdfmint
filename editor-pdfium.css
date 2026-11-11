@@ -437,3 +437,7 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 .simple-email-design .pdfium-email-continue.is-working{color:transparent;opacity:1;cursor:wait;background:#299b78}
 .simple-email-design .pdfium-email-continue.is-working::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:emailSpin .75s linear infinite}
 @keyframes emailSpin{to{transform:rotate(360deg)}}
+/* Text style toggles (underline, italic) */
+.add-style-toggles{display:flex;gap:2px}
+.add-style-toggle{width:36px;height:36px;display:grid;place-items:center;border:1px solid #dce3ea;border-radius:8px;background:#fff;color:#334155;font:600 16px Georgia,'Times New Roman',serif;cursor:pointer}
+.add-style-toggle.active{background:#e7f7f0;border-color:#9fdcc3;color:#1f7d60}

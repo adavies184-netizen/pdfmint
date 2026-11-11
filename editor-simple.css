@@ -464,3 +464,50 @@
   body.ui-layout-rail .ui-dock-icon{width:36px;height:36px}
 }
 @media (min-width:901px) and (max-width:1366px){body.ui-layout-rail:not(.no-document) .ui-tip.is-on{bottom:76px!important}}
+@media (min-width:901px){
+  /* B / U / I: plain, no border, like the reference */
+  body.ui-simple #addControls .add-style-toggles{display:flex;gap:2px}
+  body.ui-simple .ui-bold,body.ui-simple #addControls .add-style-toggle{width:36px!important;height:36px!important;min-height:36px!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:8px!important;color:#3d4f49!important;font:600 16px Georgia,'Times New Roman',serif!important;display:grid;place-items:center;cursor:pointer;padding:0!important}
+  body.ui-simple .ui-bold{font-weight:800!important}
+  body.ui-simple .ui-bold:hover,body.ui-simple #addControls .add-style-toggle:hover{background:#f1f6f4!important}
+  body.ui-simple .ui-bold.is-on,body.ui-simple #addControls .add-style-toggle.active{background:#e7f7f0!important;color:#1f7d60!important}
+  body.ui-simple #addControls>.ui-bold{margin-right:-6px!important}
+}
+@media (min-width:901px){
+  /* Settings group centred in the top bar (over the page) */
+  body.ui-simple .ui-topfloat{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(max-content,1fr);align-items:center}
+  body.ui-simple .ui-topfloat .ui-tf-left{justify-self:start}
+  body.ui-simple .ui-topfloat .ui-tf-mid{justify-self:center;flex:none}
+  body.ui-simple .ui-topfloat .ui-tf-right{justify-self:end}
+  body.ui-layout-rail .ui-topfloat .ui-tf-left{display:block!important;visibility:hidden;width:0}
+  /* One chevron for colour, font and size */
+  body.ui-simple #addControls #addFont,body.ui-simple .ui-size-select,body.ui-simple .draw-select select,body.ui-simple .shape-width select{-webkit-appearance:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6f69' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")!important;background-repeat:no-repeat!important;background-position:right 8px center!important;background-size:14px 14px!important;padding-right:28px!important}
+  body.ui-simple #addControls #addFont{background-color:transparent!important}
+  body.ui-simple .ui-size-select{background-color:#fff!important;min-width:70px}
+  body.ui-simple #addControls .colour-control:has(#addTextColor)::after{content:"";width:14px;height:14px;border:0!important;transform:none!important;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6f69' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat center/14px 14px}
+  body.ui-simple #addControls .colour-control:has(#addTextColor){width:62px!important;gap:6px}
+  /* + Add text: centred content */
+  body.ui-simple .ui-add-text{justify-content:center}
+}
+/* Logo: never inherit the toolbar icon outline (kept the brand colours exact) */
+svg.ui-plane{stroke:none!important;fill:none}
+@media (min-width:901px){
+  body.ui-simple .ui-topfloat .ui-tf-left{display:flex!important;align-items:center;gap:8px;visibility:visible!important;width:auto!important}
+  body.ui-layout-rail .ui-topfloat .ui-tf-left .ui-file{display:none}
+  body.ui-simple .ui-topfloat .ui-tf-left .ui-history{margin-left:2px}
+}
+@media (min-width:901px) and (max-width:1366px){
+  body.ui-simple .ui-full-btn span{display:none!important}
+  body.ui-simple .ui-full-btn{padding:0 11px!important}
+}
+@media (min-width:901px) and (max-width:1180px){
+  body.ui-simple .ui-add-text span{display:none}
+  body.ui-simple .ui-add-text{padding:0 12px}
+  body.ui-simple #addControls #addFont{min-width:96px}
+  body.ui-simple .ui-download-sm span{display:none}
+  body.ui-simple .ui-download-sm{padding:0 14px}
+}
+@media (min-width:901px) and (max-width:1180px){
+  body.ui-layout-dock .ui-topfloat .ui-tf-left .ui-file{display:none!important}
+  body.ui-simple #editControls #replacement{min-width:200px!important}
+}
