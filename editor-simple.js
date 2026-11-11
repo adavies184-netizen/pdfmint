@@ -278,36 +278,80 @@
     // Watermark: plain-English choices instead of sliders (they drive the editor's own controls).
     const wmBox = document.getElementById('watermarkControls');
     if (wmBox) {
-      const pick = (label, id, options) => {
+      // Segmented icon choices that drive a range input.
+      const segmented = (label, id, options, cls) => {
         const input = document.getElementById(id);
         if (!input) return null;
-        const select = document.createElement('select');
-        select.className = 'ui-wm-select';
-        select.setAttribute('aria-label', label);
-        select.innerHTML = options.map(([value, text]) => `<option value="${value}">${label}: ${text}</option>`).join('');
-        const nearest = () => {
+        const group = document.createElement('div');
+        group.className = `ui-wm-seg ${cls}`;
+        group.setAttribute('role', 'radiogroup');
+        group.setAttribute('aria-label', label);
+        group.innerHTML = options.map(([value, title, inner]) => `<button type="button" role="radio" data-value="${value}" title="${label}: ${title}" aria-label="${label}: ${title}">${inner}</button>`).join('');
+        const sync = () => {
           const current = Number(input.value);
           let best = options[0][0];
           for (const [value] of options) if (Math.abs(Number(value) - current) < Math.abs(Number(best) - current)) best = value;
-          select.value = String(best);
+          group.querySelectorAll('button').forEach(button => { const on = button.dataset.value === String(best); button.classList.toggle('is-on', on); button.setAttribute('aria-checked', String(on)); });
         };
-        nearest();
-        select.addEventListener('change', () => {
-          input.value = select.value;
+        group.addEventListener('click', event => {
+          const button = event.target.closest('button');
+          if (!button) return;
+          input.value = button.dataset.value;
           input.dispatchEvent(new Event('input', { bubbles: true }));
           input.dispatchEvent(new Event('change', { bubbles: true }));
+          sync();
         });
-        input.addEventListener('input', nearest);
-        return select;
+        input.addEventListener('input', sync);
+        sync();
+        return group;
       };
-      const size = pick('Size', 'watermarkSize', [['40', 'Small'], ['65', 'Medium'], ['90', 'Large']]);
-      const strength = pick('Look', 'watermarkOpacity', [['18', 'Faint'], ['35', 'Light'], ['60', 'Bold']]);
-      const angle = pick('Angle', 'watermarkAngle', [['-45', 'Diagonal'], ['0', 'Straight']]);
-      const where = pick('Position', 'watermarkVertical', [['50', 'Middle'], ['8', 'Top'], ['92', 'Bottom']]);
+      const size = segmented('Size', 'watermarkSize', [['40', 'Small', '<span style="font-size:11px">A</span>'], ['65', 'Medium', '<span style="font-size:15px">A</span>'], ['90', 'Large', '<span style="font-size:20px">A</span>']], 'is-size');
+      const opacity = segmented('Opacity', 'watermarkOpacity', [['18', 'Faint', '<i style="opacity:.25"></i>'], ['35', 'Light', '<i style="opacity:.5"></i>'], ['60', 'Strong', '<i style="opacity:.9"></i>']], 'is-opacity');
+      // Angle dial: a circle with a needle; drag (or click) to set the angle.
+      const angleInput = document.getElementById('watermarkAngle');
+      let angle = null;
+      if (angleInput) {
+        angle = document.createElement('div');
+        angle.className = 'ui-wm-angle';
+        angle.innerHTML = '<button type="button" class="ui-dial" title="Drag to set the angle" aria-label="Watermark angle"><span class="ui-dial-needle"></span><span class="ui-dial-hub"></span></button><output></output>';
+        const dial = angle.querySelector('.ui-dial'), needle = angle.querySelector('.ui-dial-needle'), out = angle.querySelector('output');
+        const show = () => { const value = Math.round(Number(angleInput.value) || 0); needle.style.transform = `rotate(${value}deg)`; out.textContent = `${value}°`; dial.setAttribute('aria-valuenow', String(value)); };
+        const setFrom = (event, commit) => {
+          const r = dial.getBoundingClientRect();
+          let deg = Math.atan2(event.clientY - (r.top + r.height / 2), event.clientX - (r.left + r.width / 2)) * 180 / Math.PI;
+          deg = Math.round(deg / 5) * 5;
+          if (deg > 180) deg -= 360;
+          angleInput.value = String(deg);
+          angleInput.dispatchEvent(new Event('input', { bubbles: true }));
+          if (commit) angleInput.dispatchEvent(new Event('change', { bubbles: true }));
+          show();
+        };
+        let dragging = false;
+        dial.addEventListener('pointerdown', event => { dragging = true; dial.setPointerCapture(event.pointerId); setFrom(event, false); event.preventDefault(); });
+        dial.addEventListener('pointermove', event => { if (dragging) setFrom(event, false); });
+        dial.addEventListener('pointerup', event => { if (!dragging) return; dragging = false; setFrom(event, true); });
+        dial.addEventListener('keydown', event => {
+          const step = event.key === 'ArrowLeft' || event.key === 'ArrowDown' ? -5 : event.key === 'ArrowRight' || event.key === 'ArrowUp' ? 5 : 0;
+          if (!step) return;
+          event.preventDefault();
+          angleInput.value = String(Math.max(-180, Math.min(180, (Number(angleInput.value) || 0) + step)));
+          angleInput.dispatchEvent(new Event('input', { bubbles: true }));
+          angleInput.dispatchEvent(new Event('change', { bubbles: true }));
+          show();
+        });
+        angleInput.addEventListener('input', show);
+        show();
+      }
       const text = wmBox.querySelector('label.wide');
       const swatches = wmBox.querySelector('.watermark-swatches');
-      if (text) text.after(...[size, strength].filter(Boolean));
-      if (swatches) swatches.after(...[angle, where].filter(Boolean));
+      if (text) text.after(...[size, opacity].filter(Boolean));
+      if (swatches && angle) swatches.after(angle);
+      // Opacity dots use the chosen watermark colour.
+      const colourInput = document.getElementById('watermarkColour');
+      const tint = () => { if (opacity && colourInput) opacity.style.setProperty('--wm-colour', colourInput.value); };
+      colourInput?.addEventListener('input', tint);
+      wmBox.addEventListener('click', () => setTimeout(tint, 0));
+      tint();
     }
 
     // Short instructions shown in the bar for tools with few settings.

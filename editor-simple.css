@@ -679,3 +679,16 @@ body.ui-simple #watermarkControls label.wide{height:40px;padding:0 10px!importan
 body.ui-simple #watermarkControls #watermarkText{border:0!important;outline:0;background:transparent!important;font:500 14px Inter,sans-serif;color:#14241f;width:170px;height:38px;padding:0!important;box-shadow:none!important}
 body.ui-simple .ui-wm-select{-webkit-appearance:none;appearance:none;height:40px;padding:0 30px 0 12px;border:1px solid #d6e1dc;border-radius:10px;background-color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6f69' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px 14px;font:500 14px Inter,sans-serif;color:#2f413b;cursor:pointer;outline:0;flex:none}
 body.ui-simple .ui-wm-select:hover{border-color:#b8cdc5}
+/* Watermark v2: icon choices for size and opacity, an angle dial */
+body.ui-simple .ui-wm-seg{display:inline-flex;align-items:center;gap:2px;height:40px;padding:3px;border:1px solid #d6e1dc;border-radius:10px;background:#fff;flex:none}
+body.ui-simple .ui-wm-seg button{width:34px;height:32px;display:grid;place-items:center;border:0;border-radius:7px;background:transparent;color:#4b5d57;cursor:pointer;padding:0;font:700 15px Inter,sans-serif;line-height:1}
+body.ui-simple .ui-wm-seg button:hover{background:#f1f6f4}
+body.ui-simple .ui-wm-seg button.is-on{background:#e7f7f0;color:#1f7d60;box-shadow:inset 0 0 0 1px #9fdcc3}
+body.ui-simple .ui-wm-seg.is-opacity button i{width:18px;height:18px;border-radius:50%;background:var(--wm-colour,#ef4444);display:block}
+body.ui-simple .ui-wm-angle{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 10px 0 4px;border:1px solid #d6e1dc;border-radius:10px;background:#fff;flex:none}
+body.ui-simple .ui-dial{position:relative;width:30px;height:30px;padding:0;border:2px solid #9fb1aa;border-radius:50%;background:#fff;cursor:grab;touch-action:none}
+body.ui-simple .ui-dial:active{cursor:grabbing}
+body.ui-simple .ui-dial-needle{position:absolute;left:50%;top:50%;width:11px;height:2px;margin-top:-1px;background:#1fa97b;border-radius:2px;transform-origin:0 50%}
+body.ui-simple .ui-dial-needle:after{content:"";position:absolute;right:-3px;top:-2px;width:6px;height:6px;border-radius:50%;background:#1fa97b}
+body.ui-simple .ui-dial-hub{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;border:2px solid #1fa97b;background:#fff}
+body.ui-simple .ui-wm-angle output{min-width:38px;font:600 14px Inter,sans-serif;color:#2f413b;text-align:right}
