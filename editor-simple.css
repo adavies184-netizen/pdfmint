@@ -627,3 +627,9 @@ body.ui-simple .live-text-editor{border:1.5px solid #2878e3;outline:0;box-shadow
 .live-text-frame .ltf-side{position:absolute;top:50%;width:6px;height:max(16px,60%);transform:translateY(-50%);border-radius:3px;background:#2878e3;pointer-events:auto;cursor:ew-resize;box-shadow:0 0 0 2px #fff}
 .live-text-frame .ltf-left{left:-4px}
 .live-text-frame .ltf-right{right:-4px}
+
+/* No flash of the full editor while the uploaded PDF is handed over: plain background and a spinner */
+html.ui-boot body.transfer-pending{background:#eef3f1!important}
+html.ui-boot body.transfer-pending>*:not(script):not(style){visibility:hidden!important}
+html.ui-boot body.transfer-pending:after{content:"";position:fixed;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid #cfe9dd;border-top-color:#1fa97b;border-radius:50%;animation:uiBootSpin .8s linear infinite}
+@keyframes uiBootSpin{to{transform:rotate(360deg)}}

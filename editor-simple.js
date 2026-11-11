@@ -374,16 +374,21 @@
         const phone = body.classList.contains('ui-mobile');
         const open = pages > 1 && !phone && !body.classList.contains('ui-layout-rail');
         body.classList.toggle('ui-thumbs-open', open);
-        // Start at 60% so the whole page is in view (uses the editor's own zoom-out button).
-        let tries = 0;
-        const zoomTo60 = () => {
-          const current = parseInt($('#zoomLabel')?.textContent || '0', 10);
-          const out = $('#zoomOut');
-          if (!current || current <= 60 || !out || out.disabled || tries++ > 6) return;
-          out.click();
-          setTimeout(zoomTo60, 90);
+        // Start at 70% for A4/Letter-size pages. Smaller pages (labels, receipts) are enlarged to fill the
+        // space so they're readable.
+        const startZoom = () => {
+          const size = window.pdfbreezePageSize?.();
+          const stage = $('#stage');
+          if (!size || !window.pdfbreezeSetZoom || !stage) return;
+          const [w, h] = size;
+          let target = 0.7;
+          if (w < 500 && h < 760) {
+            const room = Math.min(stage.clientWidth - 96, 1000);
+            target = Math.max(0.7, Math.min(2.5, Math.floor((room / (w * 1.35)) * 10) / 10));
+          }
+          window.pdfbreezeSetZoom(target);
         };
-        if (!phone) setTimeout(zoomTo60, 120);
+        if (!phone) setTimeout(startZoom, 60);
         $('.ui-thumbs-toggle')?.setAttribute('aria-pressed', String(open));
         window.dispatchEvent(new Event('resize'));
       }
