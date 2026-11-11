@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
   <title>Edit PDF | PDFBreeze</title>
-<link rel="stylesheet" href="editor-pdfium.css?v=page-sidebar-reorder-4">
+<link rel="stylesheet" href="editor-pdfium.css?v=simple-email-3">
 <link rel="stylesheet" href="cookie-consent.css?v=consent-4">
 <script src="cookie-consent.js?v=consent-7"></script>
 <script src="analytics.js?v=advanced-consent-1"></script>
@@ -178,16 +178,24 @@
   </div>
   <div id="exportEmailModal" class="pdfium-export-layer pdfium-email-layer" hidden>
     <div class="pdfium-export-backdrop"></div>
-    <section class="pdfium-email-dialog legacy-email-design" role="dialog" aria-modal="true" aria-labelledby="exportEmailTitle">
-      <button id="exportEmailClose" class="pdfium-email-close" type="button" aria-label="Close">×</button>
-      <h2 id="exportEmailTitle">Use your email to continue</h2>
-      <button class="social-login-button" id="exportGoogle" type="button"><span class="google-mark">G</span>Continue with Google</button>
-      <div class="email-divider"><span>OR</span></div>
-      <label class="email-field"><span>Email</span><input id="exportEmail" type="email" autocomplete="email" placeholder="email@example.com"></label>
-      <span id="exportEmailError" class="pdfium-email-error" hidden>Please enter a valid email address.</span>
-      <button id="exportEmailContinue" class="pdfium-email-continue" type="button">Download</button>
-      <p class="login-copy">Already have an account? <button id="exportLogin" type="button" class="text-link-button">Log in</button></p>
-      <p class="terms-copy">By clicking <strong>Download</strong>, you agree to the <a href="terms-of-use.html" target="_blank">Terms of Service</a>, <a href="subscription-policy.html" target="_blank">Subscription Terms</a>, <a href="privacy-policy.html" target="_blank">Privacy Policy</a>, and <a href="cookie-policy.html" target="_blank">Cookie Policy</a>.</p>
+    <section class="pdfium-email-dialog simple-email-design" role="dialog" aria-modal="true" aria-labelledby="exportEmailTitle">
+      <header class="simple-email-head">
+        <h2 id="exportEmailTitle">Enter your email address</h2>
+        <button id="exportEmailClose" class="pdfium-email-close" type="button" aria-label="Close">×</button>
+      </header>
+      <div class="simple-email-body">
+        <label class="simple-email-field" for="exportEmail"><span>Email</span>
+          <span class="simple-email-input"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m4 7 8 6 8-6"/></svg><input id="exportEmail" type="email" autocomplete="email" placeholder="name@example.com"></span>
+        </label>
+        <span id="exportEmailError" class="pdfium-email-error" hidden>Please enter a valid email address.</span>
+      </div>
+      <div class="simple-email-foot">
+        <button id="exportEmailContinue" class="pdfium-email-continue" type="button" data-email-action>Download PDF</button>
+        <p class="terms-copy">By clicking <strong data-email-action>Download PDF</strong>, you agree to the <a href="terms-of-use.html" target="_blank">Terms of Service</a>, <a href="subscription-policy.html" target="_blank">Subscription Terms</a>, <a href="privacy-policy.html" target="_blank">Privacy Policy</a>, and <a href="cookie-policy.html" target="_blank">Cookie Policy</a>.</p>
+      </div>
+      <!-- Kept for the existing flow's script hooks; not shown in the simple design. -->
+      <button class="social-login-button" id="exportGoogle" type="button" hidden>Continue with Google</button>
+      <button id="exportLogin" type="button" class="text-link-button" hidden>Log in</button>
     </section>
   </div>
   <div id="compressionCompleteModal" class="compression-complete-layer" hidden>
@@ -212,6 +220,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js?v=5603"></script>
 <script src="auth.js?v=5580"></script>
-<script type="module" src="editor-pdfium.js?v=page-sidebar-reorder-4"></script>
+<script type="module" src="editor-pdfium.js?v=simple-email-1"></script>
 </body>
 </html>

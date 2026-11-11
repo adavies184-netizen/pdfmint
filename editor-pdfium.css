@@ -393,3 +393,41 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
   .annotation-delete,.delete-highlight,.clear-drawings{border-color:#f0b8b8;color:#d52f2f}
   body.manage-mode .manage-dialog{height:calc(100vh - 148px)}
 }
+
+/* Simple email step (November 2026): title band, one field, one button */
+.pdfium-email-dialog.simple-email-design{width:min(620px,calc(100vw - 32px));padding:0;border-radius:16px;overflow:hidden;text-align:left;color:#14241f;box-shadow:0 24px 60px rgba(15,34,28,.28)}
+.simple-email-head{position:relative;padding:24px 56px;background:#f4f8f6;border-bottom:1px solid #e6eeea;text-align:center}
+.simple-email-head h2{margin:0;font-size:24px;font-weight:700;letter-spacing:-.01em;color:#14241f}
+.simple-email-design .pdfium-email-close{position:absolute;right:14px;top:50%;transform:translateY(-50%);width:36px;height:36px;border:0;border-radius:50%;background:transparent;color:#6b7c76;font-size:28px;line-height:1;cursor:pointer}
+.simple-email-design .pdfium-email-close:hover{background:#e6eeea;color:#14241f}
+.simple-email-body{padding:34px 64px 30px}
+.simple-email-field{display:block}
+.simple-email-field>span:first-child{display:block;margin-bottom:8px;font-size:14px;font-weight:600;color:#2a3a35}
+.simple-email-input{display:flex;align-items:center;gap:10px;height:48px;padding:0 14px;border:1.5px solid #cfdcd7;border-radius:10px;background:#fff;transition:border-color .15s,box-shadow .15s}
+.simple-email-input:focus-within{border-color:#34c79a;box-shadow:0 0 0 4px rgba(52,199,154,.16)}
+.simple-email-input svg{flex:none;width:19px;height:19px;fill:none;stroke:#7d8e88;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.simple-email-input input{flex:1;min-width:0;height:100%;border:0;outline:0;background:transparent;font:inherit;font-size:16px;color:#14241f}
+.simple-email-input input::placeholder{color:#9aa9a3}
+.simple-email-design .pdfium-email-error{display:block;margin-top:8px;font-size:14px;color:#d93636;text-align:left}
+.simple-email-design .pdfium-email-error[hidden]{display:none}
+.simple-email-foot{margin:0 24px;padding:20px 40px 28px;border-top:1px solid #e6eeea;text-align:center}
+.simple-email-design .pdfium-email-continue{width:auto;min-width:190px;height:50px;margin:0;padding:0 30px;border:0;border-radius:10px;background:#34c79a;color:#fff;font-size:17px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(41,155,120,.22);transition:background .15s}
+.simple-email-design .pdfium-email-continue:hover{background:#299b78}
+.simple-email-design .pdfium-email-continue:disabled{opacity:.6;cursor:wait}
+.simple-email-design .terms-copy{margin:16px 0 0;font-size:13px;line-height:1.5;color:#4b5d57}
+.simple-email-design .terms-copy a{color:#299b78;text-decoration:none}
+.simple-email-design .terms-copy a:hover{text-decoration:underline}
+@media (max-width:640px){
+  .pdfium-email-dialog.simple-email-design{width:100%;max-height:calc(100dvh - 16px);overflow-y:auto;border-radius:16px}
+  .simple-email-head{padding:20px 48px}
+  .simple-email-head h2{font-size:20px}
+  .simple-email-body{padding:24px 20px 22px}
+  .simple-email-foot{margin:0 16px;padding:18px 4px 22px}
+  .simple-email-design .pdfium-email-continue{width:100%}
+  .simple-email-design .terms-copy{font-size:12px}
+}
+.pdfium-email-dialog.simple-email-design h2{margin:0;padding:0;text-align:center;line-height:1.2}
+.pdfium-email-dialog.simple-email-design .simple-email-input input{width:auto;height:100%;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:transparent;font-weight:400;font-size:16px;outline:0}
+.pdfium-email-dialog.simple-email-design .simple-email-input{box-sizing:border-box;width:100%}
+.pdfium-email-dialog.simple-email-design .simple-email-head{display:block}
+.pdfium-email-dialog.simple-email-design .simple-email-head h2{display:block;width:100%;max-width:none}
