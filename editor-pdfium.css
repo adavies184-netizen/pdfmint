@@ -431,3 +431,9 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 .pdfium-email-dialog.simple-email-design .simple-email-input{box-sizing:border-box;width:100%}
 .pdfium-email-dialog.simple-email-design .simple-email-head{display:block}
 .pdfium-email-dialog.simple-email-design .simple-email-head h2{display:block;width:100%;max-width:none}
+
+/* Working circle on the email step's button while the payment page loads */
+.simple-email-design .pdfium-email-continue{position:relative}
+.simple-email-design .pdfium-email-continue.is-working{color:transparent;opacity:1;cursor:wait;background:#299b78}
+.simple-email-design .pdfium-email-continue.is-working::after{content:"";position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:emailSpin .75s linear infinite}
+@keyframes emailSpin{to{transform:rotate(360deg)}}
