@@ -247,3 +247,14 @@
   .home-v2 .contact-v2-cards{grid-template-columns:1fr}
   .home-v2 .about-hero .home-eyebrow{order:1}
 }
+
+/* Original upload cards kept inside the v2 hero (their page scripts rely on them) */
+.home-v2 .home-upload .upload-icon{width:64px;height:64px;border-radius:50%;background:var(--hm-tint);color:var(--hm-accent-strong);display:grid;place-items:center;margin:0 auto 16px;padding:15px;box-sizing:border-box}
+.home-v2 .home-upload .upload-icon svg{width:100%;height:100%}
+.home-v2 .home-upload .or-label{display:none}
+.home-v2 .home-upload .upload-button{min-width:220px;min-height:50px;font-size:16px}
+.home-v2 .home-upload h2 + p{margin-bottom:20px}
+@media (max-width:600px){
+  .home-v2 .home-upload .upload-icon,.home-v2 .home-upload .or-label{display:none}
+  .home-v2 .home-upload .upload-button{width:100%;min-height:54px;border-radius:12px}
+}

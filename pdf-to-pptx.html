@@ -19,6 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=plane-5">
+<link rel="stylesheet" href="home.css?v=4">
 <link rel="stylesheet" href="cookie-consent.css?v=consent-4">
 <script src="cookie-consent.js?v=consent-7"></script>
 <script src="analytics.js?v=advanced-consent-1"></script>
@@ -32,7 +33,7 @@
   gtag('config', 'AW-16506274922');
 </script>
 </head>
-<body data-landing-tool="pdf-to-pptx">
+<body class="home-v2" data-landing-tool="pdf-to-pptx">
   <header class="site-header">
     <div class="container nav-wrap">
       <a class="brand" href="index.html" aria-label="PDFBreeze home">
@@ -66,23 +67,20 @@
     </div>
   </header>
 
-  <main>
-    <section class="hero">
-      <div class="container hero-grid">
-        <div class="hero-copy">
-          <span class="eyebrow">Trusted by 1M+ users</span>
+<main class="home-main">
+    <section class="hero home-hero">
+      <div class="container home-hero-grid">
+        <div class="hero-copy home-hero-copy">
+          <span class="home-badge"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 19 6v5c0 4.6-2.8 8.1-7 10-4.2-1.9-7-5.4-7-10V6l7-3Z"/></svg><span>Trusted by 1M+ users</span></span>
           <h1>Convert PDF to PowerPoint with ease</h1>
           <p class="hero-subtitle">Transform PDF pages into editable PowerPoint slides ready for presenting, updating and sharing.</p>
-          <ul class="check-list">
-            <li>Works on any device</li>
-            <li>No software installation</li>
-            <li>Secure processing</li>
-            <li>Keeps your document layout intact</li>
-            <li>Supports popular file formats</li>
+          <ul class="home-checks">
+            <li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Works on any device</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>No software installation</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Secure processing</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Keeps your document layout intact</span></li>
           </ul>
+          
         </div>
 
-        <div class="upload-card" id="upload-card">
+        <div class="upload-card home-upload" id="upload-card">
           <div class="upload-icon" aria-hidden="true">
             <svg viewBox="0 0 64 64" role="img"><path d="M16 4h22l10 10v42a4 4 0 0 1-4 4H16a4 4 0 0 1-4-4V8a4 4 0 0 1 4-4Z" fill="none" stroke="currentColor" stroke-width="3"/><path d="M38 4v12h12M32 45V24m0 0-8 8m8-8 8 8" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </div>
@@ -104,124 +102,171 @@
       </div>
     </section>
 
-    <section class="section tools-section" id="tools">
+    <section class="home-section home-how">
       <div class="container">
-        <div class="section-heading centered">
-          <span class="eyebrow">EVERYDAY PDF TOOLS</span>
-          <h2>Unlimited access to 50+ PDF tools</h2>
-          <p>Use a dependable toolkit to edit, sign and convert documents quickly, wherever you are.</p>
+        <div class="home-heading">
+          <span class="home-eyebrow">How it works</span>
+          <h2>How it works in three simple steps</h2>
         </div>
-
-        <div class="tool-tabs" role="tablist">
-          <button class="tool-tab active" data-target="edit-tools">Edit PDF</button>
-          <button class="tool-tab" data-target="from-tools">Convert from PDF</button>
-          <button class="tool-tab" data-target="to-tools">Convert to PDF</button>
+        <div class="home-steps">
+          <article><div class="home-step-art" aria-hidden="true"><div class="sheet"><i></i><i></i><i></i><i></i></div><span class="bubble top"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9"/><path d="M12 12v8m0-8-3 3m3-3 3 3"/></svg></span><span class="bubble bottom"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg></span></div><h3>1. Upload your PDF</h3><p>Choose a PDF from your device or drag it onto this page. Files are transferred securely.</p></article><article><div class="home-step-art" aria-hidden="true"><div class="sheet"><i></i><i></i><i></i><i></i></div><span class="bubble top"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7"/></svg></span><span class="bubble bottom"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg></span></div><h3>2. Convert to PowerPoint</h3><p>Your pages become slides you can edit and present.</p></article><article><div class="home-step-art" aria-hidden="true"><div class="sheet"><i></i><i></i><i></i><i></i></div><span class="bubble top"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11m0 0-4-4m4 4 4-4"/><path d="M5 20h14"/></svg></span><span class="bubble bottom"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span></div><h3>3. Download your file</h3><p>Save the finished file to your device, ready to share or print.</p></article>
         </div>
+        <div class="home-steps-action"><label class="button button-primary" for="file-input"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9"/><path d="M12 12v8m0-8-3 3m3-3 3 3"/></svg><span>Upload document</span></label></div>
+      </div>
+    </section>
 
-        <div class="tool-panel active" id="edit-tools">
-          <a class="tool-card" href="png-to-pdf.html"><span class="tool-icon">✎</span><span>Edit PDF</span><small>Change text, images and pages</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">✓</span><span>Sign PDF</span><small>Add a secure electronic signature</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">⇲</span><span>Compress PDF</span><small>Reduce file size in seconds</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">◫</span><span>Add watermark</span><small>Protect and brand documents</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">↻</span><span>Rotate PDF</span><small>Turn individual pages instantly</small></a>
-          <button class="tool-card tool-card-button" type="button" data-open-tool="merge"><span class="tool-icon">⧉</span><span>Merge PDF</span><small>Combine several files into one</small></button>
-          <button class="tool-card tool-card-button" type="button" data-open-tool="split"><span class="tool-icon">✂</span><span>Split PDF</span><small>Separate selected pages</small></button>
-          <a class="tool-card" href="#"><span class="tool-icon">⌫</span><span>Delete pages</span><small>Remove pages you no longer need</small></a>
+    <section class="home-section home-why home-topic" aria-labelledby="seo-topic-title">
+      <div class="container">
+        <div class="home-heading">
+          <span class="home-eyebrow">Pdf to powerpoint</span>
+          <h2 id="seo-topic-title">Turn PDF pages into a PowerPoint presentation</h2>
+          <p>Move PDF content into PPTX format so it can be presented, reorganised and updated in Microsoft PowerPoint or compatible software.</p>
         </div>
-
-        <div class="tool-panel" id="from-tools">
-          <a class="tool-card" href="#"><span class="tool-icon">W</span><span>PDF to Word</span><small>Create editable Word documents</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">P</span><span>PDF to PPTX</span><small>Turn pages into slides</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">X</span><span>PDF to Excel</span><small>Extract tables and data</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">J</span><span>PDF to JPG</span><small>Export pages as images</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">N</span><span>PDF to PNG</span><small>Create high-quality PNG files</small></a>
+        <div class="home-why-grid">
+          <article><span class="home-why-number">01</span><h3>Rebuild presentation flow</h3><p>Use the converted pages as a starting point, then reorder slides and add speaker context where needed.</p></article><article><span class="home-why-number">02</span><h3>Review editable elements</h3><p>Complex PDF layouts may be represented differently once moved into a slide-based format.</p></article><article><span class="home-why-number">03</span><h3>Check fonts and spacing</h3><p>Open the PPTX on the presentation device and review line breaks, images and slide dimensions.</p></article>
         </div>
+        <p class="home-topic-tip"><strong>Practical tip:</strong> Keep the source PDF nearby when refining slides so important visual details can be compared.</p>
+      </div>
+    </section>
 
-        <div class="tool-panel" id="to-tools">
-          <a class="tool-card" href="#"><span class="tool-icon">W</span><span>Word to PDF</span><small>Make a polished PDF document</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">P</span><span>PPTX to PDF</span><small>Share presentations anywhere</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">X</span><span>Excel to PDF</span><small>Preserve spreadsheet formatting</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">J</span><span>JPG to PDF</span><small>Combine photos into a PDF</small></a>
-          <a class="tool-card" href="#"><span class="tool-icon">N</span><span>PNG to PDF</span><small>Convert PNG images with ease</small></a>
+    <section class="home-section home-features" aria-labelledby="feature-explorer-title">
+      <div class="container">
+        <div class="home-heading">
+          <span class="home-eyebrow">Features</span>
+          <h2 id="feature-explorer-title">Everything you need to work with PDFs</h2>
+          <p>Choose a feature to see how PDFBreeze turns everyday document jobs into a clear, focused workflow.</p>
+        </div>
+        <div class="feature-explorer home-feature-explorer">
+          <div class="feature-tabs" role="tablist" aria-label="PDFBreeze features">
+            <button class="feature-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="feature-scene-editor" data-feature="editor"><span class="feature-tab-icon">✎</span><span><strong>Edit PDFs</strong><small>Change text, add content and annotate precisely.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-sign" data-feature="sign"><span class="feature-tab-icon">⌁</span><span><strong>Sign documents</strong><small>Draw, type or upload a reusable signature.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-convert" data-feature="convert"><span class="feature-tab-icon">⇄</span><span><strong>Convert files</strong><small>Move between PDF, Word, images and more.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-organise" data-feature="organise"><span class="feature-tab-icon">▦</span><span><strong>Organise pages</strong><small>Reorder, rotate, duplicate and remove pages.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-ocr" data-feature="ocr"><span class="feature-tab-icon">⌗</span><span><strong>Recognise text</strong><small>Turn scanned pages into searchable content.</small></span><i>→</i></button>
+            <button class="feature-tab" type="button" role="tab" aria-selected="false" aria-controls="feature-scene-secure" data-feature="secure"><span class="feature-tab-icon">◇</span><span><strong>Protect documents</strong><small>Redact sensitive details and work securely.</small></span><i>→</i></button>
+          </div>
+          <div class="feature-stage" aria-live="polite">
+            <article class="feature-scene is-active" id="feature-scene-editor" data-scene="editor" role="tabpanel"><div class="scene-caption"><span>PDF EDITOR</span><strong>Edit existing text without covering the original</strong></div><div class="scene-window"><div class="scene-toolbar"><b>↶</b><b>↷</b><span>Add text</span><span class="active">Edit text</span><span>Sign</span></div><div class="scene-document"><h3>Project proposal</h3><i></i><p>Clear documents, <mark>edited with confidence</mark>.</p><p>Keep the original layout while making precise changes.</p></div></div></article>
+            <article class="feature-scene" id="feature-scene-sign" data-scene="sign" role="tabpanel" hidden><div class="scene-caption"><span>E-SIGNATURES</span><strong>Create a signature and place it exactly where it belongs</strong></div><div class="scene-window scene-sign"><div class="signature-dialog"><b>Add your signature</b><div>Draw&nbsp;&nbsp;&nbsp; Type&nbsp;&nbsp;&nbsp; Upload</div><em>Your Signature</em></div><div class="scene-document"><h3>Approval</h3><i></i><span class="placed-signature">Your Signature</span></div></div></article>
+            <article class="feature-scene" id="feature-scene-convert" data-scene="convert" role="tabpanel" hidden><div class="scene-caption"><span>FILE CONVERSION</span><strong>Convert popular formats with a simple, guided flow</strong></div><div class="scene-window scene-convert"><div class="convert-card"><b>W</b><span>Word document</span></div><strong class="convert-arrow">→</strong><div class="convert-card pdf"><b>PDF</b><span>Ready to download</span></div></div></article>
+            <article class="feature-scene" id="feature-scene-organise" data-scene="organise" role="tabpanel" hidden><div class="scene-caption"><span>PAGE MANAGER</span><strong>See every page and arrange the document visually</strong></div><div class="scene-window scene-pages"><div class="page-card"><span>1</span><i></i><i></i></div><div class="drop-line"></div><div class="page-card active"><span>2</span><i></i><i></i></div><div class="page-card"><span>3</span><i></i><i></i></div></div></article>
+            <article class="feature-scene" id="feature-scene-ocr" data-scene="ocr" role="tabpanel" hidden><div class="scene-caption"><span>TEXT RECOGNITION</span><strong>Make scanned paperwork searchable and useful again</strong></div><div class="scene-window scene-ocr"><div class="scan-page"><span></span><span></span><span></span><span></span></div><div class="ocr-beam"></div><div class="ocr-result"><b>Text recognised</b><p>Search, copy and work with the words on the page.</p></div></div></article>
+            <article class="feature-scene" id="feature-scene-secure" data-scene="secure" role="tabpanel" hidden><div class="scene-caption"><span>PRIVACY TOOLS</span><strong>Redact sensitive information before sharing</strong></div><div class="scene-window scene-secure"><div class="secure-shield">✓</div><div class="scene-document"><h3>Private statement</h3><i></i><p>Account: <mark class="redacted">0000 0000 0000</mark></p><p>Prepared securely for sharing.</p></div></div></article>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- SEO-TOPIC-START -->
-    <section class="section seo-topic-section" aria-labelledby="seo-topic-title">
-      <div class="container seo-topic-layout">
-        <div class="seo-topic-intro"><span class="eyebrow">PDF TO POWERPOINT</span><h2 id="seo-topic-title">Turn PDF pages into a PowerPoint presentation</h2><p>Move PDF content into PPTX format so it can be presented, reorganised and updated in Microsoft PowerPoint or compatible software.</p><div class="seo-topic-tips"><strong>Practical tip:</strong> Keep the source PDF nearby when refining slides so important visual details can be compared.</div></div>
-        <div class="seo-topic-grid"><article class="seo-topic-card"><span>01</span><h3>Rebuild presentation flow</h3><p>Use the converted pages as a starting point, then reorder slides and add speaker context where needed.</p></article><article class="seo-topic-card"><span>02</span><h3>Review editable elements</h3><p>Complex PDF layouts may be represented differently once moved into a slide-based format.</p></article><article class="seo-topic-card"><span>03</span><h3>Check fonts and spacing</h3><p>Open the PPTX on the presentation device and review line breaks, images and slide dimensions.</p></article></div>
-      </div>
-    </section>
-<!-- SEO-TOPIC-END -->
-
-    <section class="section reviews-section">
+    <section class="home-section home-reviews">
       <div class="container">
-        <div class="section-heading centered compact">
-          <span class="eyebrow">CUSTOMER STORIES</span>
+        <div class="home-heading">
+          <span class="home-eyebrow">Customer stories</span>
           <h2>What our users are saying</h2>
         </div>
-        <div class="review-grid">
-          <article class="review-card"><img class="customer-story-avatar" src="assets/customer-lisa-o.jpg" alt="Portrait of Lisa O." width="64" height="64" loading="lazy" decoding="async"><div class="stars">★★★★★</div><time>19 May 2026</time><h3>Exactly what I needed</h3><p>Editing a form took less than two minutes. The controls were clear and the finished PDF looked exactly right.</p><strong>Lisa O.</strong></article>
-          <article class="review-card"><img class="customer-story-avatar" src="assets/customer-chantal-r.jpg" alt="Portrait of Chantal R." width="64" height="64" loading="lazy" decoding="async"><div class="stars">★★★★★</div><time>1 April 2026</time><h3>Quick and convenient</h3><p>I signed and downloaded a contract from my phone without installing anything. It could not have been easier.</p><strong>Chantal R.</strong></article>
-          <article class="review-card"><img class="customer-story-avatar" src="assets/customer-greg-c.jpg" alt="Portrait of Greg C." width="64" height="64" loading="lazy" decoding="async"><div class="stars">★★★★★</div><time>8 February 2026</time><h3>Reliable conversions</h3><p>I regularly convert Word and spreadsheet files. The formatting stays clean and the results are consistently fast.</p><strong>Greg C.</strong></article>
+        <div class="home-review-grid">
+          <article class="home-review"><div class="home-stars" aria-label="5 out of 5 stars">★★★★★</div><h3>Exactly what I needed</h3><p>“Editing a form took less than two minutes. The controls were clear and the finished PDF looked exactly right.”</p><div class="home-review-person"><img class="customer-story-avatar" src="assets/customer-lisa-o.jpg" alt="Portrait of Lisa O." width="64" height="64" loading="lazy" decoding="async"><div><strong>Lisa O.</strong><time>19 May 2026</time></div></div></article><article class="home-review"><div class="home-stars" aria-label="5 out of 5 stars">★★★★★</div><h3>Quick and convenient</h3><p>“I signed and downloaded a contract from my phone without installing anything. It could not have been easier.”</p><div class="home-review-person"><img class="customer-story-avatar" src="assets/customer-chantal-r.jpg" alt="Portrait of Chantal R." width="64" height="64" loading="lazy" decoding="async"><div><strong>Chantal R.</strong><time>1 April 2026</time></div></div></article><article class="home-review"><div class="home-stars" aria-label="5 out of 5 stars">★★★★★</div><h3>Reliable conversions</h3><p>“I regularly convert Word and spreadsheet files. The formatting stays clean and the results are consistently fast.”</p><div class="home-review-person"><img class="customer-story-avatar" src="assets/customer-greg-c.jpg" alt="Portrait of Greg C." width="64" height="64" loading="lazy" decoding="async"><div><strong>Greg C.</strong><time>8 February 2026</time></div></div></article>
         </div>
       </div>
     </section>
 
-    <section class="section forms-section" id="forms">
+    <section class="home-section home-why">
       <div class="container">
-        <div class="forms-header">
-          <div>
-            <span class="eyebrow">READY-MADE DOCUMENTS</span>
-            <h2>Get paperwork done in minutes</h2>
-            <p>Open, complete and download commonly used forms for work, finance and everyday life.</p>
-          </div>
-          <a class="button button-outline" href="#">View all forms</a>
-        </div>
-        <div class="form-grid">
-          <a class="form-card" href="#"><div class="paper-preview"><span>W-9</span><i></i><i></i><i></i></div><h3>W-9 Form</h3><span class="text-link">View form →</span></a>
-          <a class="form-card" href="#"><div class="paper-preview"><span>DS-11</span><i></i><i></i><i></i></div><h3>DS-11 Form</h3><span class="text-link">View form →</span></a>
-          <a class="form-card" href="#"><div class="paper-preview"><span>1099</span><i></i><i></i><i></i></div><h3>1099-MISC</h3><span class="text-link">View form →</span></a>
-          <a class="form-card" href="#"><div class="paper-preview"><span>1040</span><i></i><i></i><i></i></div><h3>IRS 1040</h3><span class="text-link">View form →</span></a>
-        </div>
-      </div>
-    </section>
-
-    <section class="section difference-section">
-      <div class="container">
-        <div class="section-heading centered">
-          <span class="eyebrow">BUILT FOR SIMPLE WORKFLOWS</span>
+        <div class="home-heading">
+          <span class="home-eyebrow">Built for simple workflows</span>
           <h2>Why PDFBreeze is different</h2>
           <p>Practical, fast and secure — a complete online workspace for everyday documents.</p>
         </div>
-        <div class="feature-grid">
-          <article><span class="feature-number">01</span><h3>50+ useful PDF tools</h3><p>Edit, sign, merge, highlight, watermark, add images and organise pages in one place.</p></article>
-          <article><span class="feature-number">02</span><h3>Works in your browser</h3><p>Use PDFBreeze on desktop, tablet or mobile without downloading extra software.</p></article>
-          <article><span class="feature-number">03</span><h3>Accurate text recognition</h3><p>Turn scanned pages into searchable, editable content using modern OCR technology.</p></article>
-          <article><span class="feature-number">04</span><h3>Fast document conversion</h3><p>Convert popular formats while preserving fonts, images, spacing and page layouts.</p></article>
-          <article><span class="feature-number">05</span><h3>Made for global users</h3><p>A simple interface designed for individuals, educators and businesses worldwide.</p></article>
-          <article><span class="feature-number">06</span><h3>Privacy comes first</h3><p>Secure connections, clear retention rules and responsible handling of your files.</p></article>
+        <div class="home-why-grid">
+          <article><span class="home-why-number">01</span><h3>50+ useful PDF tools</h3><p>Edit, sign, merge, highlight, watermark, add images and organise pages in one place.</p></article><article><span class="home-why-number">02</span><h3>Works in your browser</h3><p>Use PDFBreeze on desktop, tablet or mobile without downloading extra software.</p></article><article><span class="home-why-number">03</span><h3>Accurate text recognition</h3><p>Turn scanned pages into searchable, editable content using modern OCR technology.</p></article><article><span class="home-why-number">04</span><h3>Fast document conversion</h3><p>Convert popular formats while preserving fonts, images, spacing and page layouts.</p></article><article><span class="home-why-number">05</span><h3>Made for global users</h3><p>A simple interface designed for individuals, educators and businesses worldwide.</p></article><article><span class="home-why-number">06</span><h3>Privacy comes first</h3><p>Secure connections, clear retention rules and responsible handling of your files.</p></article>
         </div>
-
-        <div class="security-banner">
-          <div class="shield">✓</div>
+        <div class="security-banner home-security">
+          <div class="shield"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></div>
           <div><h3>Your files and information stay protected</h3><p>Strong encryption and modern security practices help keep every document private.</p></div>
           <div class="security-badges"><span>SSL</span><span>GDPR</span><span>PCI</span></div>
         </div>
       </div>
     </section>
 
-    <section class="section faq-section">
-      <div class="container faq-layout">
-        <div class="faq-intro"><span class="eyebrow">HELP CENTRE</span><h2>Got questions?</h2><p>Find quick answers about PDFBreeze, document security and using our online tools.</p></div>
-        <div class="faq-list">
+    <section class="home-section home-pricing" id="pricing">
+      <div class="container">
+        <div class="home-heading">
+          <span class="home-pill"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg><span>Simple pricing</span></span>
+          <h2>Choose the access that fits your job</h2>
+          <p>Start with a low-cost seven-day option or choose annual access for regular document work.</p>
+        </div>
+        <div class="home-price-grid">
+          <article class="home-price-card">
+            <span class="home-price-icon"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="3" width="12" height="16" rx="2"/><path d="M8 21h10a2 2 0 0 0 2-2V7"/></svg></span>
+            <h3>Limited access</h3>
+            <p>Edit and download one document.</p>
+            <div class="home-price-line"><strong>£0.50</strong><span>for 7 days</span></div>
+            <small>Then £49.99 every 4 weeks unless cancelled.</small>
+            <a class="button button-outline" href="#upload-card">Start now</a>
+            <span class="home-included">Included</span>
+            <ul><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>PDF editing tools</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>One document download</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Secure browser workflow</span></li></ul>
+          </article>
+          <article class="home-price-card is-featured">
+            <span class="home-popular">Most popular</span>
+            <span class="home-price-icon"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3 2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3 6.4 20.2l1.1-6.2L3 9.6l6.2-.9L12 3Z"/></svg></span>
+            <h3>Full access</h3>
+            <p>All PDFBreeze tools for seven days.</p>
+            <div class="home-price-line"><strong>£1</strong><span>for 7 days</span></div>
+            <small>Then £49.99 every 4 weeks unless cancelled.</small>
+            <a class="button button-primary" href="#upload-card">Start now</a>
+            <span class="home-included">Included</span>
+            <ul><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>All editing and signing tools</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Conversions and page management</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Unlimited document workflows</span></li></ul>
+          </article>
+          <article class="home-price-card">
+            <span class="home-price-icon"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5a2 2 0 0 1 2-2h14v16H6a2 2 0 0 0-2 2V5Z"/><path d="M4 19a2 2 0 0 1 2-2h14"/></svg></span>
+            <h3>Annual access</h3>
+            <p>Full access throughout the year.</p>
+            <div class="home-price-line"><strong>£299.99</strong><span>per year</span></div>
+            <small>Equivalent to approximately £25 per month.</small>
+            <a class="button button-outline" href="#upload-card">Start now</a>
+            <span class="home-included">Included</span>
+            <ul><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Full PDFBreeze access</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>One annual payment</span></li><li><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4 10-10"/></svg><span>Work across desktop and mobile</span></li></ul>
+          </article>
+        </div>
+        <div class="home-renewal">
+          <div><strong>How renewal works</strong><p>The 7-day options continue at £49.99 every 4 weeks unless you cancel before your 7 days end. You can cancel from your account at any time.</p></div>
+          <a href="subscription-policy.html">Subscription policy</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section home-faq">
+      <div class="container home-faq-layout">
+        <div class="home-faq-intro">
+          <h2>Frequently asked questions</h2>
+          <p>Find quick answers about PDFBreeze, document security and using our online tools.</p>
+          <div class="home-help-card"><h3>Still need help?</h3><p>Our support team can help with your account or document workflow.</p><a class="button button-primary" href="contact.html">Contact us</a></div>
+        </div>
+        <div class="faq-list home-faq-list">
           <details open><summary>What is PDFBreeze?</summary><p>PDFBreeze is an online document service for editing, signing, organising and converting PDFs directly in your browser. The interface is designed to be quick to learn and easy to use.</p></details>
           <details><summary>Is PDFBreeze safe to use?</summary><p>PDFBreeze is being designed around encrypted transfers, limited file retention and clear privacy controls. Final policies will be published before the service accepts live customer documents.</p></details>
           <details><summary>What tools will PDFBreeze offer?</summary><p>The platform will include PDF editing, signatures, compression, merging, splitting, watermarks, page management and popular file conversions.</p></details>
           <details><summary>Do I need to install software?</summary><p>No. PDFBreeze runs in modern desktop and mobile browsers. You only need a browser and an internet connection.</p></details>
           <details><summary>Will my original formatting be preserved?</summary><p>Our goal is to retain text positioning, images, fonts and page dimensions as accurately as possible during editing and conversion.</p></details>
+        </div>
+      </div>
+    </section>
+
+    <section class="home-section home-cta-section">
+      <div class="container">
+        <div class="home-cta">
+          <span class="home-pill"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg><span>Start editing in seconds</span></span>
+          <h2>Edit, sign and convert your PDFs right in your browser</h2>
+          <p>No installation needed. Upload a document and pick up where you left off on any device.</p>
+          <div class="home-stats">
+            <div><strong>50+</strong><span>PDF tools</span></div>
+            <div><strong>100 MB</strong><span>Upload size</span></div>
+            <div><strong>Any device</strong><span>Desktop and mobile</span></div>
+          </div>
+          <div class="home-cta-actions">
+            <label class="button button-primary" for="file-input"><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 18a5 5 0 0 1-.6-9.96A6 6 0 0 1 18 9a4.5 4.5 0 0 1-.5 9"/><path d="M12 12v8m0-8-3 3m3-3 3 3"/></svg><span>Upload a document</span></label>
+            <a class="button button-outline" href="#tools">See all tools</a>
+          </div>
+          <small><svg class="home-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="11" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg> Secure processing</small>
         </div>
       </div>
     </section>
@@ -985,5 +1030,6 @@
   <script src="auth.js?v=5580"></script>
 <script src="site-nav.js?v=1"></script>
 <script src="script.js?v=lean-1"></script>
-<script src="header-auth.js?v=5632"></script></body>
+<script src="header-auth.js?v=5632"></script><script>(()=>{const tabs=[...document.querySelectorAll('.feature-tab')];const scenes=[...document.querySelectorAll('.feature-scene')];if(!tabs.length)return;const activate=tab=>{tabs.forEach(item=>{const active=item===tab;item.classList.toggle('is-active',active);item.setAttribute('aria-selected',String(active));});scenes.forEach(scene=>{const active=scene.dataset.scene===tab.dataset.feature;scene.classList.toggle('is-active',active);scene.hidden=!active;});};tabs.forEach((tab,index)=>{tab.addEventListener('click',()=>activate(tab));tab.addEventListener('keydown',event=>{if(!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;event.preventDefault();const direction=['ArrowDown','ArrowRight'].includes(event.key)?1:-1;const next=tabs[(index+direction+tabs.length)%tabs.length];next.focus();activate(next);});});})();</script>
+</body>
 </html>
