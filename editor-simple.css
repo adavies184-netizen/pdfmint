@@ -529,10 +529,8 @@ svg.ui-plane{stroke:none!important;fill:none}
   body.ui-simple .ui-tip-ok:hover{background:none;color:#14241f}
 }
 
-/* Left rail: Full editor sits in the rail, just above the line over More */
-.ui-dock-full{display:none!important}
+/* Full editor lives at the bottom of the More menu; the rail has no top-bar Full editor button */
+.ui-more-full{border-top:1px solid #eef3f1!important;border-radius:0 0 10px 10px!important;margin-top:4px}
 @media (min-width:901px){
-  body.ui-layout-rail .ui-dock-full{display:flex!important;margin-top:auto}
-  body.ui-layout-rail .ui-dock-sep{margin-top:6px}
   body.ui-layout-rail .ui-tf-right .ui-full-btn{display:none!important}
 }
