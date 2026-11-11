@@ -4884,6 +4884,8 @@ async function openAccessPage() {
     return;
   }
   document.getElementById('access-page').hidden = false;
+  const planFilename = document.getElementById('plan-filename');
+  if (planFilename) planFilename.textContent = preparedExportFilename || editor.file?.name || 'document.pdf';
   window.PDFBreezeAnalytics?.track('payment_plan_viewed', 'standard');
   loadStripeLibrary().catch(() => {});
   window.PDFMintAuth?.getSession?.().catch?.(() => {});
@@ -4972,6 +4974,8 @@ document.querySelectorAll('input[name="access-plan"]').forEach(input => {
 });
 
 document.getElementById('plan-continue').addEventListener('click', openPaymentPage);
+// Phone sticky bar: same action as the main Continue button.
+document.querySelector('[data-plan-continue]')?.addEventListener('click', () => document.getElementById('plan-continue')?.click());
 document.getElementById('back-to-plans').addEventListener('click', () => {
   if (history.state?.pdfbreezeCheckout === 'payment') history.back();
   else {

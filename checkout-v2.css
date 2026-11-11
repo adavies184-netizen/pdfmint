@@ -1,0 +1,163 @@
+/* PDFBreeze checkout v2 (November 2026)
+   Plan page (#access-page) and standard card page (#payment-page without .payment-wall-zendocs).
+   Layout follows the reference flow; colours are PDFBreeze mint. Markup, IDs, prices and Stripe hooks are unchanged. */
+
+#access-page,#payment-page:not(.payment-wall-zendocs){--co-ink:#14241f;--co-muted:#5d6f69;--co-line:#dfe8e4;--co-soft:#f5f9f7;--co-mint:#34c79a;--co-mint-d:#299b78;--co-mint-l:#e7f7f0}
+
+/* Header and progress */
+#access-page .checkout-header,#payment-page:not(.payment-wall-zendocs) .checkout-header{min-height:72px;background:#fff;border-bottom:1px solid var(--co-line)}
+#access-page .progress-step,#payment-page:not(.payment-wall-zendocs) .progress-step{gap:9px;color:#8a9a94}
+#access-page .progress-step small,#payment-page:not(.payment-wall-zendocs) .progress-step small{font-size:13px}
+#access-page .progress-step span,#payment-page:not(.payment-wall-zendocs) .progress-step span{width:24px;height:24px;border:1.5px solid #c9d6d1;background:#fff;color:#8a9a94;font-size:11px}
+#access-page .progress-step.complete,#payment-page:not(.payment-wall-zendocs) .progress-step.complete,#access-page .progress-step.current,#payment-page:not(.payment-wall-zendocs) .progress-step.current{color:var(--co-ink)}
+#access-page .progress-step.complete span,#payment-page:not(.payment-wall-zendocs) .progress-step.complete span{background:var(--co-mint-d);border-color:var(--co-mint-d);color:#fff}
+#access-page .progress-step.current span,#payment-page:not(.payment-wall-zendocs) .progress-step.current span{background:#fff;border:2px solid var(--co-mint);color:var(--co-mint-d);box-shadow:0 0 0 3px var(--co-mint-l)}
+#access-page .checkout-progress i,#payment-page:not(.payment-wall-zendocs) .checkout-progress i{width:32px;background:#d3dfda}
+
+/* Page background */
+#access-page .checkout-page,#access-page .checkout-main,#access-page .access-layout{background:var(--co-soft)!important}
+#access-page .checkout-page{min-height:100%}
+#payment-page:not(.payment-wall-zendocs) .checkout-page,#payment-page:not(.payment-wall-zendocs) .payment-main{background:var(--co-soft)}
+#access-page .checkout-main{width:min(1200px,calc(100% - 48px));padding:30px 0 64px}
+#access-page .checkout-main>h1,#payment-page:not(.payment-wall-zendocs) .payment-main>h1{margin:0 0 24px;font-size:30px;font-weight:600;letter-spacing:-.02em;color:var(--co-ink);text-align:center}
+
+/* Plan page layout */
+#access-page .access-layout{grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:28px}
+
+/* Document card */
+#access-page .document-ready-card{border:1px solid var(--co-line);border-radius:12px;background:#fff;overflow:hidden;box-shadow:0 1px 2px rgba(15,34,28,.04)}
+#access-page .ready-band{display:flex;align-items:center;justify-content:center;gap:12px;padding:16px 20px;background:var(--co-mint-l);border-bottom:1px solid #d3eee3;font-size:21px;font-weight:600;color:var(--co-ink)}
+#access-page .ready-tick{flex:none;width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(15,34,28,.08)}
+#access-page .ready-tick svg{width:18px;height:18px;fill:none;stroke:var(--co-mint-d);stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+#access-page .document-preview-frame{min-height:430px;border-radius:0;padding:22px 40px 10px;background:#fff}
+#access-page .document-preview-frame canvas{max-height:420px;box-shadow:0 2px 10px rgba(15,34,28,.12)}
+#access-page .preview-pdf-badge,#access-page .ready-status{display:none}
+#access-page .ready-file{display:flex;align-items:center;justify-content:center;gap:10px;margin:0;padding:14px 20px 18px;font-size:17px;color:var(--co-ink)}
+#access-page .ready-file strong{font-weight:500;max-width:70%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#access-page .ready-file-icon{flex:none;width:26px;height:32px;display:grid;place-items:end center;padding-bottom:5px;border:1px solid #d3ddd9;border-radius:4px;background:linear-gradient(#fff 55%,#f1f5f3);font-size:7px;font-weight:800;color:var(--co-muted)}
+
+/* Continue button */
+#access-page .plans-panel{gap:14px}
+#access-page .checkout-continue-button,#access-page .plan-sticky-continue{height:60px;border:0;border-radius:10px;background:linear-gradient(135deg,#3fd0a3,#2aa57f);color:#fff;font:600 21px Poppins,Inter,sans-serif;letter-spacing:.005em;box-shadow:0 8px 20px rgba(41,155,120,.22);cursor:pointer}
+#access-page .checkout-continue-button:hover,#access-page .plan-sticky-continue:hover{background:linear-gradient(135deg,#36c497,#23926f)}
+#access-page .checkout-continue-button:after,#access-page .plan-sticky-continue:after{content:"→";position:static;display:inline-block;margin-left:12px;transform:none;font-size:22px;font-weight:500;vertical-align:-1px}
+
+/* Plan options */
+#access-page .plan-options{gap:14px}
+#access-page .plan-option{min-height:72px;margin:0!important;padding:12px 22px 12px 16px;grid-template-columns:34px 1fr auto;gap:10px;border:1.5px solid #cfdcd7;border-radius:10px;background:#fff;box-shadow:none;overflow:hidden!important;transition:border-color .15s}
+#access-page .plan-option:hover{border-color:#a9c9bd}
+#access-page .plan-option.selected{border:2px solid var(--co-mint);background:#fff;box-shadow:0 0 0 3px rgba(52,199,154,.12)}
+#access-page .plan-check{width:26px;height:26px;border:2px solid #b9c9c3;background:#fff!important}
+#access-page .plan-option.selected .plan-check{border-color:var(--co-mint-d);background:#fff!important}
+#access-page .plan-option.selected .plan-check:after{content:"";inset:5px;border-radius:50%;background:var(--co-mint-d)}
+#access-page .plan-copy strong{font-size:18px;font-weight:600;color:var(--co-ink)}
+#access-page .plan-copy small{font-size:12px;color:var(--co-muted);margin-top:2px}
+#access-page .plan-price{position:static;min-width:0;font-size:27px;font-weight:600;color:var(--co-ink);letter-spacing:-.01em}
+#access-page .plan-price span{font-size:14px;font-weight:500;color:var(--co-muted);margin-left:3px}
+/* "Most popular" sits as a band across the top of its card */
+#access-page .plan-option.recommended{padding-top:40px}
+#access-page .recommended-ribbon{left:0!important;right:0!important;top:0!important;height:26px!important;padding:0 14px!important;place-items:center start!important;border-radius:0!important;background:#c8f0e1!important;color:#165f48!important;font:600 13px/1 Poppins,Inter,sans-serif!important;letter-spacing:0!important;text-transform:none!important;box-shadow:none!important}
+#access-page .plan-option.recommended.selected .recommended-ribbon{background:linear-gradient(90deg,#9fe5cc,#c8f0e1)!important}
+
+/* Benefits */
+#access-page .plan-benefits{grid-template-columns:1fr 1fr;gap:11px 24px;padding:6px 2px 0;background:transparent;font-size:14px;color:#3d4f49}
+#access-page .plan-benefits>div{display:flex;align-items:flex-start;gap:9px}
+#access-page .plan-benefits>div>span:first-child{flex:none;width:18px;height:18px;margin:1px 0 0;border-radius:0;background:transparent!important;color:var(--co-mint-d);font-size:15px;font-weight:700}
+#access-page .plan-benefits .benefit-unavailable>span:first-child{color:#a7b3ae!important;background:transparent!important}
+#access-page .plan-disclosure{margin:22px 0 0;padding:0;border:0;text-align:left;font-size:13px;line-height:1.55;color:var(--co-muted)}
+
+/* What happens after you pay */
+#access-page .after-pay{margin-top:48px}
+#access-page .after-pay h2{margin:0 0 16px;font-size:21px;font-weight:600;color:var(--co-ink);text-align:left}
+#access-page .after-pay-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+#access-page .after-pay-card{display:flex;flex-direction:column;gap:12px;padding:22px;border:1px solid var(--co-line);border-radius:12px;background:#fff}
+#access-page .after-pay-head{display:flex;align-items:center;gap:11px}
+#access-page .after-pay-head strong{font-size:16px;font-weight:600;color:var(--co-ink)}
+#access-page .after-pay-icon{flex:none;width:32px;height:32px;display:grid;place-items:center;border-radius:8px}
+#access-page .after-pay-icon svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+#access-page .ap-lock{background:#e5f6ef;color:#23926f}
+#access-page .ap-download{background:#e6f1fb;color:#2a74c4}
+#access-page .ap-cancel{background:#fdeeea;color:#d0573a}
+#access-page .after-pay-card p{margin:0;font-size:14px;line-height:1.5;color:var(--co-muted)}
+#access-page .after-pay-tags{display:flex;flex-wrap:wrap;gap:7px;margin-top:auto}
+#access-page .after-pay-tags>span{padding:5px 9px;border:1px solid var(--co-line);border-radius:6px;background:var(--co-soft);font-size:12px;font-weight:600;color:#3d4f49}
+.ap-visa{font:italic 900 17px/1 Arial,sans-serif;letter-spacing:-.02em;color:#1a1f71!important;background:none!important;border:0!important;padding:4px 2px!important}
+.ap-mc{position:relative;display:inline-block;width:36px;height:24px;padding:0!important;border:0!important;background:none!important}
+.ap-mc i{position:absolute;top:2px;width:20px;height:20px;border-radius:50%}
+.ap-mc i:first-child{left:2px;background:#eb001b}
+.ap-mc i:last-child{right:2px;background:#f79e1b;mix-blend-mode:multiply}
+
+/* Reviews */
+#access-page .checkout-reviews{margin-top:44px;padding:0;background:transparent}
+#access-page .checkout-reviews h2{margin:0 0 16px;font-size:21px;font-weight:600;text-align:left;color:var(--co-ink)}
+#access-page .checkout-review-grid article{padding:22px;border:1px solid var(--co-line);border-radius:12px;background:#fff}
+#access-page .checkout-review-grid strong{font-size:16px;color:var(--co-ink)}
+#access-page .checkout-review-grid p{font-size:14px;line-height:1.6;color:#3d4f49}
+#access-page .checkout-review-grid small{font-size:13px;color:var(--co-muted)}
+#access-page .review-stars{color:var(--co-mint-d);font-size:18px}
+#access-page .checkout-footer{background:#fff}
+
+/* Sticky Continue bar (phones only) */
+#access-page .plan-sticky-bar{display:none}
+
+/* Card page */
+#payment-page:not(.payment-wall-zendocs) .payment-main{width:min(1200px,calc(100% - 48px));padding:30px 0 64px}
+#payment-page:not(.payment-wall-zendocs) .payment-layout{grid-template-columns:minmax(0,1.4fr) minmax(320px,1fr);gap:26px}
+#payment-page:not(.payment-wall-zendocs) .payment-form-card,#payment-page:not(.payment-wall-zendocs) .order-summary-card{border:1px solid var(--co-line);border-radius:14px;background:#fff;box-shadow:0 1px 2px rgba(15,34,28,.04)}
+#payment-page:not(.payment-wall-zendocs) .card-info-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:28px 30px 4px}
+#payment-page:not(.payment-wall-zendocs) .card-info-head strong{font-size:19px;font-weight:600;color:var(--co-ink)}
+#payment-page:not(.payment-wall-zendocs) .card-logos{display:flex;align-items:center;gap:8px}
+#payment-page:not(.payment-wall-zendocs) .card-logos>span{display:grid;place-items:center;height:28px;min-width:44px;border:1px solid var(--co-line)!important;border-radius:5px;background:#fff!important}
+#payment-page:not(.payment-wall-zendocs) .card-logos .ap-visa{font-size:13px;padding:0 6px!important}
+#payment-page:not(.payment-wall-zendocs) .card-logos .ap-mc i{top:5px;width:16px;height:16px}
+#payment-page:not(.payment-wall-zendocs) .card-logos .ap-mc i:first-child{left:6px}
+#payment-page:not(.payment-wall-zendocs) .card-logos .ap-mc i:last-child{right:6px}
+#payment-page:not(.payment-wall-zendocs) .card-payment-panel{padding:18px 30px 30px}
+#payment-page:not(.payment-wall-zendocs) .payment-field input,#payment-page:not(.payment-wall-zendocs) .card-number-wrap{border-color:#cbd8d3}
+#payment-page:not(.payment-wall-zendocs) .pay-now-button{height:56px;border:0;border-radius:10px;background:linear-gradient(135deg,#3fd0a3,#2aa57f);color:#fff;font:600 18px Poppins,Inter,sans-serif;box-shadow:0 8px 20px rgba(41,155,120,.2)}
+#payment-page:not(.payment-wall-zendocs) .pay-now-button:hover{background:linear-gradient(135deg,#36c497,#23926f)}
+#payment-page:not(.payment-wall-zendocs) .secure-payment-note{font-size:14px;color:#3d4f49}
+
+/* Order summary: total first, then the document, then plan and what's included */
+#payment-page:not(.payment-wall-zendocs) .order-summary-card{display:flex;flex-direction:column;padding:26px 30px 28px;top:24px}
+#payment-page:not(.payment-wall-zendocs) .order-summary-card>h2{display:none}
+#payment-page:not(.payment-wall-zendocs) .order-summary-card .summary-total{order:-2;margin:0 0 18px;padding:0;border:0;align-items:baseline;font-size:20px}
+#payment-page:not(.payment-wall-zendocs) .order-summary-card .summary-total>span{font-weight:500;color:var(--co-ink)}
+#payment-page:not(.payment-wall-zendocs) .order-summary-card .summary-total>strong{font-size:27px;font-weight:700;color:var(--co-ink)}
+#payment-page:not(.payment-wall-zendocs) .summary-document{order:-1;display:flex;flex-direction:column;align-items:center;gap:10px;margin:0 auto 22px;padding:18px 24px 16px;width:min(100%,300px);border:1px solid var(--co-line);border-radius:12px;background:var(--co-soft);text-align:center}
+#payment-page:not(.payment-wall-zendocs) .summary-document canvas{width:auto;max-width:150px;max-height:190px;background:#fff}
+#payment-page:not(.payment-wall-zendocs) .summary-document strong{font-size:15px;font-weight:600;color:var(--co-ink)}
+#payment-page:not(.payment-wall-zendocs) .summary-document small{font-size:12px;color:var(--co-muted)}
+#payment-page:not(.payment-wall-zendocs) .summary-line{padding:10px 0;font-size:14px;border-top:1px solid var(--co-line)}
+#payment-page:not(.payment-wall-zendocs) .summary-line>span{font-weight:600;letter-spacing:.03em;text-transform:uppercase;font-size:13px;color:var(--co-ink)}
+#payment-page:not(.payment-wall-zendocs) .summary-line.muted{display:none}
+#payment-page:not(.payment-wall-zendocs) .summary-guarantees{display:grid;grid-template-columns:1fr 1fr;gap:10px 20px;margin-top:10px}
+#payment-page:not(.payment-wall-zendocs) .summary-guarantees>div{display:flex;align-items:center;gap:9px}
+#payment-page:not(.payment-wall-zendocs) .summary-guarantees>div>span{flex:none;width:18px;height:18px;background:transparent!important;color:var(--co-mint-d)!important;font-weight:700}
+#payment-page:not(.payment-wall-zendocs) .summary-guarantees p{margin:0;font-size:14px}
+#payment-page:not(.payment-wall-zendocs) .summary-guarantees strong{font-weight:500;color:#3d4f49}
+#payment-page:not(.payment-wall-zendocs) .renewal-box{order:5;margin-top:16px;font-size:12px}
+.payment-wall-zendocs .card-info-head{display:none}
+
+@media (max-width:900px){
+  #access-page .checkout-main,#payment-page:not(.payment-wall-zendocs) .payment-main{width:calc(100% - 32px);padding-top:20px}
+  #access-page .checkout-main>h1,#payment-page:not(.payment-wall-zendocs) .payment-main>h1{font-size:24px;text-align:left}
+  #access-page .after-pay-grid{grid-template-columns:1fr}
+  #access-page .plan-benefits{grid-template-columns:1fr}
+  #payment-page:not(.payment-wall-zendocs) .summary-guarantees{grid-template-columns:1fr}
+}
+@media (max-width:700px){
+  #access-page .checkout-main{padding-bottom:110px}
+  #access-page .plans-panel>.checkout-continue-button{display:none}
+  #access-page .plan-sticky-bar{display:block;position:fixed;left:0;right:0;bottom:0;z-index:30;padding:12px 14px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.96);border-top:1px solid var(--co-line);box-shadow:0 -8px 24px rgba(15,34,28,.1)}
+  #access-page .plan-sticky-continue{width:100%;height:54px;font-size:19px}
+  #access-page .ready-band{font-size:18px;padding:13px 16px}
+  #access-page .document-preview-frame{min-height:320px;padding:16px 20px 6px}
+  #access-page .plan-option{min-height:64px;padding:10px 14px 10px 12px;grid-template-columns:30px 1fr auto}
+  #access-page .plan-option.recommended{padding-top:36px}
+  #access-page .plan-copy strong{font-size:16px}
+  #access-page .plan-price{font-size:23px}
+  #payment-page:not(.payment-wall-zendocs) .card-info-head{padding:22px 18px 2px}
+  #payment-page:not(.payment-wall-zendocs) .card-payment-panel{padding:14px 18px 22px}
+  #payment-page:not(.payment-wall-zendocs) .order-summary-card{padding:22px 18px}
+}

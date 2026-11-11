@@ -298,3 +298,8 @@
 .home-v2 .feature-tab:nth-child(4) .feature-tab-icon{background:#7c3aed!important}
 .home-v2 .feature-tab:nth-child(5) .feature-tab-icon{background:#9333ea!important}
 .home-v2 .feature-tab:nth-child(6) .feature-tab-icon{background:#12865f!important}
+
+/* Main CTA buttons: lighter mint (November 2026) */
+.home-v2 .button-primary{background:#1fa97b;border-color:#1fa97b}
+.home-v2 .button-primary:hover,.home-v2 .button-primary:focus-visible{background:#19956c;border-color:#19956c}
+.home-v2 .upload-button{box-shadow:0 10px 22px rgba(31,169,123,.24)}

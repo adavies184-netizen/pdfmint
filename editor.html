@@ -9,7 +9,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://js.stripe.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css?v=payment-wall-2">
+<link rel="stylesheet" href="styles.css?v=plane-7">
+<link rel="stylesheet" href="checkout-v2.css?v=1">
 <script>if(new URLSearchParams(location.search).get('pdfiumCheckout')==='1')document.documentElement.classList.add('pdfium-checkout-route')</script>
 <style>
 body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}
@@ -802,11 +803,13 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
 
         <div class="access-layout">
           <section class="document-ready-card">
+            <div class="ready-band"><span class="ready-tick" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m6 12.5 4 4 8-9"/></svg></span>Your document is ready</div>
             <div class="document-preview-frame">
               <canvas id="plan-preview-canvas"></canvas>
               <span class="preview-pdf-badge">PDF</span>
             </div>
             <div class="ready-status"><strong>Done!</strong><span>Ready for download</span></div>
+            <p class="ready-file"><span class="ready-file-icon" aria-hidden="true">PDF</span><strong id="plan-filename">Document.pdf</strong></p>
           </section>
 
           <section class="plans-panel">
@@ -852,6 +855,15 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
           Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 3 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.
         </div>
 
+        <section class="after-pay" aria-labelledby="after-pay-title">
+          <h2 id="after-pay-title">What happens after you pay</h2>
+          <div class="after-pay-grid">
+            <article class="after-pay-card"><div class="after-pay-head"><span class="after-pay-icon ap-lock" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span><strong>Pay securely</strong></div><p>Card payment through Stripe. Your details are encrypted.</p><div class="after-pay-tags"><span class="ap-visa">VISA</span><span class="ap-mc" aria-label="Mastercard"><i></i><i></i></span></div></article>
+            <article class="after-pay-card"><div class="after-pay-head"><span class="after-pay-icon ap-download" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4.5-4.5M12 15l-4.5-4.5M5 20h14"/></svg></span><strong>Download instantly</strong></div><p>Your document is ready as soon as payment goes through, in the format you chose.</p><div class="after-pay-tags"><span>PDF</span><span>Word</span><span>Excel</span><span>JPG</span><span>+6</span></div></article>
+            <article class="after-pay-card"><div class="after-pay-head"><span class="after-pay-icon ap-cancel" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="m9 9 6 6m0-6-6 6"/></svg></span><strong>Cancel anytime, online</strong></div><p>Manage or cancel your access from your account whenever you like.</p><div class="after-pay-tags"><span>30-day money-back</span><span>Cancel online</span></div></article>
+          </div>
+        </section>
+
         <section class="checkout-reviews">
           <h2>What PDFBreeze users are saying</h2>
           <div class="checkout-review-grid">
@@ -861,6 +873,8 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
           </div>
         </section>
       </main>
+
+      <div class="plan-sticky-bar"><button type="button" class="plan-sticky-continue" data-plan-continue>Continue</button></div>
 
       <footer class="checkout-footer">
         <p>© 2026 Blue Ocean Ecom Ltd. All rights reserved.</p>
@@ -906,6 +920,7 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before{display:
           <h2 class="zendocs-download-title">Download Now!</h2>
 
           <section class="payment-form-card">
+            <div class="card-info-head"><strong>Card information</strong><span class="card-logos" aria-label="Visa and Mastercard accepted"><span class="ap-visa">VISA</span><span class="ap-mc"><i></i><i></i></span></span></div>
             <div class="payment-method-tabs">
               <button class="payment-method active" type="button" data-payment-method="card">Card</button>
               <button class="payment-method" type="button" data-payment-method="paypal">PayPal</button>
