@@ -150,7 +150,7 @@
       if (!steps || tipsSeen[tool] || tipsSeen.__off) return hideTip();
       tipTool = tool;
       tip.innerHTML = `<div class="ui-tip-head"><span class="ui-tip-icon">${svg(ICON[tool] || ICON.hint)}</span><div><small>How to use</small><b>${nameOf(tool)}</b></div><button type="button" class="ui-tip-x" data-tip="close" aria-label="Close tip">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button></div>
-        <ol>${steps.map(step => `<li>${step}</li>`).join('')}</ol>
+        <ol>${steps.map(step => `<li><span>${step}</span></li>`).join('')}</ol>
         <div class="ui-tip-foot"><button type="button" class="ui-tip-off" data-tip="off">Turn off tips</button><button type="button" class="ui-tip-ok" data-tip="ok">Got it</button></div>`;
       tip.classList.add('is-on');
       body.classList.add('ui-tip-on');
@@ -164,6 +164,7 @@
       hideTip();
     });
     let lastTool = '';
+    let thumbsDecided = false;
 
     // Short pop-up for error messages (the status line is hidden in simple mode)
     const toast = mount(document.createElement('div'));
@@ -261,6 +262,24 @@
       for (const id of ['pageLabel', 'zoomLabel']) {
         const text = $('#' + id)?.textContent || '';
         document.querySelectorAll(`[data-mirror="${id}"]`).forEach(node => { node.textContent = text; });
+      }
+      const pages = Number((($('#pageLabel')?.textContent || '').match(/of\s+(\d+)/) || [])[1] || 0);
+      if (pages && !thumbsDecided && body.classList.contains('ui-simple')) {
+        thumbsDecided = true;
+        const open = pages > 1;
+        body.classList.toggle('ui-thumbs-open', open);
+        // Start at 60% so the whole page is in view (uses the editor's own zoom-out button).
+        let tries = 0;
+        const zoomTo60 = () => {
+          const current = parseInt($('#zoomLabel')?.textContent || '0', 10);
+          const out = $('#zoomOut');
+          if (!current || current <= 60 || !out || out.disabled || tries++ > 6) return;
+          out.click();
+          setTimeout(zoomTo60, 90);
+        };
+        setTimeout(zoomTo60, 120);
+        $('.ui-thumbs-toggle')?.setAttribute('aria-pressed', String(open));
+        window.dispatchEvent(new Event('resize'));
       }
       const name = $('#fileName')?.textContent || 'Document';
       document.querySelectorAll('[data-ui-filename]').forEach(node => { node.textContent = name; node.parentElement.title = name; });
