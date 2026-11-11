@@ -254,7 +254,7 @@
     modeSwitch.addEventListener('click', () => apply(simpleLayout));
 
     // "More options": shows this tool's extra settings in the bar (click again to hide them).
-    const EXTRAS = { addControls: 'Fill colour, opacity, alignment', drawControls: 'Custom colour, clear page drawings', shapeControls: 'Fill colour', highlightControls: 'Squiggly, custom colour, opacity', watermarkControls: 'Size, opacity, angle, position' };
+    const EXTRAS = { addControls: 'Fill colour, opacity, alignment', drawControls: 'Custom colour, clear page drawings', shapeControls: 'Fill colour', highlightControls: 'Squiggly, custom colour, opacity', };
     for (const [id, extra] of Object.entries(EXTRAS)) {
       const box = document.getElementById(id);
       if (!box) continue;
@@ -273,6 +273,41 @@
         requestAnimationFrame(() => window.dispatchEvent(new Event('resize')));
       });
       box.appendChild(more);
+    }
+
+    // Watermark: plain-English choices instead of sliders (they drive the editor's own controls).
+    const wmBox = document.getElementById('watermarkControls');
+    if (wmBox) {
+      const pick = (label, id, options) => {
+        const input = document.getElementById(id);
+        if (!input) return null;
+        const select = document.createElement('select');
+        select.className = 'ui-wm-select';
+        select.setAttribute('aria-label', label);
+        select.innerHTML = options.map(([value, text]) => `<option value="${value}">${label}: ${text}</option>`).join('');
+        const nearest = () => {
+          const current = Number(input.value);
+          let best = options[0][0];
+          for (const [value] of options) if (Math.abs(Number(value) - current) < Math.abs(Number(best) - current)) best = value;
+          select.value = String(best);
+        };
+        nearest();
+        select.addEventListener('change', () => {
+          input.value = select.value;
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        input.addEventListener('input', nearest);
+        return select;
+      };
+      const size = pick('Size', 'watermarkSize', [['40', 'Small'], ['65', 'Medium'], ['90', 'Large']]);
+      const strength = pick('Look', 'watermarkOpacity', [['18', 'Faint'], ['35', 'Light'], ['60', 'Bold']]);
+      const angle = pick('Angle', 'watermarkAngle', [['-45', 'Diagonal'], ['0', 'Straight']]);
+      const where = pick('Position', 'watermarkVertical', [['50', 'Middle'], ['8', 'Top'], ['92', 'Bottom']]);
+      const text = wmBox.querySelector('label.wide');
+      const swatches = wmBox.querySelector('.watermark-swatches');
+      if (text) text.after(...[size, strength].filter(Boolean));
+      if (swatches) swatches.after(...[angle, where].filter(Boolean));
     }
 
     // Short instructions shown in the bar for tools with few settings.

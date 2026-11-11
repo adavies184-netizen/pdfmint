@@ -671,3 +671,11 @@ body.ui-simple #watermarkControls label:has(#watermarkVertical):before{content:"
 body.ui-simple #watermarkControls label:has(#watermarkAngle):before{content:"Angle"}
 body.ui-simple #watermarkControls label:has(#watermarkSize):before,body.ui-simple #watermarkControls label:has(#watermarkOpacity):before,body.ui-simple #watermarkControls label:has(#watermarkVertical):before,body.ui-simple #watermarkControls label:has(#watermarkAngle):before{font:500 13px Inter,sans-serif;color:#5d6f69;margin-right:2px}
 body.ui-simple #watermarkControls.ui-extras-on input[type=range]{width:80px!important;min-width:0!important}body.ui-simple #watermarkControls.ui-extras-on > label{width:auto!important;flex:none!important;padding:0 10px!important}
+
+/* Watermark: one line - text, Size, Look, colour, Angle, Position (no sliders) */
+body.ui-simple #watermarkControls > label:not(.wide),body.ui-simple #watermarkControls .wm-align{display:none!important}
+body.ui-simple #watermarkControls{flex-wrap:nowrap!important}
+body.ui-simple #watermarkControls label.wide{height:40px;padding:0 10px!important;border:1px solid #d6e1dc!important;border-radius:10px!important;background:#fff!important;display:flex!important;align-items:center}
+body.ui-simple #watermarkControls #watermarkText{border:0!important;outline:0;background:transparent!important;font:500 14px Inter,sans-serif;color:#14241f;width:170px;height:38px;padding:0!important;box-shadow:none!important}
+body.ui-simple .ui-wm-select{-webkit-appearance:none;appearance:none;height:40px;padding:0 30px 0 12px;border:1px solid #d6e1dc;border-radius:10px;background-color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235d6f69' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;background-size:14px 14px;font:500 14px Inter,sans-serif;color:#2f413b;cursor:pointer;outline:0;flex:none}
+body.ui-simple .ui-wm-select:hover{border-color:#b8cdc5}
