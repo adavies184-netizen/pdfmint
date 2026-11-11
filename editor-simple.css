@@ -340,3 +340,73 @@
 }
 /* One-line hint bubble removed (the tip card explains each tool the first time) */
 .ui-hint{display:none!important}
+
+/* ===== Simpler settings bar: one plain control style, no labels, no dividers ===== */
+.ui-bold{display:none}
+@media (min-width:901px){
+  body.ui-simple .ui-tf-sep,body.ui-simple .ui-tf-name{display:none!important}
+  body.ui-simple .ui-topfloat{gap:14px}
+  /* every control: same plain 40px button */
+  body.ui-simple #contextBar>div>label,
+  body.ui-simple #contextBar .draw-modes>button,body.ui-simple #contextBar .shape-modes>button,body.ui-simple #contextBar .highlight-modes>button,
+  body.ui-simple #contextBar .ui-colour-dd,body.ui-simple .ui-bold,body.ui-simple .ui-more-options,
+  body.ui-simple #contextBar .annotation-action,body.ui-simple #contextBar .annotation-delete,body.ui-simple #contextBar .context-action,body.ui-simple #contextBar .delete-highlight,body.ui-simple #contextBar #apply{
+    height:40px!important;min-height:40px!important;margin:0!important;border:1px solid #d6e1dc!important;border-radius:10px!important;background:#fff!important;box-shadow:none!important;font:500 14px Inter,sans-serif!important;color:#2f413b!important}
+  body.ui-simple #contextBar>div:not([hidden]){gap:8px!important}
+  body.ui-simple #contextBar .draw-modes,body.ui-simple #contextBar .shape-modes,body.ui-simple #contextBar .highlight-modes{display:flex;gap:4px;padding:0!important;border:0!important;background:none!important;box-shadow:none!important}
+  /* labels and inline icons out */
+  body.ui-simple #addControls .colour-control>span:first-child,
+  body.ui-simple #addControls .control-icon,
+  body.ui-simple #addControls .weight-control,
+  body.ui-simple .draw-select>span,body.ui-simple .draw-select>b,body.ui-simple .shape-width>span,
+  body.ui-simple .draw-modes span,body.ui-simple .shape-modes span,body.ui-simple .highlight-modes span,
+  body.ui-simple #linkControls > span:not(.annotation-icon),body.ui-simple #noteControls > span:not(.annotation-icon),body.ui-simple #cropControls > span:not(.annotation-icon),body.ui-simple #redactControls > span:not(.annotation-icon),
+  body.ui-simple #highlightControls #deleteHighlight:disabled,
+  body.ui-simple .watermark-swatches input,body.ui-simple .watermark-swatches label{display:none!important}
+  body.ui-simple .watermark-controls .field-icon{display:none!important}
+  /* icon-only mode buttons */
+  body.ui-simple #contextBar .draw-modes>button,body.ui-simple #contextBar .shape-modes>button,body.ui-simple #contextBar .highlight-modes>button{width:40px;padding:0!important;display:grid!important;place-items:center}
+  body.ui-simple #contextBar .draw-modes>button.active,body.ui-simple #contextBar .shape-modes>button.active,body.ui-simple #contextBar .highlight-modes>button.active{background:#e7f7f0!important;border-color:#9fdcc3!important;color:#1f7d60!important}
+  body.ui-simple #contextBar .draw-modes svg,body.ui-simple #contextBar .shape-modes svg,body.ui-simple #contextBar .highlight-modes svg{width:20px;height:20px}
+  /* text colour: a round dot */
+  body.ui-simple #addControls .colour-control{width:40px;padding:0!important;display:grid!important;place-items:center;position:relative}
+  body.ui-simple #addControls .colour-swatch{width:22px!important;height:22px!important;border-radius:50%!important;border:2px solid #fff!important;box-shadow:0 0 0 1px #c9d6d1!important;margin:0!important}
+  /* plain font and size controls */
+  body.ui-simple #addControls label:has(#addFont){padding:0 4px 0 10px!important}
+  body.ui-simple #addControls #addFont{border:0;background:transparent;font:500 14px Inter,sans-serif;color:#2f413b;min-width:120px;height:38px;outline:0}
+  body.ui-simple #addControls .size-control{padding:0 6px!important}
+  body.ui-simple #addControls #addFontSize{width:46px;border:0;background:transparent;font:500 14px Inter,sans-serif;text-align:center;outline:0}
+  body.ui-simple .draw-select,body.ui-simple .shape-width{padding:0 6px 0 10px!important}
+  body.ui-simple .draw-select select,body.ui-simple .shape-width select{border:0;background:transparent;font:500 14px Inter,sans-serif;height:38px;outline:0}
+  /* bold toggle */
+  body.ui-simple .ui-bold{display:grid;place-items:center;width:40px;padding:0;font:800 16px Georgia,serif!important;cursor:pointer}
+  body.ui-simple .ui-bold.is-on{background:#e7f7f0!important;border-color:#9fdcc3!important;color:#1f7d60!important}
+  /* colour dot dropdown */
+  body.ui-simple .ui-colour-dd{position:relative;display:flex!important;align-items:center;justify-content:center;width:40px;padding:0!important;gap:0}
+  body.ui-simple .ui-colour-dd>legend{display:none}
+  body.ui-simple .ui-colour-dd:not(.is-open)>button:not(.active){display:none!important}
+  body.ui-simple .ui-colour-dd:not(.is-open)>button.active{width:22px!important;height:22px!important;min-width:0!important;margin:0!important;border-radius:50%!important;box-shadow:0 0 0 1px #c9d6d1!important;border:2px solid #fff!important}
+  body.ui-simple .ui-colour-dd.is-open{width:auto}
+  body.ui-simple .ui-colour-dd.is-open{position:relative;z-index:80;flex-wrap:wrap;width:auto!important;height:auto!important;padding:6px!important;gap:6px!important;box-shadow:0 14px 34px rgba(15,34,28,.16)!important}
+  body.ui-simple .ui-colour-dd.is-open>button{width:28px!important;height:28px!important;border-radius:50%!important;margin:0!important}
+  /* settings icon */
+  body.ui-simple .ui-more-options{width:40px;padding:0!important;justify-content:center;color:#1f7d60!important;background:#f1faf6!important;border-color:#cfe9dd!important}
+  body.ui-simple .ui-more-options svg{width:19px;height:19px}
+  /* buttons that keep text (Replace text, Choose stamp...) */
+  body.ui-simple #contextBar .annotation-action,body.ui-simple #contextBar .annotation-delete,body.ui-simple #contextBar .context-action,body.ui-simple #contextBar .delete-highlight{padding:0 14px!important}
+  body.ui-simple #contextBar #apply{background:#1fa97b!important;border-color:#1fa97b!important;color:#fff!important;padding:0 16px!important;font-weight:700!important}
+  body.ui-simple #editControls>label{border:1px solid #d6e1dc!important;padding:0 10px!important}
+  body.ui-simple #editControls .replacement-label{display:none!important}
+  body.ui-simple #editControls #replacement{border:0;outline:0;font:14px Inter,sans-serif;min-width:300px;background:transparent}
+  body.ui-simple .watermark-controls .icon-field.wide{padding:0 10px!important}
+  body.ui-simple .watermark-controls #watermarkText{border:0;outline:0;font:14px Inter,sans-serif;min-width:200px;background:transparent}
+}
+@media (min-width:901px){
+  body.ui-simple #contextBar .draw-modes>button,body.ui-simple #contextBar .shape-modes>button,body.ui-simple #contextBar .highlight-modes>button{width:40px!important;min-width:40px!important;max-width:40px!important}
+  body.ui-simple #contextBar .highlight-modes>button[data-highlight-mode="squiggly"]{display:none!important}
+  body.ui-simple .ui-colour-dd input,body.ui-simple .ui-colour-dd label,body.ui-simple .ui-colour-dd span,
+  body.ui-simple #shapeControls input[type="color"],body.ui-simple #shapeControls .shape-custom{display:none!important}
+  body.ui-simple #contextBar .annotation-action:disabled,body.ui-simple #contextBar .annotation-delete:disabled{display:none!important}
+  body.ui-simple #editControls #replacement{border:0!important;box-shadow:none!important;padding:0!important;height:38px}
+}
+@media (min-width:901px){body.ui-simple #noteTutorial{display:none!important}}

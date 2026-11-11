@@ -238,11 +238,46 @@
       const more = document.createElement('button');
       more.type = 'button';
       more.className = 'ui-more-options';
-      more.title = `In the full editor: ${extra}`;
-      more.innerHTML = `${svg(ICON.sliders)}<span>More options</span>`;
+      more.title = `More options (full editor): ${extra}`;
+      more.innerHTML = `${svg(ICON.sliders)}`;
+      more.setAttribute('aria-label', `More options: ${extra}`);
       more.addEventListener('click', () => apply('advanced'));
       box.appendChild(more);
     }
+
+    // Bold as a single B button (drives the editor's own Regular/Bold menu).
+    const weight = document.getElementById('addFontWeight');
+    if (weight) {
+      const bold = document.createElement('button');
+      bold.type = 'button';
+      bold.className = 'ui-bold';
+      bold.title = 'Bold';
+      bold.setAttribute('aria-label', 'Bold');
+      bold.textContent = 'B';
+      const syncBold = () => { const on = weight.value === '700'; bold.classList.toggle('is-on', on); bold.setAttribute('aria-pressed', String(on)); };
+      bold.addEventListener('click', () => {
+        weight.value = weight.value === '700' ? '400' : '700';
+        weight.dispatchEvent(new Event('input', { bubbles: true }));
+        weight.dispatchEvent(new Event('change', { bubbles: true }));
+        syncBold();
+      });
+      weight.addEventListener('change', syncBold);
+      weight.closest('label')?.after(bold);
+      syncBold();
+    }
+
+    // Colour rows collapse to one colour dot; click it to open the palette.
+    document.querySelectorAll('.draw-colours, .shape-colours, .highlight-colours, .watermark-swatches, .redact-colours').forEach(group => {
+      group.classList.add('ui-colour-dd');
+      group.addEventListener('click', event => {
+        if (!body.classList.contains('ui-simple')) return;
+        const swatch = event.target.closest('button');
+        if (!swatch) return;
+        if (!group.classList.contains('is-open')) { event.preventDefault(); event.stopPropagation(); document.querySelectorAll('.ui-colour-dd.is-open').forEach(g => g.classList.remove('is-open')); group.classList.add('is-open'); return; }
+        setTimeout(() => group.classList.remove('is-open'), 0);
+      }, true);
+    });
+    document.addEventListener('click', event => { if (!event.target.closest('.ui-colour-dd')) document.querySelectorAll('.ui-colour-dd.is-open').forEach(g => g.classList.remove('is-open')); });
 
     // Keep the new controls in step with the editor's own state.
     const sync = () => {
