@@ -64,8 +64,7 @@
     hint: '<path d="m5 3 14 7-6 2-2 6z"/>'
   };
   const MAIN = [
-    ['add', 'Add text', 'Type anywhere, like filling in a form', 'c-blue'],
-    ['edit', 'Edit text', 'Click text on the page to change it', 'c-mint'],
+    ['add', 'Text', 'Click any text to edit it, or add new text', 'c-blue'],
     ['sign', 'Sign', 'Draw, type or upload your signature', 'c-violet'],
     ['draw', 'Draw', 'Pen, highlighter and rubber', 'c-amber'],
     ['image', 'Insert', 'Add a logo, photo or scan', 'c-blue'],
@@ -83,7 +82,7 @@
   ];
   const HINT = {
     edit: 'Click any text on the page, type your new wording, then press Replace text.',
-    add: 'Press + Add text in the top bar, then type.',
+    add: 'Click any text to edit it. Press + Add text to add new text.',
     sign: 'Create your signature, then click where it should go.',
     highlight: 'Drag across the words you want to mark.',
     image: 'Choose an image, then drag it into place.',
@@ -97,7 +96,7 @@
     redact: 'Drag across the text you want to black out.'
   };
   const TIPS = {
-    add: ['Press + Add text in the top bar.', 'Type your text.', 'Change the font, size or colour in the settings. Drag the box to move it.'],
+    add: ['Click any text on the page to edit it right there.', 'To add new text, press + Add text, then click where it should go.', 'Drag the top edge of a box to move it, or its sides to resize it. Click outside to finish.'],
     edit: ['Click the text you want to change.', 'Type your new wording in the New text box.', 'Press Replace text.'],
     sign: ['Draw, type or upload your signature.', 'Press Add signature.', 'Move it into place on the page.'],
     draw: ['Choose marker, highlighter or rubber.', 'Pick a colour and thickness.', 'Draw on the page with your mouse.'],
@@ -290,32 +289,16 @@
       syncBold();
     }
 
-    // "+ Add text": places a text box on the visible page (same as clicking the page with Add text).
+    // "+ Add text": the next click on the page places a new "Text" box there.
     const addBox = document.getElementById('addControls');
     if (addBox) {
       const addBtn = document.createElement('button');
       addBtn.type = 'button';
       addBtn.className = 'ui-add-text';
       addBtn.innerHTML = `${svg('<path d="M12 5v14M5 12h14"/>')}<span>Add text</span>`;
-      let addCount = 0;
       addBtn.addEventListener('click', () => {
-        const step = (addCount++ % 8) * 36;
         if ($('.tool-ribbon .tool.active')?.dataset.tool !== 'add') clickTool('add');
-        const overlay = document.getElementById('textOverlay');
-        const wrap = document.getElementById('pageWrap');
-        const stage = document.getElementById('stage');
-        if (!overlay || !wrap) return;
-        setTimeout(() => {
-          const r = wrap.getBoundingClientRect();
-          const s = stage ? stage.getBoundingClientRect() : { top: 0, bottom: innerHeight };
-          const padTop = stage ? (parseInt(getComputedStyle(stage).paddingTop, 10) || 0) : 0;
-          const visTop = Math.max(r.top, s.top + padTop), visBottom = Math.min(r.bottom, innerHeight - 140);
-          const top = visTop + Math.max(40, (visBottom - visTop) * 0.3) + step;
-          const fire = () => overlay.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: r.left + r.width * 0.3, clientY: Math.min(top, r.bottom - 40) }));
-          fire();
-          // If the first click only cleared a selection, place the box with a second one.
-          setTimeout(() => { if (!document.querySelector('#liveTextEditor:not([hidden]), .live-text-editor:not([hidden])')) fire(); }, 60);
-        }, 40);
+        setTimeout(() => window.pdfbreezeArmAddText?.(), 0);
       });
       addBox.prepend(addBtn);
 
