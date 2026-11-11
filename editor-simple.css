@@ -302,3 +302,34 @@
   body.ui-layout-dock.ui-thumbs-open .ui-tf-slot .context-bar>div:not([hidden]){flex-wrap:wrap!important}
 }
 @media (min-width:901px) and (prefers-reduced-motion:reduce){body.ui-layout-dock .ui-dock,body.ui-layout-dock .ui-topfloat{animation:none!important}}
+@media (min-width:901px){
+  /* Dock lines up with the page: centre it on the page area, not the whole window */
+  body.ui-layout-dock.ui-thumbs-open .ui-dock{left:calc(170px + (100% - 170px) / 2)}
+}
+@media (min-width:901px) and (max-width:1600px){
+  /* Narrower screens: page/zoom pill stands upright in the top-right corner, clear of the dock */
+  body.ui-layout-dock:not(.no-document) .ui-view{flex-direction:column;right:16px;bottom:auto;top:calc(var(--ui-card-space,92px) + 2px);padding:6px 5px;border-radius:18px;gap:2px}
+  body.ui-layout-dock .ui-view .ui-view-sep{width:20px;height:1px;margin:4px 0}
+  body.ui-layout-dock .ui-view span[data-mirror="pageLabel"]{font-size:11.5px;text-align:center;white-space:normal;width:44px;line-height:1.2}
+  body.ui-layout-dock .ui-view span[data-mirror="zoomLabel"]{font-size:11.5px}
+  body.ui-layout-dock .ui-view [data-proxy="prev"] svg{transform:rotate(90deg)}
+  body.ui-layout-dock .ui-view [data-proxy="next"] svg{transform:rotate(90deg)}
+}
+/* Dock style options (for comparison): grey and light */
+@media (min-width:901px){
+  body.dock-grey .ui-dock{background:#dfe7e3!important;border:1px solid #c3d1cb!important;box-shadow:0 18px 44px rgba(15,34,28,.2),0 1px 3px rgba(15,34,28,.1)!important}
+  body.dock-grey .ui-dock-item{color:#2f413b!important}
+  body.dock-grey .ui-dock-item:hover{background:rgba(255,255,255,.55)!important;color:#14241f!important}
+  body.dock-grey .ui-dock-item.is-active{background:#fff!important;color:#1f7d60!important}
+  body.dock-grey .ui-dock-sep{background:#c3d1cb!important}
+  body.dock-grey .ui-dock .c-grey{background:#fff;color:#4b5d57}
+  body.dock-light .ui-dock{background:#fff!important;border:1.5px solid #b9cbc3!important;box-shadow:0 20px 48px rgba(15,34,28,.22),0 2px 6px rgba(15,34,28,.1)!important}
+  body.dock-light .ui-dock-item{color:#3d4f49!important}
+  body.dock-light .ui-dock-item:hover{background:#f1f6f4!important;color:#14241f!important}
+  body.dock-light .ui-dock-item.is-active{background:#e7f7f0!important;color:#1f7d60!important}
+  body.dock-light .ui-dock-sep{background:#dbe6e1!important}
+  body.dock-light .ui-dock .c-grey{background:#eef2f1;color:#5d6f69}
+}
+@media (min-width:901px) and (max-width:1600px){
+  body.ui-layout-dock:not(.no-document) .ui-tip.is-on{top:calc(var(--ui-card-space,92px) + 2px);bottom:auto;right:76px}
+}
