@@ -2672,3 +2672,13 @@ html,body{max-width:100%;overflow-x:hidden}
 .stripe-card-field>div.StripeElement--invalid{border-color:#d92d20}
 .stripe-card-field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:600px){.checkout-step-link{padding:3px}.review-avatar{width:32px;height:32px;flex-basis:32px}.payment-assurance-row{align-items:center;gap:10px}.payment-assurance-row .digicert-secured{width:100px;height:auto;flex-basis:100px}.stripe-card-field-row{grid-template-columns:1fr 1fr}.card-payment-panel>.payment-legal-copy{text-align:center}}
+
+
+/* Paper-plane brand mark (logo concept 3, November 2026). */
+.brand-mark.brand-mark-plane{width:36px;height:36px;padding:0;border-radius:0;background:none;box-shadow:none;display:block;flex-shrink:0}
+.brand-mark-plane svg{width:100%;height:100%;display:block}
+.brand-word{font-weight:800;letter-spacing:-.6px;color:#0d3b2c}
+.brand-word b{font-weight:650;color:#1e7359}
+.brand-light .brand-word{color:#fff}
+.brand-light .brand-word b{color:#5fd8b0}
+.checkout-brand-mark.brand-mark-plane{width:40px;height:40px;padding:0;border-radius:0;background:none;box-shadow:none;display:block}
