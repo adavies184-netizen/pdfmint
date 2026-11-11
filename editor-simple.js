@@ -111,7 +111,7 @@
     crop: ['Drag over the part of the page you want to keep.', 'Confirm the crop.'],
     redact: ['Drag across the text you want to black out.', 'Check the black boxes cover everything you need hidden.']
   };
-  const TIP_KEY = 'pdfbreezeEditorTipsSeen';
+  const TIP_KEY = 'pdfbreezeEditorSnackSeen';
   const tipsSeen = (() => { try { return JSON.parse(localStorage.getItem(TIP_KEY) || '{}') || {}; } catch (_) { return {}; } })();
   const saveTips = () => { try { localStorage.setItem(TIP_KEY, JSON.stringify(tipsSeen)); } catch (_) {} };
   const moreTools = new Set(MORE.map(item => item[0]));
@@ -156,32 +156,59 @@
       <button type="button" data-proxy="prev" aria-label="Previous page">${svg('<path d="m15 18-6-6 6-6"/>')}</button><span data-mirror="pageLabel">Page 1</span><button type="button" data-proxy="next" aria-label="Next page">${svg('<path d="m9 18 6-6-6-6"/>')}</button><span class="ui-view-sep"></span>
       <button type="button" data-proxy="zoomOut" aria-label="Zoom out">${svg('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/>')}</button><span data-mirror="zoomLabel">100%</span><button type="button" data-proxy="zoomIn" aria-label="Zoom in">${svg('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/>')}</button>`;
 
-    // Tip card: how to use the chosen tool (first time per tool)
-    const tip = document.createElement('div');
-    tip.className = 'ui-tip';
-    tip.setAttribute('role', 'dialog');
-    tip.setAttribute('aria-label', 'How to use this tool');
-    $('.viewer-area')?.prepend(tip);
-    let tipTool = '';
-    const hideTip = () => { tip.classList.remove('is-on'); body.classList.remove('ui-tip-on'); };
-    const showTip = tool => {
-      const steps = TIPS[tool];
-      if (!steps || tipsSeen[tool] || tipsSeen.__off) return hideTip();
-      tipTool = tool;
-      tip.innerHTML = `<div class="ui-tip-head"><span class="ui-tip-icon">${svg(ICON[tool] || ICON.hint)}</span><div><small>How to use</small><b>${nameOf(tool)}</b></div><button type="button" class="ui-tip-x" data-tip="close" aria-label="Close tip">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button></div>
-        <ol>${steps.map(step => `<li><span>${body.classList.contains('ui-mobile') ? step.replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap').replace(/your mouse/g, 'your finger') : step}</span></li>`).join('')}</ol>
-        <div class="ui-tip-foot"><button type="button" class="ui-tip-off" data-tip="off">Turn off tips</button><button type="button" class="ui-tip-ok" data-tip="ok">Got it</button></div>`;
-      tip.classList.add('is-on');
-      body.classList.add('ui-tip-on');
+    // Snackbar: one line on how to use the chosen tool, under the top bar on the left.
+    // Shown the first time each tool is picked; fades away after a few seconds or on close.
+    const SNACK = {
+      add: 'Click any text to edit it, or press + Add text and click where it should go.',
+      sign: 'Create your signature, then drag it into place on the page.',
+      draw: 'Pick Marker, Highlighter or Rubber, then draw on the page.',
+      image: 'Choose an image from your device, then drag it into place.',
+      manage: 'Select pages to rotate, move, duplicate or delete them, then press Apply.',
+      highlight: 'Pick a style, then drag across the words you want to mark.',
+      shapes: 'Pick a shape, then drag on the page to draw it.',
+      note: 'Click on the page where the note should go.',
+      link: 'Drag a box over the area that should open the link.',
+      stamp: 'Choose a stamp. You can move and resize it afterwards.',
+      watermark: 'Type your text, then pick its size, colour and angle.',
+      crop: 'Drag over the part of the page you want to keep.',
+      redact: 'Drag across the text you want to black out.'
     };
-    tip.addEventListener('click', event => {
-      const action = event.target.closest('[data-tip]')?.dataset.tip;
-      if (!action) return;
-      if (action === 'off') tipsSeen.__off = true;
-      else tipsSeen[tipTool] = true;
+    const tip = document.createElement('div');
+    tip.className = 'ui-snack';
+    tip.setAttribute('role', 'status');
+    tip.setAttribute('aria-live', 'polite');
+    document.body.append(tip);
+    let tipTool = '', snackTimer = 0, snackHover = false;
+    const hideTip = () => { clearTimeout(snackTimer); tip.classList.remove('is-on'); };
+    const armSnackTimer = () => { clearTimeout(snackTimer); snackTimer = setTimeout(() => { if (snackHover) armSnackTimer(); else hideTip(); }, 6000); };
+    const placeSnack = () => {
+      const bar = $('.ui-topfloat'), mid = $('.ui-tf-mid');
+      if (!bar || !bar.getClientRects().length) return;
+      const r = bar.getBoundingClientRect(), m = mid?.getBoundingClientRect();
+      tip.style.left = `${Math.round(r.left)}px`;
+      tip.style.top = `${Math.round(r.bottom + 10)}px`;
+      const caret = m && m.width ? Math.max(14, Math.min(220, m.left - r.left + 16)) : 24;
+      tip.style.setProperty('--snack-caret', `${Math.round(caret)}px`);
+    };
+    const showTip = tool => {
+      const text = SNACK[tool];
+      if (!text || tipsSeen[tool] || tipsSeen.__off) return hideTip();
+      tipTool = tool;
+      tipsSeen[tool] = true;
       saveTips();
-      hideTip();
-    });
+      const phone = body.classList.contains('ui-mobile');
+      const line = phone ? text.replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap') : text;
+      tip.innerHTML = `<span class="ui-snack-i" aria-hidden="true">i</span><span class="ui-snack-text"><b>${nameOf(tool)}</b>${line}</span><button type="button" class="ui-snack-x" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button>`;
+      placeSnack();
+      tip.classList.remove('is-on');
+      void tip.offsetWidth;
+      tip.classList.add('is-on');
+      armSnackTimer();
+    };
+    tip.addEventListener('mouseenter', () => { snackHover = true; });
+    tip.addEventListener('mouseleave', () => { snackHover = false; });
+    tip.addEventListener('click', event => { if (event.target.closest('.ui-snack-x')) hideTip(); });
+    window.addEventListener('resize', () => { if (tip.classList.contains('is-on')) placeSnack(); });
     let lastTool = '';
     let thumbsDecided = false;
 

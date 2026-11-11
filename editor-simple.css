@@ -704,3 +704,22 @@ body.ui-simple .ui-wm-colour-holder .watermark-swatches.is-open{position:absolut
 body.ui-simple .ui-wm-colour-holder .watermark-swatches:not(.is-open){width:40px!important}
 body.ui-simple #contextBar .ui-wm-colour-holder .watermark-swatches.is-open{height:auto!important;min-height:0!important;flex-wrap:wrap!important;box-shadow:0 14px 34px rgba(15,34,28,.16)!important}
 body.ui-simple .watermark-swatches.is-open .ui-dd-opacity span{display:inline!important}
+
+/* Snackbar tips (replace the tip card) */
+.ui-snack{position:fixed;z-index:95;left:16px;top:96px;display:flex;align-items:center;gap:12px;max-width:min(680px,calc(100vw - 32px));padding:9px 6px 9px 14px;border-radius:12px;background:#14241f;color:#fff;font:500 14px/1.35 Inter,system-ui,sans-serif;box-shadow:0 12px 30px rgba(15,34,28,.24);opacity:0;transform:translateY(-6px);pointer-events:none;transition:opacity .2s ease,transform .2s ease;visibility:hidden}
+.ui-snack.is-on{opacity:1;transform:none;pointer-events:auto;visibility:visible}
+.ui-snack:before{content:"";position:absolute;top:-6px;left:var(--snack-caret,24px);width:12px;height:12px;background:#14241f;border-radius:2px;transform:rotate(45deg)}
+.ui-snack-i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#34c79a;color:#0f2a20;font:700 12px Georgia,serif}
+.ui-snack-text b{font-weight:700;margin-right:7px}
+.ui-snack-x{flex:none;width:30px;height:30px;display:grid;place-items:center;border:0;border-left:1px solid rgba(255,255,255,.14);border-radius:0 8px 8px 0;background:none;color:#9fb5ad;cursor:pointer;padding:0 0 0 2px}
+.ui-snack-x:hover{color:#fff}
+.ui-snack svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+body:not(.ui-simple) .ui-snack,body.no-document .ui-snack{display:none}
+@media (prefers-reduced-motion:reduce){.ui-snack{transition:none}}
+@media (max-width:900px){.ui-snack{font-size:13px;padding:8px 4px 8px 12px}.ui-snack-text{white-space:normal}}
+/* Snackbar: light version */
+.ui-snack{background:#fff;color:#14241f;border:1px solid #dbe6e1;box-shadow:0 12px 30px rgba(15,34,28,.14)}
+.ui-snack:before{background:#fff;border-left:1px solid #dbe6e1;border-top:1px solid #dbe6e1;top:-7px}
+.ui-snack-i{background:#1fa97b;color:#fff}
+.ui-snack-x{color:#7d8f89;border-left-color:#e6eeea}
+.ui-snack-x:hover{color:#14241f}
