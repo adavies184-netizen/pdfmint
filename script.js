@@ -7418,6 +7418,16 @@ async function initialiseSharedEditorRoute() {
       }
       const transferredName = sessionStorage.getItem('pdfbreezePdfiumExportName');
       if (transferredName) document.getElementById('export-filename').value = transferredName;
+      // Split points chosen in the PDF editor's Pages window: the PDF download becomes a ZIP of the parts.
+      const transferredSplit = sessionStorage.getItem('pdfbreezePdfiumSplitPoints');
+      sessionStorage.removeItem('pdfbreezePdfiumSplitPoints');
+      if (transferredSplit && preferredFormat === 'pdf') {
+        try {
+          const total = editor.pages?.length || 0;
+          const points = [...new Set(JSON.parse(transferredSplit).map(Number))].filter(n => Number.isInteger(n) && n > 0 && n < total).sort((a, b) => a - b);
+          if (points.length) { editor.splitPoints = points; editor.splitApplied = true; }
+        } catch (_) {}
+      }
       sessionStorage.removeItem('pdfbreezePdfiumExportName');
       sessionStorage.removeItem('pdfbreezePdfiumExportFormat');
       const signedInUser = await window.PDFMintAuth?.getUser?.();

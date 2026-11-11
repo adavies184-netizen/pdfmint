@@ -861,3 +861,12 @@ body:not(.ui-simple) .ui-scanbar,body.no-document .ui-scanbar{display:none}
 .ui-scan-go:disabled{opacity:.85;cursor:default}
 .ui-scan-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:uiBootSpin .8s linear infinite}
 @media (max-width:900px){.ui-scanbar{font-size:13px;flex-wrap:wrap}.ui-scan-go{order:5}}
+
+/* Split PDF: scissors between pages in the Pages window */
+.manage-split{position:absolute;right:-19px;top:38%;z-index:9;width:34px;height:34px;display:grid;place-items:center;padding:0;border:1.5px dashed #9fb3c8;border-radius:999px;background:#fff;color:#4b5b70;cursor:pointer;box-shadow:0 4px 12px #17233a1a;transition:background .15s,border-color .15s,color .15s,transform .15s}
+.manage-split svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+.manage-split:hover{border-color:#20aa7d;color:#078c68;transform:scale(1.06)}
+.manage-split.on{border-style:solid;border-color:#20aa7d;background:#20aa7d;color:#fff}
+.manage-page-unit.split-after .manage-page-paper{box-shadow:6px 0 0 -3px #fff,9px 0 0 -3px #20aa7d}
+.manage-page-unit.split-after::before{content:"";position:absolute;right:-3px;top:4px;bottom:40px;border-right:2px dashed #20aa7d;pointer-events:none}
+.ui-mp-tool.ui-mp-split.is-on{background:#e9f8f3;border-color:#a9decf;color:#078c68}

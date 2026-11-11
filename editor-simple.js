@@ -550,9 +550,13 @@
       const originalApply = applyBtn?.textContent;
       const words = () => {
         const on = simpleOn();
-        if (title) title.textContent = on ? 'Arrange your pages' : originalTitle;
-        if (intro) intro.textContent = on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
-        if (applyBtn) applyBtn.textContent = on ? 'Save page changes' : originalApply;
+        const split = window.pdfbreezeManagerSplit, splitting = Boolean(split?.mode), parts = splitting ? split.parts : 1;
+        if (title) title.textContent = splitting ? 'Split your PDF' : on ? 'Arrange your pages' : originalTitle;
+        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
+        if (applyBtn) applyBtn.textContent = parts > 1 ? `Split into ${parts} PDFs` : on ? 'Save page changes' : originalApply;
+        manage.classList.toggle('is-splitting', splitting);
+        manage.querySelector('[data-mp-split]')?.classList.toggle('is-on', splitting);
+        manage.querySelector('[data-mp-split]')?.setAttribute('aria-pressed', String(splitting));
       };
       const icon = d => `<svg class="ui-mp-ico" viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
       const demo = document.createElement('div');
@@ -565,6 +569,7 @@
         ${proxy('manageRotateRight', 'Rotate', '<path d="M21 12a9 9 0 1 1-3-6.7L21 8M21 3v5h-5"/>')}
         ${proxy('manageDuplicate', 'Duplicate', '<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/>')}
         ${proxy('manageDelete', 'Delete', '<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>', 'is-danger')}
+        <button type="button" class="ui-mp-tool ui-mp-split" data-mp-split aria-pressed="false">${icon('<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>')}<span>Split</span></button>
         ${proxy('manageMoveLeft', 'Move left', '<path d="M15 18l-6-6 6-6"/>', 'is-phone')}
         ${proxy('manageMoveRight', 'Move right', '<path d="M9 18l6-6-6-6"/>', 'is-phone')}
         <span class="ui-mp-sep"></span>
@@ -612,6 +617,7 @@
       if (grid) new MutationObserver(addTile).observe(grid, { childList: true });
       manage.addEventListener('click', event => {
         if (event.target.closest('[data-mp-add]')) { addInput.click(); return; }
+        if (event.target.closest('[data-mp-split]') && window.pdfbreezeManagerSplit) { window.pdfbreezeManagerSplit.mode = !window.pdfbreezeManagerSplit.mode; words(); return; }
         const button = event.target.closest('[data-mp]');
         if (!button) return;
         document.getElementById(button.dataset.mp)?.click();
@@ -629,6 +635,7 @@
       ['manageDelete', 'manageDuplicate', 'manageRotateRight', 'manageMoveLeft', 'manageMoveRight', 'manageUndo', 'manageRedo'].forEach(id => { const el = document.getElementById(id); if (el) watch.observe(el, { attributes: true, attributeFilter: ['disabled'] }); });
       if (count) watch.observe(count, { childList: true, characterData: true, subtree: true });
       new MutationObserver(() => { if (!manage.hidden) { words(); syncTools(); const z = parseFloat(document.getElementById('manageGrid')?.style.getPropertyValue('--manage-zoom')) || 1; sizeStep = Math.round((z - 0.7) / 0.1); size.value = String(sizeStep); } }).observe(manage, { attributes: true, attributeFilter: ['hidden'] });
+      manage.addEventListener('pdfbreeze:split', words);
       words();
       syncTools();
     }
