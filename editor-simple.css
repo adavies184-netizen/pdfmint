@@ -587,3 +587,25 @@ svg.ui-plane{stroke:none!important;fill:none}
   body.ui-trial:not(.ui-simple) .ui-mode-switch{height:40px;padding:0 12px;font-size:13px;flex:none}
 }
 .ui-layout-switch{display:none!important}
+
+/* Tool settings start at the left of the top bar (after undo/redo), like the reference */
+@media (min-width:901px){
+  body.ui-simple .ui-topfloat{grid-template-columns:auto minmax(0,1fr) auto!important}
+  body.ui-simple .ui-topfloat .ui-tf-mid{justify-self:start!important;margin-left:8px}
+  body.ui-layout-rail .ui-topfloat .ui-tf-left{display:flex!important;visibility:visible;width:auto}
+  body.ui-layout-rail .ui-topfloat .ui-tf-left .ui-file{display:none!important}
+}
+/* Labelled mode buttons (Marker / Highlighter / Rubber, shape and highlight styles) */
+@media screen{
+  body.ui-simple #contextBar .draw-modes>button,body.ui-simple #contextBar .shape-modes>button,body.ui-simple #contextBar .highlight-modes>button{width:auto!important;min-width:0!important;max-width:none!important;padding:0 12px 0 10px!important;display:inline-flex!important;align-items:center;gap:7px}
+  body.ui-simple #contextBar .draw-modes span,body.ui-simple #contextBar .shape-modes span,body.ui-simple #contextBar .highlight-modes span{display:inline!important;font:600 13.5px Inter,sans-serif;white-space:nowrap}
+  body.ui-simple #contextBar .draw-modes svg,body.ui-simple #contextBar .shape-modes svg,body.ui-simple #contextBar .highlight-modes svg{width:18px!important;height:18px!important}
+  body.ui-simple .draw-select>span,body.ui-simple .shape-width>span{display:inline!important;font:500 13px Inter,sans-serif;color:#5d6f69;margin-right:2px}
+}
+/* Peek at the next page */
+.page-peek{display:block;position:relative;margin:22px auto 0;padding:0;border:0;background:#fff;cursor:pointer;overflow:hidden;box-shadow:0 12px 35px #17233a2e;max-width:100%}
+.page-peek[hidden],body:not(.ui-simple) .page-peek{display:none!important}
+.page-peek canvas{display:block;width:100%;height:auto}
+.page-peek:after{content:"";position:absolute;inset:auto 0 0;height:45%;background:linear-gradient(rgba(238,243,241,0),#eef3f1)}
+.page-peek-label{position:absolute;z-index:1;left:50%;bottom:14px;transform:translateX(-50%);padding:7px 14px;border-radius:999px;background:#fff;border:1px solid #dbe6e1;box-shadow:0 6px 16px rgba(15,34,28,.1);font:600 13px Inter,sans-serif;color:#14241f;white-space:nowrap}
+.page-peek:hover .page-peek-label{border-color:#9fdcc3;color:#1f7d60}

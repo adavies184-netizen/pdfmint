@@ -83,7 +83,7 @@
   ];
   const HINT = {
     edit: 'Click any text on the page, type your new wording, then press Replace text.',
-    add: 'Click on the page where you want to type.',
+    add: 'Press + Add text in the top bar, then type.',
     sign: 'Create your signature, then click where it should go.',
     highlight: 'Drag across the words you want to mark.',
     image: 'Choose an image, then drag it into place.',
@@ -97,7 +97,7 @@
     redact: 'Drag across the text you want to black out.'
   };
   const TIPS = {
-    add: ['Click on the page where you want to type.', 'Type your text.', 'Change the font, size or colour in the settings. Drag the box to move it.'],
+    add: ['Press + Add text in the top bar.', 'Type your text.', 'Change the font, size or colour in the settings. Drag the box to move it.'],
     edit: ['Click the text you want to change.', 'Type your new wording in the New text box.', 'Press Replace text.'],
     sign: ['Draw, type or upload your signature.', 'Press Add signature.', 'Move it into place on the page.'],
     draw: ['Choose marker, highlighter or rubber.', 'Pick a colour and thickness.', 'Draw on the page with your mouse.'],
