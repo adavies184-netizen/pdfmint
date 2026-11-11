@@ -7706,7 +7706,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 document.addEventListener('DOMContentLoaded', () => {
   applyPdfMintLandingUploadLabel();
-  addUploadPageSupportDetails();
+  // Support line under the hero removed (November 2026 redesign).
 
   const input = document.getElementById('file-input');
   const usesDedicatedUploadFlow =

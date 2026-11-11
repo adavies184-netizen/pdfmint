@@ -258,3 +258,43 @@
   .home-v2 .home-upload .upload-icon,.home-v2 .home-upload .or-label{display:none}
   .home-v2 .home-upload .upload-button{width:100%;min-height:54px;border-radius:12px}
 }
+
+/* Step illustrations v2: three shades, subtle gradients, richer detail */
+.home-v2 .home-step-art{border:1px solid rgba(16,107,77,.10)}
+.home-v2 .home-step-art.art-upload{background:radial-gradient(120% 90% at 85% 0%,#ffffff 0,rgba(255,255,255,0) 55%),linear-gradient(155deg,#e4f6ee 0%,#c6eadb 100%)}
+.home-v2 .home-step-art.art-process{background:radial-gradient(120% 90% at 15% 0%,rgba(255,255,255,.55) 0,rgba(255,255,255,0) 55%),linear-gradient(155deg,#a9dcc6 0%,#76c3a4 100%)}
+.home-v2 .home-step-art.art-download{background:radial-gradient(120% 90% at 85% 100%,#ffffff 0,rgba(255,255,255,0) 55%),linear-gradient(155deg,#d3efe4 0%,#b2e0cf 100%)}
+.home-v2 .home-step-art .sheet i:nth-child(5){width:45%}
+.home-v2 .home-step-art .bubble.tool{top:14px;left:14%;right:auto;background:#0f2a22;color:#fff}
+.home-v2 .home-step-art .bubble.dl{left:12%;right:auto}
+.home-v2 .home-step-art.art-download .bubble.bottom{left:auto;right:12%;bottom:18px}
+.home-v2 .art-select{position:absolute;left:24%;right:24%;top:62px;height:46px;border:2px solid #12865f;border-radius:4px;background:rgba(18,134,95,.06)}
+.home-v2 .art-select b{position:absolute;width:9px;height:9px;border-radius:50%;background:#fff;border:2px solid #12865f}
+.home-v2 .art-select b:nth-child(1){left:-6px;top:-6px}.home-v2 .art-select b:nth-child(2){right:-6px;top:-6px}.home-v2 .art-select b:nth-child(3){left:-6px;bottom:-6px}.home-v2 .art-select b:nth-child(4){right:-6px;bottom:-6px}
+.home-v2 .art-select span{position:absolute;left:10px;height:5px;border-radius:3px;background:#12865f;opacity:.55}
+.home-v2 .art-select span:nth-of-type(1){top:12px;width:62%}.home-v2 .art-select span:nth-of-type(2){top:25px;width:40%}
+.home-v2 .art-chip{position:absolute;top:16px;right:12%;display:flex;gap:3px;padding:4px;border-radius:8px;background:#fff;box-shadow:0 6px 16px rgba(16,60,44,.14)}
+.home-v2 .art-chip em{font-style:normal;font-size:10px;font-weight:700;width:20px;height:20px;border-radius:5px;display:grid;place-items:center;color:#41524b;border:1px solid #e1ece7}
+.home-v2 .art-chip em.on{background:#12865f;border-color:#12865f;color:#fff}
+.home-v2 .art-ready{position:absolute;left:30%;top:64px;width:44%;padding:8px 10px;border-radius:8px;background:#fff;box-shadow:0 8px 18px rgba(16,60,44,.14);display:grid;gap:7px}
+.home-v2 .art-ready span{display:flex;align-items:center;gap:6px}
+.home-v2 .art-ready small{font-size:8px;font-weight:800;color:#5b6b65;letter-spacing:.3px}
+.home-v2 .art-ready i{flex:1;height:5px;border-radius:3px;background:#12865f}
+.home-v2 .art-ready i.half{background:linear-gradient(90deg,#12865f 55%,#dcebe5 55%)}
+.home-v2 .art-ready .home-icon{width:12px;height:12px;color:#12865f;stroke-width:3}
+
+/* Feature showcase: deeper green gradient panel, light caption text */
+.home-v2 .home-feature-explorer .feature-stage{background:radial-gradient(90% 70% at 100% 0%,rgba(255,255,255,.18) 0,rgba(255,255,255,0) 60%),linear-gradient(160deg,#6fae96 0%,#3f826b 100%);border-color:#3f826b}
+.home-v2 .home-feature-explorer .scene-caption span{color:#d7f3e7}
+.home-v2 .home-feature-explorer .scene-caption strong{color:#ffffff}
+.home-v2 .home-step-art{height:190px}
+.home-v2 .home-step-art .art-select{top:70px;height:52px}
+.home-v2 .home-step-art .art-ready{top:72px}
+/* Feature list icons: one colour per feature */
+.home-v2 .feature-tab .feature-tab-icon{color:#fff!important;border:0!important}
+.home-v2 .feature-tab:nth-child(1) .feature-tab-icon{background:#2563eb!important}
+.home-v2 .feature-tab:nth-child(2) .feature-tab-icon{background:#4f46e5!important}
+.home-v2 .feature-tab:nth-child(3) .feature-tab-icon{background:#0891b2!important}
+.home-v2 .feature-tab:nth-child(4) .feature-tab-icon{background:#7c3aed!important}
+.home-v2 .feature-tab:nth-child(5) .feature-tab-icon{background:#9333ea!important}
+.home-v2 .feature-tab:nth-child(6) .feature-tab-icon{background:#12865f!important}
