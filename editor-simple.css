@@ -528,3 +528,11 @@ svg.ui-plane{stroke:none!important;fill:none}
   body.ui-simple .ui-tip-ok{height:30px;padding:0 4px;background:none;color:#1f7d60}
   body.ui-simple .ui-tip-ok:hover{background:none;color:#14241f}
 }
+
+/* Left rail: Full editor sits in the rail, just above the line over More */
+.ui-dock-full{display:none!important}
+@media (min-width:901px){
+  body.ui-layout-rail .ui-dock-full{display:flex!important;margin-top:auto}
+  body.ui-layout-rail .ui-dock-sep{margin-top:6px}
+  body.ui-layout-rail .ui-tf-right .ui-full-btn{display:none!important}
+}

@@ -199,6 +199,7 @@
     dock.className = 'ui-dock';
     dock.setAttribute('aria-label', 'Editing tools');
     dock.innerHTML = `<a class="ui-rail-logo" href="index.html" title="PDFBreeze home">${PLANE}</a>${MAIN.map(([tool, title, , colour]) => `<button type="button" class="ui-dock-item" data-ui-tool="${tool}"><span class="ui-dock-icon ${colour}">${svg(ICON[tool])}</span>${title}</button>`).join('')}
+      <button type="button" class="ui-dock-item ui-dock-full" data-ui-advanced title="Open the full editor: every tool and setting"><span class="ui-dock-icon c-grey">${svg(ICON.sliders)}</span>Full editor</button>
       <span class="ui-dock-sep" aria-hidden="true"></span>
       <button type="button" class="ui-dock-item ui-dock-more" aria-expanded="false"><span class="ui-dock-icon c-grey">${svg(ICON.more)}</span>More</button>
       <div class="ui-dock-menu" hidden><div class="ui-dock-menu-head">More tools</div>${MORE.map(([tool, title, text]) => `<button type="button" class="ui-more-item" data-ui-tool="${tool}">${svg(ICON[tool])}<span><b>${title}</b><small>${text}</small></span></button>`).join('')}<div class="ui-dock-menu-foot ui-open-slot"></div></div>`;
