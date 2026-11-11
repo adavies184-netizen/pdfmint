@@ -538,7 +538,8 @@
     };
     const spaceForCard = () => {
       if (!body.classList.contains('ui-layout-dock')) return;
-      const bottom = topFloat.getBoundingClientRect().bottom || 72;
+      // Layout position (ignores the slide-in animation, so the page doesn't jump once it finishes).
+      const bottom = topFloat.offsetHeight ? topFloat.offsetTop + topFloat.offsetHeight : 72;
       body.style.setProperty('--ui-card-space', `${Math.max(84, Math.round(bottom + 14))}px`);
     };
     if ('ResizeObserver' in window) new ResizeObserver(spaceForCard).observe(topFloat);
