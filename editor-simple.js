@@ -281,7 +281,7 @@
     modeSwitch.addEventListener('click', () => apply(simpleLayout));
 
     // "More options": shows this tool's extra settings in the bar (click again to hide them).
-    const EXTRAS = { addControls: 'Fill colour, opacity, alignment', drawControls: 'Custom colour, clear page drawings', shapeControls: 'Fill colour', highlightControls: 'Squiggly, custom colour, opacity', };
+    const EXTRAS = { addControls: 'Fill colour, opacity, alignment', shapeControls: 'Fill colour', highlightControls: 'Squiggly, custom colour, opacity', };
     for (const [id, extra] of Object.entries(EXTRAS)) {
       const box = document.getElementById(id);
       if (!box) continue;
@@ -440,6 +440,14 @@
       });
       drawColours.addEventListener('click', event => { if (event.target.closest('.draw-swatch')) rgb.classList.remove('is-on'); });
       drawColours.append(rgb);
+    }
+    // Clear page drawings: a bin icon in the bar (undo brings them back).
+    const clearBtn = document.getElementById('clearDrawings');
+    if (clearBtn) {
+      clearBtn.classList.add('ui-clear-draw');
+      clearBtn.title = 'Clear page drawings';
+      clearBtn.setAttribute('aria-label', 'Clear page drawings');
+      clearBtn.innerHTML = `${svg('<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6"/>')}<span>Clear page drawings</span>`;
     }
     const drawBox = document.getElementById('drawControls');
     const drawColourInput = document.getElementById('drawColour');

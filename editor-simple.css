@@ -764,3 +764,9 @@ body.ui-simple .ui-rgb:after{content:"";position:absolute;inset:7px;border-radiu
 body.ui-simple .ui-rgb.is-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa97b}
 body.ui-simple .ui-rgb input{position:absolute;inset:0;width:100%!important;height:100%!important;opacity:0;cursor:pointer;border:0;padding:0;display:block!important}
 body.ui-simple #drawControls .draw-custom{display:none!important}
+/* Draw: bin icon to clear the page's drawings */
+body.ui-simple #contextBar #drawControls #clearDrawings.ui-clear-draw{display:grid!important;place-items:center;width:40px!important;height:40px!important;padding:0!important;border:0!important;border-radius:10px!important;background:transparent!important;color:#4b5d57!important;cursor:pointer;box-shadow:none!important}
+body.ui-simple #contextBar #drawControls #clearDrawings.ui-clear-draw:hover{background:#fdecec!important;color:#c0392b!important}
+body.ui-simple #drawControls #clearDrawings.ui-clear-draw svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+body.ui-simple #drawControls #clearDrawings.ui-clear-draw span{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+body.ui-simple #drawControls{position:relative}
