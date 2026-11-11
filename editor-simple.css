@@ -511,3 +511,20 @@ svg.ui-plane{stroke:none!important;fill:none}
   body.ui-layout-dock .ui-topfloat .ui-tf-left .ui-file{display:none!important}
   body.ui-simple #editControls #replacement{min-width:200px!important}
 }
+
+/* Tip design 4: minimal white card, green left edge, bullet steps, text-only Got it */
+@media (min-width:901px){
+  body.ui-simple:not(.no-document) .ui-tip.is-on{width:340px;border:1px solid #e3ebe7;border-left:4px solid #1fa97b;border-radius:12px;box-shadow:0 12px 32px rgba(15,34,28,.12)}
+  body.ui-simple .ui-tip-head{background:none;border-bottom:0;padding:14px 10px 2px 16px}
+  body.ui-simple .ui-tip-icon{display:none}
+  body.ui-simple .ui-tip-head small{font-size:10.5px;color:#1f7d60}
+  body.ui-simple .ui-tip-head b{font-size:16px}
+  body.ui-simple .ui-tip-x{color:#8a9a94}
+  body.ui-simple .ui-tip-x:hover{background:#f1f6f4;color:var(--ui-ink)}
+  body.ui-simple .ui-tip ol{padding:8px 16px 4px;gap:6px}
+  body.ui-simple .ui-tip li{font-size:13.5px;color:#4a5b55;padding-left:2px}
+  body.ui-simple .ui-tip li:before{content:"";width:6px;height:6px;margin:8px 4px 0 0;background:#1fa97b}
+  body.ui-simple .ui-tip-foot{padding:10px 16px 12px;border-top:1px solid #eef3f1;margin-top:8px}
+  body.ui-simple .ui-tip-ok{height:30px;padding:0 4px;background:none;color:#1f7d60}
+  body.ui-simple .ui-tip-ok:hover{background:none;color:#14241f}
+}
