@@ -396,6 +396,35 @@
       if (swatches && angle) (swatches.closest('.ui-wm-colour-holder') || swatches).after(angle);
     }
 
+    // Draw: illustrated pen, highlighter and rubber that stand up from the bottom of the bar.
+    const DRAW_ICONS = {
+      marker: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><rect x="3.5" y="15" width="9" height="30" rx="2.6" fill="#eef1f4" stroke="#9aa4ae" stroke-width=".9"/><rect x="3.5" y="15" width="3" height="30" rx="1.4" fill="#fff"/><rect x="10.2" y="15" width="2.3" height="30" rx="1" fill="#d5dbe1"/><rect x="3.5" y="18" width="9" height="1.8" fill="#c6ced6"/><path d="M3.8 15.2 L6.6 7.8 Q8 6.6 9.4 7.8 L12.2 15.2 Z" fill="#e3e8ec" stroke="#9aa4ae" stroke-width=".9" stroke-linejoin="round"/><path d="M6.2 9.6 L8 4.6 L9.8 9.6 Z" fill="var(--ink,#2f7ae5)"/></svg>',
+      highlighter: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><rect x="2.5" y="19" width="11" height="26" rx="2.4" fill="#f6c343" stroke="#b8891a" stroke-width=".9"/><rect x="2.5" y="19" width="3.4" height="26" rx="1.6" fill="#ffe08a"/><rect x="10.6" y="19" width="2.9" height="26" rx="1.2" fill="#e0a92a"/><rect x="2.5" y="15.5" width="11" height="4.5" rx="1" fill="#e9eef2" stroke="#9aa4ae" stroke-width=".8"/><path d="M3.6 15.6 L5.4 9.8 L10.6 9.8 L12.4 15.6 Z" fill="#dfe5ea" stroke="#9aa4ae" stroke-width=".9" stroke-linejoin="round"/><path d="M5.4 9.8 L6 4.6 L10.6 6.4 L10.6 9.8 Z" fill="var(--ink,#f6c343)" stroke="#b8891a" stroke-width=".7" stroke-linejoin="round"/></svg>',
+      rubber: '<svg class="ui-tool-art" viewBox="0 0 16 44" aria-hidden="true"><rect x="1.8" y="12" width="12.4" height="33" rx="3" fill="#f4a6b4" stroke="#c76b7e" stroke-width=".9"/><rect x="1.8" y="12" width="4" height="33" rx="2" fill="#ffd0d8"/><rect x="11" y="12" width="3.2" height="33" rx="1.5" fill="#e48799"/><rect x="1.8" y="22" width="12.4" height="7" fill="#fff" stroke="#c76b7e" stroke-width=".7"/></svg>'
+    };
+    document.querySelectorAll('#drawControls .draw-mode').forEach(button => {
+      const art = DRAW_ICONS[button.dataset.mode];
+      if (!art) return;
+      button.querySelector('svg')?.remove();
+      button.insertAdjacentHTML('afterbegin', art);
+      // The editor styles toolbar icons as outlines; keep these drawings' own colours.
+      button.querySelectorAll('svg.ui-tool-art *').forEach(node => {
+        for (const prop of ['fill', 'stroke', 'stroke-width', 'stroke-linejoin', 'opacity']) {
+          const value = node.getAttribute(prop);
+          if (value) node.style.setProperty(prop, value, 'important');
+        }
+        if (!node.getAttribute('stroke')) node.style.setProperty('stroke', 'none', 'important');
+      });
+      button.setAttribute('aria-label', button.title || button.textContent.trim());
+      button.classList.add('ui-art-tool');
+    });
+    const drawBox = document.getElementById('drawControls');
+    const drawColourInput = document.getElementById('drawColour');
+    const inkSync = () => { if (drawBox && drawColourInput) drawBox.style.setProperty('--ink', drawColourInput.value); };
+    drawColourInput?.addEventListener('input', inkSync);
+    drawBox?.addEventListener('click', () => setTimeout(inkSync, 0));
+    inkSync();
+
     // Short instructions shown in the bar for tools with few settings.
     const HINTS = {
       noteControls: 'Click on the page where the note should go.',

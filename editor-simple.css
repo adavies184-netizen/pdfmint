@@ -723,3 +723,13 @@ body:not(.ui-simple) .ui-snack,body.no-document .ui-snack{display:none}
 .ui-snack-i{background:#1fa97b;color:#fff}
 .ui-snack-x{color:#7d8f89;border-left-color:#e6eeea}
 .ui-snack-x:hover{color:#14241f}
+
+/* Draw: illustrated tools standing up from the bottom of the bar; the chosen one rises */
+body.ui-simple #contextBar .draw-modes{gap:2px!important;align-self:stretch;align-items:flex-end!important;margin:-14px 0 -14px!important;height:68px}
+body.ui-simple #contextBar .draw-modes>button.ui-art-tool{position:relative;width:40px!important;min-width:40px!important;max-width:40px!important;height:68px!important;min-height:0!important;padding:0!important;border:0!important;border-radius:10px 10px 0 0!important;background:transparent!important;overflow:hidden;display:block!important;cursor:pointer}
+body.ui-simple #contextBar .draw-modes>button.ui-art-tool span{position:absolute!important;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+body.ui-simple #contextBar .draw-modes>button.ui-art-tool svg.ui-tool-art{position:absolute;left:50%;bottom:-20px;width:22px!important;height:60px!important;transform:translateX(-50%);transition:bottom .18s ease;filter:drop-shadow(0 1px 1px rgba(15,34,28,.18))}
+body.ui-simple #contextBar .draw-modes>button.ui-art-tool:hover svg.ui-tool-art{bottom:-13px}
+body.ui-simple #contextBar .draw-modes>button.ui-art-tool.active svg.ui-tool-art{bottom:-3px}
+body.ui-simple #contextBar .draw-modes>button.ui-art-tool.active{background:linear-gradient(#fff0,#e7f7f0)!important}
+@media (max-width:900px){body.ui-simple #contextBar .draw-modes{margin:-6px 0 -6px!important;height:52px}body.ui-simple #contextBar .draw-modes>button.ui-art-tool{height:52px!important}body.ui-simple #contextBar .draw-modes>button.ui-art-tool svg.ui-tool-art{bottom:-24px}body.ui-simple #contextBar .draw-modes>button.ui-art-tool.active svg.ui-tool-art{bottom:-8px}}
