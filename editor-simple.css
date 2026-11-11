@@ -733,3 +733,19 @@ body.ui-simple #contextBar .draw-modes>button.ui-art-tool:hover svg.ui-tool-art{
 body.ui-simple #contextBar .draw-modes>button.ui-art-tool.active svg.ui-tool-art{bottom:-3px}
 body.ui-simple #contextBar .draw-modes>button.ui-art-tool.active{background:linear-gradient(#fff0,#e7f7f0)!important}
 @media (max-width:900px){body.ui-simple #contextBar .draw-modes{margin:-6px 0 -6px!important;height:52px}body.ui-simple #contextBar .draw-modes>button.ui-art-tool{height:52px!important}body.ui-simple #contextBar .draw-modes>button.ui-art-tool svg.ui-tool-art{bottom:-24px}body.ui-simple #contextBar .draw-modes>button.ui-art-tool.active svg.ui-tool-art{bottom:-8px}}
+
+/* Thickness: icon button + slider popover */
+body.ui-simple .draw-select,body.ui-simple .shape-width{display:none!important}
+.ui-thick{display:none}
+body.ui-simple .ui-thick{position:relative;display:inline-block;flex:none}
+body.ui-simple .ui-thick-btn{width:40px;height:40px;display:grid;place-items:center;padding:0;border:1px solid #d6e1dc;border-radius:10px;background:#fff;color:#2f413b;cursor:pointer}
+body.ui-simple .ui-thick-btn:hover{border-color:#b8cdc5}
+body.ui-simple .ui-thick-btn.is-on{border-color:#9fdcc3;background:#e7f7f0;color:#1f7d60}
+body.ui-simple .ui-thick-btn svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-linecap:round}
+body.ui-simple .ui-thick-pop{position:absolute;z-index:90;left:0;top:calc(100% + 8px);width:220px;padding:10px 12px 12px;background:#fff;border:1px solid #d6e1dc;border-radius:12px;box-shadow:0 14px 34px rgba(15,34,28,.16)}
+body.ui-simple .ui-thick-pop[hidden]{display:none}
+body.ui-simple .ui-thick-row{display:flex;justify-content:space-between;align-items:center;font:500 12.5px Inter,sans-serif;color:#5d6f69;margin-bottom:6px}
+body.ui-simple .ui-thick-row output{font-weight:600;color:#2f413b}
+body.ui-simple .ui-thick-pop input{display:block!important;width:100%;accent-color:#1fa97b;margin:0}
+body.ui-simple .ui-thick-preview{height:26px;display:flex;align-items:center;margin-top:6px;padding:0 4px}
+body.ui-simple .ui-thick-preview i{display:block;width:100%;border-radius:20px;background:var(--ink,#142038)}

@@ -425,6 +425,39 @@
     drawBox?.addEventListener('click', () => setTimeout(inkSync, 0));
     inkSync();
 
+    // Thickness: an icon button that opens a small slider (drives the editor's own Thickness menu).
+    const thicknessPicker = select => {
+      if (!select) return;
+      const values = [...select.options].map(option => option.value);
+      const holder = document.createElement('span');
+      holder.className = 'ui-thick';
+      holder.innerHTML = `<button type="button" class="ui-thick-btn" aria-haspopup="true" aria-expanded="false" title="Thickness" aria-label="Thickness">${svg('<path d="M4 6h16" stroke-width="1.2"/><path d="M4 11.5h16" stroke-width="2.4"/><path d="M4 18h16" stroke-width="4"/>')}</button>
+        <div class="ui-thick-pop" hidden><div class="ui-thick-row"><span>Thickness</span><output></output></div><input type="range" min="0" max="${values.length - 1}" step="1" aria-label="Thickness"><div class="ui-thick-preview"><i></i></div></div>`;
+      const button = holder.querySelector('.ui-thick-btn'), pop = holder.querySelector('.ui-thick-pop'), range = holder.querySelector('input'), out = holder.querySelector('output'), line = holder.querySelector('.ui-thick-preview i');
+      const show = () => {
+        const index = Math.max(0, values.indexOf(select.value));
+        range.value = String(index);
+        out.textContent = `${select.value} px`;
+        line.style.height = `${Math.min(22, Math.max(1, Number(select.value)))}px`;
+      };
+      const setOpen = open => { pop.hidden = !open; button.setAttribute('aria-expanded', String(open)); button.classList.toggle('is-on', open); if (open) show(); };
+      button.addEventListener('click', event => { event.stopPropagation(); setOpen(pop.hidden); });
+      pop.addEventListener('click', event => event.stopPropagation());
+      range.addEventListener('input', () => {
+        select.value = values[Number(range.value)] || select.value;
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        show();
+      });
+      document.addEventListener('click', () => setOpen(false));
+      document.addEventListener('keydown', event => { if (event.key === 'Escape') setOpen(false); });
+      select.addEventListener('change', show);
+      select.closest('label')?.after(holder);
+      show();
+    };
+    thicknessPicker(document.getElementById('drawThickness'));
+    thicknessPicker(document.getElementById('shapeThickness'));
+
     // Short instructions shown in the bar for tools with few settings.
     const HINTS = {
       noteControls: 'Click on the page where the note should go.',
