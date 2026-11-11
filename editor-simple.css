@@ -2,7 +2,7 @@
 .ui-panel,.ui-dock,.ui-dock-card,.ui-hint,.ui-tip,.ui-view,.ui-toast,.ui-corner{display:none}
 .ui-mode-switch{display:none}
 
-@media (min-width:901px){
+@media screen{
   body.ui-trial:not(.ui-simple) .ui-mode-switch{display:inline-flex;align-items:center;height:40px;padding:0 14px;border-radius:10px;font-weight:600;font-size:14px;white-space:nowrap}
 
   body.ui-simple{--ui-mint:#34c79a;--ui-mint-d:#299b78;--ui-mint-l:#e7f7f0;--ui-ink:#14241f;--ui-muted:#5d6f69;--ui-line:#e1eae6;background:#eef3f1;overflow:hidden}
@@ -157,7 +157,7 @@
 
 /* Dock layout: tool settings float at the top (under the corners) instead of over the page;
    the tip card and hint sit just above the dock, next to the tools. */
-@media (min-width:901px){
+@media screen{
   body.ui-layout-dock .ui-dock-card{top:68px;bottom:auto;max-width:min(1100px,calc(100vw - 32px));padding:8px 12px;border-radius:14px}
   body.ui-layout-dock .ui-dock-card .context-bar{min-height:44px}
   body.ui-layout-dock .ui-dock-card .context-bar>div:not([hidden]){justify-content:center}
@@ -168,14 +168,14 @@
   @keyframes uiTipUp{from{opacity:0;transform:translate(-50%,6px)}}
   body.ui-layout-dock.ui-menu-open .ui-tip{display:none!important}
 }
-@media (min-width:901px){
+@media screen{
   body.ui-layout-dock .ui-dock-card{left:0;right:0;margin:0 auto;width:max-content;transform:none}
   body.ui-layout-dock .ui-dock-card .context-bar>div:not([hidden]){flex-wrap:wrap;overflow:visible!important;width:auto!important;max-width:100%}
 }
 
 /* ===== November 2026 update: one floating top bar (dock), Full editor entry points, simplified settings ===== */
 .ui-topfloat,.ui-full-card,.ui-more-options{display:none}
-@media (min-width:901px){
+@media screen{
   body.ui-trial:not(.ui-simple) .ui-mode-switch{gap:7px}
   .ui-mode-switch svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
@@ -242,7 +242,7 @@
   body.ui-simple #editControls > label{flex:1 1 320px}
 }
 
-@media (min-width:901px){
+@media screen{
   .ui-options-slot .shape-modes,.ui-options-slot .draw-modes,.ui-options-slot .highlight-modes{flex-wrap:wrap}
   body.ui-simple #linkControls > span,body.ui-simple #noteControls > span,body.ui-simple #cropControls > span,body.ui-simple #redactControls > span{font-size:13px;color:#5d6f69;white-space:normal;max-width:460px}
   body.ui-trial:not(.ui-simple) .document-name{min-width:0;overflow:hidden}
@@ -251,10 +251,10 @@
 @media (min-width:901px) and (max-width:1180px){body.ui-trial:not(.ui-simple) .ui-mode-switch span{display:none}}
 
 @media (min-width:1281px){body.ui-layout-dock .ui-tf-slot .context-bar>div:not([hidden]){flex-wrap:nowrap!important}}
-@media (min-width:901px){body.ui-simple #watermarkControls .wm-align{display:contents}}
+@media screen{body.ui-simple #watermarkControls .wm-align{display:contents}}
 
 /* ===== Dock stands out, tip card on the right, page strip open by default ===== */
-@media (min-width:901px){
+@media screen{
   /* Dark dock */
   .ui-dock{background:#14241f!important;border:1px solid #14241f!important;box-shadow:0 20px 48px rgba(10,30,24,.38),0 2px 6px rgba(10,30,24,.2)!important;backdrop-filter:none!important;padding:10px 12px!important;gap:6px!important}
   .ui-dock-item{color:#cfe0d9!important;font-weight:600}
@@ -288,7 +288,7 @@
   body.ui-simple.ui-thumbs-open .sidebar{padding-top:12px}
   body.ui-layout-dock.ui-thumbs-open .ui-topfloat{left:186px}
 }
-@media (min-width:901px){
+@media screen{
   /* Dock slides up into place when the editor opens */
   body.ui-layout-dock:not(.no-document) .ui-dock{animation:uiDockUp .55s cubic-bezier(.2,.9,.25,1.15) both .15s}
   @keyframes uiDockUp{from{opacity:0;transform:translate(-50%,70px) scale(.96)}to{opacity:1;transform:translate(-50%,0) scale(1)}}
@@ -301,8 +301,8 @@
   body.ui-thumbs-open .ui-tf-left{max-width:150px}
   body.ui-layout-dock.ui-thumbs-open .ui-tf-slot .context-bar>div:not([hidden]){flex-wrap:wrap!important}
 }
-@media (min-width:901px) and (prefers-reduced-motion:reduce){body.ui-layout-dock .ui-dock,body.ui-layout-dock .ui-topfloat{animation:none!important}}
-@media (min-width:901px){
+@media (prefers-reduced-motion:reduce){body.ui-layout-dock .ui-dock,body.ui-layout-dock .ui-topfloat{animation:none!important}}
+@media screen{
   /* Dock lines up with the page: centre it on the page area, not the whole window */
   body.ui-layout-dock.ui-thumbs-open .ui-dock{left:calc(170px + (100% - 170px) / 2)}
 }
@@ -316,7 +316,7 @@
   body.ui-layout-dock .ui-view [data-proxy="next"] svg{transform:rotate(90deg)}
 }
 /* Dock style options (for comparison): grey and light */
-@media (min-width:901px){
+@media screen{
   body.dock-grey .ui-dock{background:#dfe7e3!important;border:1px solid #c3d1cb!important;box-shadow:0 18px 44px rgba(15,34,28,.2),0 1px 3px rgba(15,34,28,.1)!important}
   body.dock-grey .ui-dock-item{color:#2f413b!important}
   body.dock-grey .ui-dock-item:hover{background:rgba(255,255,255,.55)!important;color:#14241f!important}
@@ -333,7 +333,7 @@
 @media (min-width:901px) and (max-width:1600px){
   body.ui-layout-dock:not(.no-document) .ui-tip.is-on{top:calc(var(--ui-card-space,92px) + 2px);bottom:auto;right:76px}
 }
-@media (min-width:901px){
+@media screen{
   /* Light dock: dark hint pill so the two don't merge */
   body.dock-light.ui-layout-dock:not(.no-document):not(.ui-tip-on) .ui-hint{background:#14241f;color:#fff;border-color:#14241f;box-shadow:0 8px 22px rgba(15,34,28,.2)}
   body.dock-light.ui-layout-dock .ui-hint b{color:#7fe3c1}
@@ -343,7 +343,7 @@
 
 /* ===== Simpler settings bar: one plain control style, no labels, no dividers ===== */
 .ui-bold{display:none}
-@media (min-width:901px){
+@media screen{
   body.ui-simple .ui-tf-sep,body.ui-simple .ui-tf-name{display:none!important}
   body.ui-simple .ui-topfloat{gap:14px}
   /* every control: same plain 40px button */
@@ -401,7 +401,7 @@
   body.ui-simple .watermark-controls .icon-field.wide{padding:0 10px!important}
   body.ui-simple .watermark-controls #watermarkText{border:0;outline:0;font:14px Inter,sans-serif;min-width:200px;background:transparent}
 }
-@media (min-width:901px){
+@media screen{
   body.ui-simple #contextBar .draw-modes>button,body.ui-simple #contextBar .shape-modes>button,body.ui-simple #contextBar .highlight-modes>button{width:40px!important;min-width:40px!important;max-width:40px!important}
   body.ui-simple #contextBar .highlight-modes>button[data-highlight-mode="squiggly"]{display:none!important}
   body.ui-simple .ui-colour-dd input,body.ui-simple .ui-colour-dd label,body.ui-simple .ui-colour-dd span,
@@ -409,9 +409,9 @@
   body.ui-simple #contextBar .annotation-action:disabled,body.ui-simple #contextBar .annotation-delete:disabled{display:none!important}
   body.ui-simple #editControls #replacement{border:0!important;box-shadow:none!important;padding:0!important;height:38px}
 }
-@media (min-width:901px){body.ui-simple #noteTutorial{display:none!important}}
+@media screen{body.ui-simple #noteTutorial{display:none!important}}
 .ui-add-text,.ui-size-select{display:none}
-@media (min-width:901px){
+@media screen{
   /* No file name; logo only */
   body.ui-simple .ui-file span{display:none!important}
   body.ui-simple .ui-tf-left{max-width:none}
@@ -430,7 +430,7 @@
 
 /* ===== Left rail layout (PDFSmart-style simple mode) ===== */
 .ui-rail-logo{display:none}
-@media (min-width:901px){
+@media screen{
   body.ui-layout-rail .ui-rail-logo{display:grid;place-items:center;width:56px;height:52px;margin:2px auto 8px;border-bottom:1px solid #e3ebe7;padding-bottom:8px}
   body.ui-layout-rail .ui-rail-logo svg{width:32px;height:32px}
   body.ui-layout-rail .ui-tf-left{display:none}
@@ -464,7 +464,7 @@
   body.ui-layout-rail .ui-dock-icon{width:36px;height:36px}
 }
 @media (min-width:901px) and (max-width:1366px){body.ui-layout-rail:not(.no-document) .ui-tip.is-on{bottom:76px!important}}
-@media (min-width:901px){
+@media screen{
   /* B / U / I: plain, no border, like the reference */
   body.ui-simple #addControls .add-style-toggles{display:flex;gap:2px}
   body.ui-simple .ui-bold,body.ui-simple #addControls .add-style-toggle{width:36px!important;height:36px!important;min-height:36px!important;border:0!important;background:transparent!important;box-shadow:none!important;border-radius:8px!important;color:#3d4f49!important;font:600 16px Georgia,'Times New Roman',serif!important;display:grid;place-items:center;cursor:pointer;padding:0!important}
@@ -473,7 +473,7 @@
   body.ui-simple .ui-bold.is-on,body.ui-simple #addControls .add-style-toggle.active{background:#e7f7f0!important;color:#1f7d60!important}
   body.ui-simple #addControls>.ui-bold{margin-right:-6px!important}
 }
-@media (min-width:901px){
+@media screen{
   /* Settings group centred in the top bar (over the page) */
   body.ui-simple .ui-topfloat{display:grid!important;grid-template-columns:minmax(0,1fr) auto minmax(max-content,1fr);align-items:center}
   body.ui-simple .ui-topfloat .ui-tf-left{justify-self:start}
@@ -491,7 +491,7 @@
 }
 /* Logo: never inherit the toolbar icon outline (kept the brand colours exact) */
 svg.ui-plane{stroke:none!important;fill:none}
-@media (min-width:901px){
+@media screen{
   body.ui-simple .ui-topfloat .ui-tf-left{display:flex!important;align-items:center;gap:8px;visibility:visible!important;width:auto!important}
   body.ui-layout-rail .ui-topfloat .ui-tf-left .ui-file{display:none}
   body.ui-simple .ui-topfloat .ui-tf-left .ui-history{margin-left:2px}
@@ -513,7 +513,7 @@ svg.ui-plane{stroke:none!important;fill:none}
 }
 
 /* Tip design 4: minimal white card, green left edge, bullet steps, text-only Got it */
-@media (min-width:901px){
+@media screen{
   body.ui-simple:not(.no-document) .ui-tip.is-on{width:340px;border:1px solid #e3ebe7;border-left:4px solid #1fa97b;border-radius:12px;box-shadow:0 12px 32px rgba(15,34,28,.12)}
   body.ui-simple .ui-tip-head{background:none;border-bottom:0;padding:14px 10px 2px 16px}
   body.ui-simple .ui-tip-icon{display:none}
@@ -531,6 +531,58 @@ svg.ui-plane{stroke:none!important;fill:none}
 
 /* Full editor lives at the bottom of the More menu; the rail has no top-bar Full editor button */
 .ui-more-full{border-top:1px solid #eef3f1!important;border-radius:0 0 10px 10px!important;margin-top:4px}
-@media (min-width:901px){
+@media screen{
   body.ui-layout-rail .ui-tf-right .ui-full-btn{display:none!important}
+}
+
+/* ===== Phones: simple editor (bottom dock + floating top bar) ===== */
+@media (max-width:900px){
+  body.ui-mobile{height:100dvh;overflow:hidden}
+  body.ui-mobile .editor-shell,body.ui-mobile .editor-shell.sidebar-hidden{display:block!important;height:100dvh!important;margin:0!important;flex:none!important}
+  body.ui-mobile .sidebar,body.ui-mobile .ui-thumbs-toggle,body.ui-mobile .ui-layout-switch,body.ui-mobile .ui-full-btn,body.ui-mobile .ui-tf-name,body.ui-mobile .ui-tf-left .ui-file span,body.ui-mobile .ui-dock-sep,body.ui-mobile .ui-rail-logo{display:none!important}
+  body.ui-mobile .viewer-area{height:100dvh}
+  body.ui-mobile .stage{height:100dvh;overflow:auto;padding:var(--ui-card-space,124px) 8px 150px!important}
+
+  /* top bar: logo, undo/redo, Download; tool settings scroll underneath */
+  body.ui-mobile .ui-topfloat{display:grid!important;grid-template-columns:auto minmax(0,1fr) auto;grid-template-areas:"l . r" "m m m";left:8px;right:8px;top:8px;gap:6px 6px;padding:6px 6px 6px 10px;border-radius:16px;animation:none!important}
+  body.ui-mobile .ui-tf-left{grid-area:l;display:flex;align-items:center;gap:4px;max-width:none}
+  body.ui-mobile .ui-tf-left .ui-history button{width:36px;height:36px}
+  body.ui-mobile .ui-tf-right{grid-area:r}
+  body.ui-mobile .ui-tf-right .ui-download-sm{height:38px;padding:0 14px;font-size:14px;border-radius:11px}
+  body.ui-mobile .ui-tf-right .ui-download-sm svg{width:17px;height:17px}
+  body.ui-mobile .ui-tf-mid{grid-area:m;display:block;min-width:0;contain:inline-size;justify-self:stretch!important;width:auto!important;margin:0 -6px 0 -10px;padding:6px 6px 0 10px;border-top:1px solid #eef3f1;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+  body.ui-mobile .ui-tf-mid::-webkit-scrollbar{display:none}
+  body.ui-mobile .ui-tf-slot{max-width:none;width:max-content;min-width:100%}
+  body.ui-mobile .ui-tf-slot .context-bar>div:not([hidden]){flex-wrap:nowrap!important;justify-content:flex-start!important;gap:6px!important;min-width:max-content!important;padding:0!important}
+  body.ui-mobile .ui-tf-slot .context-bar>div:not([hidden])>*{flex:none}
+  body.ui-mobile .ui-tf-slot .context-bar input[type=text],body.ui-mobile .ui-tf-slot .context-bar textarea{max-width:170px}
+
+  /* bottom dock: full width */
+  body.ui-mobile .ui-dock{position:fixed!important;left:0!important;right:0!important;bottom:0!important;top:auto!important;transform:none!important;width:auto!important;display:flex!important;flex-direction:row!important;justify-content:space-between;gap:0!important;padding:6px 4px calc(6px + env(safe-area-inset-bottom))!important;border-radius:18px 18px 0 0!important;border-width:1px 0 0!important;animation:none!important;box-shadow:0 -8px 24px rgba(15,34,28,.08)!important}
+  body.ui-mobile .ui-dock-item{flex:1 1 0;width:auto!important;min-width:0;padding:4px 0 2px!important;gap:3px!important;font-size:10.5px!important;line-height:1.15;border-radius:12px;text-align:center}
+  body.ui-mobile .ui-dock-icon{width:38px!important;height:38px!important;border-radius:11px!important}
+  body.ui-mobile .ui-dock-icon svg{width:20px!important;height:20px!important}
+
+  /* More tools sheet */
+  body.ui-mobile .ui-dock-menu{position:fixed!important;left:8px!important;right:8px!important;bottom:calc(76px + env(safe-area-inset-bottom))!important;top:auto!important;width:auto!important;max-height:calc(100dvh - 190px);overflow:auto;border-radius:16px!important}
+
+  /* page and zoom pill above the dock */
+  body.ui-mobile:not(.no-document) .ui-view{position:fixed!important;left:50%!important;right:auto!important;top:auto!important;bottom:calc(84px + env(safe-area-inset-bottom))!important;transform:translateX(-50%)!important;flex-direction:row!important;width:auto!important;height:38px!important;padding:0 4px!important;gap:2px!important}
+  body.ui-mobile .ui-view button{width:32px!important;height:32px!important}
+  body.ui-mobile .ui-view span{font-size:12.5px!important;writing-mode:horizontal-tb!important}
+
+  /* tips sit above the page pill */
+  body.ui-mobile:not(.no-document) .ui-tip.is-on{position:fixed!important;left:8px!important;right:8px!important;top:auto!important;bottom:calc(132px + env(safe-area-inset-bottom))!important;width:auto!important;transform:none!important}
+  body.ui-mobile .ui-toast{bottom:calc(132px + env(safe-area-inset-bottom))!important}
+}
+@media (max-width:900px){
+  body.ui-mobile .ui-tip-head{padding:12px 8px 0 14px}
+  body.ui-mobile .ui-tip-head b{font-size:15px}
+  body.ui-mobile .ui-tip ol{padding:6px 14px 2px;gap:4px}
+  body.ui-mobile .ui-tip li{font-size:13px}
+  body.ui-mobile .ui-tip-foot{padding:6px 14px 8px;margin-top:6px}
+}
+@media (max-width:760px){
+  body.ui-trial:not(.ui-simple) .brand{font-size:0;gap:0}
+  body.ui-trial:not(.ui-simple) .ui-mode-switch{height:40px;padding:0 12px;font-size:13px;flex:none}
 }

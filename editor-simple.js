@@ -150,7 +150,7 @@
       if (!steps || tipsSeen[tool] || tipsSeen.__off) return hideTip();
       tipTool = tool;
       tip.innerHTML = `<div class="ui-tip-head"><span class="ui-tip-icon">${svg(ICON[tool] || ICON.hint)}</span><div><small>How to use</small><b>${nameOf(tool)}</b></div><button type="button" class="ui-tip-x" data-tip="close" aria-label="Close tip">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button></div>
-        <ol>${steps.map(step => `<li><span>${step}</span></li>`).join('')}</ol>
+        <ol>${steps.map(step => `<li><span>${body.classList.contains('ui-mobile') ? step.replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap').replace(/your mouse/g, 'your finger') : step}</span></li>`).join('')}</ol>
         <div class="ui-tip-foot"><button type="button" class="ui-tip-off" data-tip="off">Turn off tips</button><button type="button" class="ui-tip-ok" data-tip="ok">Got it</button></div>`;
       tip.classList.add('is-on');
       body.classList.add('ui-tip-on');
@@ -368,7 +368,8 @@
       const pages = Number((($('#pageLabel')?.textContent || '').match(/of\s+(\d+)/) || [])[1] || 0);
       if (pages && !thumbsDecided && body.classList.contains('ui-simple')) {
         thumbsDecided = true;
-        const open = pages > 1 && !body.classList.contains('ui-layout-rail');
+        const phone = body.classList.contains('ui-mobile');
+        const open = pages > 1 && !phone && !body.classList.contains('ui-layout-rail');
         body.classList.toggle('ui-thumbs-open', open);
         // Start at 60% so the whole page is in view (uses the editor's own zoom-out button).
         let tries = 0;
@@ -379,7 +380,7 @@
           out.click();
           setTimeout(zoomTo60, 90);
         };
-        setTimeout(zoomTo60, 120);
+        if (!phone) setTimeout(zoomTo60, 120);
         $('.ui-thumbs-toggle')?.setAttribute('aria-pressed', String(open));
         window.dispatchEvent(new Event('resize'));
       }
@@ -414,11 +415,12 @@
       layout = next;
       save(next);
       if (LAYOUTS.includes(next)) simpleLayout = next;
-      // Phones keep today's editor; the trial layouts are desktop only.
-      const shown = desktop.matches ? next : 'advanced';
+      // Phones get the bottom-dock layout (styled for small screens); Full editor stays available.
+      const shown = desktop.matches ? next : (next === 'advanced' ? 'advanced' : 'mobile');
+      body.classList.toggle('ui-mobile', shown === 'mobile');
       body.classList.toggle('ui-simple', shown !== 'advanced');
       body.classList.toggle('ui-layout-panel', shown === 'panel');
-      body.classList.toggle('ui-layout-dock', shown === 'dock' || shown === 'rail');
+      body.classList.toggle('ui-layout-dock', shown === 'dock' || shown === 'rail' || shown === 'mobile');
       body.classList.toggle('ui-layout-rail', shown === 'rail');
       // Layout icon cycles: left rail -> bottom dock -> task panel -> left rail
       const nextOf = { rail: 'dock', dock: 'panel', panel: 'rail' };
@@ -429,14 +431,14 @@
         button.title = `Switch to the ${label[target]} layout`;
         button.setAttribute('aria-label', button.title);
       });
-      body.classList.toggle('ui-trial', desktop.matches);
+      body.classList.toggle('ui-trial', true);
       // Move the tool settings bar and "Open another PDF" into the active layout; put them back for Advanced mode.
       if (shown === 'panel') $('.ui-options-slot', panel).appendChild(contextBar);
-      else if (shown === 'dock' || shown === 'rail') dockCard.appendChild(contextBar);
+      else if (shown === 'dock' || shown === 'rail' || shown === 'mobile') dockCard.appendChild(contextBar);
       else contextHome.parent.insertBefore(contextBar, contextHome.next);
       if (openAnother && openHome) {
         if (shown === 'panel') $('.ui-open-slot', panel).appendChild(openAnother);
-        else if (shown === 'dock' || shown === 'rail') $('.ui-open-slot', dock).appendChild(openAnother);
+        else if (shown === 'dock' || shown === 'rail' || shown === 'mobile') $('.ui-open-slot', dock).appendChild(openAnother);
         else openHome.parent.insertBefore(openAnother, openHome.next);
       }
       closeDockMenu();
