@@ -329,6 +329,7 @@
           sync();
         });
         input.addEventListener('input', sync);
+        input.addEventListener('ui-sync', sync);
         sync();
         return group;
       };
@@ -683,6 +684,15 @@
       if (!active && lastTool === 'add' && body.classList.contains('ui-simple') && !body.classList.contains('no-document')) { setTimeout(() => { if (!$('.tool-ribbon .tool.active')) clickTool('add'); }, 30); }
       document.querySelectorAll('[data-ui-tool]').forEach(button => button.classList.toggle('is-active', button.dataset.uiTool === active));
       dockMore.classList.toggle('is-active', moreTools.has(active));
+      // When a tool from More tools is in use, the More button shows that tool (it still opens the menu).
+      const moreKey = moreTools.has(active) ? active : '';
+      if (dockMore.dataset.showing !== moreKey) {
+        dockMore.dataset.showing = moreKey;
+        dockMore.innerHTML = moreKey
+          ? `<span class="ui-dock-icon c-mint">${svg(ICON[moreKey] || ICON.more)}<i class="ui-more-dot" aria-hidden="true">•••</i></span>${nameOf(moreKey)}`
+          : `<span class="ui-dock-icon c-grey">${svg(ICON.more)}</span>More tools`;
+        dockMore.title = moreKey ? `${nameOf(moreKey)} (click for more tools)` : 'More tools';
+      }
       if (moreTools.has(active) && moreList.hidden) { moreList.hidden = false; moreToggle.setAttribute('aria-expanded', 'true'); }
       const title = $('[data-ui-options-title]', panel);
       if (title) title.textContent = `${nameOf(active)} settings`;
