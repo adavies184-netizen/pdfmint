@@ -25,7 +25,10 @@
     add: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     sign: '<path d="M3 17c3-1 4-9 7-9s0 8 3 8 3-4 5-4 2 2 3 2"/><path d="M3 21h18"/>',
     highlight: '<path d="m9 11-4 4v3h3l4-4"/><path d="m9 11 6-6 4 4-6 6z"/><path d="M14 20h7"/>',
-    image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="2"/><path d="m21 17-5-5-9 8"/>',
+    image: '<path d="M7 18a4.5 4.5 0 0 1-.6-8.96A6 6 0 0 1 18 9.5a4 4 0 0 1-.5 8.5"/><path d="M12 12v8m0-8-3 3m3-3 3 3"/>',
+    layoutPanel: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M15 4v16"/>',
+    layoutDock: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 16h10"/>',
+    right: '<path d="m9 18 6-6-6-6"/>',
     manage: '<rect x="4" y="3" width="11" height="14" rx="2"/><path d="M9 21h9a2 2 0 0 0 2-2V8"/>',
     more: '<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',
     draw: '<path d="M3 21c2-6 6-14 9-14s-1 9 2 9 3-5 7-6"/>',
@@ -48,7 +51,7 @@
     ['edit', 'Edit text', 'Click text on the page to change it', 'c-mint'],
     ['sign', 'Sign', 'Draw, type or upload your signature', 'c-violet'],
     ['draw', 'Draw', 'Pen, highlighter and rubber', 'c-amber'],
-    ['image', 'Add image', 'Logo, photo or scan', 'c-blue'],
+    ['image', 'Insert', 'Add a logo, photo or scan', 'c-blue'],
     ['manage', 'Pages', 'Rotate, reorder or delete pages', 'c-mint']
   ];
   const MORE = [
@@ -72,7 +75,7 @@
     note: 'Click on the page to place a note.',
     link: 'Drag over the area that should open the link.',
     stamp: 'Pick a stamp, then click where it goes.',
-    watermark: 'Type your watermark, then apply it to the pages.',
+    watermark: 'Type your watermark text and pick a colour.',
     crop: 'Drag over the part of the page you want to keep.',
     redact: 'Drag across the text you want to black out.'
   };
@@ -81,14 +84,14 @@
     edit: ['Click the text you want to change.', 'Type your new wording in the New text box.', 'Press Replace text.'],
     sign: ['Draw, type or upload your signature.', 'Press Add signature.', 'Move it into place on the page.'],
     draw: ['Choose marker, highlighter or rubber.', 'Pick a colour and thickness.', 'Draw on the page with your mouse.'],
-    image: ['Choose an image from your device.', 'Drag it into place on the page.'],
+    image: ['Choose an image from your device: a logo, photo or scan.', 'Drag it into place on the page.'],
     manage: ['Click pages to select them.', 'Rotate, move, duplicate or delete them.', 'Press Apply to save the changes.'],
     highlight: ['Choose highlight, underline, squiggly or strikethrough.', 'Drag across the words you want to mark.'],
     shapes: ['Pick a shape: box, circle, line, tick or cross.', 'Drag on the page to draw it.'],
     note: ['Click on the page where the note should go.', 'Type your message in the box that opens.'],
     link: ['Drag over the area that should be clickable.', 'Enter the web address or page to open.'],
     stamp: ['Pick a stamp design, or make your own.', 'Click on the page where it should go.'],
-    watermark: ['Type your watermark text.', 'Choose its size, colour and angle.', 'Apply it to your pages.'],
+    watermark: ['Type your watermark text.', 'Pick a colour. It appears on the page as you type.', 'For size, angle or position, use More options.'],
     crop: ['Drag over the part of the page you want to keep.', 'Confirm the crop.'],
     redact: ['Drag across the text you want to black out.', 'Check the black boxes cover everything you need hidden.']
   };
@@ -120,8 +123,8 @@
     const modeSwitch = document.createElement('button');
     modeSwitch.type = 'button';
     modeSwitch.className = 'button secondary ui-mode-switch';
-    modeSwitch.textContent = 'Simple mode';
-    modeSwitch.title = 'Back to the simple editor';
+        modeSwitch.title = 'Back to the simple editor';
+    modeSwitch.innerHTML = `${svg('<path d="M15 18 9 12l6-6"/>')}<span>Simple mode</span>`;
     topActions.prepend(modeSwitch);
 
     // Hint pill above the page
@@ -176,24 +179,24 @@
     panel.className = 'ui-panel';
     panel.setAttribute('aria-label', 'Editing tools');
     panel.innerHTML = `
-      <div class="ui-panel-top">${fileHtml}${historyHtml}</div>
+      <div class="ui-panel-top">${fileHtml}<button type="button" class="ui-layout-switch" data-ui-layout="dock" title="Switch to the bottom dock layout" aria-label="Switch to the bottom dock layout">${svg(ICON.layoutDock)}</button>${historyHtml}</div>
       <div class="ui-panel-head"><h2>What would you like to do?</h2><p>Pick a tool, then click on the page.</p></div>
       <div class="ui-panel-scroll">
         <div class="ui-tasks">${MAIN.map(([tool, title, text, colour]) => `<button type="button" class="ui-task" data-ui-tool="${tool}"><span class="ui-task-icon ${colour}">${svg(ICON[tool])}</span><span><b>${title}</b><small>${text}</small></span></button>`).join('')}</div>
+        <button type="button" class="ui-full-card" data-ui-advanced><span class="ui-full-icon">${svg(ICON.sliders)}</span><span><b>Need more control?</b><small>Open the full editor: every tool and setting.</small></span>${svg(ICON.right)}</button>
         <div class="ui-options"><div class="ui-options-head">${svg(ICON.sliders)}<b data-ui-options-title>Tool settings</b></div><div class="ui-options-slot"></div></div>
         <button type="button" class="ui-more-toggle" aria-expanded="false">${svg(ICON.more)}<span>More tools <small>highlight, shapes, notes, stamps…</small></span>${svg(ICON.chev)}</button>
         <div class="ui-more-list" hidden>${MORE.map(([tool, title, text]) => `<button type="button" class="ui-more-item" data-ui-tool="${tool}">${svg(ICON[tool])}<span><b>${title}</b><small>${text}</small></span></button>`).join('')}</div>
       </div>
       <div class="ui-panel-foot"><button type="button" class="ui-download" data-proxy="download">${svg(ICON.download)}<span>Download</span></button>
-        <div class="ui-foot-links"><span class="ui-open-slot"></span><button type="button" class="ui-link" data-ui-advanced>Advanced mode</button></div></div>`;
+        <div class="ui-foot-links"><span class="ui-open-slot"></span><button type="button" class="ui-link" data-ui-advanced>Full editor</button></div></div>`;
 
-    // Layout B: bottom dock, with two small floating corners
-    const dockLeft = mount(document.createElement('div'));
-    dockLeft.className = 'ui-corner ui-corner-left';
-    dockLeft.innerHTML = fileHtml;
-    const dockRight = mount(document.createElement('div'));
-    dockRight.className = 'ui-corner ui-corner-right';
-    dockRight.innerHTML = `${historyHtml}<button type="button" class="ui-link" data-ui-advanced>Advanced mode</button><button type="button" class="ui-download ui-download-sm" data-proxy="download">${svg(ICON.download)}<span>Download</span></button>`;
+    // Layout B: bottom dock, with one floating bar at the top (file, tool settings, actions)
+    const topFloat = mount(document.createElement('div'));
+    topFloat.className = 'ui-topfloat';
+    topFloat.innerHTML = `<div class="ui-tf-left">${fileHtml}</div><span class="ui-tf-sep"></span>
+      <div class="ui-tf-mid"><span class="ui-tf-name" data-ui-tool-name></span><div class="ui-tf-slot"></div></div><span class="ui-tf-sep"></span>
+      <div class="ui-tf-right"><button type="button" class="ui-layout-switch" data-ui-layout="panel" title="Switch to the task panel layout" aria-label="Switch to the task panel layout">${svg(ICON.layoutPanel)}</button>${historyHtml}<button type="button" class="ui-full-btn" data-ui-advanced>${svg(ICON.sliders)}<span>Full editor</span></button><button type="button" class="ui-download ui-download-sm" data-proxy="download">${svg(ICON.download)}<span>Download</span></button></div>`;
     const dock = mount(document.createElement('nav'));
     dock.className = 'ui-dock';
     dock.setAttribute('aria-label', 'Editing tools');
@@ -201,8 +204,7 @@
       <span class="ui-dock-sep" aria-hidden="true"></span>
       <button type="button" class="ui-dock-item ui-dock-more" aria-expanded="false"><span class="ui-dock-icon c-grey">${svg(ICON.more)}</span>More</button>
       <div class="ui-dock-menu" hidden><div class="ui-dock-menu-head">More tools</div>${MORE.map(([tool, title, text]) => `<button type="button" class="ui-more-item" data-ui-tool="${tool}">${svg(ICON[tool])}<span><b>${title}</b><small>${text}</small></span></button>`).join('')}<div class="ui-dock-menu-foot ui-open-slot"></div></div>`;
-    const dockCard = mount(document.createElement('div'));
-    dockCard.className = 'ui-dock-card';
+    const dockCard = $('.ui-tf-slot', topFloat);
 
     // Behaviour
     const isOwn = node => own.some(el => el.contains(node));
@@ -211,6 +213,8 @@
       const proxy = event.target.closest('[data-proxy]');
       if (proxy) { $('#' + proxy.dataset.proxy)?.click(); return; }
       if (event.target.closest('[data-ui-advanced]')) { apply('advanced'); return; }
+      const swap = event.target.closest('[data-ui-layout]');
+      if (swap) { apply(swap.dataset.uiLayout); return; }
       if (event.target.closest('.ui-thumbs-toggle')) { const open = !body.classList.contains('ui-thumbs-open'); body.classList.toggle('ui-thumbs-open', open); $('.ui-thumbs-toggle').setAttribute('aria-pressed', String(open)); window.dispatchEvent(new Event('resize')); return; }
       const pick = event.target.closest('[data-ui-tool]');
       if (pick) { clickTool(pick.dataset.uiTool); closeDockMenu(); return; }
@@ -228,6 +232,20 @@
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDockMenu(); });
     modeSwitch.addEventListener('click', () => apply(simpleLayout));
 
+    // "More options": opens the full editor, for tools whose extra settings are hidden here.
+    const EXTRAS = { addControls: 'Fill colour, opacity, alignment', drawControls: 'Custom colour, clear page drawings', shapeControls: 'Fill colour', highlightControls: 'Squiggly, custom colour, opacity', watermarkControls: 'Size, opacity, angle, position' };
+    for (const [id, extra] of Object.entries(EXTRAS)) {
+      const box = document.getElementById(id);
+      if (!box) continue;
+      const more = document.createElement('button');
+      more.type = 'button';
+      more.className = 'ui-more-options';
+      more.title = `In the full editor: ${extra}`;
+      more.innerHTML = `${svg(ICON.sliders)}<span>More options</span>`;
+      more.addEventListener('click', () => apply('advanced'));
+      box.appendChild(more);
+    }
+
     // Keep the new controls in step with the editor's own state.
     const sync = () => {
       const active = $('.tool-ribbon .tool.active')?.dataset.tool || 'edit';
@@ -236,6 +254,7 @@
       if (moreTools.has(active) && moreList.hidden) { moreList.hidden = false; moreToggle.setAttribute('aria-expanded', 'true'); }
       const title = $('[data-ui-options-title]', panel);
       if (title) title.textContent = `${nameOf(active)} settings`;
+      document.querySelectorAll('[data-ui-tool-name]').forEach(node => { node.textContent = nameOf(active); });
       if (active !== lastTool && body.classList.contains('ui-simple') && !body.classList.contains('no-document')) { lastTool = active; showTip(active); }
       hint.innerHTML = `${svg(ICON.hint)}<span>${HINT[active] || 'Pick a tool, then click on the page.'} <b>Done? Press Download.</b></span>`;
       for (const id of ['undo', 'redo', 'download', 'prev', 'next', 'zoomOut', 'zoomIn']) {
@@ -251,11 +270,10 @@
     };
     const spaceForCard = () => {
       if (!body.classList.contains('ui-layout-dock')) return;
-      const visible = getComputedStyle(dockCard).display !== 'none';
-      const bottom = visible ? dockCard.getBoundingClientRect().bottom : 58;
+      const bottom = topFloat.getBoundingClientRect().bottom || 72;
       body.style.setProperty('--ui-card-space', `${Math.max(84, Math.round(bottom + 14))}px`);
     };
-    if ('ResizeObserver' in window) new ResizeObserver(spaceForCard).observe(dockCard);
+    if ('ResizeObserver' in window) new ResizeObserver(spaceForCard).observe(topFloat);
     window.addEventListener('resize', spaceForCard);
     const observer = new MutationObserver(() => { sync(); requestAnimationFrame(spaceForCard); });
     observer.observe($('.tool-ribbon'), { attributes: true, subtree: true, attributeFilter: ['class', 'disabled'] });

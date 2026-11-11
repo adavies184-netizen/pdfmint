@@ -172,3 +172,83 @@
   body.ui-layout-dock .ui-dock-card{left:0;right:0;margin:0 auto;width:max-content;transform:none}
   body.ui-layout-dock .ui-dock-card .context-bar>div:not([hidden]){flex-wrap:wrap;overflow:visible!important;width:auto!important;max-width:100%}
 }
+
+/* ===== November 2026 update: one floating top bar (dock), Full editor entry points, simplified settings ===== */
+.ui-topfloat,.ui-full-card,.ui-more-options{display:none}
+@media (min-width:901px){
+  body.ui-trial:not(.ui-simple) .ui-mode-switch{gap:7px}
+  .ui-mode-switch svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+  /* Floating top bar for the dock layout */
+  body.ui-layout-dock:not(.no-document) .ui-topfloat{display:flex}
+  .ui-topfloat{position:fixed;z-index:50;left:16px;right:16px;top:14px;align-items:center;gap:10px;padding:8px 8px 8px 14px;background:#fff;border:1px solid #dbe6e1;border-radius:20px;box-shadow:0 14px 36px rgba(15,34,28,.12)}
+  .ui-topfloat svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .ui-topfloat svg.ui-plane{fill:initial;stroke:none;width:28px;height:28px}
+  .ui-tf-left{min-width:0;max-width:230px}
+  .ui-tf-mid{flex:1;min-width:0;display:flex;align-items:center;justify-content:center;gap:10px}
+  .ui-tf-name{font-size:12px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ui-mint-d);white-space:nowrap}
+  .ui-tf-slot{min-width:0;max-width:100%}
+  .ui-tf-right{display:flex;align-items:center;gap:8px;flex:none}
+  .ui-tf-sep{width:1px;height:30px;background:var(--ui-line);flex:none}
+  .ui-tf-right .ui-download-sm{height:42px;border-radius:12px;box-shadow:none}
+  .ui-full-btn{height:42px;display:flex;align-items:center;gap:8px;padding:0 15px;border:1.5px solid #bfe3d3;border-radius:12px;background:#fff;color:#1f7d60;font:700 14px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+  .ui-full-btn:hover{background:#f1faf6;border-color:var(--ui-mint)}
+  .ui-layout-switch{width:40px;height:40px;display:grid;place-items:center;border:1px solid #dbe6e1;border-radius:11px;background:#fff;color:#4b5d57;cursor:pointer;flex:none}
+  .ui-layout-switch:hover{background:#f1f6f4;color:var(--ui-ink)}
+  .ui-layout-switch svg{width:19px!important;height:19px!important}
+  body.ui-layout-dock .stage{padding-top:var(--ui-card-space,92px)!important}
+  /* settings bar inside the floating bar */
+  .ui-tf-slot .context-bar{height:auto!important;min-height:0!important;margin:0!important;padding:0!important;border:0!important;background:transparent!important;overflow:visible!important;display:block!important}
+  .ui-tf-slot .context-bar>div:not([hidden]){display:flex!important;flex-wrap:wrap;align-items:center;justify-content:center;gap:8px;height:auto!important;width:auto!important;overflow:visible!important}
+  @media (max-width:1380px){.ui-tf-name{display:none}.ui-tf-left{max-width:160px}}
+  @media (max-width:1120px){.ui-tf-left .ui-file span,.ui-full-btn span{display:none}}
+
+  /* Panel: way into the full editor */
+  body.ui-layout-panel .ui-full-card{display:flex}
+  .ui-full-card{align-items:center;gap:12px;width:100%;margin-top:10px;padding:11px 14px;border:1.5px dashed #bfe3d3;border-radius:12px;background:#f7fcfa;text-align:left;color:#1f7d60;cursor:pointer}
+  .ui-full-card:hover{border-color:var(--ui-mint);background:#f1faf6}
+  .ui-full-card>span:nth-child(2){flex:1}
+  .ui-full-card b{display:block;font-size:14px;color:var(--ui-ink)}
+  .ui-full-card small{display:block;font-size:12.5px;color:var(--ui-muted)}
+  .ui-full-icon{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:#e2f5ec}
+  .ui-full-icon svg{width:18px!important;height:18px!important}
+  .ui-panel-top .ui-layout-switch{margin-left:auto}
+  .ui-panel-top .ui-file{flex:1}
+
+  /* "More options" inside a tool's settings */
+  body.ui-simple .ui-more-options{display:inline-flex;align-items:center;gap:6px;height:38px;padding:0 12px;border:0;border-radius:9px;background:#f1faf6;color:#1f7d60;font:700 13px Inter,sans-serif;cursor:pointer;white-space:nowrap}
+  body.ui-simple .ui-more-options:hover{background:#e2f5ec}
+  .ui-more-options svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+  /* Simplified settings: hide the extras in simple mode (all still in the full editor) */
+  body.ui-simple #addControls .colour-control:has(#addFillColor),
+  body.ui-simple #addControls .opacity-control,
+  body.ui-simple #addControls #addAlignment,
+  body.ui-simple #editControls .context-heading,
+  body.ui-simple #editControls #selectionMeta,
+  body.ui-simple #drawControls .draw-custom,
+  body.ui-simple #drawControls #clearDrawings,
+  body.ui-simple #shapeControls #shapeFillControl,
+  body.ui-simple #highlightControls [data-highlight-mode="squiggly"],
+  body.ui-simple #highlightControls .highlight-custom,
+  body.ui-simple #highlightControls .highlight-opacity,
+  body.ui-simple #watermarkControls > label:not(.wide),
+  body.ui-simple #watermarkControls .wm-align > :not(#applyWatermark),
+  body.ui-simple #linkControls > .annotation-icon, body.ui-simple #linkControls > strong,
+  body.ui-simple #noteControls > .annotation-icon, body.ui-simple #noteControls > strong,
+  body.ui-simple #cropControls > .annotation-icon, body.ui-simple #cropControls > strong,
+  body.ui-simple #redactControls > .annotation-icon, body.ui-simple #redactControls > strong,
+  body.ui-simple #stampControls > .context-icon, body.ui-simple #stampControls > strong, body.ui-simple #stampControls > span{display:none!important}
+  body.ui-simple #editControls > label{flex:1 1 320px}
+}
+
+@media (min-width:901px){
+  .ui-options-slot .shape-modes,.ui-options-slot .draw-modes,.ui-options-slot .highlight-modes{flex-wrap:wrap}
+  body.ui-simple #linkControls > span,body.ui-simple #noteControls > span,body.ui-simple #cropControls > span,body.ui-simple #redactControls > span{font-size:13px;color:#5d6f69;white-space:normal;max-width:460px}
+  body.ui-trial:not(.ui-simple) .document-name{min-width:0;overflow:hidden}
+  body.ui-trial:not(.ui-simple) .document-name strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+}
+@media (min-width:901px) and (max-width:1180px){body.ui-trial:not(.ui-simple) .ui-mode-switch span{display:none}}
+
+@media (min-width:1281px){body.ui-layout-dock .ui-tf-slot .context-bar>div:not([hidden]){flex-wrap:nowrap!important}}
+@media (min-width:901px){body.ui-simple #watermarkControls .wm-align{display:contents}}
