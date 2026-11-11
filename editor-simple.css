@@ -410,3 +410,20 @@
   body.ui-simple #editControls #replacement{border:0!important;box-shadow:none!important;padding:0!important;height:38px}
 }
 @media (min-width:901px){body.ui-simple #noteTutorial{display:none!important}}
+.ui-add-text,.ui-size-select{display:none}
+@media (min-width:901px){
+  /* No file name; logo only */
+  body.ui-simple .ui-file span{display:none!important}
+  body.ui-simple .ui-tf-left{max-width:none}
+  /* + Add text */
+  body.ui-simple .ui-add-text{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:0;border-radius:10px;background:#1fa97b;color:#fff;font:700 14.5px Inter,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(31,169,123,.22)}
+  body.ui-simple .ui-add-text:hover{background:#19956c}
+  body.ui-simple .ui-add-text svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
+  /* colour dot with a chevron */
+  body.ui-simple #addControls .colour-control:has(#addTextColor){width:58px!important;grid-template-columns:auto auto;gap:5px;justify-content:center}
+  body.ui-simple #addControls .colour-control:has(#addTextColor)::after{content:"";width:7px;height:7px;border-right:1.8px solid #5d6f69;border-bottom:1.8px solid #5d6f69;transform:rotate(45deg) translateY(-2px)}
+  /* size dropdown replaces the number box */
+  body.ui-simple #addControls .size-control{display:none!important}
+  body.ui-simple .ui-size-select{display:block;height:40px;padding:0 8px 0 12px;border:1px solid #d6e1dc;border-radius:10px;background:#fff;font:500 14px Inter,sans-serif;color:#2f413b;cursor:pointer;min-width:64px}
+  body.ui-simple .ui-size-select:focus,body.ui-simple #addControls #addFont:focus{outline:2px solid #9fdcc3;outline-offset:1px}
+}

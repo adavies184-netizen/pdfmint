@@ -266,6 +266,58 @@
       syncBold();
     }
 
+    // "+ Add text": places a text box on the visible page (same as clicking the page with Add text).
+    const addBox = document.getElementById('addControls');
+    if (addBox) {
+      const addBtn = document.createElement('button');
+      addBtn.type = 'button';
+      addBtn.className = 'ui-add-text';
+      addBtn.innerHTML = `${svg('<path d="M12 5v14M5 12h14"/>')}<span>Add text</span>`;
+      let addCount = 0;
+      addBtn.addEventListener('click', () => {
+        const step = (addCount++ % 8) * 36;
+        if ($('.tool-ribbon .tool.active')?.dataset.tool !== 'add') clickTool('add');
+        const overlay = document.getElementById('textOverlay');
+        const wrap = document.getElementById('pageWrap');
+        const stage = document.getElementById('stage');
+        if (!overlay || !wrap) return;
+        setTimeout(() => {
+          const r = wrap.getBoundingClientRect();
+          const s = stage ? stage.getBoundingClientRect() : { top: 0, bottom: innerHeight };
+          const padTop = stage ? (parseInt(getComputedStyle(stage).paddingTop, 10) || 0) : 0;
+          const visTop = Math.max(r.top, s.top + padTop), visBottom = Math.min(r.bottom, innerHeight - 140);
+          const top = visTop + Math.max(40, (visBottom - visTop) * 0.3) + step;
+          const fire = () => overlay.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: r.left + r.width * 0.3, clientY: Math.min(top, r.bottom - 40) }));
+          fire();
+          // If the first click only cleared a selection, place the box with a second one.
+          setTimeout(() => { if (!document.querySelector('#liveTextEditor:not([hidden]), .live-text-editor:not([hidden])')) fire(); }, 60);
+        }, 40);
+      });
+      addBox.prepend(addBtn);
+
+      // Size as a simple dropdown (drives the editor's own size box).
+      const sizeInput = document.getElementById('addFontSize');
+      if (sizeInput) {
+        const sizes = [8, 9, 10, 11, 12, 14, 16, 18, 20, 24, 28, 32, 36, 48, 60, 72];
+        const sizeSel = document.createElement('select');
+        sizeSel.className = 'ui-size-select';
+        sizeSel.setAttribute('aria-label', 'Text size');
+        const fill = () => {
+          const v = Number(sizeInput.value) || 18;
+          const list = sizes.includes(v) ? sizes : [...sizes, v].sort((a, b) => a - b);
+          sizeSel.innerHTML = list.map(n => `<option value="${n}"${n === v ? ' selected' : ''}>${n}</option>`).join('');
+        };
+        fill();
+        sizeSel.addEventListener('change', () => {
+          sizeInput.value = sizeSel.value;
+          sizeInput.dispatchEvent(new Event('input', { bubbles: true }));
+          sizeInput.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+        sizeInput.addEventListener('change', fill);
+        sizeInput.closest('label')?.after(sizeSel);
+      }
+    }
+
     // Colour rows collapse to one colour dot; click it to open the palette.
     document.querySelectorAll('.draw-colours, .shape-colours, .highlight-colours, .watermark-swatches, .redact-colours').forEach(group => {
       group.classList.add('ui-colour-dd');
@@ -281,14 +333,15 @@
 
     // Keep the new controls in step with the editor's own state.
     const sync = () => {
-      const active = $('.tool-ribbon .tool.active')?.dataset.tool || 'edit';
+      const active = $('.tool-ribbon .tool.active')?.dataset.tool || '';
+      if (!active && lastTool === 'add' && body.classList.contains('ui-simple') && !body.classList.contains('no-document')) { setTimeout(() => { if (!$('.tool-ribbon .tool.active')) clickTool('add'); }, 30); }
       document.querySelectorAll('[data-ui-tool]').forEach(button => button.classList.toggle('is-active', button.dataset.uiTool === active));
       dockMore.classList.toggle('is-active', moreTools.has(active));
       if (moreTools.has(active) && moreList.hidden) { moreList.hidden = false; moreToggle.setAttribute('aria-expanded', 'true'); }
       const title = $('[data-ui-options-title]', panel);
       if (title) title.textContent = `${nameOf(active)} settings`;
       document.querySelectorAll('[data-ui-tool-name]').forEach(node => { node.textContent = nameOf(active); });
-      if (active !== lastTool && body.classList.contains('ui-simple') && !body.classList.contains('no-document')) { lastTool = active; showTip(active); }
+      if (active && active !== lastTool && body.classList.contains('ui-simple') && !body.classList.contains('no-document')) { lastTool = active; showTip(active); }
       hint.innerHTML = `${svg(ICON.hint)}<span>${HINT[active] || 'Pick a tool, then click on the page.'} <b>Done? Press Download.</b></span>`;
       for (const id of ['undo', 'redo', 'download', 'prev', 'next', 'zoomOut', 'zoomIn']) {
         const disabled = !!$('#' + id)?.disabled;
