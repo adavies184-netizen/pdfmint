@@ -2690,13 +2690,19 @@ html,body{max-width:100%;overflow-x:hidden}
 .site-header .mega-nav .nav-dropdown-toggle,.site-header .mega-nav .plain-nav-link{border-radius:8px;margin:auto 0;height:40px;padding:0 12px;color:#172033;font-weight:600}
 .site-header .mega-dropdown.is-open .nav-dropdown-toggle{background:#e8f8f1;color:#106b4d}
 .site-header .mega-dropdown.is-open .nav-dropdown-toggle span{transform:rotate(180deg)}
-.mega-panel{display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border-top:1px solid #e1ece7;border-bottom:1px solid #e1ece7;box-shadow:0 24px 48px rgba(15,42,34,.10);z-index:60;cursor:default}
-.mega-dropdown.is-open .mega-panel{display:block}
+/* Hover area fills the header height so the pointer can travel down to the panel */
+.site-header .desktop-nav.mega-nav{height:100%;align-items:stretch}
+.site-header .desktop-nav.mega-nav .mega-dropdown{display:flex;align-items:center;height:100%}
+.mega-panel{display:block;visibility:hidden;opacity:0;position:absolute;left:0;right:0;top:100%;background:#fff;border-top:1px solid #e1ece7;border-bottom:1px solid #e1ece7;box-shadow:0 24px 48px rgba(15,42,34,.10);z-index:60;cursor:default;transition:opacity .12s ease,visibility 0s linear .18s}
+/* invisible bridge over any gap between the button and the panel */
+.mega-panel::before{content:"";position:absolute;left:0;right:0;bottom:100%;height:28px}
+.mega-dropdown.is-open .mega-panel{visibility:visible;opacity:1;transition-delay:0s}
 @media (hover:hover) and (min-width:901px){
-  .mega-nav .mega-dropdown:hover .mega-panel{display:block}
-  .mega-nav:hover .mega-dropdown.is-open:not(:hover) .mega-panel{display:none}
+  .mega-nav .mega-dropdown:hover .mega-panel{visibility:visible;opacity:1;transition-delay:0s}
+  .mega-nav:hover .mega-dropdown.is-open:not(:hover) .mega-panel{visibility:hidden;opacity:0;transition:none}
   .mega-nav .mega-dropdown:hover .nav-dropdown-toggle,.mega-nav .plain-nav-link:hover{background:#e8f8f1;color:#106b4d}
 }
+@media (max-width:900px){.mega-panel{display:none}}
 .mega-inner{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px 36px;padding:26px 0 30px}
 .mega-section{grid-column:span var(--mega-cols);min-width:0}
 .mega-heading{display:block;font-size:12px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#5b6b65;margin:0 0 10px 12px}
