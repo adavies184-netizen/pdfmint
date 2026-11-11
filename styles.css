@@ -2793,3 +2793,7 @@ html.upload-progress-open{overflow:hidden}
 @keyframes upRise{from{opacity:0;transform:translateY(8px) scale(.98)}}
 @media (max-width:600px){.upload-progress-card h2,.upload-progress-body,.upload-progress-foot{padding-left:20px;padding-right:20px}.upload-progress-body{padding-top:22px}}
 @media (prefers-reduced-motion:reduce){.upload-progress,.upload-progress-card{animation:none}.upload-progress-spinner span,.is-active .upload-progress-dot::after{animation-duration:2.4s}}
+
+/* Content width: slightly wider sitewide (November 2026) */
+.container{width:min(1260px,calc(100% - 40px))}
+@media(max-width:600px){.container{width:min(100% - 28px,1260px)}}
