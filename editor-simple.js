@@ -1,23 +1,20 @@
-/* PDFBreeze simple editor layouts (November 2026 trial).
-   Two optional desktop layouts on top of the existing editor:
-     editor-pdfium.html?ui=panel  -> task panel on the right
-     editor-pdfium.html?ui=dock   -> bottom dock
-     ?ui=advanced                 -> the full editor (today's layout)
-     ?ui=off                      -> forget the trial choice
-   The choice is remembered in this browser. With no choice saved, the editor is unchanged.
-   Every new button simply clicks the editor's own button, so behaviour is identical. */
+/* PDFBreeze simple editor (desktop default, November 2026).
+   Every upload opens the simple editor. "Full editor" switches to today's full editor for the
+   document that's open; "Simple mode" comes back. The layout icon swaps bottom dock <-> task panel
+   and that choice is remembered. Phones keep the existing phone editor.
+   Every simple-mode button clicks the editor's own button, so behaviour is identical. */
 (() => {
-  const KEY = 'pdfbreezeEditorUi';
+  // Simple editor is the default on desktop. "Full editor" opens today's editor for this tab;
+  // the next upload starts in simple again. The layout icon swaps dock <-> panel and is remembered.
+  const KEY = 'pdfbreezeEditorUiLast';
   const LAYOUTS = ['panel', 'dock'];
-  const read = () => { try { return localStorage.getItem(KEY) || ''; } catch (_) { return ''; } };
-  const save = value => { try { localStorage.setItem(KEY, value); } catch (_) {} };
-  const asked = new URLSearchParams(location.search).get('ui');
-  if (asked === 'off') { try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + 'Last'); } catch (_) {} return; }
-  if (asked && [...LAYOUTS, 'advanced'].includes(asked)) save(asked);
-  let layout = read();
-  if (!LAYOUTS.includes(layout) && layout !== 'advanced') return; // no trial chosen: leave the editor as it is
-  // Remember which simple layout to return to from Advanced mode.
-  let simpleLayout = LAYOUTS.includes(layout) ? layout : (() => { try { return localStorage.getItem(KEY + 'Last') || 'panel'; } catch (_) { return 'panel'; } })();
+  const readLocal = key => { try { return localStorage.getItem(key) || ''; } catch (_) { return ''; } };
+  const params = new URLSearchParams(location.search);
+  const asked = params.get('ui');
+  if (asked && LAYOUTS.includes(asked)) { try { localStorage.setItem(KEY, asked); } catch (_) {} }
+  let simpleLayout = LAYOUTS.includes(readLocal(KEY)) ? readLocal(KEY) : 'dock';
+  let layout = asked === 'advanced' ? 'advanced' : simpleLayout;
+  const save = value => { if (LAYOUTS.includes(value)) { try { localStorage.setItem(KEY, value); } catch (_) {} } };
 
   const svg = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const ICON = {
@@ -294,7 +291,7 @@
     function apply(next) {
       layout = next;
       save(next);
-      if (LAYOUTS.includes(next)) { simpleLayout = next; try { localStorage.setItem(KEY + 'Last', next); } catch (_) {} }
+      if (LAYOUTS.includes(next)) simpleLayout = next;
       // Phones keep today's editor; the trial layouts are desktop only.
       const shown = desktop.matches ? next : 'advanced';
       body.classList.toggle('ui-simple', shown !== 'advanced');
