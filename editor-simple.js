@@ -7,12 +7,12 @@
   // Simple editor is the default on desktop. "Full editor" opens today's editor for this tab;
   // the next upload starts in simple again. The layout icon swaps dock <-> panel and is remembered.
   const KEY = 'pdfbreezeEditorUiLast';
-  const LAYOUTS = ['panel', 'dock'];
+  const LAYOUTS = ['rail', 'dock', 'panel'];
   const readLocal = key => { try { return localStorage.getItem(key) || ''; } catch (_) { return ''; } };
   const params = new URLSearchParams(location.search);
   const asked = params.get('ui');
   if (asked && LAYOUTS.includes(asked)) { try { localStorage.setItem(KEY, asked); } catch (_) {} }
-  let simpleLayout = LAYOUTS.includes(readLocal(KEY)) ? readLocal(KEY) : 'dock';
+  let simpleLayout = LAYOUTS.includes(readLocal(KEY)) ? readLocal(KEY) : 'rail';
   let layout = asked === 'advanced' ? 'advanced' : simpleLayout;
   const save = value => { if (LAYOUTS.includes(value)) { try { localStorage.setItem(KEY, value); } catch (_) {} } };
 
@@ -53,7 +53,7 @@
   ];
   const MORE = [
     ['highlight', 'Highlight text', 'Highlight, underline or strike out words'],
-    ['shapes', 'Shapes & arrows', 'Boxes, circles, lines, ticks'],
+    ['shapes', 'Shapes & arrows', 'Boxes, ellipses, lines, arrows'],
     ['note', 'Sticky note', 'Leave a comment'],
     ['link', 'Link', 'Add a web link'],
     ['stamp', 'Stamp', 'Approved, paid and more'],
@@ -84,7 +84,7 @@
     image: ['Choose an image from your device: a logo, photo or scan.', 'Drag it into place on the page.'],
     manage: ['Click pages to select them.', 'Rotate, move, duplicate or delete them.', 'Press Apply to save the changes.'],
     highlight: ['Choose highlight, underline, squiggly or strikethrough.', 'Drag across the words you want to mark.'],
-    shapes: ['Pick a shape: box, circle, line, tick or cross.', 'Drag on the page to draw it.'],
+    shapes: ['Pick a shape: box, ellipse, line or arrow.', 'Drag on the page to draw it.'],
     note: ['Click on the page where the note should go.', 'Type your message in the box that opens.'],
     link: ['Drag over the area that should be clickable.', 'Enter the web address or page to open.'],
     stamp: ['Pick a stamp design, or make your own.', 'Click on the page where it should go.'],
@@ -198,7 +198,7 @@
     const dock = mount(document.createElement('nav'));
     dock.className = 'ui-dock';
     dock.setAttribute('aria-label', 'Editing tools');
-    dock.innerHTML = `${MAIN.map(([tool, title, , colour]) => `<button type="button" class="ui-dock-item" data-ui-tool="${tool}"><span class="ui-dock-icon ${colour}">${svg(ICON[tool])}</span>${title}</button>`).join('')}
+    dock.innerHTML = `<a class="ui-rail-logo" href="index.html" title="PDFBreeze home">${PLANE}</a>${MAIN.map(([tool, title, , colour]) => `<button type="button" class="ui-dock-item" data-ui-tool="${tool}"><span class="ui-dock-icon ${colour}">${svg(ICON[tool])}</span>${title}</button>`).join('')}
       <span class="ui-dock-sep" aria-hidden="true"></span>
       <button type="button" class="ui-dock-item ui-dock-more" aria-expanded="false"><span class="ui-dock-icon c-grey">${svg(ICON.more)}</span>More</button>
       <div class="ui-dock-menu" hidden><div class="ui-dock-menu-head">More tools</div>${MORE.map(([tool, title, text]) => `<button type="button" class="ui-more-item" data-ui-tool="${tool}">${svg(ICON[tool])}<span><b>${title}</b><small>${text}</small></span></button>`).join('')}<div class="ui-dock-menu-foot ui-open-slot"></div></div>`;
@@ -354,7 +354,7 @@
       const pages = Number((($('#pageLabel')?.textContent || '').match(/of\s+(\d+)/) || [])[1] || 0);
       if (pages && !thumbsDecided && body.classList.contains('ui-simple')) {
         thumbsDecided = true;
-        const open = pages > 1;
+        const open = pages > 1 && !body.classList.contains('ui-layout-rail');
         body.classList.toggle('ui-thumbs-open', open);
         // Start at 60% so the whole page is in view (uses the editor's own zoom-out button).
         let tries = 0;
@@ -404,15 +404,25 @@
       const shown = desktop.matches ? next : 'advanced';
       body.classList.toggle('ui-simple', shown !== 'advanced');
       body.classList.toggle('ui-layout-panel', shown === 'panel');
-      body.classList.toggle('ui-layout-dock', shown === 'dock');
+      body.classList.toggle('ui-layout-dock', shown === 'dock' || shown === 'rail');
+      body.classList.toggle('ui-layout-rail', shown === 'rail');
+      // Layout icon cycles: left rail -> bottom dock -> task panel -> left rail
+      const nextOf = { rail: 'dock', dock: 'panel', panel: 'rail' };
+      const label = { rail: 'left toolbar', dock: 'bottom toolbar', panel: 'task panel' };
+      document.querySelectorAll('[data-ui-layout]').forEach(button => {
+        const target = nextOf[LAYOUTS.includes(next) ? next : simpleLayout];
+        button.dataset.uiLayout = target;
+        button.title = `Switch to the ${label[target]} layout`;
+        button.setAttribute('aria-label', button.title);
+      });
       body.classList.toggle('ui-trial', desktop.matches);
       // Move the tool settings bar and "Open another PDF" into the active layout; put them back for Advanced mode.
       if (shown === 'panel') $('.ui-options-slot', panel).appendChild(contextBar);
-      else if (shown === 'dock') dockCard.appendChild(contextBar);
+      else if (shown === 'dock' || shown === 'rail') dockCard.appendChild(contextBar);
       else contextHome.parent.insertBefore(contextBar, contextHome.next);
       if (openAnother && openHome) {
         if (shown === 'panel') $('.ui-open-slot', panel).appendChild(openAnother);
-        else if (shown === 'dock') $('.ui-open-slot', dock).appendChild(openAnother);
+        else if (shown === 'dock' || shown === 'rail') $('.ui-open-slot', dock).appendChild(openAnother);
         else openHome.parent.insertBefore(openAnother, openHome.next);
       }
       closeDockMenu();
