@@ -333,3 +333,10 @@
 @media (min-width:901px) and (max-width:1600px){
   body.ui-layout-dock:not(.no-document) .ui-tip.is-on{top:calc(var(--ui-card-space,92px) + 2px);bottom:auto;right:76px}
 }
+@media (min-width:901px){
+  /* Light dock: dark hint pill so the two don't merge */
+  body.dock-light.ui-layout-dock:not(.no-document):not(.ui-tip-on) .ui-hint{background:#14241f;color:#fff;border-color:#14241f;box-shadow:0 8px 22px rgba(15,34,28,.2)}
+  body.dock-light.ui-layout-dock .ui-hint b{color:#7fe3c1}
+}
+/* One-line hint bubble removed (the tip card explains each tool the first time) */
+.ui-hint{display:none!important}

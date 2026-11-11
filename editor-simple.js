@@ -306,6 +306,7 @@
       toastTimer = setTimeout(() => toast.classList.remove('is-on'), 5000);
     }).observe(status, { childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ['style'] });
 
+    body.classList.add('dock-light'); // chosen dock style: light
     const desktop = window.matchMedia('(min-width: 901px)');
     function apply(next) {
       layout = next;
