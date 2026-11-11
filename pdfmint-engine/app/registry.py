@@ -8,7 +8,7 @@ from .operations.word import pdf_to_doc, pdf_to_docx
 from .operations.spreadsheet import pdf_to_xls, pdf_to_xlsx
 from .operations.powerpoint import pdf_to_ppt, pdf_to_pptx
 from .operations.compress import compress_pdf
-from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt
+from .operations.ocr import create_searchable_pdf, ocr_pdf_to_docx, ocr_pdf_to_txt, ocr_single_page
 from .operations.image_conversions import ROUTES as IMAGE_ROUTES, convert_image_route
 from .operations.pdf_outputs import FORMATS as PDF_OUTPUT_FORMATS, convert_pdf_output
 from .operations.to_pdf import ROUTES as TO_PDF_ROUTES, convert_to_pdf
@@ -132,6 +132,12 @@ def run_ocr_pdf(pdf_path: Path, workspace: Path, base_name: str) -> OperationRes
     return OperationResult(output, output.name, "application/pdf")
 
 
+def run_ocr_page(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
+    output = workspace / f"{base_name}-page-ocr.pdf"
+    ocr_single_page(pdf_path, output, workspace)
+    return OperationResult(output, output.name, "application/pdf")
+
+
 def run_ocr_docx(pdf_path: Path, workspace: Path, base_name: str) -> OperationResult:
     output = workspace / f"{base_name}-ocr.docx"
     ocr_pdf_to_docx(pdf_path, output, workspace)
@@ -185,6 +191,7 @@ OPERATIONS: dict[str, Callable[[Path, Path, str], OperationResult]] = {
     "compress-pdf-standard": run_compress_pdf_standard,
     "compress-pdf-high": run_compress_pdf_high,
     "ocr-pdf": run_ocr_pdf,
+    "ocr-page": run_ocr_page,
     "ocr-docx": run_ocr_docx,
     "ocr-txt": run_ocr_txt,
 }
