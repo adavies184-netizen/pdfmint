@@ -249,7 +249,15 @@
       const name = $('#fileName')?.textContent || 'Document';
       document.querySelectorAll('[data-ui-filename]').forEach(node => { node.textContent = name; node.parentElement.title = name; });
     };
-    const observer = new MutationObserver(sync);
+    const spaceForCard = () => {
+      if (!body.classList.contains('ui-layout-dock')) return;
+      const visible = getComputedStyle(dockCard).display !== 'none';
+      const bottom = visible ? dockCard.getBoundingClientRect().bottom : 58;
+      body.style.setProperty('--ui-card-space', `${Math.max(84, Math.round(bottom + 14))}px`);
+    };
+    if ('ResizeObserver' in window) new ResizeObserver(spaceForCard).observe(dockCard);
+    window.addEventListener('resize', spaceForCard);
+    const observer = new MutationObserver(() => { sync(); requestAnimationFrame(spaceForCard); });
     observer.observe($('.tool-ribbon'), { attributes: true, subtree: true, attributeFilter: ['class', 'disabled'] });
     for (const id of ['download', 'prev', 'next', 'zoomOut', 'zoomIn']) { const el = $('#' + id); if (el) observer.observe(el, { attributes: true, attributeFilter: ['disabled'] }); }
     for (const id of ['pageLabel', 'zoomLabel', 'fileName']) { const el = $('#' + id); if (el) observer.observe(el, { childList: true, characterData: true, subtree: true }); }

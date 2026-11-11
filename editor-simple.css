@@ -154,3 +154,21 @@
   .ui-dock-card .context-bar{height:auto!important;min-height:52px;margin:0!important;padding:0!important;border:0!important;background:transparent!important;overflow:visible!important}
   .ui-dock-card .context-bar>div:not([hidden]){flex-wrap:wrap;row-gap:8px}
 }
+
+/* Dock layout: tool settings float at the top (under the corners) instead of over the page;
+   the tip card and hint sit just above the dock, next to the tools. */
+@media (min-width:901px){
+  body.ui-layout-dock .ui-dock-card{top:68px;bottom:auto;max-width:min(1100px,calc(100vw - 32px));padding:8px 12px;border-radius:14px}
+  body.ui-layout-dock .ui-dock-card .context-bar{min-height:44px}
+  body.ui-layout-dock .ui-dock-card .context-bar>div:not([hidden]){justify-content:center}
+  body.ui-layout-dock .stage{padding-top:var(--ui-card-space,150px)!important}
+  body.ui-layout-dock:not(.no-document):not(.ui-tip-on) .ui-hint,
+  body.ui-layout-dock:not(.no-document) .ui-tip.is-on{top:auto;bottom:124px}
+  body.ui-layout-dock .ui-tip.is-on{animation-name:uiTipUp}
+  @keyframes uiTipUp{from{opacity:0;transform:translate(-50%,6px)}}
+  body.ui-layout-dock.ui-menu-open .ui-tip{display:none!important}
+}
+@media (min-width:901px){
+  body.ui-layout-dock .ui-dock-card{left:0;right:0;margin:0 auto;width:max-content;transform:none}
+  body.ui-layout-dock .ui-dock-card .context-bar>div:not([hidden]){flex-wrap:wrap;overflow:visible!important;width:auto!important;max-width:100%}
+}
