@@ -197,3 +197,4 @@
   #payment-page .zd2-card-slot .stripe-card-field,#payment-page .zd2-card-slot .stripe-card-field-row{margin:0!important}
   #payment-page .zd2-card-slot .stripe-card-field-row{gap:12px}
 }
+@media (min-width:1000px){.zd2-total{margin-bottom:20px}}
