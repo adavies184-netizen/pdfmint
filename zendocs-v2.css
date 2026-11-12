@@ -171,3 +171,29 @@
 #payment-page .zd2-card-button{display:none!important}
 #payment-page .zd2-card-slot,#payment-page .zd2-card-slot[hidden]{display:block;padding:0;border:0;background:none;margin-top:4px}
 .zd2-accepted{flex-wrap:wrap;row-gap:8px}
+/* Phones: spacing matched to the reference (≈21px side margins, tighter vertical rhythm) */
+@media (max-width:999px){
+  #payment-page.payment-wall-zendocs .payment-main{padding:22px 20px 0}
+  #payment-page.payment-wall-zendocs .checkout-header{padding:12px 20px}
+  .zd2{padding-top:0}
+  .zd2 h1{margin:2px 0 16px;font-size:28px}
+  .zd2-file{padding:15px;gap:14px;border-radius:14px}
+  .zd2-total{margin:20px 0 16px;font-size:20px}
+  .zd2-accepted{margin-bottom:14px}
+  .zd2-card-slot .stripe-card-field{margin-bottom:12px}
+  .zd2-card-slot .stripe-card-field > span{margin-bottom:6px}
+  .zd2-card-slot .pay-now-button{height:48px;border-radius:12px;margin-top:4px}
+  .zd2-trust{margin-top:16px;padding-top:14px}
+  .zd2-terms{margin:16px 0 22px}
+}
+@media (max-width:999px){
+  #payment-page.payment-wall-zendocs .payment-main{margin:0!important;width:auto!important;max-width:none!important}
+  #payment-page.payment-wall-zendocs .zd2-privacy{gap:6px;padding:9px 12px;font-size:12px;white-space:nowrap}
+  #payment-page.payment-wall-zendocs .zd2-countdown{padding:3px 7px}
+}
+@media (max-width:340px){#payment-page.payment-wall-zendocs .zd2-privacy{white-space:normal}}
+@media (max-width:999px){
+  #payment-page .zd2-card-slot .stripe-payment-fields{display:grid;gap:14px}
+  #payment-page .zd2-card-slot .stripe-card-field,#payment-page .zd2-card-slot .stripe-card-field-row{margin:0!important}
+  #payment-page .zd2-card-slot .stripe-card-field-row{gap:12px}
+}
