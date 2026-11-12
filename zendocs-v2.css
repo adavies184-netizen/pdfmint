@@ -154,3 +154,6 @@
 .zd2-expired-box button:disabled{opacity:.7}
 @media (min-width:1000px){#payment-page.payment-wall-zendocs .payment-main{padding-top:16px}}
 #payment-page.payment-wall-zendocs .zd2-privacy{padding:9px 16px}
+/* Renewal disclaimer: matched to the reference (12px, #5b6470, 1px #e5e9f0 border, 10px corners) */
+.zd2 .zd2-terms{padding:10px 14px;border:1px solid #e5e9f0;border-radius:10px;background:#fff;color:#5b6470;font-size:12px;line-height:1.6}
+.zd2 .zd2-terms a{color:#5b6470;text-decoration:underline}
