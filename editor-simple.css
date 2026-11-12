@@ -1054,7 +1054,50 @@ body.ui-simple .page-thumbnails::-webkit-scrollbar,body.ui-simple #pageThumbnail
   body.ui-mobile #addControls>label:has(#addFont){flex:1 1 auto;min-width:0;height:36px;padding:0 2px 0 7px!important}
   body.ui-mobile #addControls #addFont{min-width:0!important;width:100%;height:34px;font-size:12px!important;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
   body.ui-mobile #addControls>.ui-size-select{flex:none;width:46px;min-width:0!important;height:36px;padding:0 17px 0 8px!important;font-size:12.5px!important;background-position:right 5px center!important;background-size:11px 11px!important}
-  body.ui-mobile #addControls>.ui-bold,body.ui-mobile #addControls .add-style-toggle{width:26px!important;height:34px!important;min-height:0!important;margin:0!important;font-size:15px!important}
+  body.ui-mobile #addControls>.ui-bold,body.ui-mobile #addControls .add-style-toggle{width:24px!important;height:34px!important;min-height:0!important;margin:0!important;font-size:15px!important}
   body.ui-mobile #addControls>.add-style-toggles{flex:none;gap:0!important}
-  body.ui-mobile #addControls>.ui-more-options{display:none!important}
+  body.ui-mobile #addControls>.ui-more-options{flex:none;width:30px!important;height:36px!important}
+}
+/* Phones: every tool's settings fit on one line in the bottom bar (no sideways scrolling). */
+@media (max-width:900px){
+  body.ui-mobile .ui-tf-slot{width:auto!important}
+  body.ui-mobile .ui-tf-slot .context-bar>div:not([hidden]){flex-wrap:nowrap!important;min-width:0!important;width:100%;gap:4px!important;align-items:center}
+  body.ui-mobile .ui-tf-slot .context-bar>div:not([hidden])>*{flex:none;min-width:0}
+
+  /* icon-only mode buttons */
+  body.ui-mobile #contextBar .shape-modes,body.ui-mobile #contextBar .highlight-modes{display:flex;gap:3px!important}
+  body.ui-mobile #contextBar .shape-modes>button,body.ui-mobile #contextBar .highlight-modes>button{width:40px!important;min-width:40px!important;max-width:40px!important;height:38px!important;padding:0!important;justify-content:center!important;gap:0!important}
+  body.ui-mobile #contextBar .shape-modes>button span,body.ui-mobile #contextBar .highlight-modes>button span{display:none!important}
+  body.ui-mobile #contextBar .shape-modes>button svg,body.ui-mobile #contextBar .highlight-modes>button svg{width:19px!important;height:19px!important;margin:0!important}
+  body.ui-mobile #contextBar .ui-thick-btn,body.ui-mobile #contextBar .ui-colour-dd,body.ui-mobile #contextBar .ui-more-options,body.ui-mobile #contextBar .ui-clear-draw{width:36px!important;min-width:36px!important}
+
+  /* draw: a little tighter */
+  body.ui-mobile #contextBar .draw-modes>button.ui-art-tool{width:36px!important;min-width:36px!important;max-width:36px!important}
+  body.ui-mobile #contextBar .draw-colours{gap:2px!important;padding:0!important;border:0!important}
+  body.ui-mobile #contextBar .draw-colours{width:auto!important;min-width:0!important;display:flex!important;gap:3px!important;margin:0!important}
+  body.ui-mobile #contextBar .draw-colours>*{width:24px!important;height:24px!important;min-width:0!important;margin:0!important;flex:none}
+  body.ui-mobile #contextBar #drawControls{gap:4px!important}
+  body.ui-mobile #contextBar #drawControls .draw-colours{padding:0!important;gap:3px!important;width:auto!important;min-width:0!important}
+  body.ui-mobile #contextBar #drawControls .clear-drawings{width:34px!important;min-width:0!important}
+  body.ui-mobile #contextBar>div:not([hidden]){min-height:0!important;height:auto!important}
+  body.ui-mobile #drawControls>.ui-thick,body.ui-mobile #shapeControls>.ui-thick{flex:none}
+
+  /* hint-only tools: short hint over two lines */
+  body.ui-mobile #redactControls>span:not(.annotation-icon),body.ui-mobile #linkControls>span,body.ui-mobile #noteControls>span,body.ui-mobile #cropControls>span,
+  body.ui-mobile #redactControls>span:has(.annotation-icon){flex:1 1 auto!important;min-width:0;white-space:normal!important;font-size:12px!important;line-height:1.3!important;padding:5px 8px!important}
+  body.ui-mobile #cropControls>#resetCrop{height:38px;padding:0 10px!important;font-size:12.5px!important;white-space:nowrap}
+
+  /* stamp: just the two buttons */
+  body.ui-mobile #contextBar #stampControls>span:not(.context-icon){display:none!important}
+  body.ui-mobile #stampControls>button{flex:1 1 0!important;height:40px;padding:0 8px!important;font-size:13px!important}
+
+  /* watermark and edit text: the text box takes the spare room */
+  body.ui-mobile #watermarkControls>label.icon-field{flex:1 1 auto!important;width:auto!important;min-width:0!important}
+  body.ui-mobile #watermarkControls input,body.ui-mobile #editControls input{min-width:0!important;width:100%!important}
+  body.ui-mobile #watermarkControls .ui-wm-seg button{width:28px!important;min-width:0!important}
+  body.ui-mobile #watermarkControls .ui-wm-angle{gap:2px!important}
+  body.ui-mobile #watermarkControls .ui-wm-angle output{width:34px!important;font-size:12px!important}
+  body.ui-mobile #editControls>label{flex:1 1 auto!important;width:auto!important;min-width:0!important}
+  body.ui-mobile #editControls .replacement-label{display:none!important}
+  body.ui-mobile #editControls>#apply{height:38px;padding:0 12px!important}
 }
