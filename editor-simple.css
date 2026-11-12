@@ -897,3 +897,14 @@ body.ui-mobile .ui-mascot-bubble{width:200px;margin-bottom:38px;font-size:13px}
 body.ui-mobile .ui-mascot[data-look="page"] .ui-mascot-figure svg{width:50px;height:60px}
 body.ui-mobile .ui-mascot[data-look="puff"] .ui-mascot-figure svg{width:68px;height:52px}
 @media (prefers-reduced-motion:reduce){.ui-mascot,.ui-mascot-figure,.ui-mascot-arm,.ui-mascot-wind{animation:none!important;transition:none!important}}
+
+/* Page list down the side: no inner scroll bar, thumbnails that fit, clear of the top bar */
+body.ui-simple.ui-thumbs-open .sidebar{scrollbar-width:none;overflow-x:hidden}
+body.ui-simple.ui-thumbs-open .sidebar::-webkit-scrollbar{display:none}
+body.ui-simple .page-thumbnails{padding:14px 16px 90px;gap:12px;justify-items:center}
+body.ui-simple .sidebar-page{width:116px;max-width:100%;padding:7px;gap:6px;border-width:1.5px;border-radius:10px}
+body.ui-simple .sidebar-page canvas{width:100%;max-width:100%;height:auto;box-shadow:0 1px 3px #17233a1f}
+body.ui-simple .sidebar-page span{padding:3px 10px;font-size:10.5px}
+body.ui-layout-rail.ui-thumbs-open .ui-topfloat{left:302px!important}
+.ui-thumbs-toggle{display:inline-flex!important;align-items:center;gap:6px;width:auto!important;padding:0 10px!important;border-radius:999px!important;font:600 12.5px Inter,system-ui,sans-serif;color:#33443f}
+.ui-thumbs-toggle:hover{background:#eef6f2}

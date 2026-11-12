@@ -154,7 +154,7 @@
     // Floating page/zoom pill (stands in for the hidden viewer toolbar)
     const view = mount(document.createElement('div'));
     view.className = 'ui-view';
-    view.innerHTML = `<button type="button" class="ui-thumbs-toggle" aria-pressed="false" title="Show pages">${svg(ICON.manage)}</button><span class="ui-view-sep"></span>
+    view.innerHTML = `<button type="button" class="ui-thumbs-toggle" aria-pressed="false" title="Show all pages down the side" aria-label="Show all pages">${svg('<rect x="3" y="4" width="18" height="16" rx="2.5"/><path d="M9 4v16"/><rect x="4.9" y="7" width="2.2" height="3" rx=".6" fill="currentColor" stroke="none"/><rect x="4.9" y="12" width="2.2" height="3" rx=".6" fill="currentColor" stroke="none"/>')}<span class="ui-thumbs-label">All pages</span></button><span class="ui-view-sep"></span>
       <button type="button" data-proxy="prev" aria-label="Previous page">${svg('<path d="m15 18-6-6 6-6"/>')}</button><span data-mirror="pageLabel">Page 1</span><button type="button" data-proxy="next" aria-label="Next page">${svg('<path d="m9 18 6-6-6-6"/>')}</button><span class="ui-view-sep"></span>
       <button type="button" data-proxy="zoomOut" aria-label="Zoom out">${svg('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M8 11h6"/>')}</button><span data-mirror="zoomLabel">100%</span><button type="button" data-proxy="zoomIn" aria-label="Zoom in">${svg('<circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3M11 8v6M8 11h6"/>')}</button>`;
 
@@ -356,7 +356,7 @@
       if (event.target.closest('[data-ui-advanced]')) { apply('advanced'); return; }
       const swap = event.target.closest('[data-ui-layout]');
       if (swap) { apply(swap.dataset.uiLayout); return; }
-      if (event.target.closest('.ui-thumbs-toggle')) { const open = !body.classList.contains('ui-thumbs-open'); body.classList.toggle('ui-thumbs-open', open); $('.ui-thumbs-toggle').setAttribute('aria-pressed', String(open)); window.dispatchEvent(new Event('resize')); return; }
+      if (event.target.closest('.ui-thumbs-toggle')) { const open = !body.classList.contains('ui-thumbs-open'); body.classList.toggle('ui-thumbs-open', open); $('.ui-thumbs-toggle').setAttribute('aria-pressed', String(open)); $('.ui-thumbs-label').textContent = open ? 'Hide pages' : 'All pages'; window.dispatchEvent(new Event('resize')); return; }
       const pick = event.target.closest('[data-ui-tool]');
       if (pick) {
         const live = document.getElementById('liveTextEditor');
@@ -842,7 +842,7 @@
           window.pdfbreezeSetZoom(target);
         };
         if (!phone) setTimeout(startZoom, 60);
-        $('.ui-thumbs-toggle')?.setAttribute('aria-pressed', String(open));
+        $('.ui-thumbs-toggle')?.setAttribute('aria-pressed', String(open)); const thumbsLabel = $('.ui-thumbs-label'); if (thumbsLabel) thumbsLabel.textContent = open ? 'Hide pages' : 'All pages';
         window.dispatchEvent(new Event('resize'));
       }
       const name = $('#fileName')?.textContent || 'Document';
