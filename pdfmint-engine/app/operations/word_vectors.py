@@ -659,7 +659,7 @@ def preserve_pdf_vectors(
     }
 
 
-def pdf2docx_layout_settings(pdf_path: Path) -> dict[str, bool]:
+def pdf2docx_layout_settings(pdf_path: Path) -> dict[str, bool | float]:
     """Avoid stream-table false positives on geometry-dense forms.
 
     Lattice-table parsing remains enabled, so tables with real borders can still
@@ -674,7 +674,13 @@ def pdf2docx_layout_settings(pdf_path: Path) -> dict[str, bool]:
         drawing_count += len(page.get_drawings())
         widget_count += sum(1 for _ in (page.widgets() or []))
     geometry_dense = widget_count > 0 or drawing_count / page_count >= 10
-    return {"parse_stream_table": not geometry_dense}
+    settings: dict[str, bool | float] = {"parse_stream_table": not geometry_dense}
+    # pdf2docx re-draws areas of vector artwork as pictures at 4x (288 dpi) and keeps them for
+    # every page until the end, so long, drawing-heavy documents (brochures, guides) ran the
+    # engine out of memory. 2.5x (~180 dpi) uses under 40% of that and still prints sharply.
+    if geometry_dense and page_count >= 6:
+        settings["clip_image_res_ratio"] = 2.5
+    return settings
 
 
 def needs_positioned_text(pdf_path: Path) -> bool:

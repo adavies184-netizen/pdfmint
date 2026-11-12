@@ -57,13 +57,14 @@ from .billing import (
 )
 from .files import save_uploaded_file, save_uploaded_pdf
 from .http_client import close_http
+from .memory_guard import guard_threshold_bytes, memory_used_bytes
 from .results import OperationResult
 from .settings import ALLOWED_ORIGINS, JOB_CONCURRENCY, JOB_HARD_TIMEOUT_SECONDS, JOB_QUEUE_LIMIT
 from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.21.0"
+ENGINE_VERSION = "1.22.0"
 APP_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -330,6 +331,24 @@ async def _execute_isolated(
         cwd=str(APP_ROOT),
         start_new_session=True,
     )
+    over_memory = False
+    threshold = guard_threshold_bytes()
+
+    async def _watch_memory() -> None:
+        # Kill the conversion before the container reaches its memory limit: on Kubernetes
+        # an out-of-memory kill takes the whole engine down, not just this process.
+        nonlocal over_memory
+        while process.returncode is None:
+            used = memory_used_bytes()
+            if used is not None and used >= threshold:
+                over_memory = True
+                logger.error("Stopping %s: container memory %s MB reached the guard limit of %s MB",
+                             operation, used // 1048576, threshold // 1048576)
+                _kill_process_group(process)
+                return
+            await asyncio.sleep(0.05)
+
+    watcher = asyncio.create_task(_watch_memory()) if threshold else None
     try:
         await asyncio.wait_for(process.wait(), timeout=JOB_HARD_TIMEOUT_SECONDS)
     except asyncio.TimeoutError:
@@ -340,8 +359,12 @@ async def _execute_isolated(
         _kill_process_group(process)
         raise
     finally:
+        if watcher:
+            watcher.cancel()
         _kill_process_group(process)  # tidy up anything the worker left behind
 
+    if over_memory:
+        raise ConversionOutOfMemory()
     if process.returncode in (-signal.SIGKILL, 137) or not result_file.is_file():
         logger.error("Conversion process for %s ended without a result (exit %s); likely out of memory",
                      operation, process.returncode)
