@@ -126,6 +126,24 @@
       event.target.value = '';
     });
 
+    // Arrived from the editor's More tools: pick up the PDF it handed over.
+    if (new URLSearchParams(location.search).get('from') === 'editor' && window.indexedDB) {
+      const open = indexedDB.open('pdfmint-editor-transfer');
+      open.onsuccess = () => {
+        const db = open.result;
+        if (!db.objectStoreNames.contains('uploads')) { db.close(); return; }
+        const tx = db.transaction('uploads', 'readwrite'), store = tx.objectStore('uploads'), get = store.get('tool-handoff');
+        get.onsuccess = () => {
+          const record = get.result;
+          if (record?.bytes) {
+            store.delete('tool-handoff');
+            showOptions(new File([record.bytes], record.name || 'document.pdf', { type: 'application/pdf', lastModified: record.lastModified || Date.now() }));
+          }
+        };
+        tx.oncomplete = () => db.close();
+      };
+    }
+
     window.addEventListener('pdfmint:compression-drop', event => {
       if (event.detail?.file) showOptions(event.detail.file);
     });

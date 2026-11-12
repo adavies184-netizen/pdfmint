@@ -37,6 +37,8 @@ async function takeTransferredPdf(){
   };
 }
 
+// More tools → Compress PDF: take the PDF as it is now (with any edits) to the Compress PDF page.
+window.pdfbreezeOpenInTool=async target=>{if(!doc||!['compress-pdf'].includes(target))return false;try{if(liveEdit)finishLiveEditor();setStatus('Opening Compress PDF…');const blob=await documentBlob(doc),db=await openPdfBreezeTransferDb(),bytes=await blob.arrayBuffer(),name=(ui.fileName.textContent||'document.pdf').trim().replace(/(\.pdf)?$/i,'.pdf');await new Promise((resolve,reject)=>{const tx=db.transaction(PDFBREEZE_TRANSFER_STORE,'readwrite');tx.objectStore(PDFBREEZE_TRANSFER_STORE).put({name,type:'application/pdf',lastModified:Date.now(),bytes},'tool-handoff');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error)});db.close();location.href=`${target}.html?from=editor`;return true}catch(error){console.warn('[PDF Breeze] hand-off failed',error);setStatus('Could not open Compress PDF. Download your PDF and upload it there instead.',true);return false}};
 async function storeFinishedPdfForCheckout(blob,name){
   const db=await openPdfBreezeTransferDb();
   const bytes=await blob.arrayBuffer();

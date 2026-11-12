@@ -38,6 +38,7 @@
 
   const svg = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const ICON = {
+    compress: '<path d="M8 3v5l4 3 4-3V3M8 21v-5l4-3 4 3v5M4 12h3M17 12h3"/>',
     merge: '<rect x="3" y="4" width="9" height="12" rx="1.5"/><rect x="12" y="8" width="9" height="12" rx="1.5"/><path d="M16.5 11.5v5M14 14h5"/>',
     edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
     add: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
@@ -73,6 +74,7 @@
   ];
   const MORE = [
     ['merge', 'Merge PDFs', 'Join other PDFs to this one'],
+    ['compress', 'Compress PDF', 'Make this PDF smaller'],
     ['highlight', 'Highlight text', 'Highlight, underline or strike out words'],
     ['shapes', 'Shapes & arrows', 'Boxes, ellipses, lines, arrows'],
     ['note', 'Sticky note', 'Leave a comment'],
@@ -361,6 +363,7 @@
       if (pick) {
         const live = document.getElementById('liveTextEditor');
         if (live && !live.hidden) document.getElementById('textOverlay')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: -9999, clientY: -9999 }));
+        if (pick.dataset.uiTool === 'compress') { closeDockMenu(); window.pdfbreezeOpenInTool?.('compress-pdf'); return; }
         if (pick.dataset.uiTool === 'merge') {
           closeDockMenu();
           const manageWindow = document.getElementById('manageModal');
