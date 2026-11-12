@@ -4835,8 +4835,6 @@ function applyPaymentWallStyle(style) {
   }
 }
 
-document.getElementById('zd2-card-slot')?.addEventListener('pointerdown', holdZd2Countdown);
-document.getElementById('zd2-card-slot')?.addEventListener('focusin', holdZd2Countdown);
 document.getElementById('zd2-prepare-again')?.addEventListener('click', async event => {
   const button = event.currentTarget;
   button.disabled = true;
@@ -4855,7 +4853,6 @@ document.getElementById('zd2-card-button')?.addEventListener('click', event => {
   if (!slot) return;
   slot.hidden = !slot.hidden;
   event.currentTarget.setAttribute('aria-expanded', String(!slot.hidden));
-  if (!slot.hidden) holdZd2Countdown();
   if (!slot.hidden) slot.querySelector('input, iframe, button')?.scrollIntoView({behavior:'smooth', block:'center'});
 });
 
@@ -5048,9 +5045,22 @@ window.addEventListener('popstate', event => {
   const paymentPage = document.getElementById('payment-page');
   if (!paymentPage?.hidden && event.state?.pdfbreezeCheckout !== 'payment') {
     closePaymentPage();
+    if (activePaymentWallStyle === 'zendocs') {
+      returnToEditorFromCheckout();
+      return;
+    }
     document.getElementById('access-page').hidden = false;
   }
 });
+
+// Zendocs checkout: Back goes to the editor with the edited PDF (there is no plans page in this design).
+async function returnToEditorFromCheckout() {
+  document.body.classList.add('editor-route-loading');
+  try {
+    if (editor.file) await storePdfForSharedEditor(editor.file);
+  } catch (_) {}
+  window.location.replace('editor-pdfium.html');
+}
 
 document.querySelectorAll('.payment-method').forEach(button => {
   button.addEventListener('click', () => {
@@ -5072,16 +5082,11 @@ let lastCheckoutFormat = 'pdf';
 const ZD2_EXPIRY_SECONDS = 120;
 let zd2Timer = null;
 let zd2Remaining = ZD2_EXPIRY_SECONDS;
-let zd2Held = false;
+let zd2PaymentInFlight = false;
 function zd2Show() {
   const badge = document.getElementById('zd2-countdown');
   const text = document.querySelector('#payment-page .zd2-privacy-text');
   if (!badge || !text) return;
-  if (zd2Held) {
-    text.textContent = 'Timer paused while you pay';
-    badge.hidden = true;
-    return;
-  }
   text.textContent = 'To protect your privacy, this file expires in';
   badge.hidden = false;
   const seconds = Math.max(0, zd2Remaining);
@@ -5098,22 +5103,17 @@ function startZd2Countdown() {
   const box = document.getElementById('zd2-expired-box');
   if (box) box.hidden = true;
   if (activePaymentWallStyle !== 'zendocs') return;
-  zd2Held = false;
   zd2Remaining = ZD2_EXPIRY_SECONDS;
   zd2Show();
   zd2Timer = setInterval(() => {
-    if (zd2Held) return;
     zd2Remaining -= 1;
     zd2Show();
     if (zd2Remaining <= 0) expireZd2Download();
   }, 1000);
 }
-function holdZd2Countdown() {
-  if (!zd2Timer || zd2Held) return;
-  zd2Held = true;
-  zd2Show();
-}
 function expireZd2Download() {
+  // Never pull the file from under a payment that's already being processed.
+  if (zd2PaymentInFlight) return;
   stopZd2Countdown();
   pendingCheckoutBlob = null;
   ['zd2-big-canvas', 'zd2-preview-canvas'].forEach(id => {
@@ -5354,7 +5354,6 @@ async function prepareStripePaymentElement() {
     if (payButton) payButton.disabled = false;
   };
   stripeCardElements.forEach(element => {
-    element.on('focus', holdZd2Countdown);
     element.on('ready', onFieldReady);
     element.on('change', event => showStripeError(event.error?.message || ''));
   });
@@ -5427,6 +5426,7 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
   await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
   const payButton = document.getElementById('mock-pay-button');
   const payButtonLabel = payButton?.textContent || 'Download my document';
+  zd2PaymentInFlight = true;
   if (payButton) {
     payButton.disabled = true;
     payButton.classList.add('is-processing');
@@ -5467,6 +5467,8 @@ document.getElementById('mock-pay-button').addEventListener('click', async () =>
     });
     window.location.assign('dashboard.html?v=pdfium-dashboard-3&payment=complete&download=1');
   } catch (error) {
+    zd2PaymentInFlight = false;
+    if (activePaymentWallStyle === 'zendocs' && zd2Remaining <= 0) expireZd2Download();
     showStripeError(error.message || 'Payment could not be completed.');
     if (payButton) {
       payButton.disabled = false;
