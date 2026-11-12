@@ -118,5 +118,42 @@ class AdminFunnelTests(unittest.TestCase):
         self.assertEqual(counts["purchase_complete"], 0)
 
 
+class DailyAndCampaignTests(unittest.TestCase):
+    def setUp(self):
+        from datetime import date, datetime, timedelta, timezone
+        from zoneinfo import ZoneInfo
+        names = {"UTM_FIELDS", "BREAKDOWN_STAGES", "REPORTING_TIMEZONE"}
+        nodes = [
+            node for node in tree.body
+            if (isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in names for t in node.targets))
+            or (isinstance(node, ast.FunctionDef) and node.name in {"build_daily_and_campaigns", "_parsed_datetime"})
+        ]
+        ns = {"Any": Any, "datetime": datetime, "timedelta": timedelta, "timezone": timezone, "ZoneInfo": ZoneInfo, "calendar_date": date}
+        exec(compile(ast.Module(body=nodes, type_ignores=[]), "admin.py", "exec"), ns)
+        self.build = ns["build_daily_and_campaigns"]
+        self.datetime, self.timezone = datetime, timezone
+
+    def test_days_and_campaigns(self):
+        ad = {"utm_source": "google", "utm_medium": "cpc", "utm_campaign": "pdf-to-word", "utm_content": "ag1", "utm_term": "pdf to word"}
+        events = [
+            {**event("a", "landing_view", created_at="2026-11-10T09:00:00+00:00"), **ad},
+            event("a", "payment_plan_viewed", created_at="2026-11-10T09:05:00+00:00"),
+            event("a", "purchase_complete", user_id="u1", created_at="2026-11-11T09:05:00+00:00"),
+            event("b", "landing_view", created_at="2026-11-11T09:00:00+00:00"),
+            event("b", "purchase_complete", created_at="2026-11-11T09:01:00+00:00"),
+        ]
+        since = self.datetime(2026, 11, 10, tzinfo=self.timezone.utc)
+        before = self.datetime(2026, 11, 12, tzinfo=self.timezone.utc)
+        report = self.build(events, since, before)
+        days = {row["date"]: row for row in report["daily"]}
+        self.assertEqual(list(days), ["2026-11-11", "2026-11-10"])
+        self.assertEqual((days["2026-11-10"]["visits"], days["2026-11-10"]["paywall"], days["2026-11-10"]["sales"]), (1, 1, 1))
+        self.assertEqual((days["2026-11-11"]["visits"], days["2026-11-11"]["sales"]), (1, 0))
+        google = next(row for row in report["campaigns"] if row["source"] == "google")
+        self.assertEqual((google["campaign"], google["ad_group"], google["keyword"], google["sales"]), ("pdf-to-word", "ag1", "pdf to word", 1))
+        direct = next(row for row in report["campaigns"] if row["source"] == "(direct)")
+        self.assertEqual(direct["visits"], 1)
+
+
 if __name__ == "__main__":
     unittest.main()

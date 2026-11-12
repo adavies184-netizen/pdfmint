@@ -42,6 +42,14 @@ class AnalyticsEventRequest(BaseModel):
     event_value: str = Field(default="", max_length=80)
     landing_page: str = Field(default="unknown", max_length=120)
     page_path: str = Field(default="", max_length=220)
+    utm_source: str = Field(default="", max_length=120)
+    utm_medium: str = Field(default="", max_length=120)
+    utm_campaign: str = Field(default="", max_length=120)
+    utm_content: str = Field(default="", max_length=120)
+    utm_term: str = Field(default="", max_length=120)
+
+
+UTM_FIELDS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
 
 
 class CookieConsentEventRequest(BaseModel):
@@ -104,14 +112,24 @@ async def store_analytics_event(
     user_id = await _optional_user_id(authorization)
     if user_id:
         record["user_id"] = user_id
+    for field in UTM_FIELDS:
+        value = getattr(payload, field).strip().lower()
+        if value:
+            record[field] = value
 
-    response = await http().post(
-        rest_url("analytics_events"),
-        params={"on_conflict": "session_id,event_name,event_value"},
-        headers=_service_headers(),
-        json=record,
-        timeout=8,
-    )
+    async def insert(row: dict[str, Any]):
+        return await http().post(
+            rest_url("analytics_events"),
+            params={"on_conflict": "session_id,event_name,event_value"},
+            headers=_service_headers(),
+            json=row,
+            timeout=8,
+        )
+
+    response = await insert(record)
+    if response.status_code == 400 and any(field in record for field in UTM_FIELDS):
+        # Campaign columns not added yet (database/analytics-utm-v1.sql): keep the event anyway.
+        response = await insert({key: value for key, value in record.items() if key not in UTM_FIELDS})
     if response.is_error:
         raise HTTPException(status_code=502, detail="The analytics event could not be stored.")
     return {"recorded": True}

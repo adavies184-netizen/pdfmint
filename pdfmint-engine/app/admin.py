@@ -212,6 +212,83 @@ def build_funnel_report(
     }
 
 
+UTM_FIELDS = ("utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term")
+BREAKDOWN_STAGES = (
+    ("visits", "landing_view"),
+    ("editors", "editor_opened"),
+    ("downloads", "download_clicked"),
+    ("paywall", "payment_plan_viewed"),
+    ("sales", "purchase_complete"),
+)
+
+
+def build_daily_and_campaigns(
+    events: list[dict[str, Any]],
+    since: datetime,
+    before: datetime,
+) -> dict[str, Any]:
+    """Group visiting sessions by the London day they landed and by their campaign tags.
+
+    Each session counts once per stage, on the day of its first landing-page visit, so
+    every percentage is a true share of that day's (or that campaign's) visitors.
+    """
+    first_landing: dict[str, str] = {}
+    reached: dict[str, set[str]] = {}
+    tags: dict[str, tuple[str, ...]] = {}
+    for event in events:
+        session_id = str(event.get("session_id") or "")
+        event_name = str(event.get("event_name") or "")
+        if not session_id:
+            continue
+        created_at = str(event.get("created_at") or "")
+        if event_name == "landing_view" and (session_id not in first_landing or created_at < first_landing[session_id]):
+            first_landing[session_id] = created_at
+        if event_name != "purchase_complete" or event.get("user_id"):
+            reached.setdefault(session_id, set()).add(event_name)
+        values = tuple(str(event.get(field) or "").strip().lower()[:120] for field in UTM_FIELDS)
+        if any(values) and session_id not in tags:
+            tags[session_id] = values
+
+    def empty_counts() -> dict[str, int]:
+        return {key: 0 for key, _ in BREAKDOWN_STAGES}
+
+    first_day = since.astimezone(REPORTING_TIMEZONE).date()
+    last_day = (before - timedelta(seconds=1)).astimezone(REPORTING_TIMEZONE).date()
+    daily: dict[str, dict[str, int]] = {}
+    day = first_day
+    while day <= last_day:
+        daily[day.isoformat()] = empty_counts()
+        day += timedelta(days=1)
+
+    campaigns: dict[tuple[str, ...], dict[str, int]] = {}
+    for session_id, landed_at in first_landing.items():
+        parsed = _parsed_datetime(landed_at)
+        if not parsed:
+            continue
+        stages_reached = reached.get(session_id, set())
+        source, medium, campaign, ad_group, keyword = tags.get(session_id) or ("", "", "", "", "")
+        key = (source or "(direct)", medium or "(none)", campaign, ad_group, keyword)
+        targets = [campaigns.setdefault(key, empty_counts())]
+        local_day = parsed.astimezone(REPORTING_TIMEZONE).date().isoformat()
+        if local_day in daily:
+            targets.append(daily[local_day])
+        for target in targets:
+            for column, event_name in BREAKDOWN_STAGES:
+                if event_name in stages_reached:
+                    target[column] += 1
+
+    return {
+        "daily": [{"date": key, **value} for key, value in sorted(daily.items(), reverse=True)],
+        "campaigns": [
+            {
+                "source": key[0], "medium": key[1], "campaign": key[2],
+                "ad_group": key[3], "keyword": key[4], **value,
+            }
+            for key, value in sorted(campaigns.items(), key=lambda item: (-item[1]["visits"], item[0]))
+        ],
+    }
+
+
 def build_cookie_consent_report(rows: list[dict[str, Any]]) -> dict[str, Any]:
     visitors = sum(1 for row in rows if row.get("banner_shown") is True)
     decided_rows = [
@@ -435,8 +512,9 @@ async def admin_funnel(
         since, before = local_start.astimezone(timezone.utc), local_end.astimezone(timezone.utc)
     else:
         since, before = _calendar_window(days)
+    base_select = "session_id,user_id,event_name,event_value,landing_page,page_path,created_at"
     params: dict[str, str] = {
-        "select": "session_id,user_id,event_name,event_value,landing_page,page_path,created_at",
+        "select": f"{base_select},{','.join(UTM_FIELDS)}",
         "created_at": f"gte.{since.isoformat()}",
         "session_id": "like.live_*",
         "order": "created_at.desc",
@@ -450,6 +528,14 @@ async def admin_funnel(
         headers={**_service_headers(), "Range": "0-9999"},
         params=params,
     )
+    if response.status_code == 400:
+        # Campaign columns not added yet (database/analytics-utm-v1.sql): report without them.
+        params["select"] = base_select
+        response = await client.get(
+            f"{SUPABASE_URL}/rest/v1/analytics_events",
+            headers={**_service_headers(), "Range": "0-9999"},
+            params=params,
+        )
     if response.is_error:
         raise HTTPException(status_code=502, detail="Could not load conversion analytics.")
     events = [
@@ -468,6 +554,7 @@ async def admin_funnel(
             profiles = profile_response.json()
 
     report = build_funnel_report(events, profiles)
+    report.update(build_daily_and_campaigns(events, since, before))
     report["days"] = days
     report["selected_day"] = day
     report["landing_page"] = landing_page or "all"

@@ -256,6 +256,53 @@
     }
   }
 
+  let lastFunnelData = null;
+  const breakdownHead = first => `<thead><tr><th>${first}</th><th>Visits</th><th>Editor opened</th><th>Downloads</th><th>Paywall views</th><th>Sales</th><th>Paywall → sale</th></tr></thead>`;
+  const breakdownCells = item => {
+    const visits = Number(item.visits || 0);
+    const cell = key => `<td><b>${funnelNumber(item[key])}</b><small>${funnelPercent(Number(item[key] || 0), visits)}</small></td>`;
+    return `<td><b>${funnelNumber(visits)}</b></td>${cell('editors')}${cell('downloads')}${cell('paywall')}${cell('sales')}<td><b>${funnelPercent(Number(item.sales || 0), Number(item.paywall || 0))}</b></td>`;
+  };
+  const sumBreakdown = rows => rows.reduce((total, item) => {
+    ['visits','editors','downloads','paywall','sales'].forEach(key => { total[key] += Number(item[key] || 0); });
+    return total;
+  }, {visits:0, editors:0, downloads:0, paywall:0, sales:0});
+
+  function renderBreakdowns(data) {
+    lastFunnelData = data;
+    const dailyTarget = document.querySelector('[data-funnel-daily]');
+    const daily = data.daily || [];
+    if (dailyTarget) {
+      const dayName = value => new Date(`${value}T12:00:00Z`).toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', timeZone:'UTC'});
+      dailyTarget.innerHTML = daily.length
+        ? `<table class="breakdown-table">${breakdownHead('Day')}<tbody>${daily.map(item => `<tr><td>${safe(dayName(item.date))}</td>${breakdownCells(item)}</tr>`).join('')}</tbody>${daily.length > 1 ? `<tfoot><tr><td>Total</td>${breakdownCells(sumBreakdown(daily))}</tr></tfoot>` : ''}</table>`
+        : '<div class="funnel-empty">Day-by-day figures appear after the engine update is deployed.</div>';
+    }
+    const campaignTarget = document.querySelector('[data-funnel-campaigns]');
+    if (!campaignTarget) return;
+    const campaigns = data.campaigns || [];
+    const level = document.getElementById('funnel-campaign-group')?.value || 'campaign';
+    const label = item => {
+      const source = `${item.source}${item.medium && item.medium !== '(none)' ? ` / ${item.medium}` : ''}`;
+      if (level === 'source') return source;
+      if (level === 'campaign') return item.campaign || `${source} · no campaign`;
+      if (level === 'ad_group') return item.ad_group ? `${item.ad_group}${item.campaign ? ` · ${item.campaign}` : ''}` : `${item.campaign || source} · no ad group`;
+      if (level === 'keyword') return item.keyword ? `${item.keyword}${item.ad_group ? ` · ${item.ad_group}` : ''}` : `${item.campaign || source} · no keyword`;
+      return [source, item.campaign, item.ad_group, item.keyword].filter(Boolean).join(' › ');
+    };
+    const groups = new Map();
+    campaigns.forEach(item => {
+      const key = label(item);
+      groups.set(key, sumBreakdown([groups.get(key) || {}, item]));
+    });
+    const rows = [...groups.entries()].sort((a,b) => b[1].visits - a[1].visits || b[1].sales - a[1].sales);
+    const heading = {source:'Source', campaign:'Campaign', ad_group:'Ad group', keyword:'Keyword', all:'Source › campaign › ad group › keyword'}[level];
+    campaignTarget.innerHTML = rows.length
+      ? `<table class="breakdown-table">${breakdownHead(heading)}<tbody>${rows.map(([name,item]) => `<tr><td title="${safe(name)}">${safe(name)}</td>${breakdownCells(item)}</tr>`).join('')}</tbody></table>`
+      : '<div class="funnel-empty">No tagged visits yet. Visits from ads appear here once their links carry UTM tags.</div>';
+  }
+  document.getElementById('funnel-campaign-group')?.addEventListener('change', () => { if (lastFunnelData) renderBreakdowns(lastFunnelData); });
+
   async function loadFunnel() {
     const panel = document.querySelector('[data-view-panel="funnel"]');
     panel.classList.add('funnel-loading');
@@ -274,6 +321,7 @@
     if (!response.ok) throw new Error(data.detail || 'Conversion analytics could not be loaded.');
     selectedFunnelStage = Math.min(selectedFunnelStage, Math.max(0,(data.stages || []).length-1));
     renderFunnel(data);
+    renderBreakdowns(data);
     funnelLoaded = true;
     panel.classList.remove('funnel-loading');
   }

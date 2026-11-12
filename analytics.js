@@ -55,6 +55,48 @@
     return saved.id;
   }
 
+  // Campaign tags (UTMs) the visitor arrived with, kept for the rest of their session.
+  const ATTRIBUTION_KEY = 'pdfbreezeAnalyticsAttribution';
+  const SEARCH_ENGINES = /(^|\.)(google|bing|yahoo|duckduckgo|ecosia|baidu|yandex)\./i;
+  const EMPTY_TAGS = {utm_source:'', utm_medium:'', utm_campaign:'', utm_content:'', utm_term:''};
+
+  function arrivalTags() {
+    const query = new URLSearchParams(location.search);
+    const tags = {...EMPTY_TAGS};
+    Object.keys(tags).forEach(key => { tags[key] = (query.get(key) || '').trim().toLowerCase().slice(0, 120); });
+    if (!tags.utm_source && (query.has('gclid') || query.has('gbraid') || query.has('wbraid'))) {
+      tags.utm_source = 'google';
+      tags.utm_medium = tags.utm_medium || 'cpc';
+    }
+    if (!tags.utm_source && query.has('msclkid')) {
+      tags.utm_source = 'bing';
+      tags.utm_medium = tags.utm_medium || 'cpc';
+    }
+    if (!tags.utm_source) {
+      let host = '';
+      try { host = new URL(document.referrer).hostname.toLowerCase(); } catch (_) {}
+      if (host && !LIVE_HOSTS.has(host)) {
+        const engine = host.match(SEARCH_ENGINES);
+        tags.utm_source = engine ? engine[2].toLowerCase() : host.replace(/^www\./, '').slice(0, 120);
+        tags.utm_medium = engine ? 'organic' : 'referral';
+      }
+    }
+    return tags.utm_source ? tags : null;
+  }
+
+  function attribution(id) {
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(ATTRIBUTION_KEY) || 'null'); } catch (_) {}
+    const fresh = arrivalTags();
+    const isCampaign = fresh && (fresh.utm_campaign || fresh.utm_medium === 'cpc');
+    if (saved?.session !== id || isCampaign) {
+      // A new session takes whatever it arrived with; a fresh ad click mid-session replaces it.
+      saved = {session: id, tags: fresh || EMPTY_TAGS};
+      try { localStorage.setItem(ATTRIBUTION_KEY, JSON.stringify(saved)); } catch (_) {}
+    }
+    return {...EMPTY_TAGS, ...(saved.tags || {})};
+  }
+
   function landingPage() {
     let value = sessionStorage.getItem(LANDING_KEY);
     if (!value) {
@@ -136,6 +178,7 @@
         headers,
         keepalive: true,
         body: JSON.stringify({
+          ...attribution(sessionId()),
           session_id: sessionId(),
           event_name: eventName,
           event_value: String(eventValue || '').slice(0, 80),
@@ -170,6 +213,7 @@
     showGoogleAdsTestMessage,
     resetJourney() {
       localStorage.removeItem(SESSION_KEY);
+      localStorage.removeItem(ATTRIBUTION_KEY);
       sessionStorage.removeItem(LANDING_KEY);
       sessionStorage.removeItem(TRACKED_PAGE_KEY);
     }
