@@ -4835,11 +4835,27 @@ function applyPaymentWallStyle(style) {
   }
 }
 
+document.getElementById('zd2-card-slot')?.addEventListener('pointerdown', holdZd2Countdown);
+document.getElementById('zd2-card-slot')?.addEventListener('focusin', holdZd2Countdown);
+document.getElementById('zd2-prepare-again')?.addEventListener('click', async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  button.textContent = 'Preparing…';
+  try {
+    await exportEditedDocument(lastCheckoutFormat || 'pdf');
+  } catch (error) {
+    showAlert?.('Your download could not be prepared. Please try again.');
+  } finally {
+    button.disabled = false;
+    button.textContent = 'Prepare it again';
+  }
+});
 document.getElementById('zd2-card-button')?.addEventListener('click', event => {
   const slot = document.getElementById('zd2-card-slot');
   if (!slot) return;
   slot.hidden = !slot.hidden;
   event.currentTarget.setAttribute('aria-expanded', String(!slot.hidden));
+  if (!slot.hidden) holdZd2Countdown();
   if (!slot.hidden) slot.querySelector('input, iframe, button')?.scrollIntoView({behavior:'smooth', block:'center'});
 });
 
@@ -4969,6 +4985,7 @@ async function openPaymentPage(options = {}) {
     account.querySelector('.zd2-initials').textContent = email.replace(/[^a-z0-9]/gi, '').slice(0, 2).toUpperCase();
     account.hidden = false;
   }).catch(() => {});
+  startZd2Countdown();
   const zd2PreviewPromise = Promise.all([renderCheckoutPreview('zd2-preview-canvas'), renderCheckoutPreview('zd2-big-canvas')]).catch(() => {});
   try {
     await prepareStripePaymentElement();
@@ -4983,6 +5000,7 @@ async function openPaymentPage(options = {}) {
 }
 
 function closePaymentPage() {
+  stopZd2Countdown();
   document.getElementById('payment-page').hidden = true;
 }
 
@@ -5036,6 +5054,69 @@ function openDemoPaymentNotice() {
   document.getElementById('demo-payment-modal').hidden = false;
 }
 let pendingCheckoutBlob = null;
+let lastCheckoutFormat = 'pdf';
+
+// Zendocs payment wall: the prepared download really expires after 2 minutes unless the customer starts paying.
+const ZD2_EXPIRY_SECONDS = 120;
+let zd2Timer = null;
+let zd2Remaining = ZD2_EXPIRY_SECONDS;
+let zd2Held = false;
+function zd2Show() {
+  const badge = document.getElementById('zd2-countdown');
+  const text = document.querySelector('#payment-page .zd2-privacy-text');
+  if (!badge || !text) return;
+  if (zd2Held) {
+    text.textContent = 'Timer paused while you pay';
+    badge.hidden = true;
+    return;
+  }
+  text.textContent = 'To protect your privacy, this file expires in';
+  badge.hidden = false;
+  const seconds = Math.max(0, zd2Remaining);
+  badge.textContent = `${String(Math.floor(seconds / 60)).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+}
+function stopZd2Countdown() {
+  if (zd2Timer) clearInterval(zd2Timer);
+  zd2Timer = null;
+}
+function startZd2Countdown() {
+  stopZd2Countdown();
+  const page = document.getElementById('payment-page');
+  page?.classList.remove('zd2-expired');
+  const box = document.getElementById('zd2-expired-box');
+  if (box) box.hidden = true;
+  if (activePaymentWallStyle !== 'zendocs') return;
+  zd2Held = false;
+  zd2Remaining = ZD2_EXPIRY_SECONDS;
+  zd2Show();
+  zd2Timer = setInterval(() => {
+    if (zd2Held) return;
+    zd2Remaining -= 1;
+    zd2Show();
+    if (zd2Remaining <= 0) expireZd2Download();
+  }, 1000);
+}
+function holdZd2Countdown() {
+  if (!zd2Timer || zd2Held) return;
+  zd2Held = true;
+  zd2Show();
+}
+function expireZd2Download() {
+  stopZd2Countdown();
+  pendingCheckoutBlob = null;
+  ['zd2-big-canvas', 'zd2-preview-canvas'].forEach(id => {
+    const canvas = document.getElementById(id);
+    if (canvas) { canvas.width = 0; canvas.height = 0; }
+  });
+  const page = document.getElementById('payment-page');
+  page?.classList.add('zd2-expired');
+  const text = document.querySelector('#payment-page .zd2-privacy-text');
+  const badge = document.getElementById('zd2-countdown');
+  if (text) text.textContent = 'For your privacy, this download has expired';
+  if (badge) badge.hidden = true;
+  const box = document.getElementById('zd2-expired-box');
+  if (box) box.hidden = false;
+}
 let pendingCheckoutFilename = '';
 let stripeClient = null;
 let stripeElements = null;
@@ -5261,6 +5342,7 @@ async function prepareStripePaymentElement() {
     if (payButton) payButton.disabled = false;
   };
   stripeCardElements.forEach(element => {
+    element.on('focus', holdZd2Countdown);
     element.on('ready', onFieldReady);
     element.on('change', event => showStripeError(event.error?.message || ''));
   });
@@ -6264,6 +6346,7 @@ async function exportAppliedSplitArchive() {
 let pendingWordOcr = false;
 
 async function exportEditedDocument(format) {
+  lastCheckoutFormat = format;
   if (format === 'pdf' && editor.splitApplied && editor.splitPoints?.length) {
     await exportAppliedSplitArchive();
     return;

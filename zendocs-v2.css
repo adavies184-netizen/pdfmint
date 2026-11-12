@@ -141,3 +141,16 @@
   .zd2-includes-desk .zd2-included{gap:11px}
   .zd2-total{padding:20px 0;margin-bottom:26px}
 }
+/* Countdown badge and expired state */
+.zd2-countdown{padding:4px 9px;border-radius:7px;background:#c7f0dd;color:#0d6b4f;font-variant-numeric:tabular-nums;font-weight:700}
+.zd2-countdown[hidden]{display:none}
+#payment-page.zd2-expired .zd2-privacy{background:#f1f5f9;border-color:#e2e8f0;color:#475569}
+#payment-page.zd2-expired :is(.zd2-label,.zd2-card-button,.zd2-card-slot,.zd2-guarantee){display:none!important}
+.zd2-expired-box{margin:0 0 22px;padding:18px;border:1px solid #e3e8ef;border-radius:12px;background:#fff;text-align:center}
+.zd2-expired-box[hidden]{display:none}
+.zd2-expired-box strong{display:block;font-size:16px;margin-bottom:6px}
+.zd2-expired-box p{margin:0 0 14px;color:#475569;font-size:14px}
+.zd2-expired-box button{height:46px;padding:0 24px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font:700 15px Inter,sans-serif;cursor:pointer}
+.zd2-expired-box button:disabled{opacity:.7}
+@media (min-width:1000px){#payment-page.payment-wall-zendocs .payment-main{padding-top:16px}}
+#payment-page.payment-wall-zendocs .zd2-privacy{padding:9px 16px}
