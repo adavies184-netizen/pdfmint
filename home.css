@@ -313,3 +313,4 @@
 /* Main CTA buttons: the logo's light green (November 2026, round 2) */
 .home-v2 .button-primary{background:#34c79a;border-color:#34c79a}
 .home-v2 .button-primary:hover,.home-v2 .button-primary:focus-visible{background:#2bb78b;border-color:#2bb78b}
+.home-v2 .home-checks .home-icon{background:#34c79a}

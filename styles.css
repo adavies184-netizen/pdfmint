@@ -2597,7 +2597,7 @@ html,body{max-width:100%;overflow-x:hidden}
 .hero-subtitle{max-width:660px;margin-bottom:28px;font-size:clamp(17px,1.2vw,20px);line-height:1.52;color:#42536a}
 .hero .check-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px 24px;margin:0;padding:22px 24px;border:1px solid rgba(200,220,218,.75);border-radius:22px;background:rgba(255,255,255,.76);box-shadow:0 16px 35px rgba(31,55,72,.06);backdrop-filter:blur(8px)}
 .hero .check-list li{position:relative;padding-left:32px;color:#22334a;font-size:15px;font-weight:650;line-height:1.35}
-.hero .check-list li::before{content:'✓';position:absolute;left:0;top:-2px;display:grid;width:23px;height:23px;place-items:center;border-radius:50%;background:#20b58a;color:#fff;font-size:13px;font-weight:900}
+.hero .check-list li::before{content:'✓';position:absolute;left:0;top:-2px;display:grid;width:23px;height:23px;place-items:center;border-radius:50%;background:#34c79a;color:#fff;font-size:13px;font-weight:900}
 .hero .upload-card{min-height:500px;padding:44px 34px;border:2px dashed #1fac83;border-radius:30px;background:rgba(255,255,255,.92);box-shadow:0 24px 55px rgba(26,61,80,.1);cursor:pointer;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease}
 .hero .upload-card:hover,.hero .upload-card:focus-visible,.hero .upload-card.dragover{transform:translateY(-3px);border-color:#087f63;box-shadow:0 28px 64px rgba(26,61,80,.15);outline:none}
 .hero .upload-icon{display:grid;width:100px;height:100px;margin-bottom:28px;place-items:center;border-radius:50%;background:#e4f7f1;color:#129673}
