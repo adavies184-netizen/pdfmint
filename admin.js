@@ -630,6 +630,8 @@
     const result = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(result.detail || 'Payment wall setting could not be loaded.');
     renderPaymentWallSetting(result.style);
+    const socialInput = document.getElementById('admin-payment-wall-social');
+    if (socialInput) socialInput.value = result.social_text || '';
   }
 
   function paymentWallStatsContainer() {
@@ -678,6 +680,32 @@
     renderPaymentWallStats(result.payment_walls || []);
   }
 
+  async function savePaymentWallSocialText() {
+    const input = document.getElementById('admin-payment-wall-social');
+    const button = document.getElementById('admin-payment-wall-social-save');
+    const feedback = document.querySelector('[data-payment-wall-social-feedback]');
+    if (!input || !button) return;
+    button.disabled = true;
+    if (feedback) feedback.textContent = 'Saving…';
+    try {
+      const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/payment-wall`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json',Authorization:`Bearer ${adminSession.access_token}`},
+        body:JSON.stringify({social_text: input.value})
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.detail || 'The text could not be saved.');
+      input.value = result.social_text || '';
+      localStorage.removeItem('pdfbreeze_payment_wall_style_v1');
+      if (feedback) feedback.textContent = 'Saved. New payment-wall visits show it within one minute.';
+    } catch (error) {
+      if (feedback) feedback.textContent = error.message || 'The text could not be saved.';
+    } finally {
+      button.disabled = false;
+    }
+  }
+  document.getElementById('admin-payment-wall-social-save')?.addEventListener('click', savePaymentWallSocialText);
+
   async function updatePaymentWallSetting(style) {
     const inputs = [...document.querySelectorAll('input[name="admin-payment-wall"]')];
     inputs.forEach(input => { input.disabled = true; });
@@ -690,7 +718,7 @@
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.detail || 'Payment wall setting could not be saved.');
-      localStorage.setItem('pdfbreeze_payment_wall_style_v1', JSON.stringify({style:result.style, cachedAt:Date.now()}));
+      localStorage.removeItem('pdfbreeze_payment_wall_style_v1');
       renderPaymentWallSetting(result.style, 'Saved. New payment-wall visits reflect this design within one minute.');
     } finally {
       inputs.forEach(input => { input.disabled = false; });

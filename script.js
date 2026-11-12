@@ -4859,6 +4859,15 @@ document.getElementById('zd2-card-button')?.addEventListener('click', event => {
   if (!slot.hidden) slot.querySelector('input, iframe, button')?.scrollIntoView({behavior:'smooth', block:'center'});
 });
 
+// The line beside the customer photos on the Zendocs payment wall, set in Admin → Payment wall.
+function applyPaymentWallSocialText(text) {
+  const value = String(text || '').trim();
+  document.querySelectorAll('#payment-page .zd2-social > span:last-child').forEach(span => {
+    if (!span.dataset.defaultText) span.dataset.defaultText = span.textContent;
+    span.textContent = value || span.dataset.defaultText;
+  });
+}
+
 async function loadPaymentWallStyle() {
   const params = new URLSearchParams(location.search);
   const forced = params.get('paymentWall');
@@ -4873,6 +4882,7 @@ async function loadPaymentWallStyle() {
   try {
     const cached = JSON.parse(localStorage.getItem(paymentWallStyleCacheKey) || 'null');
     if (cached && Date.now() - Number(cached.cachedAt || 0) < 60000 && ['standard','zendocs'].includes(cached.style)) {
+      applyPaymentWallSocialText(cached.socialText);
       applyPaymentWallStyle(cached.style);
       return cached.style;
     }
@@ -4887,7 +4897,9 @@ async function loadPaymentWallStyle() {
       const result = await response.json();
       if (!response.ok) throw new Error(result.detail || 'Payment wall setting unavailable.');
       const style = result.style === 'zendocs' ? 'zendocs' : 'standard';
-      localStorage.setItem(paymentWallStyleCacheKey, JSON.stringify({style, cachedAt:Date.now()}));
+      const socialText = String(result.social_text || '');
+      localStorage.setItem(paymentWallStyleCacheKey, JSON.stringify({style, socialText, cachedAt:Date.now()}));
+      applyPaymentWallSocialText(socialText);
       applyPaymentWallStyle(style);
       return style;
     } catch (_) {

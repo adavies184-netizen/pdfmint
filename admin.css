@@ -77,3 +77,6 @@ body{background:#f3f7f5;color:#10271f}.admin-sidebar{width:248px;padding:26px 20
 .funnel-range-box{display:inline-flex;align-items:center;gap:6px;margin-left:8px}.funnel-range-box[hidden]{display:none}.funnel-range-box span{font-size:12px;color:#6b778a}.funnel-range-box input{height:38px;padding:0 10px;border:1px solid #dfe6ec;border-radius:9px;background:#fff;font:inherit;font-size:12px}
 .breakdown-subhead{margin:18px 0 6px;font-size:13px;font-weight:600;color:#17243b}
 .action-table .bar-cell{width:30%}.action-table .bar-cell span{display:block;height:8px;border-radius:999px;background:#34c79a;min-width:2px}
+
+.payment-wall-social-setting{margin-top:22px;padding-top:18px;border-top:1px solid #e6ebef}.payment-wall-social-setting label{display:block;margin-bottom:8px}.payment-wall-social-setting label b{display:block;font-size:13px;color:#17243b}.payment-wall-social-setting label small{color:#6b778a;font-size:12px}
+.payment-wall-social-setting>div{display:flex;gap:8px}.payment-wall-social-setting input{flex:1;min-width:0;height:40px;padding:0 12px;border:1px solid #dfe6ec;border-radius:9px;font:inherit;font-size:13px}.payment-wall-social-setting button{height:40px;padding:0 16px;border:0;border-radius:9px;background:#0f513f;color:#fff;font:inherit;font-size:13px;font-weight:600;cursor:pointer}

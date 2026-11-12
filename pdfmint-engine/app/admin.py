@@ -47,7 +47,8 @@ class CookieConsentSettingRequest(BaseModel):
 
 
 class PaymentWallSettingRequest(BaseModel):
-    style: Literal["standard", "zendocs"]
+    style: Literal["standard", "zendocs"] | None = None
+    social_text: str | None = Field(default=None, max_length=120)
 
 
 class EditorLayoutSettingRequest(BaseModel):
@@ -759,6 +760,8 @@ async def select_payment_provider(payload: ProviderSelectionRequest, authorizati
 
 COOKIE_CONSENT_SETTING_KEY = "site_cookie_consent"
 PAYMENT_WALL_SETTING_KEY = "site_payment_wall_zendocs"
+# The line beside the customer photos on the Zendocs payment wall (kept in the row's display_name).
+PAYMENT_WALL_SOCIAL_KEY = "site_payment_wall_social_text"
 EDITOR_LAYOUT_SETTING_KEY = "site_editor_bottom_bar"
 
 
@@ -848,17 +851,44 @@ async def update_cookie_consent_setting(payload: CookieConsentSettingRequest, au
     return {"enabled": payload.enabled}
 
 
+async def _site_text(key: str) -> str:
+    """Free text kept in a site-setting row's display_name ('' when unset or unreachable)."""
+    cache_key = f"{key}:text"
+    cached = _setting_cache.get(cache_key)
+    if cached and time.monotonic() - cached[0] < SETTING_CACHE_SECONDS:
+        return cached[1]
+    if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+        return ""
+    try:
+        response = await http().get(
+            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+            headers=_service_headers(),
+            params={"provider": f"eq.{key}", "select": "display_name,enabled", "limit": "1"},
+            timeout=5,
+        )
+        if response.is_error:
+            return ""
+        rows = response.json()
+    except (httpx.HTTPError, ValueError, TypeError):
+        return ""
+    value = str(rows[0].get("display_name") or "") if rows and rows[0].get("enabled") else ""
+    _setting_cache[cache_key] = (time.monotonic(), value)
+    return value
+
+
 async def payment_wall_setting() -> dict[str, str]:
-    """Public payment-wall style. Missing configuration deliberately defaults to Zendocs style."""
+    """Public payment-wall style and the Zendocs avatar line. Missing configuration deliberately defaults to Zendocs style."""
     flag = await _site_flag(PAYMENT_WALL_SETTING_KEY)
+    social_text = await _site_text(PAYMENT_WALL_SOCIAL_KEY)
     if flag is _MISSING:
-        return {"style": "zendocs"}
-    return {"style": "zendocs" if flag is True else "standard"}
+        return {"style": "zendocs", "social_text": social_text}
+    return {"style": "zendocs" if flag is True else "standard", "social_text": social_text}
 
 
 async def admin_payment_wall_setting(authorization: str | None) -> dict[str, str]:
     await _require_admin(authorization)
     _setting_cache.pop(PAYMENT_WALL_SETTING_KEY, None)
+    _setting_cache.pop(f"{PAYMENT_WALL_SOCIAL_KEY}:text", None)
     return await payment_wall_setting()
 
 
@@ -869,25 +899,32 @@ async def update_payment_wall_setting(payload: PaymentWallSettingRequest, author
         "Content-Type": "application/json",
         "Prefer": "resolution=merge-duplicates,return=representation",
     }
-    row = {
-        "provider": PAYMENT_WALL_SETTING_KEY,
-        "display_name": "Payment wall style",
-        "enabled": payload.style == "zendocs",
-        "is_default": False,
-        "configured": True,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
-    }
+    now = datetime.now(timezone.utc).isoformat()
+    rows = []
+    if payload.style is not None:
+        rows.append({
+            "provider": PAYMENT_WALL_SETTING_KEY, "display_name": "Payment wall style",
+            "enabled": payload.style == "zendocs", "is_default": False, "configured": True, "updated_at": now,
+        })
+    if payload.social_text is not None:
+        text = " ".join(payload.social_text.split())
+        rows.append({
+            "provider": PAYMENT_WALL_SOCIAL_KEY, "display_name": text,
+            "enabled": bool(text), "is_default": False, "configured": True, "updated_at": now,
+        })
     client = http()
-    response = await client.post(
-        f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
-        headers=headers,
-        params={"on_conflict": "provider"},
-        json=row,
-    )
-    if response.is_error:
-        raise HTTPException(status_code=502, detail="The payment wall setting could not be updated.")
+    for row in rows:
+        response = await client.post(
+            f"{SUPABASE_URL}/rest/v1/payment_provider_settings",
+            headers=headers,
+            params={"on_conflict": "provider"},
+            json=row,
+        )
+        if response.is_error:
+            raise HTTPException(status_code=502, detail="The payment wall setting could not be updated.")
     _setting_cache.pop(PAYMENT_WALL_SETTING_KEY, None)
-    return {"style": payload.style}
+    _setting_cache.pop(f"{PAYMENT_WALL_SOCIAL_KEY}:text", None)
+    return await payment_wall_setting()
 
 
 async def editor_layout_setting() -> dict[str, str]:
