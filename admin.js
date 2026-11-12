@@ -9,7 +9,7 @@
   const safe = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const money = value => new Intl.NumberFormat('en-GB',{style:'currency',currency:'GBP'}).format((Number(value)||0)/100);
   const date = value => value ? new Intl.DateTimeFormat('en-GB',{dateStyle:'medium',timeStyle:'short'}).format(new Date(value)) : '—';
-  const planName = value => ({document_trial:'3-day single-document access',unlimited_trial:'3-day unlimited access',annual:'Annual unlimited membership'}[value] || 'No plan');
+  const planName = value => ({document_trial:'7-day single-document access',unlimited_trial:'7-day unlimited access',annual:'Annual unlimited membership'}[value] || 'No plan');
   const status = value => `<i class="status ${safe(value)}">${safe(String(value || '').replaceAll('_',' '))}</i>`;
   const row = (cells, attributes='') => `<div class="admin-row" ${attributes}>${cells.map(cell => `<span>${cell}</span>`).join('')}</div>`;
   const PAGE_SIZE = 20;
