@@ -875,7 +875,8 @@ body:not(.ui-simple) .ui-scanbar,body.no-document .ui-scanbar{display:none}
 .ui-mascot{position:fixed;right:22px;bottom:22px;z-index:60;display:flex;align-items:flex-end;gap:6px;pointer-events:none;opacity:0;transform:translateY(14px) scale(.96);transform-origin:100% 100%;transition:opacity .28s ease,transform .32s cubic-bezier(.2,1.3,.4,1)}
 .ui-mascot.is-on{opacity:1;transform:none;pointer-events:auto}
 body:not(.ui-simple) .ui-mascot{display:none}
-.ui-mascot-bubble{position:relative;width:228px;margin-bottom:46px;padding:12px 30px 10px 14px;background:#fff;border:1px solid #cfe7dd;border-radius:16px 16px 4px 16px;box-shadow:0 12px 30px #17233a24;font:500 13.5px/1.45 Inter,system-ui,sans-serif;color:#14241f}
+.ui-mascot-bubble{position:relative;width:250px;margin-bottom:46px;padding:12px 30px 10px 14px;background:#fff;border:1px solid #cfe7dd;border-radius:16px 16px 4px 16px;box-shadow:0 12px 30px #17233a24;font:500 13.5px/1.45 Inter,system-ui,sans-serif;color:#14241f}
+.ui-mascot-bubble b{display:block;margin-bottom:2px;font-size:12px;font-weight:700;letter-spacing:.02em;color:#0b7f5c}
 .ui-mascot-bubble p{margin:0}
 .ui-mascot-x{position:absolute;top:6px;right:6px;width:24px;height:24px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;color:#7b8b85;cursor:pointer}
 .ui-mascot-x:hover{background:#f0f5f3;color:#14241f}
@@ -887,7 +888,7 @@ body:not(.ui-simple) .ui-mascot{display:none}
 @keyframes ui-mascot-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes ui-mascot-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-22deg)}}
 body.ui-mobile .ui-mascot{right:12px;bottom:calc(166px + env(safe-area-inset-bottom,0px))}
-body.ui-mobile .ui-mascot-bubble{width:200px;margin-bottom:38px;font-size:13px}
+body.ui-mobile .ui-mascot-bubble{width:214px;margin-bottom:38px;font-size:13px}
 body.ui-mobile .ui-mascot[data-look="page"] .ui-mascot-figure svg{width:50px;height:60px}
 @media (prefers-reduced-motion:reduce){.ui-mascot,.ui-mascot-figure,.ui-mascot-arm{animation:none!important;transition:none!important}}
 
@@ -926,3 +927,79 @@ body.ui-simple .sidebar-page-menu{top:28px}
 /* The More tools menu sits above the scanned-page bar on phones */
 body.ui-simple .ui-dock:has(.ui-dock-menu:not([hidden])){z-index:120}
 body.ui-mobile:has(.ui-dock-menu:not([hidden])) .ui-scanbar{opacity:0;pointer-events:none}
+/* Tool previews inside Page's speech bubble */
+.ui-mascot-bubble b{display:block}
+.ui-demo{display:block;width:100%;height:auto;margin:6px 0 8px;border-radius:8px}
+.ui-demo [class^="d-"]{transform-box:fill-box}
+.ui-demo .d-cur,.ui-demo .d-pen{transform-box:view-box}
+.ui-demo [class^="d-"]{animation-duration:var(--d,3.2s);animation-iteration-count:infinite;animation-fill-mode:both;animation-timing-function:ease-in-out}
+.ui-mascot:not(.is-on) .ui-demo *{animation-play-state:paused}
+/* Text */
+.ui-demo-add{--d:4.6s}
+.ui-demo-add .d-cur{animation-name:da-cur}
+.ui-demo-add .d-box1{animation-name:da-box1}.ui-demo-add .d-old{animation-name:da-old}
+.ui-demo-add .d-type1{transform-origin:0 50%;animation-name:da-type1}
+.ui-demo-add .d-btn{transform-origin:50% 50%;animation-name:da-btn}
+.ui-demo-add .d-box2{animation-name:da-box2}.ui-demo-add .d-type2{transform-origin:0 50%;animation-name:da-type2}
+@keyframes da-cur{0%{transform:translate(170px,66px)}15%,46%{transform:translate(84px,26px)}56%,62%{transform:translate(30px,17px)}72%,100%{transform:translate(80px,58px)}}
+@keyframes da-box1{0%,18%{opacity:0}20%,54%{opacity:1}58%,100%{opacity:0}}
+@keyframes da-old{0%,22%{opacity:1}25%,100%{opacity:0}}
+@keyframes da-type1{0%,25%{transform:scaleX(0);animation-timing-function:steps(9,end)}44%,100%{transform:scaleX(1)}}
+@keyframes da-btn{0%,57%{transform:scale(1)}59%{transform:scale(.88)}62%,100%{transform:scale(1)}}
+@keyframes da-box2{0%,73%{opacity:0}75%,100%{opacity:1}}
+@keyframes da-type2{0%,76%{transform:scaleX(0);animation-timing-function:steps(8,end)}93%,100%{transform:scaleX(1)}}
+/* Sign */
+.ui-demo-sign{--d:3.8s}
+.ui-demo-sign .d-ink{stroke-dasharray:1;animation-name:ds-ink}
+.ui-demo-sign .d-sig{animation-name:ds-sig}
+.ui-demo-sign .d-cur{animation-name:ds-cur}
+@keyframes ds-ink{0%,5%{stroke-dashoffset:1}40%,100%{stroke-dashoffset:0}}
+@keyframes ds-sig{0%,48%{transform:translate(0,0);opacity:1}72%,92%{transform:translate(60px,20px);opacity:1}100%{transform:translate(60px,20px);opacity:0}}
+@keyframes ds-cur{0%,40%{opacity:0;transform:translate(26px,32px)}46%{opacity:1;transform:translate(26px,32px)}72%,88%{opacity:1;transform:translate(86px,52px)}100%{opacity:0;transform:translate(86px,52px)}}
+/* Draw */
+.ui-demo-draw{--d:3s}
+.ui-demo-draw .d-ink{stroke-dasharray:1;animation-name:dd-ink}
+.ui-demo-draw .d-pen{offset-path:path("M70 52c6-14 12-14 16-2s10 10 14-4 10-12 16 2 8 6 14-4");offset-rotate:0deg;offset-anchor:0 0;animation-name:dd-pen}
+@keyframes dd-ink{0%,8%{stroke-dashoffset:1;opacity:1}75%,90%{stroke-dashoffset:0;opacity:1}100%{stroke-dashoffset:0;opacity:0}}
+@keyframes dd-pen{0%,8%{offset-distance:0%}75%,100%{offset-distance:100%}}
+/* Insert image */
+.ui-demo-image .d-img{animation-name:di-img}.ui-demo-image .d-handles{animation-name:di-h}.ui-demo-image .d-cur{animation-name:di-cur}
+@keyframes di-img{0%,10%{transform:translate(0,0)}45%,100%{transform:translate(64px,0)}}
+@keyframes di-h{0%,48%{opacity:0}52%,100%{opacity:1}}
+@keyframes di-cur{0%,10%{transform:translate(26px,44px)}45%,55%{transform:translate(90px,44px)}75%,100%{transform:translate(160px,64px)}}
+/* Pages */
+.ui-demo-manage{--d:3.6s}
+.ui-demo-manage .d-p1{animation-name:dm-p1}.ui-demo-manage .d-p2,.ui-demo-manage .d-p3{animation-name:dm-p23}.ui-demo-manage .d-cur{animation-name:dm-cur}
+@keyframes dm-p1{0%,10%{transform:translate(0,0)}16%{transform:translate(0,-5px)}52%,82%{transform:translate(88px,-5px)}88%,92%{transform:translate(88px,0);opacity:1}100%{transform:translate(88px,0);opacity:0}}
+@keyframes dm-p23{0%,28%{transform:translate(0,0);opacity:1}52%,92%{transform:translate(-44px,0);opacity:1}100%{transform:translate(-44px,0);opacity:0}}
+@keyframes dm-cur{0%{transform:translate(70px,66px)}10%,16%{transform:translate(58px,34px)}52%,82%{transform:translate(146px,29px)}100%{transform:translate(170px,66px)}}
+/* Highlight + Redact (drag across a line) */
+.ui-demo-highlight .d-grow,.ui-demo-redact .d-grow{transform-origin:0 50%;animation-name:dg-x}
+.ui-demo-highlight .d-cur,.ui-demo-redact .d-cur{animation-name:dg-cur}
+@keyframes dg-x{0%,15%{transform:scaleX(0)}55%,92%{transform:scaleX(1);opacity:1}100%{transform:scaleX(1);opacity:0}}
+@keyframes dg-cur{0%{transform:translate(150px,62px)}15%{transform:translate(64px,26px)}55%,80%{transform:translate(118px,26px)}100%{transform:translate(150px,62px)}}
+/* Shapes + Link (drag a box) */
+.ui-demo-shapes .d-grow2,.ui-demo-link .d-grow2{transform-origin:0 0;animation-name:dg-box}
+.ui-demo-shapes .d-cur{animation-name:dsh-cur}.ui-demo-link .d-cur{animation-name:dl-cur}
+@keyframes dg-box{0%,15%{transform:scale(0);opacity:1}55%,92%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}
+@keyframes dsh-cur{0%{transform:translate(160px,66px)}15%{transform:translate(70px,24px)}55%,80%{transform:translate(122px,54px)}100%{transform:translate(160px,66px)}}
+@keyframes dl-cur{0%{transform:translate(160px,66px)}15%{transform:translate(63px,21px)}55%,80%{transform:translate(117px,33px)}100%{transform:translate(160px,66px)}}
+.ui-demo-link .d-pop{transform-origin:50% 50%;animation-name:dl-pop}
+@keyframes dl-pop{0%,56%{transform:scale(0)}64%{transform:scale(1.15)}68%,92%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}
+/* Sticky note */
+.ui-demo-note .d-pop{transform-origin:0 0;animation-name:dn-pop}.ui-demo-note .d-cur{animation-name:dn-cur}
+@keyframes dn-pop{0%,34%{transform:scale(0)}42%{transform:scale(1.1)}46%,92%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}
+@keyframes dn-cur{0%{transform:translate(170px,66px)}30%,40%{transform:translate(104px,30px)}60%,100%{transform:translate(170px,66px)}}
+/* Stamp */
+.ui-demo-stamp .d-stamp{transform-origin:50% 50%;animation-name:dst}
+@keyframes dst{0%,12%{transform:scale(1.9);opacity:0}28%{transform:scale(.94);opacity:1}33%,90%{transform:scale(1);opacity:1}100%{transform:scale(1);opacity:0}}
+/* Watermark */
+.ui-demo-watermark .d-fade{animation-name:dw}
+@keyframes dw{0%,12%{opacity:0}45%,88%{opacity:1}100%{opacity:0}}
+/* Crop */
+.ui-demo-crop .d-crop{transform-origin:50% 50%;animation-name:dc-box}.ui-demo-crop .d-dim{animation-name:dc-dim}.ui-demo-crop .d-cur{animation-name:dc-cur}
+@keyframes dc-box{0%,10%{transform:scale(1.5,1.82)}50%,100%{transform:scale(1)}}
+@keyframes dc-dim{0%,45%{opacity:0}58%,90%{opacity:1}100%{opacity:0}}
+@keyframes dc-cur{0%,10%{transform:translate(141px,66px)}50%,80%{transform:translate(126px,52px)}100%{transform:translate(160px,68px)}}
+.ui-mascot{z-index:1100}
+@media (prefers-reduced-motion:reduce){.ui-demo [class^="d-"]{animation:none!important}.ui-demo .d-old,.ui-demo .d-cur,.ui-demo .d-pen{opacity:0}}

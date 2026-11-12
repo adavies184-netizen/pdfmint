@@ -167,7 +167,7 @@
       sign: 'Create your signature, then drag it into place on the page.',
       draw: 'Pick Marker, Highlighter or Rubber, then draw on the page.',
       image: 'Choose an image from your device, then drag it into place.',
-      manage: 'Select pages to rotate, move, duplicate or delete them, then press Apply.',
+      manage: 'Select pages to rotate, move, duplicate or delete them, then press Save page changes.',
       highlight: 'Pick a style, then drag across the words you want to mark.',
       shapes: 'Pick a shape, then drag on the page to draw it.',
       note: 'Click on the page where the note should go.',
@@ -196,6 +196,46 @@
     };
     // Text tool helper: a small mascot (Page) in the bottom-right corner with a speech bubble, shown the first time the Text tool opens.
     const MASCOT_SVG = '<svg viewBox="0 0 50 60" aria-hidden="true"><path d="M6 4h26l12 12v38a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#fff" stroke="#34c79a" stroke-width="2.2"/><path d="M32 4v12h12" fill="#d8f3e8" stroke="#34c79a" stroke-width="2.2" stroke-linejoin="round"/><path d="M11 21h13M11 25h9" stroke="#cfe7dd" stroke-width="1.6" stroke-linecap="round"/><path class="ui-mascot-eyes" d="M14 33q3-3 6 0M28 33q3-3 6 0" stroke="#14241f" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 39q6 6 12 0z" fill="#14241f"/><circle cx="12" cy="38.5" r="2.4" fill="#ffc7c7"/><circle cx="36" cy="38.5" r="2.4" fill="#ffc7c7"/><path class="ui-mascot-arm" d="M44 30q7-4 5-12" stroke="#34c79a" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
+    // Tiny looping previews of each tool, shown inside Page's speech bubble (SVG + CSS only).
+    const CUR = '<g class="d-cur"><path d="M0 0v12l3.2-3 2.6 5.4 2.2-1-2.6-5.3H10z" fill="#14241f" stroke="#fff" stroke-width="1" stroke-linejoin="round"/></g>';
+    const PG = '<rect x="58" y="5" width="84" height="62" rx="4" fill="#fff" stroke="#dbe6e1"/>';
+    const LN = (x, y, w, c = '#dde6e2') => `<rect x="${x}" y="${y}" width="${w}" height="4" rx="2" fill="${c}"/>`;
+    const DEMO = {
+      add: `${PG}${LN(66, 13, 64)}<g class="d-old">${LN(66, 23, 50)}</g>${LN(66, 33, 58)}${LN(66, 43, 40)}
+        <rect class="d-box1" x="63" y="19.5" width="58" height="11" rx="2" fill="none" stroke="#3b78d8" stroke-width="1.4"/>
+        <g class="d-type1">${LN(66, 23, 46, '#14241f')}</g>
+        <g class="d-btn"><rect x="4" y="9" width="46" height="15" rx="7.5" fill="#34c79a"/><text x="27" y="19.3" text-anchor="middle" font-size="8" font-weight="700" fill="#fff" font-family="Inter,system-ui,sans-serif">+ Add text</text></g>
+        <rect class="d-box2" x="63" y="51" width="50" height="11" rx="2" fill="none" stroke="#3b78d8" stroke-width="1.4"/>
+        <g class="d-type2">${LN(66, 54.5, 38, '#14241f')}</g>${CUR}`,
+      sign: `${PG}${LN(66, 13, 60)}${LN(66, 23, 48)}<rect x="68" y="56" width="60" height="1.4" fill="#b9c8c2"/>
+        <rect x="4" y="12" width="46" height="34" rx="5" fill="#fff" stroke="#c9b8f2" stroke-dasharray="3 2"/>
+        <g class="d-sig"><path class="d-ink" pathLength="1" d="M10 36c4-10 7-15 9-12s-4 12 1 9 5-10 8-8-1 8 3 6 6-5 9-4" fill="none" stroke="#7c5cd6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></g>${CUR}`,
+      draw: `${PG}${LN(66, 13, 64)}${LN(66, 23, 52)}
+        <path class="d-ink" pathLength="1" d="M70 52c6-14 12-14 16-2s10 10 14-4 10-12 16 2 8 6 14-4" fill="none" stroke="#d88a2b" stroke-width="2.2" stroke-linecap="round"/>
+        <g class="d-pen"><path d="M0 0l-2.5-7 9-9 3.5 3.5-9 9z" fill="#d88a2b" stroke="#fff" stroke-width=".8"/></g>`,
+      image: `${PG}${LN(66, 13, 64)}${LN(66, 23, 40)}
+        <g class="d-img"><rect x="8" y="30" width="34" height="26" rx="3" fill="#e5f0fb" stroke="#3b78d8"/><circle cx="16" cy="38" r="3" fill="#f2c94c"/><path d="M10 54l9-10 7 7 5-4 9 7z" fill="#3b78d8"/></g>
+        <g class="d-handles" fill="#fff" stroke="#3b78d8"><rect x="70.5" y="29.5" width="4" height="4"/><rect x="100.5" y="29.5" width="4" height="4"/><rect x="70.5" y="53.5" width="4" height="4"/><rect x="100.5" y="53.5" width="4" height="4"/></g>${CUR}`,
+      manage: `<g class="d-p1"><rect x="40" y="12" width="32" height="44" rx="3" fill="#fff" stroke="#34c79a" stroke-width="1.6"/>${LN(45, 18, 20)}${LN(45, 25, 16)}<text x="56" y="49" text-anchor="middle" font-size="9" font-weight="700" fill="#4b5b56" font-family="Inter,system-ui,sans-serif">1</text></g>
+        <g class="d-p2"><rect x="84" y="12" width="32" height="44" rx="3" fill="#fff" stroke="#dbe6e1"/>${LN(89, 18, 20)}${LN(89, 25, 14)}<text x="100" y="49" text-anchor="middle" font-size="9" font-weight="700" fill="#4b5b56" font-family="Inter,system-ui,sans-serif">2</text></g>
+        <g class="d-p3"><rect x="128" y="12" width="32" height="44" rx="3" fill="#fff" stroke="#dbe6e1"/>${LN(133, 18, 20)}${LN(133, 25, 18)}<text x="144" y="49" text-anchor="middle" font-size="9" font-weight="700" fill="#4b5b56" font-family="Inter,system-ui,sans-serif">3</text></g>${CUR}`,
+      highlight: `${PG}${LN(66, 13, 64)}<rect class="d-grow" x="64" y="21" width="56" height="8" rx="2" fill="#ffe266"/>${LN(66, 23, 52, '#9aa9a3')}${LN(66, 33, 58)}${LN(66, 43, 44)}${CUR}`,
+      shapes: `${PG}${LN(66, 13, 64)}<rect class="d-grow2" x="70" y="24" width="52" height="30" rx="3" fill="#3b78d811" stroke="#3b78d8" stroke-width="1.6"/>${CUR}`,
+      note: `${PG}${LN(66, 13, 64)}${LN(66, 23, 52)}${LN(66, 33, 58)}${LN(66, 43, 40)}
+        <g class="d-pop"><rect x="104" y="30" width="26" height="26" rx="3" fill="#facc15" stroke="#c59000"/>${LN(108, 37, 16, '#a07800')}${LN(108, 44, 12, '#a07800')}</g>${CUR}`,
+      link: `${PG}${LN(66, 13, 64)}${LN(66, 25, 46, '#3b78d8')}${LN(66, 37, 58)}${LN(66, 47, 40)}
+        <rect class="d-grow2" x="63" y="21" width="54" height="12" rx="2" fill="#3b78d814" stroke="#3b78d8" stroke-width="1.3" stroke-dasharray="3 2"/>
+        <g class="d-pop"><circle cx="124" cy="20" r="8" fill="#3b78d8"/><path d="M121 21.5l-1 1a2.2 2.2 0 0 1-3-3l2-2a2.2 2.2 0 0 1 3 0M127 18.5l1-1a2.2 2.2 0 0 0-3-3l-2 2a2.2 2.2 0 0 0 0 3" transform="translate(2 1.5)" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round"/></g>${CUR}`,
+      stamp: `${PG}${LN(66, 13, 64)}${LN(66, 23, 52)}${LN(66, 33, 58)}
+        <g class="d-stamp"><g transform="rotate(-10 100 50)"><rect x="76" y="42" width="48" height="16" rx="3" fill="#fff" fill-opacity=".6" stroke="#d63f3f" stroke-width="1.6"/><text x="100" y="53.3" text-anchor="middle" font-size="8.5" font-weight="800" letter-spacing=".6" fill="#d63f3f" font-family="Inter,system-ui,sans-serif">APPROVED</text></g></g>`,
+      watermark: `${PG}${LN(66, 13, 64)}${LN(66, 23, 52)}${LN(66, 33, 58)}${LN(66, 43, 44)}${LN(66, 53, 56)}
+        <g class="d-fade"><text x="100" y="42" text-anchor="middle" transform="rotate(-28 100 38)" font-size="17" font-weight="800" fill="#34c79a" fill-opacity=".38" font-family="Inter,system-ui,sans-serif">DRAFT</text></g>`,
+      crop: `${PG}${LN(66, 13, 64)}${LN(66, 23, 52)}${LN(66, 33, 58)}${LN(66, 43, 44)}${LN(66, 53, 56)}
+        <path class="d-dim" fill-rule="evenodd" d="M58 5h84v62H58zM70 18h56v34H70z" fill="#14241f" fill-opacity=".28"/>
+        <rect class="d-crop" x="70" y="18" width="56" height="34" fill="none" stroke="#14241f" stroke-width="1.4" stroke-dasharray="4 2"/>${CUR}`,
+      redact: `${PG}${LN(66, 13, 64)}${LN(66, 23, 50)}${LN(66, 33, 58)}${LN(66, 43, 44)}<rect class="d-grow" x="64" y="20.5" width="54" height="9" fill="#14241f"/>${CUR}`
+    };
+    const demoFor = tool => DEMO[tool] ? `<svg class="ui-demo ui-demo-${tool}" viewBox="0 0 200 72" aria-hidden="true"><rect width="200" height="72" rx="8" fill="#f1f7f4"/>${DEMO[tool]}</svg>` : '';
     const mascot = document.createElement('div');
     mascot.className = 'ui-mascot';
     mascot.setAttribute('role', 'status');
@@ -204,24 +244,29 @@
     let mascotTimer = 0, mascotHover = false;
     const hideMascot = () => { clearTimeout(mascotTimer); mascot.classList.remove('is-on'); };
     const armMascotTimer = () => { clearTimeout(mascotTimer); mascotTimer = setTimeout(() => { if (mascotHover) armMascotTimer(); else hideMascot(); }, 9000); };
-    const drawMascot = () => {
+    const drawMascot = tool => {
       const phone = body.classList.contains('ui-mobile');
-      const line = phone ? 'Tap any text to edit it, or add your own text.' : 'Hover over any text and click to edit it, or add your own text.';
+      const text = tool === 'add' ? (phone ? 'Tap any text to edit it, or add your own text.' : 'Hover over any text and click to edit it, or add your own text.') : SNACK[tool];
+      const line = phone ? text.replace(/\bClick\b/g, 'Tap').replace(/\bclick\b/g, 'tap') : text;
       mascot.dataset.look = 'page';
-      mascot.innerHTML = `<div class="ui-mascot-bubble"><button type="button" class="ui-mascot-x" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button><p>${line}</p></div><div class="ui-mascot-figure">${MASCOT_SVG}</div>`;
+      mascot.dataset.tool = tool;
+      mascot.innerHTML = `<div class="ui-mascot-bubble"><button type="button" class="ui-mascot-x" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button><b>${nameOf(tool)}</b>${demoFor(tool)}<p>${line}</p></div><div class="ui-mascot-figure">${MASCOT_SVG}</div>`;
     };
-    const showMascot = () => {
-      if (tipsSeen.__off || tipsSeen.add) return;
-      tipsSeen.add = true;
-      saveTips();
+    // TEMPORARY: Page shows every time a tool opens so the owner can review each message.
+    // Set to false to go back to showing each tool's message only the first time.
+    const MASCOT_EVERY_TIME = true;
+    const showMascot = tool => {
+      if (!SNACK[tool] || tipsSeen.__off) return hideMascot();
+      if (!MASCOT_EVERY_TIME) { if (tipsSeen[tool]) return hideMascot(); tipsSeen[tool] = true; saveTips(); }
       hideTip();
-      drawMascot();
+      drawMascot(tool);
       mascot.classList.remove('is-on');
       void mascot.offsetWidth;
       mascot.classList.add('is-on');
       armMascotTimer();
     };
     document.addEventListener('pointerdown', event => { if (mascot.classList.contains('is-on') && event.target.closest?.('.text-hit, #pageWrap')) hideMascot(); }, true);
+    document.addEventListener('click', event => { if (event.target.closest?.('[data-ui-tool="sign"]')) setTimeout(() => showMascot('sign'), 0); });
     mascot.addEventListener('mouseenter', () => { mascotHover = true; });
     mascot.addEventListener('mouseleave', () => { mascotHover = false; });
     mascot.addEventListener('click', event => {
@@ -229,8 +274,9 @@
     });
 
     const showTip = tool => {
-      if (tool !== 'add') hideMascot();
-      if (tool === 'add') { showMascot(); return; }
+      hideTip();
+      showMascot(tool);
+      return;
       const text = SNACK[tool];
       if (!text || tipsSeen[tool] || tipsSeen.__off) return hideTip();
       tipTool = tool;
