@@ -1004,7 +1004,9 @@
 
     // Simple layouts open on Add text, unless the tool page asked for a specific tool.
     const askedTool = new URLSearchParams(location.search).get('tool');
-    const wantsDefault = !askedTool || askedTool === 'edit' || askedTool === 'add';
+    // Converter pages pass their own name (e.g. tool=pdf-to-word); anything that isn't an editor tool opens on Add text too.
+    const EDITOR_TOOLS = ['sign', 'draw', 'image', 'manage', 'highlight', 'shapes', 'note', 'link', 'stamp', 'watermark', 'crop', 'redact', 'text', 'split'];
+    const wantsDefault = !askedTool || !EDITOR_TOOLS.includes(askedTool);
     let defaulted = false;
     const pickDefault = () => {
       if (defaulted || body.classList.contains('no-document') || !body.classList.contains('ui-simple')) return;

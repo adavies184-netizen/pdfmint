@@ -1028,3 +1028,6 @@ body.ui-mobile .ui-all-panel{position:static;width:auto;padding:4px 6px 6px;bord
 body.ui-mobile .ui-dock-menu.is-all>:not(.ui-all-panel){display:none}
 body.ui-mobile .ui-all-back{display:grid}
 body.ui-mobile .ui-all-chip{padding:6px 11px;font-size:13px}
+/* Page list: the thumbnails scroll with the wheel/touch, but no visible scroll bar (Windows shows a classic one otherwise). */
+body.ui-simple .page-thumbnails,body.ui-simple #pageThumbnails{scrollbar-width:none;-ms-overflow-style:none}
+body.ui-simple .page-thumbnails::-webkit-scrollbar,body.ui-simple #pageThumbnails::-webkit-scrollbar{display:none;width:0;height:0}
