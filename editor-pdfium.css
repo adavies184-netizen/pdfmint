@@ -441,3 +441,5 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 .add-style-toggles{display:flex;gap:2px}
 .add-style-toggle{width:36px;height:36px;display:grid;place-items:center;border:1px solid #dce3ea;border-radius:8px;background:#fff;color:#334155;font:600 16px Georgia,'Times New Roman',serif;cursor:pointer}
 .add-style-toggle.active{background:#e7f7f0;border-color:#9fdcc3;color:#1f7d60}
+.redact-hover{position:absolute;pointer-events:none;box-sizing:border-box;border:1.5px dashed #14241f;border-radius:2px;background:#14241f14}
+.redact-area-outline{position:absolute;pointer-events:none;box-sizing:border-box;border:1.5px dashed #14241f;background:transparent;opacity:.85}

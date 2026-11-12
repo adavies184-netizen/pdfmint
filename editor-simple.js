@@ -175,7 +175,7 @@
       stamp: 'Choose a stamp. You can move and resize it afterwards.',
       watermark: 'Type your text, then pick its size, colour and angle.',
       crop: 'Drag over the part of the page you want to keep.',
-      redact: 'Drag across text to black it out, or drag a box over any area (scans too).'
+      redact: 'Drag across text to black it out. Words get a dashed outline when you\'re on them. Or drag a box over any area (scans too).'
     };
     const tip = document.createElement('div');
     tip.className = 'ui-snack';
