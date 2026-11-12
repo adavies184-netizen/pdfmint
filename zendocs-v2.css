@@ -157,3 +157,13 @@
 /* Renewal disclaimer: matched to the reference (12px, #5b6470, 1px #e5e9f0 border, 10px corners) */
 .zd2 .zd2-terms{padding:10px 14px;border:1px solid #e5e9f0;border-radius:10px;background:#fff;color:#5b6470;font-size:12px;line-height:1.6}
 .zd2 .zd2-terms a{color:#5b6470;text-decoration:underline}
+/* Accepted cards and security line (replaces "Choose your payment method") */
+.zd2-accepted{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.zd2-cards{display:flex;align-items:center;gap:6px}
+.zd2-card{display:grid;place-items:center;height:28px;min-width:44px;padding:0 6px;border:1px solid #e5e9f0;border-radius:5px;background:#fff}
+.zd2-card .ap-visa{font-size:13px;padding:0!important}
+.zd2-card .ap-mc{transform:scale(.85)}
+.zd2-amex{background:#1f72cd;border-color:#1f72cd;color:#fff;font:800 11px/1 Arial,sans-serif;letter-spacing:.04em}
+.zd2-secure{display:inline-flex;align-items:center;gap:6px;color:#5b6470;font-size:12.5px;white-space:nowrap}
+.zd2-secure svg{width:15px;height:15px;color:#16a34a}
+@media (min-width:1000px){.zd2-accepted{margin-bottom:16px}}
