@@ -1045,16 +1045,16 @@ body.ui-simple .page-thumbnails::-webkit-scrollbar,body.ui-simple #pageThumbnail
   body.ui-mobile .ui-tf-slot:has(#addControls:not([hidden])){width:auto}
   body.ui-mobile .ui-tf-slot .context-bar>#addControls:not([hidden]){display:flex!important;flex-wrap:nowrap!important;align-items:center;gap:3px!important;min-width:0!important;width:100%}
   body.ui-mobile #addControls>.ui-add-text{flex:none;width:40px;height:40px;padding:0!important;border-radius:10px;display:flex!important;flex-direction:column;align-items:center;justify-content:center;gap:0!important;line-height:1}
-  body.ui-mobile #addControls>.ui-add-text svg{width:15px!important;height:15px!important;margin:0!important}
+  body.ui-mobile #addControls>.ui-add-text svg{display:none!important}
   body.ui-mobile #addControls>.ui-add-text span{font-size:0!important}
-  body.ui-mobile #addControls>.ui-add-text span::after{content:"Text";font:700 10.5px Inter,sans-serif}
+  body.ui-mobile #addControls>.ui-add-text span::after{content:"Add\A Text";white-space:pre;text-align:center;display:block;font:700 11px/1.2 Inter,sans-serif}
   body.ui-mobile #addControls>.colour-control:has(#addTextColor){flex:none;width:32px!important;min-width:0;height:36px;padding:0!important;gap:0!important}
   body.ui-mobile #addControls>.colour-control:has(#addTextColor)::after{display:none}
   body.ui-mobile #addControls .colour-swatch{width:18px!important;height:18px!important}
   body.ui-mobile #addControls>label:has(#addFont){flex:1 1 auto;min-width:0;height:36px;padding:0 2px 0 7px!important}
   body.ui-mobile #addControls #addFont{min-width:0!important;width:100%;height:34px;font-size:12px!important;text-overflow:ellipsis;white-space:nowrap;overflow:hidden}
-  body.ui-mobile #addControls>.ui-size-select{flex:none;width:40px;min-width:0!important;height:36px;padding:0 0 0 6px!important;font-size:12.5px!important}
+  body.ui-mobile #addControls>.ui-size-select{flex:none;width:46px;min-width:0!important;height:36px;padding:0 17px 0 8px!important;font-size:12.5px!important;background-position:right 5px center!important;background-size:11px 11px!important}
   body.ui-mobile #addControls>.ui-bold,body.ui-mobile #addControls .add-style-toggle{width:26px!important;height:34px!important;min-height:0!important;margin:0!important;font-size:15px!important}
   body.ui-mobile #addControls>.add-style-toggles{flex:none;gap:0!important}
-  body.ui-mobile #addControls>.ui-more-options{flex:none;width:30px!important;height:36px!important}
+  body.ui-mobile #addControls>.ui-more-options{display:none!important}
 }
