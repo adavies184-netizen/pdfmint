@@ -23,6 +23,7 @@ EVENT_NAMES = {
     "upload_clicked",
     "editor_opened",
     "editor_tool_used",
+    "editor_action",
     "download_clicked",
     "email_entered",
     "payment_plan_viewed",

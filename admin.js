@@ -76,6 +76,27 @@
       funnelDay.hidden = true;
       funnelDay.max = londonToday();
       funnelRange.after(funnelDay);
+      funnelRange.insertAdjacentHTML('beforeend', '<option value="range">Custom range</option>');
+      const rangeBox = document.createElement('span');
+      rangeBox.id = 'funnel-range-box';
+      rangeBox.className = 'funnel-range-box';
+      rangeBox.hidden = true;
+      rangeBox.innerHTML = `<input id="funnel-start" type="date" max="${londonToday()}" aria-label="From"><span>to</span><input id="funnel-end" type="date" max="${londonToday()}" value="${londonToday()}" aria-label="To">`;
+      funnelDay.after(rangeBox);
+      rangeBox.addEventListener('change', () => {
+        if (!document.getElementById('funnel-start').value || !document.getElementById('funnel-end').value) return;
+        selectedFunnelStage = 0;
+        funnelLoaded = false;
+        loadFunnel().catch(showFunnelError);
+      });
+      funnelRange.addEventListener('change', () => {
+        rangeBox.hidden = funnelRange.value !== 'range';
+        if (funnelRange.value === 'range' && !document.getElementById('funnel-start').value) {
+          const start = new Date(`${londonToday()}T12:00:00Z`);
+          start.setUTCDate(start.getUTCDate() - 6);
+          document.getElementById('funnel-start').value = start.toISOString().slice(0, 10);
+        }
+      });
       funnelDay.addEventListener('change', () => {
         selectedFunnelStage = 0;
         funnelLoaded = false;
@@ -301,6 +322,48 @@
       ? `<table class="breakdown-table">${breakdownHead(heading)}<tbody>${rows.map(([name,item]) => `<tr><td title="${safe(name)}">${safe(name)}</td>${breakdownCells(item)}</tr>`).join('')}</tbody></table>`
       : '<div class="funnel-empty">No tagged visits yet. Visits from ads appear here once their links carry UTM tags.</div>';
   }
+  const ACTION_LABELS = {
+    'edit-text':'Edited existing text', 'add-text':'Added new text', 'signature':'Signed the document',
+    'draw':'Drew or wrote by hand', 'highlighter-pen':'Highlighter pen', 'highlight-text':'Highlighted, underlined or struck through text',
+    'shapes':'Added shapes', 'image':'Inserted an image', 'stamp':'Added a stamp', 'watermark':'Added a watermark',
+    'redact':'Redacted', 'crop':'Cropped a page', 'note':'Added a note', 'link':'Added a link',
+    'pages':'Changed pages (rotate, delete, reorder)', 'annotation':'Other mark-up'
+  };
+  const actionLabel = key => ACTION_LABELS[key] || funnelLabel(key);
+  const dayLabel = value => new Date(`${value}T12:00:00Z`).toLocaleDateString('en-GB', {weekday:'short', day:'numeric', month:'short', timeZone:'UTC'});
+
+  function renderActionsAndDevices(data) {
+    const actionsTarget = document.querySelector('[data-funnel-actions]');
+    const actionsDaily = document.querySelector('[data-funnel-actions-daily]');
+    if (actionsTarget) {
+      const base = Number(data.editor_sessions || 0);
+      const actions = data.actions || [];
+      const top = Math.max(1, ...actions.map(item => Number(item.sessions || 0)));
+      actionsTarget.innerHTML = actions.length
+        ? `<table class="breakdown-table action-table"><thead><tr><th>Action</th><th>Visitors</th><th>% of editor visitors</th><th></th></tr></thead><tbody>${actions.map(item => `<tr><td>${safe(actionLabel(item.action))}</td><td><b>${funnelNumber(item.sessions)}</b></td><td><b>${funnelPercent(Number(item.sessions || 0), base)}</b></td><td class="bar-cell"><span style="width:${Math.round(Number(item.sessions || 0) / top * 100)}%"></span></td></tr>`).join('')}</tbody><tfoot><tr><td>Opened the editor</td><td>${funnelNumber(base)}</td><td>100%</td><td></td></tr></tfoot></table>`
+        : '<div class="funnel-empty">No editor actions recorded for these dates yet. They start counting after the site and engine updates are deployed.</div>';
+      const days = (data.actions_daily || []).filter(day => day.editor_sessions);
+      const columns = actions.slice(0, 6).map(item => item.action);
+      actionsDaily.innerHTML = days.length > 1 && columns.length
+        ? `<h3 class="breakdown-subhead">Day by day</h3><table class="breakdown-table"><thead><tr><th>Day</th><th>Editor visitors</th>${columns.map(key => `<th>${safe(actionLabel(key))}</th>`).join('')}</tr></thead><tbody>${days.map(day => `<tr><td>${safe(dayLabel(day.date))}</td><td><b>${funnelNumber(day.editor_sessions)}</b></td>${columns.map(key => { const count = Number(day.actions?.[key] || 0); return `<td><b>${funnelNumber(count)}</b><small>${funnelPercent(count, day.editor_sessions)}</small></td>`; }).join('')}</tr>`).join('')}</tbody></table>`
+        : '';
+    }
+    const devicesTarget = document.querySelector('[data-funnel-devices]');
+    const devicesDaily = document.querySelector('[data-funnel-devices-daily]');
+    if (devicesTarget) {
+      const devices = data.devices || [];
+      const total = devices.reduce((sum, item) => sum + Number(item.visits || 0), 0);
+      const name = key => ({mobile:'Mobile', desktop:'Desktop', tablet:'Tablet', unknown:'Unknown'})[key] || funnelLabel(key);
+      devicesTarget.innerHTML = devices.length
+        ? `<table class="breakdown-table"><thead><tr><th>Device</th><th>Visits</th><th>Share</th><th>Editor opened</th><th>Downloads</th><th>Paywall views</th><th>Sales</th></tr></thead><tbody>${devices.map(item => { const visits = Number(item.visits || 0); const cell = key => `<td><b>${funnelNumber(item[key])}</b><small>${funnelPercent(Number(item[key] || 0), visits)}</small></td>`; return `<tr><td>${safe(name(item.device))}</td><td><b>${funnelNumber(visits)}</b></td><td><b>${funnelPercent(visits, total)}</b></td>${cell('editors')}${cell('downloads')}${cell('paywall')}${cell('sales')}</tr>`; }).join('')}</tbody></table>`
+        : '<div class="funnel-empty">Device figures appear after the engine update is deployed.</div>';
+      const days = (data.daily || []).filter(day => Number(day.visits || 0));
+      devicesDaily.innerHTML = days.length > 1
+        ? `<h3 class="breakdown-subhead">Day by day</h3><table class="breakdown-table"><thead><tr><th>Day</th><th>Visits</th><th>Mobile</th><th>Desktop</th><th>Tablet</th></tr></thead><tbody>${days.map(day => { const visits = Number(day.visits || 0); const cell = key => { const count = Number(day.devices?.[key] || 0); return `<td><b>${funnelNumber(count)}</b><small>${funnelPercent(count, visits)}</small></td>`; }; return `<tr><td>${safe(dayLabel(day.date))}</td><td><b>${funnelNumber(visits)}</b></td>${cell('mobile')}${cell('desktop')}${cell('tablet')}</tr>`; }).join('')}</tbody></table>`
+        : '';
+    }
+  }
+
   document.getElementById('funnel-campaign-group')?.addEventListener('change', () => { if (lastFunnelData) renderBreakdowns(lastFunnelData); });
 
   async function loadFunnel() {
@@ -312,6 +375,9 @@
     if (range === 'day') {
       const day = document.getElementById('funnel-day')?.value || londonToday();
       params.set('day', day);
+    } else if (range === 'range') {
+      params.set('start', document.getElementById('funnel-start')?.value || londonToday());
+      params.set('end', document.getElementById('funnel-end')?.value || londonToday());
     } else {
       params.set('days', range);
     }
@@ -322,6 +388,7 @@
     selectedFunnelStage = Math.min(selectedFunnelStage, Math.max(0,(data.stages || []).length-1));
     renderFunnel(data);
     renderBreakdowns(data);
+    renderActionsAndDevices(data);
     funnelLoaded = true;
     panel.classList.remove('funnel-loading');
   }

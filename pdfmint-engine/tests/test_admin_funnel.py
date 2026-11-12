@@ -122,13 +122,14 @@ class DailyAndCampaignTests(unittest.TestCase):
     def setUp(self):
         from datetime import date, datetime, timedelta, timezone
         from zoneinfo import ZoneInfo
-        names = {"UTM_FIELDS", "BREAKDOWN_STAGES", "REPORTING_TIMEZONE"}
+        names = {"UTM_FIELDS", "BREAKDOWN_STAGES", "REPORTING_TIMEZONE", "MOBILE_AGENT", "TABLET_AGENT"}
         nodes = [
             node for node in tree.body
             if (isinstance(node, ast.Assign) and any(isinstance(t, ast.Name) and t.id in names for t in node.targets))
-            or (isinstance(node, ast.FunctionDef) and node.name in {"build_daily_and_campaigns", "_parsed_datetime"})
+            or (isinstance(node, ast.FunctionDef) and node.name in {"build_daily_and_campaigns", "_parsed_datetime", "device_type"})
         ]
-        ns = {"Any": Any, "datetime": datetime, "timedelta": timedelta, "timezone": timezone, "ZoneInfo": ZoneInfo, "calendar_date": date}
+        import re
+        ns = {"re": re, "Any": Any, "datetime": datetime, "timedelta": timedelta, "timezone": timezone, "ZoneInfo": ZoneInfo, "calendar_date": date}
         exec(compile(ast.Module(body=nodes, type_ignores=[]), "admin.py", "exec"), ns)
         self.build = ns["build_daily_and_campaigns"]
         self.datetime, self.timezone = datetime, timezone
@@ -153,6 +154,28 @@ class DailyAndCampaignTests(unittest.TestCase):
         self.assertEqual((google["campaign"], google["ad_group"], google["keyword"], google["sales"]), ("pdf-to-word", "ag1", "pdf to word", 1))
         direct = next(row for row in report["campaigns"] if row["source"] == "(direct)")
         self.assertEqual(direct["visits"], 1)
+
+    def test_devices_and_editor_actions(self):
+        phone = "Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 Chrome/130 Mobile Safari/537.36"
+        laptop = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/130 Safari/537.36"
+        events = [
+            {**event("p", "landing_view", created_at="2026-11-11T09:00:00+00:00"), "user_agent": phone},
+            event("p", "editor_opened", created_at="2026-11-11T09:01:00+00:00"),
+            event("p", "editor_action", "edit-text", created_at="2026-11-11T09:02:00+00:00"),
+            event("p", "editor_action", "signature", created_at="2026-11-11T09:03:00+00:00"),
+            {**event("d", "landing_view", created_at="2026-11-11T10:00:00+00:00"), "user_agent": laptop},
+            event("d", "editor_opened", created_at="2026-11-11T10:01:00+00:00"),
+            event("d", "editor_action", "edit-text", created_at="2026-11-11T10:02:00+00:00"),
+        ]
+        since = self.datetime(2026, 11, 11, tzinfo=self.timezone.utc)
+        before = self.datetime(2026, 11, 12, tzinfo=self.timezone.utc)
+        report = self.build(events, since, before)
+        devices = {row["device"]: row["visits"] for row in report["devices"]}
+        self.assertEqual(devices, {"mobile": 1, "desktop": 1})
+        self.assertEqual(report["daily"][0]["devices"], {"mobile": 1, "desktop": 1})
+        self.assertEqual(report["editor_sessions"], 2)
+        self.assertEqual(report["actions"][0], {"action": "edit-text", "sessions": 2})
+        self.assertEqual(report["actions_daily"][0]["actions"], {"edit-text": 2, "signature": 1})
 
 
 if __name__ == "__main__":

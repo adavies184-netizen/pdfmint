@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 import time
 from datetime import date as calendar_date, datetime, timedelta, timezone
 from typing import Any, Literal
@@ -222,6 +223,20 @@ BREAKDOWN_STAGES = (
 )
 
 
+MOBILE_AGENT = re.compile(r"iphone|ipod|android.+mobile|windows phone|mobi", re.IGNORECASE)
+TABLET_AGENT = re.compile(r"ipad|tablet|android(?!.*mobile)|silk|kindle", re.IGNORECASE)
+
+
+def device_type(user_agent: str) -> str:
+    if not user_agent:
+        return "unknown"
+    if TABLET_AGENT.search(user_agent):
+        return "tablet"
+    if MOBILE_AGENT.search(user_agent):
+        return "mobile"
+    return "desktop"
+
+
 def build_daily_and_campaigns(
     events: list[dict[str, Any]],
     since: datetime,
@@ -235,6 +250,10 @@ def build_daily_and_campaigns(
     first_landing: dict[str, str] = {}
     reached: dict[str, set[str]] = {}
     tags: dict[str, tuple[str, ...]] = {}
+    devices: dict[str, str] = {}
+    actions: dict[str, set[str]] = {}
+    action_days: dict[str, dict[str, set[str]]] = {}
+    editor_days: dict[str, set[str]] = {}
     for event in events:
         session_id = str(event.get("session_id") or "")
         event_name = str(event.get("event_name") or "")
@@ -248,6 +267,19 @@ def build_daily_and_campaigns(
         values = tuple(str(event.get(field) or "").strip().lower()[:120] for field in UTM_FIELDS)
         if any(values) and session_id not in tags:
             tags[session_id] = values
+        agent = str(event.get("user_agent") or "")
+        if agent and session_id not in devices:
+            devices[session_id] = device_type(agent)
+        parsed_at = _parsed_datetime(created_at)
+        event_day = parsed_at.astimezone(REPORTING_TIMEZONE).date().isoformat() if parsed_at else ""
+        if event_name == "editor_opened" and event_day:
+            editor_days.setdefault(event_day, set()).add(session_id)
+        if event_name == "editor_action":
+            action = str(event.get("event_value") or "").strip().lower()
+            if action:
+                actions.setdefault(action, set()).add(session_id)
+                if event_day:
+                    action_days.setdefault(event_day, {}).setdefault(action, set()).add(session_id)
 
     def empty_counts() -> dict[str, int]:
         return {key: 0 for key, _ in BREAKDOWN_STAGES}
@@ -261,6 +293,8 @@ def build_daily_and_campaigns(
         day += timedelta(days=1)
 
     campaigns: dict[tuple[str, ...], dict[str, int]] = {}
+    device_totals: dict[str, dict[str, int]] = {}
+    daily_devices: dict[str, dict[str, int]] = {key: {} for key in daily}
     for session_id, landed_at in first_landing.items():
         parsed = _parsed_datetime(landed_at)
         if not parsed:
@@ -268,17 +302,40 @@ def build_daily_and_campaigns(
         stages_reached = reached.get(session_id, set())
         source, medium, campaign, ad_group, keyword = tags.get(session_id) or ("", "", "", "", "")
         key = (source or "(direct)", medium or "(none)", campaign, ad_group, keyword)
-        targets = [campaigns.setdefault(key, empty_counts())]
+        device = devices.get(session_id, "unknown")
+        targets = [campaigns.setdefault(key, empty_counts()), device_totals.setdefault(device, empty_counts())]
         local_day = parsed.astimezone(REPORTING_TIMEZONE).date().isoformat()
         if local_day in daily:
             targets.append(daily[local_day])
+            daily_devices[local_day][device] = daily_devices[local_day].get(device, 0) + 1
         for target in targets:
             for column, event_name in BREAKDOWN_STAGES:
                 if event_name in stages_reached:
                     target[column] += 1
 
+    editor_sessions = set().union(*editor_days.values()) if editor_days else set()
     return {
-        "daily": [{"date": key, **value} for key, value in sorted(daily.items(), reverse=True)],
+        "daily": [
+            {"date": key, **value, "devices": daily_devices.get(key, {})}
+            for key, value in sorted(daily.items(), reverse=True)
+        ],
+        "devices": [
+            {"device": name, **value}
+            for name, value in sorted(device_totals.items(), key=lambda item: -item[1]["visits"])
+        ],
+        "editor_sessions": len(editor_sessions),
+        "actions": [
+            {"action": name, "sessions": len(ids)}
+            for name, ids in sorted(actions.items(), key=lambda item: (-len(item[1]), item[0]))
+        ],
+        "actions_daily": [
+            {
+                "date": key,
+                "editor_sessions": len(editor_days.get(key, set())),
+                "actions": {name: len(ids) for name, ids in action_days.get(key, {}).items()},
+            }
+            for key in sorted(daily, reverse=True)
+        ],
         "campaigns": [
             {
                 "source": key[0], "medium": key[1], "campaign": key[2],
@@ -500,9 +557,22 @@ async def admin_funnel(
     days: int = Query(default=7, ge=1, le=90),
     landing_page: str | None = Query(default=None, max_length=120),
     day: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    start: str | None = None,
+    end: str | None = None,
 ) -> dict[str, Any]:
     await _require_admin(authorization)
-    if day:
+    if start and end:
+        try:
+            first, last = calendar_date.fromisoformat(start), calendar_date.fromisoformat(end)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail="Choose valid start and end dates.") from exc
+        if last < first:
+            first, last = last, first
+        if (last - first).days > 91:
+            raise HTTPException(status_code=422, detail="Choose a range of 92 days or fewer.")
+        since = datetime.combine(first, datetime.min.time(), REPORTING_TIMEZONE).astimezone(timezone.utc)
+        before = datetime.combine(last + timedelta(days=1), datetime.min.time(), REPORTING_TIMEZONE).astimezone(timezone.utc)
+    elif day:
         try:
             selected_day = calendar_date.fromisoformat(day)
         except ValueError as exc:
@@ -512,7 +582,7 @@ async def admin_funnel(
         since, before = local_start.astimezone(timezone.utc), local_end.astimezone(timezone.utc)
     else:
         since, before = _calendar_window(days)
-    base_select = "session_id,user_id,event_name,event_value,landing_page,page_path,created_at"
+    base_select = "session_id,user_id,event_name,event_value,landing_page,page_path,user_agent,created_at"
     params: dict[str, str] = {
         "select": f"{base_select},{','.join(UTM_FIELDS)}",
         "created_at": f"gte.{since.isoformat()}",
@@ -523,23 +593,36 @@ async def admin_funnel(
         params["landing_page"] = f"eq.{landing_page}"
 
     client = http()
-    response = await client.get(
-        f"{SUPABASE_URL}/rest/v1/analytics_events",
-        headers={**_service_headers(), "Range": "0-9999"},
-        params=params,
-    )
-    if response.status_code == 400:
+    params["order"] = "created_at.desc,id.desc"
+    page_size, max_events = 1000, 30000
+
+    async def fetch_events() -> list[dict[str, Any]] | None:
+        rows: list[dict[str, Any]] = []
+        for start_row in range(0, max_events, page_size):
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/analytics_events",
+                headers={**_service_headers(), "Range": f"{start_row}-{start_row + page_size - 1}"},
+                params=params,
+                timeout=20,
+            )
+            if response.status_code == 400 and not rows:
+                return None
+            if response.is_error:
+                raise HTTPException(status_code=502, detail="Could not load conversion analytics.")
+            page = response.json()
+            rows.extend(page)
+            if len(page) < page_size:
+                break
+        return rows
+
+    # Supabase returns at most 1,000 rows per request, so read the range page by page.
+    fetched = await fetch_events()
+    if fetched is None:
         # Campaign columns not added yet (database/analytics-utm-v1.sql): report without them.
         params["select"] = base_select
-        response = await client.get(
-            f"{SUPABASE_URL}/rest/v1/analytics_events",
-            headers={**_service_headers(), "Range": "0-9999"},
-            params=params,
-        )
-    if response.is_error:
-        raise HTTPException(status_code=502, detail="Could not load conversion analytics.")
+        fetched = await fetch_events() or []
     events = [
-        row for row in response.json()
+        row for row in fetched
         if (created := _parsed_datetime(row.get("created_at"))) and created < before
     ]
     user_ids = sorted({str(row.get("user_id")) for row in events if row.get("user_id")})
@@ -561,7 +644,7 @@ async def admin_funnel(
     report["period_start"] = since.isoformat()
     report["period_end"] = before.isoformat()
     report["timezone"] = "Europe/London"
-    report["event_limit_reached"] = len(events) >= 10000
+    report["event_limit_reached"] = len(fetched) >= max_events
     return report
 
 

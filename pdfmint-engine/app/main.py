@@ -65,7 +65,7 @@ from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.25.0"
+ENGINE_VERSION = "1.26.0"
 APP_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -203,8 +203,10 @@ async def admin_conversion_funnel(
     days: int = Query(default=7, ge=1, le=90),
     landing_page: str | None = Query(default=None, max_length=120),
     day: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    start: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
+    end: str | None = Query(default=None, pattern=r"^\d{4}-\d{2}-\d{2}$"),
 ):
-    return await admin_funnel(authorization, days, landing_page, day)
+    return await admin_funnel(authorization, days, landing_page, day, start, end)
 
 
 @app.post("/v1/admin/payment-provider")
