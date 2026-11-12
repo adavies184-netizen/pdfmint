@@ -4772,7 +4772,7 @@ async function renderCheckoutPreview(canvasId) {
   const state = editor.pages[0];
   const page = await editor.pdfjs.getPage(state.sourceIndex + 1);
   const base = page.getViewport({scale: 1, rotation: state.rotation});
-  const targetWidth = canvasId === 'plan-preview-canvas' || canvasId === 'zendocs-preview-canvas' ? 430 : 70;
+  const targetWidth = canvasId === 'plan-preview-canvas' || canvasId === 'zendocs-preview-canvas' ? 430 : canvasId === 'zd2-preview-canvas' ? 150 : canvasId === 'zd2-big-canvas' ? 560 : 70;
   const viewport = page.getViewport({scale: targetWidth / base.width, rotation: state.rotation});
   canvas.width = Math.floor(viewport.width);
   canvas.height = Math.floor(viewport.height);
@@ -4824,8 +4824,24 @@ function applyPaymentWallStyle(style) {
   if (paymentTitle) paymentTitle.textContent = activePaymentWallStyle === 'zendocs'
     ? 'Download Now!'
     : "You're on the last step before receiving your document";
-  if (payButton) payButton.textContent = activePaymentWallStyle === 'zendocs' ? 'Pay now' : 'Download my document';
+  if (payButton) payButton.textContent = activePaymentWallStyle === 'zendocs' ? 'Pay £1.00 securely' : 'Download my document';
+  // Zendocs layout: the secure card form lives under the "Credit or debit card" button.
+  const formCard = document.querySelector('#payment-page .payment-form-card');
+  const slot = document.getElementById('zd2-card-slot');
+  const layout = document.querySelector('#payment-page .payment-layout');
+  if (formCard && slot && layout) {
+    if (activePaymentWallStyle === 'zendocs' && formCard.parentElement !== slot) slot.append(formCard);
+    if (activePaymentWallStyle !== 'zendocs' && formCard.parentElement === slot) layout.querySelector('.zendocs-download-title')?.after(formCard);
+  }
 }
+
+document.getElementById('zd2-card-button')?.addEventListener('click', event => {
+  const slot = document.getElementById('zd2-card-slot');
+  if (!slot) return;
+  slot.hidden = !slot.hidden;
+  event.currentTarget.setAttribute('aria-expanded', String(!slot.hidden));
+  if (!slot.hidden) slot.querySelector('input, iframe, button')?.scrollIntoView({behavior:'smooth', block:'center'});
+});
 
 async function loadPaymentWallStyle() {
   const params = new URLSearchParams(location.search);
@@ -4916,11 +4932,15 @@ async function openPaymentPage(options = {}) {
     'summary-total': formatPounds(price),
     'summary-renewal': disclosure,
     'summary-filename': preparedExportFilename || editor.file?.name || 'document.pdf',
-    'zendocs-filename': preparedExportFilename || editor.file?.name || 'document.pdf'
+    'zendocs-filename': preparedExportFilename || editor.file?.name || 'document.pdf',
+    'zd2-total': formatPounds(price)
   };
   Object.entries(summaryValues).forEach(([id, value]) => {
     const element = document.getElementById(id);
     if (element) element.textContent = value;
+  });
+  document.querySelectorAll('[data-zd2-filename]').forEach(element => {
+    element.textContent = preparedExportFilename || editor.file?.name || 'document.pdf';
   });
 
   closeAccessPage();
@@ -4941,6 +4961,15 @@ async function openPaymentPage(options = {}) {
   const zendocsPreviewPromise = renderCheckoutPreview('zendocs-preview-canvas').catch(error => {
     console.warn('Zendocs-style checkout preview could not be rendered.', error);
   });
+  window.PDFMintAuth?.getSession?.().then(session => {
+    const email = session?.user?.email || '';
+    const account = document.getElementById('zd2-account');
+    if (!account || !email) return;
+    account.querySelector('.zd2-email').textContent = email;
+    account.querySelector('.zd2-initials').textContent = email.replace(/[^a-z0-9]/gi, '').slice(0, 2).toUpperCase();
+    account.hidden = false;
+  }).catch(() => {});
+  const zd2PreviewPromise = Promise.all([renderCheckoutPreview('zd2-preview-canvas'), renderCheckoutPreview('zd2-big-canvas')]).catch(() => {});
   try {
     await prepareStripePaymentElement();
   } catch (error) {
@@ -4950,6 +4979,7 @@ async function openPaymentPage(options = {}) {
   }
   await previewPromise;
   await zendocsPreviewPromise;
+  await zd2PreviewPromise;
 }
 
 function closePaymentPage() {

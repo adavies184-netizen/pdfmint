@@ -1,0 +1,143 @@
+/* Zendocs payment wall, v2 layout (November 2026). Only used when Admin → Payment wall = Zendocs. */
+#payment-page .zd2{display:none}
+#payment-page.payment-wall-zendocs .zd2{display:block;max-width:520px;margin:0 auto;padding:6px 0 40px;color:#0f172a;font-family:Inter,"Helvetica Neue",Arial,sans-serif}
+#payment-page.payment-wall-zendocs :is(.zendocs-offer-strip,.back-to-plans,#payment-title,.payment-layout,.checkout-reviews,.checkout-progress){display:none!important}
+#payment-page.payment-wall-zendocs .checkout-page{background:#f6f8fb}
+#payment-page.payment-wall-zendocs .payment-main{padding:18px 20px 0;max-width:none}
+#payment-page.payment-wall-zendocs .checkout-header{justify-content:flex-start;padding:14px 20px;background:#fff;border-bottom:1px solid #e9eef5}
+
+.zd2 h1{margin:6px 0 18px;text-align:center;font-size:clamp(26px,6vw,32px);font-weight:700;letter-spacing:-.02em}
+.zd2 svg{width:16px;height:16px;flex:none}
+.zd2-file{display:flex;align-items:center;gap:14px;padding:14px;border:1px solid #d9e5fb;border-radius:14px;background:#eef4ff}
+.zd2-thumb{width:72px;height:90px;flex:none;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid #e3e8ef;border-radius:6px;background:#fff}
+.zd2-thumb canvas{max-width:100%;max-height:100%;display:block}
+.zd2-file-text{min-width:0;display:flex;flex-direction:column;gap:4px}
+.zd2-pill{align-self:flex-start;padding:5px 11px;border-radius:999px;background:#dcf5ea;color:#13795b;font-size:11px;font-weight:700;letter-spacing:.05em;text-transform:uppercase}
+.zd2-file-text strong{margin-top:4px;font-size:16px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.zd2-file-text small{color:#64748b;font-size:13px}
+.zd2-total{display:flex;justify-content:space-between;align-items:baseline;margin:24px 0 18px;font-size:21px;font-weight:700}
+.zd2-total strong{font-size:20px}
+.zd2-label{margin:0 0 10px;color:#64748b;font-size:12px;font-weight:700;letter-spacing:.09em;text-transform:uppercase}
+.zd2-card-button{display:flex;align-items:center;justify-content:center;gap:9px;width:100%;height:50px;border:0;border-radius:8px;background:#1f6feb;color:#fff;font:700 16px Inter,sans-serif;box-shadow:0 6px 16px rgba(31,111,235,.28);cursor:pointer;transition:background .15s}
+.zd2-card-button svg{width:19px;height:19px}
+.zd2-card-button:hover{background:#1a5fd0}
+.zd2-card-button[aria-expanded="true"]{border-radius:8px 8px 0 0;box-shadow:none}
+.zd2-card-slot{border:1px solid #d9e2ee;border-top:0;border-radius:0 0 10px 10px;background:#fff;padding:14px}
+.zd2-card-slot[hidden]{display:none}
+.zd2-card-slot .payment-form-card{margin:0!important;padding:0!important;border:0!important;box-shadow:none!important;background:none!important;width:auto!important;max-width:none!important}
+.zd2-card-slot :is(.payment-method-tabs,#paypal-payment-panel){display:none!important}
+.zd2-card-slot .pay-now-button{width:100%;height:50px;border-radius:8px;background:#1f6feb;font-size:16px}
+.zd2-card-slot .pay-now-button:hover{background:#1a5fd0}
+.zd2-trust{display:flex;flex-wrap:nowrap;white-space:nowrap;justify-content:center;gap:6px 10px;margin:20px 0 10px;padding-top:16px;border-top:1px solid #e5eaf0;color:#64748b;font-size:11.5px}
+@media(max-width:360px){.zd2-trust{flex-wrap:wrap}}
+.zd2-trust svg{width:14px;height:14px}
+.zd2-trust span{display:inline-flex;align-items:center;gap:5px}
+.zd2-trust span:first-child svg{color:#16a34a}.zd2-trust span:nth-child(2) svg{color:#16a34a}.zd2-trust span:nth-child(3) svg{color:#16a34a}
+.zd2-guarantee{display:flex;align-items:center;justify-content:center;gap:7px;margin:0;color:#334155;font-size:14px}
+.zd2-guarantee svg{color:#16a34a;width:18px;height:18px}
+.zd2-terms{margin:18px 0 24px;padding:14px 16px;border:1px solid #e3e8ef;border-radius:12px;background:#fff;color:#475569;font-size:13px;line-height:1.65}
+.zd2-terms a{color:#334155;text-decoration:underline}
+.zd2 h2{margin:0 0 10px;font-size:17px;font-weight:700}
+.zd2-included{list-style:none;margin:0 0 30px;padding:0;display:grid;gap:11px}
+.zd2-included li{display:flex;align-items:center;gap:11px;font-size:16px}
+.zd2-included svg{color:#16a34a;width:20px;height:20px}
+.zd2-reviews{display:grid;gap:12px;margin:0 0 34px}
+.zd2-review{padding:18px;border:1px solid #e3e8ef;border-radius:12px;background:#fff}
+.zd2-stars{display:flex;gap:2px;margin-bottom:12px}
+.zd2-stars b{width:17px;height:17px;display:flex;align-items:center;justify-content:center;background:#00b67a;color:#fff;font-size:12px;font-weight:400}
+.zd2-review p{margin:0 0 14px;font-size:15px;line-height:1.55}
+.zd2-review footer{display:flex;align-items:center;gap:9px;color:#64748b;font-size:13px}
+.zd2-avatar{width:30px;height:30px;flex:none;border-radius:50%;object-fit:cover;background:#e3e8ef}
+.zd2-review footer em{margin-left:auto;display:inline-flex;align-items:center;gap:4px;color:#13795b;font-style:normal;font-weight:700;font-size:12px}
+.zd2-review footer em svg{width:13px;height:13px;padding:1px;border:1.5px solid currentColor;border-radius:50%}
+.zd2-faq-title{font-size:clamp(24px,6vw,30px)!important;font-weight:800!important;letter-spacing:-.02em;margin-bottom:8px!important}
+.zd2-faq details{border-bottom:1px solid #e3e8ef}
+.zd2-faq summary{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:20px 0;font-size:16px;font-weight:700;list-style:none;cursor:pointer}
+.zd2-faq summary::-webkit-details-marker{display:none}
+.zd2-faq summary i{position:relative;width:14px;height:14px;flex:none}
+.zd2-faq summary i::before,.zd2-faq summary i::after{content:"";position:absolute;left:0;top:6px;width:14px;height:2px;background:#475569;transition:transform .2s}
+.zd2-faq summary i::after{transform:rotate(90deg)}
+.zd2-faq details[open] summary i::before{transform:rotate(45deg)}
+.zd2-faq details[open] summary i::after{transform:rotate(135deg)}
+.zd2-faq details p{margin:-6px 0 20px;color:#475569;font-size:15px;line-height:1.65}
+@media(min-width:900px){#payment-page.payment-wall-zendocs .payment-main{padding-top:34px}}
+.zd2-card-slot :is(.card-payment-panel,#card-payment-panel,.stripe-card-panel){background:none!important;padding:0!important;border:0!important;box-shadow:none!important}
+
+/* Phone/tablet: single column; desktop-only pieces hidden */
+.zd2-left,.zd2-includes-desk,.zd2-total-d{display:none}
+.zd2-right{display:flex;flex-direction:column}
+.zd2-includes-mob h2{margin:0 0 10px}
+
+/* Desktop: PDF on the left, plan and card form on the right, money-back line at the bottom of the screen */
+@media (min-width:1000px){
+  #payment-page.payment-wall-zendocs .zd2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:56px;max-width:1140px;padding:0 0 60px}
+  #payment-page.payment-wall-zendocs .payment-main{padding:30px 32px 0}
+  #payment-page.payment-wall-zendocs .checkout-header{padding:14px max(32px,calc((100% - 1140px)/2))}
+  .zd2-left{display:block}
+  .zd2-ready{display:flex;align-items:center;gap:12px;margin:12px 0 26px;color:#13a37a;font-size:28px;font-weight:700;letter-spacing:-.02em}
+  .zd2-ready span{width:32px;height:32px;border-radius:50%;background:#2ec08f;color:#fff;display:flex;align-items:center;justify-content:center}
+  .zd2-ready span svg{width:19px;height:19px}
+  .zd2-big{position:relative;padding:32px 24px 22px;border:1px solid #e3e8ef;border-radius:18px;background:linear-gradient(#f9fafc,#eef2f6);text-align:center}
+  .zd2-badge{position:absolute;left:16px;top:16px;padding:7px 10px;border-radius:5px;background:#e8466a;color:#fff;font-size:11px;font-weight:700}
+  .zd2-big-frame{width:280px;height:360px;margin:0 auto;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 2px 10px rgba(15,23,42,.08);overflow:hidden}
+  .zd2-big-frame canvas{max-width:100%;max-height:100%}
+  .zd2-big strong{display:block;margin-top:16px;color:#475569;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .zd2-right h1{text-align:left;margin:0 0 18px;font-size:30px}
+  .zd2-file,.zd2-total-m,.zd2-card-button,.zd2-includes-mob{display:none!important}
+  .zd2-includes-desk{display:block}
+  .zd2-includes-desk p{margin:0 0 12px;color:#475569;font-size:13px}
+  .zd2-includes-desk p b{color:#0f172a}
+  .zd2-includes-desk .zd2-included{gap:9px;margin:0 0 18px}
+  .zd2-includes-desk .zd2-included li{font-size:15px}
+  .zd2-includes-desk .zd2-included svg{width:17px;height:17px}
+  .zd2-total{margin:0 0 20px;padding:16px 0;border-top:1px solid #e3e8ef;border-bottom:1px solid #e3e8ef;font-size:16px}
+  .zd2-total-d{display:inline}
+  .zd2-total strong{font-size:26px}
+  .zd2-label{margin-bottom:12px}
+  .zd2-card-slot,.zd2-card-slot[hidden]{display:block;padding:0;border:0;background:none}
+  .zd2-guarantee{order:1;margin-top:12px;font-size:13.5px}
+  .zd2-trust{order:2;margin-top:22px}
+  .zd2-terms{order:3}
+  .zd2-more{grid-column:1/-1;margin-top:40px}
+  .zd2-reviews{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .zd2-more .zd2-faq,.zd2-faq-title{max-width:760px;margin-left:auto!important;margin-right:auto!important}
+}
+@media (min-width:1000px){
+  #payment-page.payment-wall-zendocs .payment-main{padding-top:58px}
+  .zd2-ready{margin-top:14px}
+  .zd2-right h1{font-size:32px;margin-bottom:26px}
+  .zd2-includes-desk p{margin-bottom:16px}
+  .zd2-includes-desk .zd2-included{gap:13px;margin-bottom:24px}
+  .zd2-total{padding:22px 0;margin-bottom:30px}
+  .zd2-label{margin-bottom:16px}
+  .zd2-card-slot .stripe-card-field{margin-bottom:14px}
+  .zd2-card-slot .stripe-card-field > span{font-size:14px;font-weight:500;color:#1e293b;margin-bottom:6px}
+  .zd2-card-slot .pay-now-button{height:52px;margin-top:8px;font-size:16px}
+  .zd2-guarantee{margin-top:16px}
+}
+/* Signed-in email, top right (zendocs only) */
+#payment-page .zd2-account{display:none}
+#payment-page.payment-wall-zendocs .zd2-account:not([hidden]){display:inline-flex;align-items:center;gap:9px;margin-left:auto;padding:5px 14px 5px 5px;border-radius:999px;background:#f1f5f9;color:#475569;font-size:13px;max-width:60%;min-width:0}
+.zd2-initials{width:26px;height:26px;flex:none;border-radius:50%;background:#1f6feb;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700}
+.zd2-email{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Privacy banner and customer avatars (zendocs only) */
+#payment-page .zd2-privacy{display:none}
+#payment-page.payment-wall-zendocs .zd2-privacy{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;background:#eafaf3;border-bottom:1px solid #d3f0e3;color:#13795b;font-size:13px;font-weight:500;text-align:center}
+.zd2-privacy svg{width:16px;height:16px;flex:none}
+.zd2-social{display:inline-flex;align-items:center;gap:10px;padding:7px 16px 7px 8px;border:1px solid #e3e8ef;border-radius:999px;background:#fff;color:#475569;font-size:13px}
+.zd2-faces{display:flex}
+.zd2-faces img{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid #fff;margin-left:-8px}
+.zd2-faces img:first-child{margin-left:0}
+.zd2-left .zd2-social{display:none}
+.zd2-social-mob{margin:18px 0 26px}
+.zd2-includes-mob .zd2-included{margin-bottom:0}
+@media (min-width:1000px){
+  .zd2-left{text-align:center}
+  .zd2-left .zd2-ready{justify-content:flex-start}
+  .zd2-left .zd2-social{display:inline-flex;margin-top:20px}
+}
+@media (min-width:1000px){
+  #payment-page.payment-wall-zendocs .payment-main{padding-top:26px}
+  .zd2-includes-desk .zd2-included{gap:11px}
+  .zd2-total{padding:20px 0;margin-bottom:26px}
+}

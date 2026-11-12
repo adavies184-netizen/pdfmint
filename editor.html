@@ -11,6 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=plane-12">
 <link rel="stylesheet" href="checkout-v2.css?v=2">
+<link rel="stylesheet" href="zendocs-v2.css?v=5">
 <script>(()=>{const q=new URLSearchParams(location.search);if(q.get('pdfiumCheckout')==='1')document.documentElement.classList.add('pdfium-checkout-route');if(q.get('member')==='1')document.documentElement.classList.add('pdfium-member-route')})()</script>
 <style>
 body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}
@@ -896,6 +897,7 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before,html.pdf
           <span class="checkout-brand-mark brand-mark-plane" aria-hidden="true"><svg viewBox="0 0 64 64" focusable="false"><path d="M5 31 58 8 45 55 31 39z" fill="#34c79a"/><path d="M58 8 31 39l4 15z" fill="#299b78"/><path d="M58 8 31 39" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/><path d="M6 46h11M10 55h15" fill="none" stroke="#299b78" stroke-width="3.5" stroke-linecap="round"/></svg></span>
           <strong>PDFBreeze</strong>
         </div>
+        <div class="zd2-account" id="zd2-account" hidden><span class="zd2-initials" aria-hidden="true"></span><span class="zd2-email"></span></div>
         <div class="checkout-progress" aria-label="Checkout progress">
           <div class="progress-step complete"><span>✓</span><small>Document filled in</small></div>
           <i></i>
@@ -907,7 +909,55 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before,html.pdf
         </div>
       </header>
 
+      <div class="zd2-privacy"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg><span>For your privacy, your file is only saved to your account after payment</span></div>
       <main class="payment-main">
+        <section class="zd2" aria-labelledby="zd2-title">
+          <div class="zd2-left">
+            <p class="zd2-ready"><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>Your edited PDF is ready</p>
+            <div class="zd2-big"><span class="zd2-badge">PDF</span><div class="zd2-big-frame"><canvas id="zd2-big-canvas"></canvas></div><strong data-zd2-filename>Document.pdf</strong></div>
+            <div class="zd2-social"><span class="zd2-faces"><img src="assets/customer-lisa-o.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"><img src="assets/customer-chantal-r.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"><img src="assets/customer-greg-c.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"></span><span>Edit, sign and download in minutes</span></div>
+          </div>
+          <div class="zd2-right">
+            <h1 id="zd2-title">Download now.</h1>
+            <div class="zd2-file">
+              <div class="zd2-thumb"><canvas id="zd2-preview-canvas"></canvas></div>
+              <div class="zd2-file-text"><span class="zd2-pill">Successfully edited</span><strong data-zd2-filename>Document.pdf</strong><small>PDF document · formatting preserved</small></div>
+            </div>
+            <div class="zd2-includes-desk"><p><b>3 days full access</b> includes:</p>
+            <ul class="zd2-included">
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited downloads and edits</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Convert and sign scanned PDFs, with OCR</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Works on desktop and mobile</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Merge, split and compress PDFs</li>
+            </ul></div>
+            <div class="zd2-total"><span class="zd2-total-m">Total due today</span><span class="zd2-total-d">3 days full access</span><strong id="zd2-total">£1.00</strong></div>
+            <p class="zd2-label">Choose your payment method</p>
+            <button class="zd2-card-button" id="zd2-card-button" type="button" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5.5" width="18" height="13" rx="2.2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M3 10h18" stroke="currentColor" stroke-width="1.9"/></svg>Credit or debit card</button>
+            <div class="zd2-card-slot" id="zd2-card-slot" hidden></div>
+            <div class="zd2-trust"><span><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.9"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>256-bit SSL</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>Secure checkout</span><span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12Z" fill="none" stroke="currentColor" stroke-width="1.9"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="1.9"/></svg>Privacy protected</span></div>
+            <p class="zd2-guarantee"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 5 6v5c0 4.4 3 8.3 7 9.5 4-1.2 7-5.1 7-9.5V6l-7-3Z" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="m9 12 2.2 2.2L15.5 10" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>30-day money-back guarantee</p>
+            <p class="zd2-terms">If you keep your subscription active after 3 days, we'll charge £49.99 every 4 weeks from day 4. Cancel anytime from <a href="dashboard.html">your account</a>. By continuing, you accept the <a href="terms-of-use.html" target="_blank" rel="noopener">Terms and Conditions</a> and <a href="privacy-policy.html" target="_blank" rel="noopener">Privacy Policy</a>.</p>
+          </div>
+          <div class="zd2-more">
+            <div class="zd2-includes-mob"><h2>Included with your trial</h2>
+            <ul class="zd2-included">
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Unlimited downloads and edits</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Convert and sign scanned PDFs, with OCR</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Works on desktop and mobile</li>
+              <li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Merge, split and compress PDFs</li>
+            </ul>
+            <div class="zd2-social zd2-social-mob"><span class="zd2-faces"><img src="assets/customer-lisa-o.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"><img src="assets/customer-chantal-r.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"><img src="assets/customer-greg-c.jpg" alt="" width="28" height="28" loading="lazy" decoding="async"></span><span>Edit, sign and download in minutes</span></div></div>
+            <div class="zd2-reviews">
+            <article class="zd2-review"><span class="zd2-stars" aria-label="5 out of 5 stars"><b>★</b><b>★</b><b>★</b><b>★</b><b>★</b></span><p>Editing a form took less than two minutes. The controls were clear and the finished PDF looked exactly right.</p><footer><img class="zd2-avatar" src="assets/customer-lisa-o.jpg" alt="" width="30" height="30" loading="lazy" decoding="async"><span>Lisa O. · 19 May 2026</span><em><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified</em></footer></article>
+            <article class="zd2-review"><span class="zd2-stars" aria-label="5 out of 5 stars"><b>★</b><b>★</b><b>★</b><b>★</b><b>★</b></span><p>I signed and downloaded a contract from my phone without installing anything. It could not have been easier.</p><footer><img class="zd2-avatar" src="assets/customer-chantal-r.jpg" alt="" width="30" height="30" loading="lazy" decoding="async"><span>Chantal R. · 1 April 2026</span><em><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified</em></footer></article>
+            <article class="zd2-review"><span class="zd2-stars" aria-label="5 out of 5 stars"><b>★</b><b>★</b><b>★</b><b>★</b><b>★</b></span><p>I regularly convert Word and spreadsheet files. The formatting stays clean and the results are consistently fast.</p><footer><img class="zd2-avatar" src="assets/customer-greg-c.jpg" alt="" width="30" height="30" loading="lazy" decoding="async"><span>Greg C. · 8 February 2026</span><em><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.2 4.2L19 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>Verified</em></footer></article>
+          </div>
+            <h2 class="zd2-faq-title">Frequently asked questions</h2>
+            <div class="zd2-faq">
+            <details open><summary>What happens after 3 days full access?<i aria-hidden="true"></i></summary><p>If you keep your subscription active after 3 days, we'll charge £49.99 every 4 weeks. You can cancel anytime from your account.</p></details><details><summary>Can I cancel anytime?<i aria-hidden="true"></i></summary><p>Yes. Cancel from your account before the 3 days are up and you won't be charged again.</p></details><details><summary>Is my file safe?<i aria-hidden="true"></i></summary><p>Your document is processed over an encrypted connection and is only available to you.</p></details><details><summary>Do you offer refunds?<i aria-hidden="true"></i></summary><p>Yes. We offer a 30-day money-back guarantee. If you're not satisfied, contact us and we'll refund your money.</p></details>
+          </div>
+          </div>
+        </section>
         <div class="zendocs-offer-strip">Limited time offer! <strong>Access now for £1.00!</strong></div>
         <button class="back-to-plans" id="back-to-plans" type="button">← Back to plans</button>
         <h1 id="payment-title">Complete your payment</h1>
@@ -1187,7 +1237,7 @@ html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before,html.pdf
   <script src="config.js?v=5603"></script>
   <script src="auth.js?v=5580"></script>
 <script src="site-nav.js?v=1"></script>
-<script src="script.js?v=lean-6"></script>
+<script src="script.js?v=lean-7"></script>
   <script src="from-pdf-converter.js?v=4600"></script>
 <script src="header-auth.js?v=5632"></script></body>
 </html>
