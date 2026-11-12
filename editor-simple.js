@@ -612,7 +612,7 @@
         const on = simpleOn();
         const split = window.pdfbreezeManagerSplit, splitting = Boolean(split?.mode), parts = splitting ? split.parts : 1;
         if (title) title.textContent = splitting ? 'Split your PDF' : merging ? 'Merge PDFs' : on ? 'Arrange your pages' : originalTitle;
-        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : merging ? 'Add the PDFs you want to join to this one, then drag the pages into the order you want.' : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
+        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : merging ? (body.classList.contains('ui-mobile') ? 'Choose one or more PDFs to join to this one, then move the pages into order.' : 'Choose one or more PDFs to join to this one (hold Ctrl, or Cmd on a Mac, to pick several), then drag the pages into order.') : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
         if (applyBtn) applyBtn.textContent = parts > 1 ? `Split into ${parts} PDFs` : on ? 'Save page changes' : originalApply;
         manage.classList.toggle('is-splitting', splitting);
         manage.querySelector('[data-mp-split]')?.classList.toggle('is-on', splitting);
