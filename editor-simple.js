@@ -38,6 +38,7 @@
 
   const svg = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
   const ICON = {
+    merge: '<rect x="3" y="4" width="9" height="12" rx="1.5"/><rect x="12" y="8" width="9" height="12" rx="1.5"/><path d="M16.5 11.5v5M14 14h5"/>',
     edit: '<path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13.5 6.5 4 4"/>',
     add: '<path d="M5 6V4h14v2M12 4v16M9 20h6"/>',
     sign: '<path d="M3 17c3-1 4-9 7-9s0 8 3 8 3-4 5-4 2 2 3 2"/><path d="M3 21h18"/>',
@@ -71,6 +72,7 @@
     ['manage', 'Pages', 'Rotate, reorder or delete pages', 'c-mint']
   ];
   const MORE = [
+    ['merge', 'Merge PDFs', 'Join other PDFs to this one'],
     ['highlight', 'Highlight text', 'Highlight, underline or strike out words'],
     ['shapes', 'Shapes & arrows', 'Boxes, ellipses, lines, arrows'],
     ['note', 'Sticky note', 'Leave a comment'],
@@ -359,6 +361,13 @@
       if (pick) {
         const live = document.getElementById('liveTextEditor');
         if (live && !live.hidden) document.getElementById('textOverlay')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: -9999, clientY: -9999 }));
+        if (pick.dataset.uiTool === 'merge') {
+          closeDockMenu();
+          const manageWindow = document.getElementById('manageModal');
+          if (manageWindow?.hidden) clickTool('manage');
+          manageWindow?.dispatchEvent(new CustomEvent('pdfbreeze:merge'));
+          return;
+        }
         clickTool(pick.dataset.uiTool); closeDockMenu(); return;
       }
       if (!event.target.closest('.ui-dock-more,.ui-dock-menu')) closeDockMenu();
@@ -595,11 +604,12 @@
       const originalTitle = title?.textContent, originalIntro = intro?.textContent;
       const applyBtn = document.getElementById('manageApply');
       const originalApply = applyBtn?.textContent;
+      let merging = false;
       const words = () => {
         const on = simpleOn();
         const split = window.pdfbreezeManagerSplit, splitting = Boolean(split?.mode), parts = splitting ? split.parts : 1;
-        if (title) title.textContent = splitting ? 'Split your PDF' : on ? 'Arrange your pages' : originalTitle;
-        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
+        if (title) title.textContent = splitting ? 'Split your PDF' : merging ? 'Merge PDFs' : on ? 'Arrange your pages' : originalTitle;
+        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : merging ? 'Add the PDFs you want to join to this one, then drag the pages into the order you want.' : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
         if (applyBtn) applyBtn.textContent = parts > 1 ? `Split into ${parts} PDFs` : on ? 'Save page changes' : originalApply;
         manage.classList.toggle('is-splitting', splitting);
         manage.querySelector('[data-mp-split]')?.classList.toggle('is-on', splitting);
@@ -662,6 +672,8 @@
         grid.append(tile);
       };
       if (grid) new MutationObserver(addTile).observe(grid, { childList: true });
+      // More tools → Merge PDFs: open this window as the merge tool and go straight to choosing files.
+      manage.addEventListener('pdfbreeze:merge', () => { merging = true; words(); addInput.click(); });
       manage.addEventListener('click', event => {
         if (event.target.closest('[data-mp-add]')) { addInput.click(); return; }
         if (event.target.closest('[data-mp-split]') && window.pdfbreezeManagerSplit) { window.pdfbreezeManagerSplit.mode = !window.pdfbreezeManagerSplit.mode; words(); return; }
@@ -681,7 +693,7 @@
       const watch = new MutationObserver(syncTools);
       ['manageDelete', 'manageDuplicate', 'manageRotateRight', 'manageMoveLeft', 'manageMoveRight', 'manageUndo', 'manageRedo'].forEach(id => { const el = document.getElementById(id); if (el) watch.observe(el, { attributes: true, attributeFilter: ['disabled'] }); });
       if (count) watch.observe(count, { childList: true, characterData: true, subtree: true });
-      new MutationObserver(() => { if (!manage.hidden) { words(); syncTools(); const z = parseFloat(document.getElementById('manageGrid')?.style.getPropertyValue('--manage-zoom')) || 1; sizeStep = Math.round((z - 0.7) / 0.1); size.value = String(sizeStep); } }).observe(manage, { attributes: true, attributeFilter: ['hidden'] });
+      new MutationObserver(() => { if (manage.hidden) merging = false; if (!manage.hidden) { words(); syncTools(); const z = parseFloat(document.getElementById('manageGrid')?.style.getPropertyValue('--manage-zoom')) || 1; sizeStep = Math.round((z - 0.7) / 0.1); size.value = String(sizeStep); } }).observe(manage, { attributes: true, attributeFilter: ['hidden'] });
       manage.addEventListener('pdfbreeze:split', words);
       words();
       syncTools();
