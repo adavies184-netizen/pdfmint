@@ -31,8 +31,8 @@
   .ui-history button:disabled{color:#b9c5c0;cursor:default}
   .ui-link{border:0;background:none;padding:6px 4px;font:600 13px Inter,sans-serif;color:var(--ui-muted);cursor:pointer;text-decoration:underline;text-decoration-color:#c9d6d1;text-underline-offset:3px}
   .ui-link:hover{color:var(--ui-ink)}
-  .ui-download{display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:12px;background:#1fa97b;color:#fff;font:700 16px Inter,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(31,169,123,.24)}
-  .ui-download:hover:not(:disabled){background:#19956c}
+  .ui-download{display:flex;align-items:center;justify-content:center;gap:9px;border:0;border-radius:12px;background:#34c79a;color:#fff;font:700 16px Inter,sans-serif;cursor:pointer;box-shadow:0 8px 20px rgba(31,169,123,.24)}
+  .ui-download:hover:not(:disabled){background:#2bb78b}
   .ui-download:disabled{opacity:.55;cursor:default}
   .c-mint{background:#e5f6ef;color:#23926f}.c-blue{background:#e6f1fb;color:#2a74c4}.c-violet{background:#f1ecfd;color:#7048c8}.c-amber{background:#fdf2e3;color:#c77a14}.c-grey{background:#eef2f1;color:#5d6f69}
   .ui-more-item{display:flex;align-items:center;gap:12px;width:100%;padding:9px 12px;border:0;border-radius:10px;background:transparent;text-align:left;cursor:pointer;color:var(--ui-mint-d)}
@@ -278,10 +278,10 @@
   .ui-tip-x{color:#4b6a5f}.ui-tip-x:hover{background:rgba(255,255,255,.6)}
   .ui-tip ol{margin:0;padding:14px 16px 6px;gap:11px}
   .ui-tip li{align-items:flex-start;font-size:14px;line-height:1.45;color:#2f413b}
-  .ui-tip li:before{background:#1fa97b;width:24px;height:24px;margin-top:-1px}
+  .ui-tip li:before{background:#34c79a;width:24px;height:24px;margin-top:-1px}
   .ui-tip-foot{padding:8px 16px 14px}
-  .ui-tip-ok{height:38px;padding:0 18px;border-radius:10px;background:#1fa97b;font-weight:700}
-  .ui-tip-ok:hover{background:#19956c}
+  .ui-tip-ok{height:38px;padding:0 18px;border-radius:10px;background:#34c79a;font-weight:700}
+  .ui-tip-ok:hover{background:#2bb78b}
 
   /* Page strip on the left, clear of the floating top bar */
   body.ui-simple.ui-thumbs-open .sidebar{background:#fff}
@@ -394,7 +394,7 @@
   body.ui-simple .ui-more-options svg{width:19px;height:19px}
   /* buttons that keep text (Replace text, Choose stamp...) */
   body.ui-simple #contextBar .annotation-action,body.ui-simple #contextBar .annotation-delete,body.ui-simple #contextBar .context-action,body.ui-simple #contextBar .delete-highlight{padding:0 14px!important}
-  body.ui-simple #contextBar #apply{background:#1fa97b!important;border-color:#1fa97b!important;color:#fff!important;padding:0 16px!important;font-weight:700!important}
+  body.ui-simple #contextBar #apply{background:#34c79a!important;border-color:#34c79a!important;color:#fff!important;padding:0 16px!important;font-weight:700!important}
   body.ui-simple #editControls>label{border:1px solid #d6e1dc!important;padding:0 10px!important}
   body.ui-simple #editControls .replacement-label{display:none!important}
   body.ui-simple #editControls #replacement{border:0;outline:0;font:14px Inter,sans-serif;min-width:300px;background:transparent}
@@ -416,8 +416,8 @@
   body.ui-simple .ui-file span{display:none!important}
   body.ui-simple .ui-tf-left{max-width:none}
   /* + Add text */
-  body.ui-simple .ui-add-text{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:0;border-radius:10px;background:#1fa97b;color:#fff;font:700 14.5px Inter,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(31,169,123,.22)}
-  body.ui-simple .ui-add-text:hover{background:#19956c}
+  body.ui-simple .ui-add-text{display:inline-flex;align-items:center;gap:7px;height:40px;padding:0 16px;border:0;border-radius:10px;background:#34c79a;color:#fff;font:700 14.5px Inter,sans-serif;cursor:pointer;white-space:nowrap;box-shadow:0 4px 12px rgba(31,169,123,.22)}
+  body.ui-simple .ui-add-text:hover{background:#2bb78b}
   body.ui-simple .ui-add-text svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
   /* colour dot with a chevron */
   body.ui-simple #addControls .colour-control:has(#addTextColor){width:58px!important;grid-template-columns:auto auto;gap:5px;justify-content:center}
@@ -514,7 +514,7 @@ svg.ui-plane{stroke:none!important;fill:none}
 
 /* Tip design 4: minimal white card, green left edge, bullet steps, text-only Got it */
 @media screen{
-  body.ui-simple:not(.no-document) .ui-tip.is-on{width:340px;border:1px solid #e3ebe7;border-left:4px solid #1fa97b;border-radius:12px;box-shadow:0 12px 32px rgba(15,34,28,.12)}
+  body.ui-simple:not(.no-document) .ui-tip.is-on{width:340px;border:1px solid #e3ebe7;border-left:4px solid #34c79a;border-radius:12px;box-shadow:0 12px 32px rgba(15,34,28,.12)}
   body.ui-simple .ui-tip-head{background:none;border-bottom:0;padding:14px 10px 2px 16px}
   body.ui-simple .ui-tip-icon{display:none}
   body.ui-simple .ui-tip-head small{font-size:10.5px;color:#1f7d60}
@@ -523,7 +523,7 @@ svg.ui-plane{stroke:none!important;fill:none}
   body.ui-simple .ui-tip-x:hover{background:#f1f6f4;color:var(--ui-ink)}
   body.ui-simple .ui-tip ol{padding:8px 16px 4px;gap:6px}
   body.ui-simple .ui-tip li{font-size:13.5px;color:#4a5b55;padding-left:2px}
-  body.ui-simple .ui-tip li:before{content:"";width:6px;height:6px;margin:8px 4px 0 0;background:#1fa97b}
+  body.ui-simple .ui-tip li:before{content:"";width:6px;height:6px;margin:8px 4px 0 0;background:#34c79a}
   body.ui-simple .ui-tip-foot{padding:10px 16px 12px;border-top:1px solid #eef3f1;margin-top:8px}
   body.ui-simple .ui-tip-ok{height:30px;padding:0 4px;background:none;color:#1f7d60}
   body.ui-simple .ui-tip-ok:hover{background:none;color:#14241f}
@@ -631,7 +631,7 @@ body.ui-simple .live-text-editor{border:1.5px solid #2878e3;outline:0;box-shadow
 /* No flash of the full editor while the uploaded PDF is handed over: plain background and a spinner */
 html.ui-boot body.transfer-pending{background:#eef3f1!important}
 html.ui-boot body.transfer-pending>*:not(script):not(style){visibility:hidden!important}
-html.ui-boot body.transfer-pending:after{content:"";position:fixed;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid #cfe9dd;border-top-color:#1fa97b;border-radius:50%;animation:uiBootSpin .8s linear infinite}
+html.ui-boot body.transfer-pending:after{content:"";position:fixed;left:50%;top:50%;width:34px;height:34px;margin:-17px 0 0 -17px;border:3px solid #cfe9dd;border-top-color:#34c79a;border-radius:50%;animation:uiBootSpin .8s linear infinite}
 @keyframes uiBootSpin{to{transform:rotate(360deg)}}
 
 /* The full editor is no longer offered in the simple editor (still reachable with ?ui=advanced) */
@@ -639,7 +639,7 @@ body.ui-simple [data-ui-advanced],body.ui-simple .ui-more-full{display:none!impo
 body.ui-trial:not(.ui-simple) .ui-mode-switch{display:inline-flex}
 
 /* "More options" now opens the extra settings inline */
-body.ui-simple .ui-more-options.is-on{background:#1fa97b!important;border-color:#1fa97b!important;color:#fff!important}
+body.ui-simple .ui-more-options.is-on{background:#34c79a!important;border-color:#34c79a!important;color:#fff!important}
 body.ui-simple #addControls.ui-extras-on .colour-control:has(#addFillColor),
 body.ui-simple #addControls.ui-extras-on .opacity-control,
 body.ui-simple #addControls.ui-extras-on #addAlignment,
@@ -663,7 +663,7 @@ body.ui-simple #linkControls > span:not(.annotation-icon):before,
 body.ui-simple #noteControls > span:not(.annotation-icon):before,
 body.ui-simple #cropControls > span:not(.annotation-icon):before,
 body.ui-simple #redactControls > span:not(.annotation-icon):before,
-body.ui-simple #stampControls > span:not(.context-icon):before{content:"i";flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#1fa97b;color:#fff;font:700 11px Georgia,serif}
+body.ui-simple #stampControls > span:not(.context-icon):before{content:"i";flex:none;width:18px;height:18px;border-radius:50%;display:grid;place-items:center;background:#34c79a;color:#fff;font:700 11px Georgia,serif}
 body.ui-simple #redactControls .redact-colours{margin-left:0}
 body.ui-simple #watermarkControls label:has(#watermarkSize):before{content:"Size"}
 body.ui-simple #watermarkControls label:has(#watermarkOpacity):before{content:"Opacity"}
@@ -688,14 +688,14 @@ body.ui-simple .ui-wm-seg.is-opacity button i{width:18px;height:18px;border-radi
 body.ui-simple .ui-wm-angle{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 10px 0 4px;border:1px solid #d6e1dc;border-radius:10px;background:#fff;flex:none}
 body.ui-simple .ui-dial{position:relative;width:30px;height:30px;padding:0;border:2px solid #9fb1aa;border-radius:50%;background:#fff;cursor:grab;touch-action:none}
 body.ui-simple .ui-dial:active{cursor:grabbing}
-body.ui-simple .ui-dial-needle{position:absolute;left:50%;top:50%;width:11px;height:2px;margin-top:-1px;background:#1fa97b;border-radius:2px;transform-origin:0 50%}
-body.ui-simple .ui-dial-needle:after{content:"";position:absolute;right:-3px;top:-2px;width:6px;height:6px;border-radius:50%;background:#1fa97b}
-body.ui-simple .ui-dial-hub{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;border:2px solid #1fa97b;background:#fff}
+body.ui-simple .ui-dial-needle{position:absolute;left:50%;top:50%;width:11px;height:2px;margin-top:-1px;background:#34c79a;border-radius:2px;transform-origin:0 50%}
+body.ui-simple .ui-dial-needle:after{content:"";position:absolute;right:-3px;top:-2px;width:6px;height:6px;border-radius:50%;background:#34c79a}
+body.ui-simple .ui-dial-hub{position:absolute;left:50%;top:50%;width:8px;height:8px;margin:-4px 0 0 -4px;border-radius:50%;border:2px solid #34c79a;background:#fff}
 body.ui-simple .ui-wm-angle output{min-width:38px;font:600 14px Inter,sans-serif;color:#2f413b;text-align:right}
 /* Opacity slider inside the watermark colour picker */
 body.ui-simple .ui-dd-opacity{display:none!important}
 body.ui-simple .watermark-swatches.is-open .ui-dd-opacity{display:flex!important;align-items:center;gap:8px;flex-basis:100%;margin-top:4px;padding:6px 4px 2px;border-top:1px solid #eef3f1;font:500 12.5px Inter,sans-serif;color:#5d6f69}
-body.ui-simple .watermark-swatches.is-open .ui-dd-opacity input{display:block!important;flex:1;min-width:90px;accent-color:#1fa97b}
+body.ui-simple .watermark-swatches.is-open .ui-dd-opacity input{display:block!important;flex:1;min-width:90px;accent-color:#34c79a}
 body.ui-simple .watermark-swatches.is-open .ui-dd-opacity output{min-width:34px;text-align:right;font-weight:600;color:#2f413b}
 body.ui-simple .watermark-swatches:not(.is-open)>button.active{opacity:max(.35,var(--wm-alpha,1))}
 body.ui-simple .watermark-swatches.is-open{width:230px!important}
@@ -720,7 +720,7 @@ body:not(.ui-simple) .ui-snack,body.no-document .ui-snack{display:none}
 /* Snackbar: light version */
 .ui-snack{background:#fff;color:#14241f;border:1px solid #dbe6e1;box-shadow:0 12px 30px rgba(15,34,28,.14)}
 .ui-snack:before{background:#fff;border-left:1px solid #dbe6e1;border-top:1px solid #dbe6e1;top:-7px}
-.ui-snack-i{background:#1fa97b;color:#fff}
+.ui-snack-i{background:#34c79a;color:#fff}
 .ui-snack-x{color:#7d8f89;border-left-color:#e6eeea}
 .ui-snack-x:hover{color:#14241f}
 
@@ -746,7 +746,7 @@ body.ui-simple .ui-thick-pop{position:absolute;z-index:90;left:0;top:calc(100% +
 body.ui-simple .ui-thick-pop[hidden]{display:none}
 body.ui-simple .ui-thick-row{display:flex;justify-content:space-between;align-items:center;font:500 12.5px Inter,sans-serif;color:#5d6f69;margin-bottom:6px}
 body.ui-simple .ui-thick-row output{font-weight:600;color:#2f413b}
-body.ui-simple .ui-thick-pop input{display:block!important;width:100%;accent-color:#1fa97b;margin:0}
+body.ui-simple .ui-thick-pop input{display:block!important;width:100%;accent-color:#34c79a;margin:0}
 body.ui-simple .ui-thick-preview{height:26px;display:flex;align-items:center;margin-top:6px;padding:0 4px}
 body.ui-simple .ui-thick-preview i{display:block;width:100%;border-radius:20px;background:var(--ink,#142038)}
 
@@ -758,10 +758,10 @@ body.ui-simple #drawControls .ui-more-options{color:#4b5d57!important}
 body.ui-simple #contextBar #drawControls .draw-colours{display:flex!important;align-items:center;gap:6px!important;height:40px!important;width:auto!important;padding:0 4px!important;border:0!important;background:transparent!important;box-shadow:none!important;margin:0!important}
 body.ui-simple #drawControls .draw-colours>legend,body.ui-simple #drawControls .draw-swatch.ui-extra-swatch{display:none!important}
 body.ui-simple #drawControls .draw-swatch{display:block!important;width:24px!important;height:24px!important;min-width:0!important;padding:0!important;margin:0!important;border-radius:50%!important;border:2px solid #fff!important;box-shadow:0 0 0 1px #d0dbd6!important;background:var(--swatch)!important;cursor:pointer}
-body.ui-simple #drawControls .draw-swatch.active{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa97b!important}
+body.ui-simple #drawControls .draw-swatch.active{box-shadow:0 0 0 2px #fff,0 0 0 4px #34c79a!important}
 body.ui-simple .ui-rgb{position:relative;display:block;width:24px;height:24px;border-radius:50%;cursor:pointer;background:conic-gradient(#ef4444,#f59e0b,#facc15,#22c55e,#06b6d4,#3b82f6,#8b5cf6,#ec4899,#ef4444);box-shadow:0 0 0 1px #d0dbd6;flex:none}
 body.ui-simple .ui-rgb:after{content:"";position:absolute;inset:7px;border-radius:50%;background:var(--picked,#fff);box-shadow:0 0 0 1.5px #fff}
-body.ui-simple .ui-rgb.is-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #1fa97b}
+body.ui-simple .ui-rgb.is-on{box-shadow:0 0 0 2px #fff,0 0 0 4px #34c79a}
 body.ui-simple .ui-rgb input{position:absolute;inset:0;width:100%!important;height:100%!important;opacity:0;cursor:pointer;border:0;padding:0;display:block!important}
 body.ui-simple #drawControls .draw-custom{display:none!important}
 /* Draw: bin icon to clear the page's drawings */
@@ -802,17 +802,17 @@ body.ui-simple #manageModal .ui-mp-tools{display:flex;align-items:center;gap:6px
 body.ui-simple #manageModal .manage-grid{background:#eef3f1!important;margin:14px 0 0!important;padding:20px 22px!important;flex:1}
 body.ui-simple #manageModal .manage-page-paper{border:2px solid transparent!important;border-radius:10px!important;box-shadow:0 4px 14px rgba(15,34,28,.1)!important;transition:transform .15s,box-shadow .15s}
 body.ui-simple #manageModal .manage-page-card:hover .manage-page-paper{transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,34,28,.14)!important}
-body.ui-simple #manageModal .manage-page-card.selected .manage-page-paper{border-color:#1fa97b!important;box-shadow:0 0 0 4px rgba(31,169,123,.18)!important}
+body.ui-simple #manageModal .manage-page-card.selected .manage-page-paper{border-color:#34c79a!important;box-shadow:0 0 0 4px rgba(31,169,123,.18)!important}
 body.ui-simple #manageModal .manage-page-card>strong{padding:0!important;background:none!important;color:#4b5d57!important;font:600 13px Inter,sans-serif!important}
 body.ui-simple #manageModal .manage-drag{display:none!important}
 body.ui-simple #manageModal .manage-check{display:grid!important;left:8px!important;right:auto!important;top:8px!important;width:22px!important;height:22px!important;border-radius:50%!important;background:#fff!important;border:2px solid #c9d6d1!important;color:transparent!important;font-size:11px!important}
-body.ui-simple #manageModal .manage-page-card.selected .manage-check{background:#1fa97b!important;border-color:#1fa97b!important;color:#fff!important}
+body.ui-simple #manageModal .manage-page-card.selected .manage-check{background:#34c79a!important;border-color:#34c79a!important;color:#fff!important}
 body.ui-simple #manageModal .signature-foot{display:flex!important;align-items:center!important;gap:10px!important;padding:14px 22px!important;border-top:1px solid #e1eae6!important;background:#fff!important}
 body.ui-simple #manageModal .ui-mp-foot{display:flex;align-items:center;gap:8px;margin-right:auto}
 .ui-mp-size{display:flex;align-items:center;gap:8px;margin-left:10px;font:500 13px Inter,sans-serif;color:#5d6f69}
-.ui-mp-size input{accent-color:#1fa97b;width:110px}
+.ui-mp-size input{accent-color:#34c79a;width:110px}
 body.ui-simple #manageModal #manageCancel,body.ui-simple #manageModal #manageApply{height:42px!important;padding:0 18px!important;border-radius:11px!important;font:600 14.5px Inter,sans-serif!important}
-body.ui-simple #manageModal #manageApply{background:#1fa97b!important;border-color:#1fa97b!important;color:#fff!important}
+body.ui-simple #manageModal #manageApply{background:#34c79a!important;border-color:#34c79a!important;color:#fff!important}
 @media (max-width:900px){body.ui-simple #manageModal .manage-dialog{width:100vw!important;height:100dvh!important;border-radius:0!important}body.ui-simple #manageModal .ui-mp-demo{margin:12px 12px 0}body.ui-simple #manageModal .ui-mp-tools{margin:10px 12px 0}.ui-mp-tool{padding:0 10px}.ui-mp-tool span{font-size:12.5px}.ui-mp-size{display:none}body.ui-simple #manageModal .signature-foot{padding:10px 12px!important}}
 body.ui-simple #manageModal .manage-dialog{display:flex!important;flex-direction:column!important}
 body.ui-simple #manageModal .manage-dialog>*{order:5}
@@ -835,11 +835,11 @@ body.ui-simple #manageModal #manageClose{display:grid!important;place-items:cent
   body.ui-simple #manageModal #manageCancel,body.ui-simple #manageModal #manageApply{padding:0 14px!important;font-size:14px!important}
 }
 /* Pages window: add pages from another PDF */
-.ui-mp-tool.is-add{background:#1fa97b;border-color:#1fa97b;color:#fff}
+.ui-mp-tool.is-add{background:#34c79a;border-color:#34c79a;color:#fff}
 .ui-mp-tool.is-add:hover:not(:disabled){background:#178f68!important;border-color:#178f68!important}
 .ui-mp-addtile{display:none}
 body.ui-simple #manageModal .ui-mp-addtile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;align-self:start;width:calc(205px * var(--manage-zoom,1));height:calc(278px * var(--manage-zoom,1));border:2px dashed #b9cfc5;border-radius:10px;background:#f7fbf9;color:#178f68;cursor:pointer;font-family:Inter,system-ui,sans-serif;padding:0}
-body.ui-simple #manageModal .ui-mp-addtile:hover{border-color:#1fa97b;background:#eef9f4}
+body.ui-simple #manageModal .ui-mp-addtile:hover{border-color:#34c79a;background:#eef9f4}
 body.ui-simple #manageModal .ui-mp-addtile svg{width:30px;height:30px;stroke-width:2}
 body.ui-simple #manageModal .ui-mp-addtile b{font-size:14.5px}
 body.ui-simple #manageModal .ui-mp-addtile small{font-size:12.5px;color:#5d6f69}
@@ -853,11 +853,11 @@ body.ui-simple .ui-toast.is-good{z-index:2000!important;background:#14241f!impor
 .ui-scanbar{position:fixed;z-index:96;left:16px;top:96px;display:flex;align-items:center;gap:12px;max-width:min(760px,calc(100vw - 32px));padding:8px 6px 8px 14px;border-radius:12px;background:#fff;color:#14241f;border:1px solid #dbe6e1;box-shadow:0 12px 30px rgba(15,34,28,.14);font:500 14px/1.35 Inter,system-ui,sans-serif;opacity:0;transform:translateY(-6px);visibility:hidden;pointer-events:none;transition:opacity .2s,transform .2s}
 .ui-scanbar.is-on{opacity:1;transform:none;visibility:visible;pointer-events:auto}
 body:not(.ui-simple) .ui-scanbar,body.no-document .ui-scanbar{display:none}
-.ui-scanbar .ui-snack-i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#1fa97b;color:#fff;font:700 12px Georgia,serif}
+.ui-scanbar .ui-snack-i{flex:none;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;background:#34c79a;color:#fff;font:700 12px Georgia,serif}
 .ui-scanbar .ui-snack-text b{font-weight:700;margin-right:7px}
 .ui-scanbar .ui-snack-x{flex:none;width:30px;height:30px;display:grid;place-items:center;border:0;border-left:1px solid #e6eeea;background:none;color:#7d8f89;cursor:pointer}
 .ui-scanbar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.ui-scan-go{flex:none;height:36px;padding:0 14px;border:0;border-radius:9px;background:#1fa97b;color:#fff;font:700 13.5px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.ui-scan-go{flex:none;height:36px;padding:0 14px;border:0;border-radius:9px;background:#34c79a;color:#fff;font:700 13.5px Inter,sans-serif;cursor:pointer;display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
 .ui-scan-go:disabled{opacity:.85;cursor:default}
 .ui-scan-spin{width:14px;height:14px;border:2px solid rgba(255,255,255,.45);border-top-color:#fff;border-radius:50%;animation:uiBootSpin .8s linear infinite}
 @media (max-width:900px){.ui-scanbar{font-size:13px;flex-wrap:wrap}.ui-scan-go{order:5}}
@@ -865,10 +865,10 @@ body:not(.ui-simple) .ui-scanbar,body.no-document .ui-scanbar{display:none}
 /* Split PDF: scissors between pages in the Pages window */
 .manage-split{position:absolute;right:-19px;top:38%;z-index:9;width:34px;height:34px;display:grid;place-items:center;padding:0;border:1.5px dashed #9fb3c8;border-radius:999px;background:#fff;color:#4b5b70;cursor:pointer;box-shadow:0 4px 12px #17233a1a;transition:background .15s,border-color .15s,color .15s,transform .15s}
 .manage-split svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
-.manage-split:hover{border-color:#20aa7d;color:#078c68;transform:scale(1.06)}
-.manage-split.on{border-style:solid;border-color:#20aa7d;background:#20aa7d;color:#fff}
-.manage-page-unit.split-after .manage-page-paper{box-shadow:6px 0 0 -3px #fff,9px 0 0 -3px #20aa7d}
-.manage-page-unit.split-after::before{content:"";position:absolute;right:-3px;top:4px;bottom:40px;border-right:2px dashed #20aa7d;pointer-events:none}
+.manage-split:hover{border-color:#34c79a;color:#078c68;transform:scale(1.06)}
+.manage-split.on{border-style:solid;border-color:#34c79a;background:#34c79a;color:#fff}
+.manage-page-unit.split-after .manage-page-paper{box-shadow:6px 0 0 -3px #fff,9px 0 0 -3px #34c79a}
+.manage-page-unit.split-after::before{content:"";position:absolute;right:-3px;top:4px;bottom:40px;border-right:2px dashed #34c79a;pointer-events:none}
 .ui-mp-tool.ui-mp-split.is-on{background:#e9f8f3;border-color:#a9decf;color:#078c68}
 
 /* Text tool helper mascot (bottom-right) */
