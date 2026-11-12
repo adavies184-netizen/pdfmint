@@ -880,23 +880,16 @@ body:not(.ui-simple) .ui-mascot{display:none}
 .ui-mascot-x{position:absolute;top:6px;right:6px;width:24px;height:24px;display:grid;place-items:center;padding:0;border:0;border-radius:8px;background:transparent;color:#7b8b85;cursor:pointer}
 .ui-mascot-x:hover{background:#f0f5f3;color:#14241f}
 .ui-mascot-x svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.ui-mascot-pick{display:flex;gap:4px;margin-top:9px;padding-top:8px;border-top:1px dashed #dbe6e1}
-.ui-mascot-pick button{flex:1;padding:4px 0;border:1px solid #dbe6e1;border-radius:999px;background:#fff;font:600 11.5px Inter,system-ui,sans-serif;color:#4b5b56;cursor:pointer}
-.ui-mascot-pick button[aria-pressed="true"]{background:#e9f8f3;border-color:#a9decf;color:#078c68}
 .ui-mascot-figure{flex:none;animation:ui-mascot-bob 3.2s ease-in-out infinite}
 .ui-mascot-figure svg{display:block;overflow:visible}
 .ui-mascot[data-look="page"] .ui-mascot-figure svg{width:62px;height:74px}
-.ui-mascot[data-look="puff"] .ui-mascot-figure svg{width:84px;height:64px}
 .ui-mascot.is-on .ui-mascot-arm{transform-origin:44px 30px;animation:ui-mascot-wave .9s ease-in-out 2 .3s}
-.ui-mascot.is-on .ui-mascot-wind{animation:ui-mascot-wind 1.6s ease-in-out infinite}
 @keyframes ui-mascot-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
 @keyframes ui-mascot-wave{0%,100%{transform:rotate(0)}50%{transform:rotate(-22deg)}}
-@keyframes ui-mascot-wind{0%,100%{opacity:1;transform:translateX(0)}50%{opacity:.45;transform:translateX(-3px)}}
 body.ui-mobile .ui-mascot{right:12px;bottom:calc(166px + env(safe-area-inset-bottom,0px))}
 body.ui-mobile .ui-mascot-bubble{width:200px;margin-bottom:38px;font-size:13px}
 body.ui-mobile .ui-mascot[data-look="page"] .ui-mascot-figure svg{width:50px;height:60px}
-body.ui-mobile .ui-mascot[data-look="puff"] .ui-mascot-figure svg{width:68px;height:52px}
-@media (prefers-reduced-motion:reduce){.ui-mascot,.ui-mascot-figure,.ui-mascot-arm,.ui-mascot-wind{animation:none!important;transition:none!important}}
+@media (prefers-reduced-motion:reduce){.ui-mascot,.ui-mascot-figure,.ui-mascot-arm{animation:none!important;transition:none!important}}
 
 /* Page list down the side: no inner scroll bar, thumbnails that fit, clear of the top bar */
 body.ui-simple.ui-thumbs-open .sidebar{scrollbar-width:none;overflow-x:hidden}

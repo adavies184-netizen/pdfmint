@@ -194,14 +194,8 @@
       const caret = m && m.width ? Math.max(14, Math.min(220, m.left - r.left + 16)) : 24;
       tip.style.setProperty('--snack-caret', `${Math.round(caret)}px`);
     };
-    // Text tool helper: a small mascot in the bottom-right corner with a speech bubble.
-    // Two looks for now (Page and Puff) with a temporary switch so the owner can pick one.
-    const MASCOTS = {
-      page: '<svg viewBox="0 0 50 60" aria-hidden="true"><path d="M6 4h26l12 12v38a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#fff" stroke="#20aa7d" stroke-width="2.2"/><path d="M32 4v12h12" fill="#d8f3e8" stroke="#20aa7d" stroke-width="2.2" stroke-linejoin="round"/><path d="M11 21h13M11 25h9" stroke="#cfe7dd" stroke-width="1.6" stroke-linecap="round"/><path class="ui-mascot-eyes" d="M14 33q3-3 6 0M28 33q3-3 6 0" stroke="#14241f" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 39q6 6 12 0z" fill="#14241f"/><circle cx="12" cy="38.5" r="2.4" fill="#ffc7c7"/><circle cx="36" cy="38.5" r="2.4" fill="#ffc7c7"/><path class="ui-mascot-arm" d="M44 30q7-4 5-12" stroke="#20aa7d" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>',
-      puff: '<svg viewBox="0 0 66 50" aria-hidden="true"><path d="M14 40a11 11 0 0 1 1-22 14 14 0 0 1 26-5 11 11 0 0 1 13 13 8 8 0 0 1-2 14z" fill="#5fd3a8"/><path d="M18 20a10 10 0 0 1 9-7" stroke="#bff0dc" stroke-width="2.2" fill="none" stroke-linecap="round"/><circle cx="27" cy="27" r="2.5" fill="#14241f"/><circle cx="39" cy="27" r="2.5" fill="#14241f"/><circle cx="28" cy="26" r=".8" fill="#fff"/><circle cx="40" cy="26" r=".8" fill="#fff"/><path d="M29 33q4 3 8 0" stroke="#14241f" stroke-width="1.8" fill="none" stroke-linecap="round"/><circle cx="22" cy="32" r="2" fill="#ffb3b3"/><circle cx="44" cy="32" r="2" fill="#ffb3b3"/><path class="ui-mascot-wind" d="M2 22h8M0 30h7M3 38h6" stroke="#20aa7d" stroke-width="2.2" stroke-linecap="round"/></svg>'
-    };
-    const MASCOT_KEY = 'pdfbreezeMascot';
-    let mascotLook = (() => { try { return localStorage.getItem(MASCOT_KEY) === 'puff' ? 'puff' : 'page'; } catch (_) { return 'page'; } })();
+    // Text tool helper: a small mascot (Page) in the bottom-right corner with a speech bubble, shown the first time the Text tool opens.
+    const MASCOT_SVG = '<svg viewBox="0 0 50 60" aria-hidden="true"><path d="M6 4h26l12 12v38a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" fill="#fff" stroke="#34c79a" stroke-width="2.2"/><path d="M32 4v12h12" fill="#d8f3e8" stroke="#34c79a" stroke-width="2.2" stroke-linejoin="round"/><path d="M11 21h13M11 25h9" stroke="#cfe7dd" stroke-width="1.6" stroke-linecap="round"/><path class="ui-mascot-eyes" d="M14 33q3-3 6 0M28 33q3-3 6 0" stroke="#14241f" stroke-width="1.8" fill="none" stroke-linecap="round"/><path d="M18 39q6 6 12 0z" fill="#14241f"/><circle cx="12" cy="38.5" r="2.4" fill="#ffc7c7"/><circle cx="36" cy="38.5" r="2.4" fill="#ffc7c7"/><path class="ui-mascot-arm" d="M44 30q7-4 5-12" stroke="#34c79a" stroke-width="2.2" fill="none" stroke-linecap="round"/></svg>';
     const mascot = document.createElement('div');
     mascot.className = 'ui-mascot';
     mascot.setAttribute('role', 'status');
@@ -213,11 +207,13 @@
     const drawMascot = () => {
       const phone = body.classList.contains('ui-mobile');
       const line = phone ? 'Tap any text to edit it, or add your own text.' : 'Hover over any text and click to edit it, or add your own text.';
-      mascot.dataset.look = mascotLook;
-      mascot.innerHTML = `<div class="ui-mascot-bubble"><button type="button" class="ui-mascot-x" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button><p>${line}</p><div class="ui-mascot-pick" role="group" aria-label="Choose a helper (temporary)"><button type="button" data-look="page" aria-pressed="${mascotLook === 'page'}">Page</button><button type="button" data-look="puff" aria-pressed="${mascotLook === 'puff'}">Puff</button></div></div><div class="ui-mascot-figure">${MASCOTS[mascotLook]}</div>`;
+      mascot.dataset.look = 'page';
+      mascot.innerHTML = `<div class="ui-mascot-bubble"><button type="button" class="ui-mascot-x" aria-label="Close">${svg('<path d="M6 6l12 12M18 6 6 18"/>')}</button><p>${line}</p></div><div class="ui-mascot-figure">${MASCOT_SVG}</div>`;
     };
     const showMascot = () => {
-      if (tipsSeen.__off) return;
+      if (tipsSeen.__off || tipsSeen.add) return;
+      tipsSeen.add = true;
+      saveTips();
       hideTip();
       drawMascot();
       mascot.classList.remove('is-on');
@@ -229,14 +225,7 @@
     mascot.addEventListener('mouseenter', () => { mascotHover = true; });
     mascot.addEventListener('mouseleave', () => { mascotHover = false; });
     mascot.addEventListener('click', event => {
-      if (event.target.closest('.ui-mascot-x')) { hideMascot(); return; }
-      const pick = event.target.closest('.ui-mascot-pick [data-look]');
-      if (pick) {
-        mascotLook = pick.dataset.look === 'puff' ? 'puff' : 'page';
-        try { localStorage.setItem(MASCOT_KEY, mascotLook); } catch (_) {}
-        drawMascot();
-        armMascotTimer();
-      }
+      if (event.target.closest('.ui-mascot-x')) hideMascot();
     });
 
     const showTip = tool => {
@@ -612,7 +601,7 @@
         const on = simpleOn();
         const split = window.pdfbreezeManagerSplit, splitting = Boolean(split?.mode), parts = splitting ? split.parts : 1;
         if (title) title.textContent = splitting ? 'Split your PDF' : merging ? 'Merge PDFs' : on ? 'Arrange your pages' : originalTitle;
-        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : merging ? (body.classList.contains('ui-mobile') ? 'Choose one or more PDFs to join to this one, then move the pages into order.' : 'Choose one or more PDFs to join to this one (hold Ctrl, or Cmd on a Mac, to pick several), then drag the pages into order.') : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
+        if (intro) intro.textContent = splitting ? 'Click the scissors between two pages to split there. Each part downloads as its own PDF.' : merging ? (body.classList.contains('ui-mobile') ? 'Tap Add pages to choose one or more PDFs to join to this one, then move the pages into order.' : 'Click Add pages to choose one or more PDFs to join to this one (hold Ctrl, or Cmd on a Mac, to pick several), then drag the pages into order.') : on ? (body.classList.contains('ui-mobile') ? 'Select a page, then move, rotate, copy or delete it. Add pages to join another PDF.' : 'Drag pages to reorder, add pages from another PDF, or select pages to rotate, copy or delete them.') : originalIntro;
         if (applyBtn) applyBtn.textContent = parts > 1 ? `Split into ${parts} PDFs` : on ? 'Save page changes' : originalApply;
         manage.classList.toggle('is-splitting', splitting);
         manage.querySelector('[data-mp-split]')?.classList.toggle('is-on', splitting);
@@ -675,8 +664,8 @@
         grid.append(tile);
       };
       if (grid) new MutationObserver(addTile).observe(grid, { childList: true });
-      // More tools → Merge PDFs: open this window as the merge tool and go straight to choosing files.
-      manage.addEventListener('pdfbreeze:merge', () => { merging = true; words(); addInput.click(); });
+      // More tools → Merge PDFs: open this window as the merge tool; the customer clicks Add pages themselves.
+      manage.addEventListener('pdfbreeze:merge', () => { merging = true; words(); });
       manage.addEventListener('click', event => {
         if (event.target.closest('[data-mp-add]')) { addInput.click(); return; }
         if (event.target.closest('[data-mp-split]') && window.pdfbreezeManagerSplit) { window.pdfbreezeManagerSplit.mode = !window.pdfbreezeManagerSplit.mode; words(); return; }

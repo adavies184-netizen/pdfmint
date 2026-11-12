@@ -144,6 +144,9 @@
       };
     }
 
+    // Let the customer swap in a different PDF from the options pop-up.
+    $('#compression-change-file')?.addEventListener('click', () => input?.click());
+
     window.addEventListener('pdfmint:compression-drop', event => {
       if (event.detail?.file) showOptions(event.detail.file);
     });
