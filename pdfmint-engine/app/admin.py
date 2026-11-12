@@ -844,3 +844,46 @@ async def update_editor_layout_setting(payload: EditorLayoutSettingRequest, auth
         raise HTTPException(status_code=502, detail="The editor layout setting could not be updated.")
     _setting_cache.pop(EDITOR_LAYOUT_SETTING_KEY, None)
     return {"layout": payload.layout}
+
+
+_visitors_today_cache: dict[str, Any] = {"day": None, "at": 0.0, "count": 0}
+
+
+async def admin_visitors(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    """Live visitors online now (in-memory pings) and unique visitors today (London day)."""
+    from .analytics import online_visitor_count
+
+    await _require_admin(authorization)
+    local_today = datetime.now(timezone.utc).astimezone(REPORTING_TIMEZONE).date()
+    cache = _visitors_today_cache
+    if cache["day"] != local_today or time.monotonic() - cache["at"] > 30:
+        since = datetime.combine(local_today, datetime.min.time(), REPORTING_TIMEZONE).astimezone(timezone.utc)
+        sessions: set[str] = set()
+        client = http()
+        page_size = 1000
+        for start in range(0, 50000, page_size):
+            response = await client.get(
+                f"{SUPABASE_URL}/rest/v1/analytics_events",
+                headers={**_service_headers(), "Range": f"{start}-{start + page_size - 1}"},
+                params={
+                    "select": "session_id",
+                    "event_name": "eq.landing_view",
+                    "session_id": "like.live_*",
+                    "created_at": f"gte.{since.isoformat()}",
+                    "order": "id.asc",
+                },
+                timeout=15,
+            )
+            if response.is_error:
+                raise HTTPException(status_code=502, detail="Could not load today's visitors.")
+            rows = response.json()
+            sessions.update(str(row.get("session_id")) for row in rows if row.get("session_id"))
+            if len(rows) < page_size:
+                break
+        cache.update({"day": local_today, "at": time.monotonic(), "count": len(sessions)})
+    return {
+        "online": online_visitor_count(),
+        "today": cache["count"],
+        "day": local_today.isoformat(),
+        "timezone": "Europe/London",
+    }

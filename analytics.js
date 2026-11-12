@@ -243,6 +243,26 @@
   };
   void recordLandingView();
 
+  // "Online now" in Admin: a tiny ping about once a minute while the tab is in view.
+  const PING_INTERVAL_MS = 60 * 1000;
+  let lastPing = 0;
+  const pingPresence = () => {
+    if (!isLiveTrackingContext() || currentPage === 'admin' || document.visibilityState !== 'visible') return;
+    if (Date.now() - lastPing < PING_INTERVAL_MS - 5000) return;
+    const baseUrl = window.PDFMINT_CONFIG?.engineBaseUrl;
+    if (!baseUrl) return;
+    lastPing = Date.now();
+    fetch(`${baseUrl.replace(/\/$/, '')}/v1/analytics/ping`, {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      keepalive: true,
+      body: JSON.stringify({session_id: sessionId()})
+    }).catch(() => {});
+  };
+  window.setTimeout(pingPresence, 1500);
+  window.setInterval(pingPresence, PING_INTERVAL_MS);
+  document.addEventListener('visibilitychange', pingPresence);
+
   document.addEventListener('pdfbreeze:consentchange', () => {
     void recordLandingView();
   });

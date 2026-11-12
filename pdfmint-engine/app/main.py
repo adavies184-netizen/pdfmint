@@ -30,6 +30,7 @@ from .admin import (
     admin_cookie_consent_stats,
     admin_editor_layout_setting,
     admin_funnel,
+    admin_visitors,
     admin_overview,
     admin_payment_wall_setting,
     cookie_consent_setting,
@@ -42,7 +43,7 @@ from .admin import (
     update_editor_layout_setting,
     update_payment_wall_setting,
 )
-from .analytics import AnalyticsEventRequest, CookieConsentEventRequest, store_analytics_event, store_cookie_consent_event
+from .analytics import AnalyticsEventRequest, CookieConsentEventRequest, PresencePing, record_presence, store_analytics_event, store_cookie_consent_event
 from .billing import (
     CheckoutRequest,
     ConsentEvidenceRequest,
@@ -64,7 +65,7 @@ from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.24.0"
+ENGINE_VERSION = "1.25.0"
 APP_ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -279,6 +280,16 @@ async def admin_delete_members(payload: AdminDeleteRequest, authorization: str |
 @app.post("/v1/support/message")
 async def website_support_message(payload: SupportMessageRequest):
     return await send_support_message(payload)
+
+
+@app.post("/v1/analytics/ping")
+async def website_presence_ping(payload: PresencePing, request: Request):
+    return record_presence(payload, request)
+
+
+@app.get("/v1/admin/visitors")
+async def admin_live_visitors(authorization: str | None = Header(default=None)):
+    return await admin_visitors(authorization)
 
 
 @app.post("/v1/analytics/events")

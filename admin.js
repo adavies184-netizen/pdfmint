@@ -640,6 +640,21 @@
     adminSession = session;
     installSectionDateFilters();
     await loadOverview();
+    const loadLiveVisitors = async () => {
+      if (document.visibilityState !== 'visible') return;
+      try {
+        const response = await fetch(`${window.PDFMINT_CONFIG.engineBaseUrl.replace(/\/$/,'')}/v1/admin/visitors`, {cache:'no-store', headers:{Authorization:`Bearer ${adminSession.access_token}`}});
+        if (!response.ok) throw new Error();
+        const live = await response.json();
+        document.querySelector('[data-live-online]').textContent = Number(live.online || 0).toLocaleString('en-GB');
+        document.querySelector('[data-live-today]').textContent = Number(live.today || 0).toLocaleString('en-GB');
+      } catch (_) {
+        document.querySelector('[data-admin-live]')?.setAttribute('title', 'Live visitor counts need engine v1.25.0 or newer.');
+      }
+    };
+    loadLiveVisitors();
+    window.setInterval(loadLiveVisitors, 30000);
+    document.addEventListener('visibilitychange', loadLiveVisitors);
     loadCookieConsentSetting().catch(error => renderCookieConsentSetting(true, `${error.message} Defaulting to On.`));
     loadCookieConsentStats().catch(error => {
       document.querySelector('[data-cookie-consent-stats]').innerHTML = `<p>${error.message || 'Cookie consent statistics could not be loaded.'}</p>`;

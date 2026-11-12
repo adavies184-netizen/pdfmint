@@ -6,6 +6,7 @@ from typing import Any
 from urllib.parse import urlparse
 
 import logging
+import time
 
 from fastapi import Header, HTTPException, Request
 from pydantic import BaseModel, Field
@@ -211,3 +212,35 @@ async def store_cookie_consent_event(payload: CookieConsentEventRequest, request
     if response.is_error:
         raise HTTPException(status_code=502, detail="The consent interaction could not be stored.")
     return {"recorded": True}
+
+
+# Who is on the site right now. Kept in this process's memory only (no database
+# writes): each open tab pings about once a minute while it is in view.
+ONLINE_WINDOW_SECONDS = 120
+_presence: dict[str, float] = {}
+
+
+class PresencePing(BaseModel):
+    session_id: str = Field(pattern=r"^[A-Za-z0-9_-]{16,80}$")
+
+
+def record_presence(payload: PresencePing, request: Request) -> dict[str, bool]:
+    user_agent = request.headers.get("user-agent") or ""
+    if (
+        not payload.session_id.startswith("live_")
+        or not _is_live_browser_request(request)
+        or BOT_USER_AGENT.search(user_agent)
+    ):
+        return {"recorded": False}
+    now = time.monotonic()
+    _presence[payload.session_id] = now
+    if len(_presence) > 2000:
+        for session_id, seen in list(_presence.items()):
+            if now - seen > ONLINE_WINDOW_SECONDS:
+                _presence.pop(session_id, None)
+    return {"recorded": True}
+
+
+def online_visitor_count() -> int:
+    cutoff = time.monotonic() - ONLINE_WINDOW_SECONDS
+    return sum(1 for seen in _presence.values() if seen >= cutoff)
