@@ -4751,13 +4751,13 @@ document.getElementById('continue-to-email').addEventListener('click', async eve
 
 let selectedAccessPlan = {
   value: 'full',
-  name: '7-day full access',
+  name: '3-day full access',
   price: 1.00,
-  disclosure: 'Renews at £49.99 every four weeks after seven days unless cancelled beforehand.'
+  disclosure: 'Renews at £49.99 every four weeks after three days unless cancelled beforehand.'
 };
 
 const paymentWallStyleCacheKey = 'pdfbreeze_payment_wall_style_v1';
-const trialDisclosureCopy = "Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 7 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.";
+const trialDisclosureCopy = "Money-back guarantee—try us for 30 days and if you're not satisfied, contact us and we'll refund your money. After 3 days, auto-renews at £49.99 billed every 4 weeks—you may cancel anytime.";
 let activePaymentWallStyle = 'zendocs';
 let paymentWallStyleRequest = null;
 
@@ -4948,7 +4948,7 @@ async function openPaymentPage(options = {}) {
   const price = Number(checked.dataset.price);
 
   let disclosure = 'One-time access with no automatic renewal.';
-  if (checked.value === 'limited' || checked.value === 'full') disclosure = 'Renews at £49.99 every four weeks after seven days unless cancelled beforehand.';
+  if (checked.value === 'limited' || checked.value === 'full') disclosure = 'Renews at £49.99 every four weeks after three days unless cancelled beforehand.';
   if (checked.value === 'annual') disclosure = 'Billed £299.99 annually until cancelled.';
 
   selectedAccessPlan = {value: checked.value, name: planName, price, disclosure};
