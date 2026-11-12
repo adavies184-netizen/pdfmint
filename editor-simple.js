@@ -1020,3 +1020,79 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', build);
   else build();
 })();
+
+/* Touch screens: our own colour panel instead of the phone's built-in picker.
+   Preset colours plus a colour area you tap or drag on to choose the exact shade. */
+(() => {
+  if (!window.matchMedia || !matchMedia('(pointer:coarse)').matches) return;
+  const PRESETS = ['#000000','#142038','#374151','#6b7280','#ffffff','#dc2626','#ea580c','#f59e0b','#facc15','#16a34a',
+                   '#34c79a','#0d9488','#0ea5e9','#2563eb','#1e3a8a','#7c3aed','#c026d3','#db2777','#92400e','#f6de1b'];
+  let input = null, chosen = '#000000';
+  const hex = (r, g, b) => '#' + [r, g, b].map(v => Math.round(v).toString(16).padStart(2, '0')).join('');
+  const panel = document.createElement('div');
+  panel.className = 'pb-colour-sheet';
+  panel.hidden = true;
+  panel.innerHTML = `<div class="pb-cs-card" role="dialog" aria-label="Choose a colour">
+    <div class="pb-cs-head"><b>Choose a colour</b><button type="button" class="pb-cs-x" aria-label="Close">×</button></div>
+    <div class="pb-cs-presets">${PRESETS.map(c => `<button type="button" data-c="${c}" style="background:${c}" aria-label="${c}"></button>`).join('')}</div>
+    <div class="pb-cs-area"><canvas width="600" height="260"></canvas><span class="pb-cs-dot"></span></div>
+    <div class="pb-cs-foot"><span class="pb-cs-preview"></span><span class="pb-cs-hex"></span><button type="button" class="pb-cs-use">Use colour</button></div>
+  </div>`;
+  document.addEventListener('DOMContentLoaded', () => document.body.append(panel));
+  if (document.body) document.body.append(panel);
+  const canvas = panel.querySelector('canvas'), ctx = canvas.getContext('2d', {willReadFrequently: true});
+  const dot = panel.querySelector('.pb-cs-dot');
+  const paint = () => {
+    const w = canvas.width, h = canvas.height;
+    const hue = ctx.createLinearGradient(0, 0, w, 0);
+    ['#ff0000','#ffff00','#00ff00','#00ffff','#0000ff','#ff00ff','#ff0000'].forEach((c, i) => hue.addColorStop(i / 6, c));
+    ctx.fillStyle = hue; ctx.fillRect(0, 0, w, h);
+    const light = ctx.createLinearGradient(0, 0, 0, h);
+    light.addColorStop(0, 'rgba(255,255,255,1)'); light.addColorStop(.45, 'rgba(255,255,255,0)');
+    light.addColorStop(.55, 'rgba(0,0,0,0)'); light.addColorStop(1, 'rgba(0,0,0,1)');
+    ctx.fillStyle = light; ctx.fillRect(0, 0, w, h);
+  };
+  paint();
+  const show = colour => {
+    chosen = colour;
+    panel.querySelector('.pb-cs-preview').style.background = colour;
+    panel.querySelector('.pb-cs-hex').textContent = colour.toUpperCase();
+    panel.querySelectorAll('.pb-cs-presets button').forEach(b => b.classList.toggle('on', b.dataset.c === colour));
+  };
+  const pickAt = event => {
+    const box = canvas.getBoundingClientRect();
+    const x = Math.min(box.width - 1, Math.max(0, event.clientX - box.left));
+    const y = Math.min(box.height - 1, Math.max(0, event.clientY - box.top));
+    const [r, g, b] = ctx.getImageData(Math.round(x / box.width * canvas.width), Math.round(y / box.height * canvas.height), 1, 1).data;
+    dot.style.left = `${x}px`; dot.style.top = `${y}px`; dot.hidden = false;
+    show(hex(r, g, b));
+  };
+  const area = panel.querySelector('.pb-cs-area');
+  area.addEventListener('pointerdown', event => { event.preventDefault(); area.setPointerCapture(event.pointerId); pickAt(event); });
+  area.addEventListener('pointermove', event => { if (area.hasPointerCapture(event.pointerId)) pickAt(event); });
+  const close = () => { panel.hidden = true; input = null; };
+  const apply = colour => {
+    if (!input) return close();
+    input.value = colour;
+    input.dispatchEvent(new Event('input', {bubbles: true}));
+    input.dispatchEvent(new Event('change', {bubbles: true}));
+    close();
+  };
+  panel.querySelector('.pb-cs-presets').addEventListener('click', event => {
+    const c = event.target.closest('button')?.dataset.c;
+    if (c) apply(c);
+  });
+  panel.querySelector('.pb-cs-use').addEventListener('click', () => apply(chosen));
+  panel.querySelector('.pb-cs-x').addEventListener('click', close);
+  panel.addEventListener('click', event => { if (event.target === panel) close(); });
+  document.addEventListener('click', event => {
+    const target = event.target.closest?.('input[type=color]') || event.target.closest?.('label')?.querySelector('input[type=color]');
+    if (!target || panel.contains(event.target)) return;
+    event.preventDefault();
+    event.stopPropagation();
+    input = target;
+    dot.hidden = true;
+    show(String(target.value || '#000000').toLowerCase());
+    panel.hidden = false;
+  }, true);
+})();

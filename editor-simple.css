@@ -1129,3 +1129,39 @@ body.ui-simple .page-thumbnails::-webkit-scrollbar,body.ui-simple #pageThumbnail
   body.ui-mobile #contextBar .ui-colour-dd:not(.is-open)>button.active{border-radius:50%!important;width:24px!important;height:24px!important;box-shadow:0 0 0 1px #c9d6d1!important;border:2px solid #fff!important}
   body.ui-mobile #contextBar .ui-wm-colour-holder,body.ui-mobile #contextBar#contextBar .watermark-swatches:not(.is-open){border:0!important;background:transparent!important;box-shadow:none!important}
 }
+@media (max-width:900px){
+  body.ui-mobile #contextBar#contextBar #addControls>.ui-add-text{width:54px!important;height:42px!important;background:#34c79a!important;color:#fff!important;border-radius:11px!important;box-shadow:0 2px 6px rgba(52,199,154,.35)!important}
+  body.ui-mobile #contextBar#contextBar #addControls>.ui-add-text span::after{font-size:12px;color:#fff}
+  body.ui-mobile #contextBar#contextBar #addControls>.ui-add-text:active{background:#2bb78b!important}
+  body.ui-mobile #addControls>label:has(#addFont){flex:0 1 106px!important;max-width:106px}
+  body.ui-mobile #addControls #addFont{font-size:11.5px!important}
+}
+/* Touch screens: a clear round handle above the text box to move it, and easier resize handles. */
+.live-text-frame .ltf-move,.live-text-frame .ltf-side{touch-action:none}
+@media (pointer:coarse){
+  .live-text-frame .ltf-move{left:50%;right:auto;top:-46px;width:34px;height:34px;margin-left:-17px;border-radius:50%;background:#2878e3 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3'/%3E%3C/svg%3E") center/18px no-repeat;box-shadow:0 2px 8px rgba(40,120,227,.35),0 0 0 2px #fff}
+  .live-text-frame .ltf-move::after{content:"";position:absolute;left:50%;top:100%;width:2px;height:12px;margin-left:-1px;background:#2878e3}
+  .live-text-frame .ltf-side{width:8px}
+  .live-text-frame .ltf-side::before{content:"";position:absolute;inset:-12px -14px}
+}
+/* Touch colour panel */
+.pb-colour-sheet{position:fixed;inset:0;z-index:3000;display:flex;align-items:flex-end;justify-content:center;background:rgba(15,25,22,.35)}
+.pb-colour-sheet[hidden]{display:none}
+.pb-cs-card{width:100%;max-width:520px;background:#fff;border-radius:20px 20px 0 0;padding:14px 16px calc(16px + env(safe-area-inset-bottom));box-shadow:0 -8px 30px rgba(0,0,0,.15);font-family:Inter,sans-serif;color:#1f2f2a}
+.pb-cs-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-size:16px}
+.pb-cs-x{width:34px;height:34px;border:0;border-radius:50%;background:#f1f5f3;font-size:22px;line-height:1;color:#43534d}
+.pb-cs-presets{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin-bottom:14px}
+.pb-cs-presets button{aspect-ratio:1;border-radius:50%;border:0;box-shadow:inset 0 0 0 1px rgba(0,0,0,.12);padding:0}
+.pb-cs-presets button.on{box-shadow:0 0 0 2px #fff,0 0 0 4px #34c79a}
+.pb-cs-area{position:relative;touch-action:none;border-radius:12px;overflow:hidden;height:150px}
+.pb-cs-area canvas{display:block;width:100%;height:100%}
+.pb-cs-dot{position:absolute;width:22px;height:22px;margin:-11px 0 0 -11px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 1px rgba(0,0,0,.35),0 2px 6px rgba(0,0,0,.3);pointer-events:none}
+.pb-cs-dot[hidden]{display:none}
+.pb-cs-foot{display:flex;align-items:center;gap:10px;margin-top:14px}
+.pb-cs-preview{width:36px;height:36px;border-radius:50%;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.pb-cs-hex{flex:1;font:600 14px ui-monospace,monospace;color:#43534d}
+.pb-cs-use{height:44px;padding:0 22px;border:0;border-radius:12px;background:#34c79a;color:#fff;font:700 15px Inter,sans-serif}
+@media (max-width:900px){
+  body.ui-mobile #contextBar #addControls #addFont{padding-right:15px!important;background-position:right 1px center!important;background-size:11px 11px!important}
+  body.ui-mobile #addControls>label:has(#addFont){padding-left:4px!important}
+}

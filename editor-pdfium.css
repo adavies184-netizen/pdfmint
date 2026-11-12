@@ -448,3 +448,10 @@ body.manage-mode{overflow:hidden}body.manage-mode .tool-context{display:flex}bod
 .export-swap-pdf:hover{color:#075c43}
 /* Touch screens: a finger drag in a drawing or marking tool draws instead of scrolling the page. */
 .page-wrap.draw-mode-active .draw-overlay,.page-wrap.highlight-mode-active .highlight-selection-overlay,.page-wrap.link-mode-active .draw-overlay{touch-action:none;-webkit-user-select:none;user-select:none;overscroll-behavior:contain}
+/* Touch screens: added text is easy to grab and drag. */
+.text-hit.added{touch-action:none}
+@media (pointer:coarse){
+  .text-hit.added::before{content:"";position:absolute;inset:-14px}
+  .text-hit.added.selected:not(.editing)::after{content:"";position:absolute;left:50%;top:-40px;width:32px;height:32px;margin-left:-16px;border-radius:50%;background:#2878e3 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3v18M3 12h18M12 3l-3 3M12 3l3 3M12 21l-3-3M12 21l3-3M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3'/%3E%3C/svg%3E") center/18px no-repeat;box-shadow:0 2px 8px rgba(40,120,227,.35)}
+  .text-hit.added.dragging::after{background-color:#1d62c4}
+}
