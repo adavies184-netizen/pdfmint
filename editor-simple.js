@@ -418,6 +418,13 @@
     });
     const dockMore = $('.ui-dock-more', dock), dockMenu = $('.ui-dock-menu', dock);
     function closeDockMenu() { dockMenu.hidden = true; dockMenu.classList.remove('is-all'); const ap = dockMenu.querySelector('.ui-all-panel'); if (ap) ap.hidden = true; dockMenu.querySelector('.ui-all-row')?.classList.remove('is-active'); dockMore.setAttribute('aria-expanded', 'false'); body.classList.remove('ui-menu-open'); }
+    // Arrived from a converter page (e.g. PDF to Word): the Download buttons name that format.
+    {
+      const q = new URLSearchParams(location.search), f = (q.get('format') || '').toLowerCase(), c = (q.get('convert') || '').toLowerCase();
+      const NAMES = { docx: 'Word', doc: 'Word', xlsx: 'Excel', xls: 'Excel', pptx: 'PowerPoint', ppt: 'PowerPoint', jpg: 'JPG', png: 'PNG', txt: 'Text' };
+      const name = NAMES[f] || { word: 'Word', excel: 'Excel', powerpoint: 'PowerPoint', image: 'JPG' }[c];
+      if (name) document.querySelectorAll('[data-proxy="download"] span, #download span').forEach(label => { label.textContent = `Download ${name}`; });
+    }
     // All PDF tools: a second panel that pulls out beside More tools. Tools that work on a PDF use this one
     // (with the option to pick a different PDF there); tools that make a PDF from other files open in a new tab.
     const ALL_GROUPS = [
