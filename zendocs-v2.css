@@ -167,3 +167,7 @@
 .zd2-secure{display:inline-flex;align-items:center;gap:6px;color:#5b6470;font-size:12.5px;white-space:nowrap}
 .zd2-secure svg{width:15px;height:15px;color:#16a34a}
 @media (min-width:1000px){.zd2-accepted{margin-bottom:16px}}
+/* Card form open straight away on every screen size (no "Credit or debit card" button) */
+#payment-page .zd2-card-button{display:none!important}
+#payment-page .zd2-card-slot,#payment-page .zd2-card-slot[hidden]{display:block;padding:0;border:0;background:none;margin-top:4px}
+.zd2-accepted{flex-wrap:wrap;row-gap:8px}
