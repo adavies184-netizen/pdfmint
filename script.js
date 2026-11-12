@@ -7576,6 +7576,25 @@ if (document.body.dataset.ocrFlow === 'true') {
     event.target.value = '';
   });
   window.addEventListener('pdfmint:ocr-drop', event => openOcrFormatModal(event.detail.file));
+  // Swap in a different PDF from the options pop-up.
+  document.getElementById('ocr-change-file')?.addEventListener('click', () => ocrInput.click());
+  // Arrived from the editor's All PDF tools: pick up the PDF it handed over (edits included).
+  if (new URLSearchParams(location.search).get('from') === 'editor' && window.indexedDB) {
+    const open = indexedDB.open('pdfmint-editor-transfer');
+    open.onsuccess = () => {
+      const db = open.result;
+      if (!db.objectStoreNames.contains('uploads')) { db.close(); return; }
+      const tx = db.transaction('uploads', 'readwrite'), store = tx.objectStore('uploads'), get = store.get('tool-handoff');
+      get.onsuccess = () => {
+        const record = get.result;
+        if (record?.bytes) {
+          store.delete('tool-handoff');
+          openOcrFormatModal(new File([record.bytes], record.name || 'document.pdf', { type: 'application/pdf', lastModified: record.lastModified || Date.now() }));
+        }
+      };
+      tx.oncomplete = () => db.close();
+    };
+  }
   document.querySelectorAll('[data-close-ocr-format]').forEach(button => button.addEventListener('click', closeOcrFormatModal));
   document.querySelectorAll('input[name="ocr-format"]').forEach(input => input.addEventListener('change', () => {
     ocrOutputFormat = input.value;

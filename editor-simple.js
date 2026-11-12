@@ -417,7 +417,48 @@
       moreToggle.setAttribute('aria-expanded', String(open));
     });
     const dockMore = $('.ui-dock-more', dock), dockMenu = $('.ui-dock-menu', dock);
-    function closeDockMenu() { dockMenu.hidden = true; dockMore.setAttribute('aria-expanded', 'false'); body.classList.remove('ui-menu-open'); }
+    function closeDockMenu() { dockMenu.hidden = true; dockMenu.classList.remove('is-all'); const ap = dockMenu.querySelector('.ui-all-panel'); if (ap) ap.hidden = true; dockMenu.querySelector('.ui-all-row')?.classList.remove('is-active'); dockMore.setAttribute('aria-expanded', 'false'); body.classList.remove('ui-menu-open'); }
+    // All PDF tools: a second panel that pulls out beside More tools. Tools that work on a PDF use this one
+    // (with the option to pick a different PDF there); tools that make a PDF from other files open in a new tab.
+    const ALL_GROUPS = [
+      ['Organise', [['Split', 'pages:split'], ['Rotate', 'pages'], ['Delete pages', 'pages']]],
+      ['Optimise', [['OCR PDF', 'tool:ocr-pdf'], ['Compress image', 'tab:compress-image.html']]],
+      ['Convert from PDF', [['Word', 'export:docx'], ['Excel', 'export:xlsx'], ['PowerPoint', 'export:pptx'], ['JPG', 'export:jpg'], ['PNG', 'export:png'], ['Text', 'export:txt']]],
+      ['Convert to PDF', [['Word', 'tab:word-to-pdf.html'], ['Excel', 'tab:excel-to-pdf.html'], ['PowerPoint', 'tab:powerpoint-to-pdf.html'], ['Images', 'tab:image-to-pdf.html'], ['HTML', 'tab:html-to-pdf.html']]]
+    ];
+    const allRow = document.createElement('button');
+    allRow.type = 'button';
+    allRow.className = 'ui-more-item ui-all-row';
+    allRow.setAttribute('aria-expanded', 'false');
+    allRow.innerHTML = `${svg('<rect x="4" y="4" width="6" height="6" rx="1.5"/><rect x="14" y="4" width="6" height="6" rx="1.5"/><rect x="4" y="14" width="6" height="6" rx="1.5"/><rect x="14" y="14" width="6" height="6" rx="1.5"/>')}<span><b>All PDF tools</b><small>Convert, split, OCR and more</small></span>${svg('<path d="m9 6 6 6-6 6"/>')}`;
+    $('.ui-more-full', dockMenu)?.before(allRow);
+    const allPanel = document.createElement('div');
+    allPanel.className = 'ui-all-panel';
+    allPanel.hidden = true;
+    allPanel.innerHTML = `<div class="ui-all-head"><button type="button" class="ui-all-back" aria-label="Back to More tools">${svg('<path d="m15 6-6 6 6 6"/>')}</button><b>All PDF tools</b></div>`
+      + `<div class="ui-all-groups">${ALL_GROUPS.map(([group, items]) => `<div class="ui-all-group"><div class="ui-all-label">${group}</div><div class="ui-all-chips">${items.map(([label, go]) => `<button type="button" class="ui-all-chip" data-all="${go}">${label}${go.startsWith('tab:') ? '<i aria-hidden="true">↗</i>' : ''}</button>`).join('')}</div></div>`).join('')}</div>`
+      + `<a class="ui-all-every" href="all-converters.html" target="_blank" rel="noopener">Every format (40+)<i aria-hidden="true">↗</i></a>`;
+    dockMenu.append(allPanel);
+    const showAll = open => { allPanel.hidden = !open; dockMenu.classList.toggle('is-all', open); allRow.setAttribute('aria-expanded', String(open)); allRow.classList.toggle('is-active', open); };
+    allRow.addEventListener('click', event => { event.stopPropagation(); showAll(allPanel.hidden); });
+    $('.ui-all-back', allPanel).addEventListener('click', event => { event.stopPropagation(); showAll(false); });
+    allPanel.addEventListener('click', event => {
+      const chip = event.target.closest('[data-all]');
+      if (!chip) return;
+      event.stopPropagation();
+      const [kind, value] = chip.dataset.all.split(':');
+      const live = document.getElementById('liveTextEditor');
+      if (live && !live.hidden) document.getElementById('textOverlay')?.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, clientX: -9999, clientY: -9999 }));
+      if (kind === 'tab') { window.open(value, '_blank', 'noopener'); return; }
+      closeDockMenu();
+      if (kind === 'export') { window.pdfbreezeOpenExport?.(value); return; }
+      if (kind === 'tool') { window.pdfbreezeOpenInTool?.(value); return; }
+      if (kind === 'pages') {
+        const manageWindow = document.getElementById('manageModal');
+        if (manageWindow?.hidden) clickTool('manage');
+        if (value === 'split') setTimeout(() => { const btn = document.querySelector('[data-mp-split]'); if (btn && !window.pdfbreezeManagerSplit?.mode) btn.click(); }, 60);
+      }
+    });
     dockMore.addEventListener('click', () => { dockMenu.hidden = !dockMenu.hidden; dockMore.setAttribute('aria-expanded', String(!dockMenu.hidden)); body.classList.toggle('ui-menu-open', !dockMenu.hidden); });
     document.addEventListener('keydown', event => { if (event.key === 'Escape') closeDockMenu(); });
     modeSwitch.addEventListener('click', () => apply(simpleLayout));
