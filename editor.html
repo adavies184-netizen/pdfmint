@@ -11,13 +11,15 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@400;500;600&family=Caveat:wght@400;600&family=Dancing+Script:wght@400;600&family=Great+Vibes&family=Pacifico&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css?v=plane-12">
 <link rel="stylesheet" href="checkout-v2.css?v=2">
-<script>if(new URLSearchParams(location.search).get('pdfiumCheckout')==='1')document.documentElement.classList.add('pdfium-checkout-route')</script>
+<script>(()=>{const q=new URLSearchParams(location.search);if(q.get('pdfiumCheckout')==='1')document.documentElement.classList.add('pdfium-checkout-route');if(q.get('member')==='1')document.documentElement.classList.add('pdfium-member-route')})()</script>
 <style>
 body.editor-route-loading>.site-header,body.editor-route-loading>main,body.editor-route-loading>.site-footer{display:none!important}
 html.pdfium-checkout-route body{background:#f4faf8}
 html.pdfium-checkout-route body>.site-header,html.pdfium-checkout-route body>main,html.pdfium-checkout-route body>.site-footer{display:none!important}
 html.pdfium-checkout-route body::before{content:'Preparing your secure checkout…';position:fixed;inset:0;z-index:3999;display:grid;place-items:center;padding-top:62px;background:radial-gradient(60% 50% at 50% 42%,#e7f7f0 0,rgba(231,247,240,0) 70%),#f5f9f7;color:#14241f;font:600 19px Poppins,Arial,sans-serif;letter-spacing:-.005em}
 html.pdfium-checkout-route body::after{content:'';position:fixed;z-index:4000;left:50%;top:calc(50% - 30px);width:42px;height:42px;border-radius:50%;background:conic-gradient(#34c79a 0 30%,rgba(52,199,154,.18) 30% 100%);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px));mask:radial-gradient(farthest-side,transparent calc(100% - 4px),#000 calc(100% - 3.5px));transform:translate(-50%,-50%);animation:checkoutPrepSpin .8s linear infinite}
+/* Members aren't going to a checkout: their file is being prepared. */
+html.pdfium-checkout-route.pdfium-member-route body::before{content:'Preparing your download…'}
 @keyframes checkoutPrepSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
 html.pdfium-checkout-route body:has(.checkout-layer:not([hidden]))::before,html.pdfium-checkout-route body:has(.checkout-layer:not([hidden]))::after{display:none}
 html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::before,html.pdfium-checkout-route body:has(#email-modal:not([hidden]))::after{display:none}
