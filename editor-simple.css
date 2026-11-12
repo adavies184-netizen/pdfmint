@@ -1031,3 +1031,17 @@ body.ui-mobile .ui-all-chip{padding:6px 11px;font-size:13px}
 /* Page list: the thumbnails scroll with the wheel/touch, but no visible scroll bar (Windows shows a classic one otherwise). */
 body.ui-simple .page-thumbnails,body.ui-simple #pageThumbnails{scrollbar-width:none;-ms-overflow-style:none}
 body.ui-simple .page-thumbnails::-webkit-scrollbar,body.ui-simple #pageThumbnails::-webkit-scrollbar{display:none;width:0;height:0}
+/* Phones: the Text toolbar shows every control at once, in two aligned rows (no sideways scrolling). */
+@media (max-width:900px){
+  body.ui-mobile .ui-tf-mid:has(#addControls:not([hidden])){overflow:visible}
+  body.ui-mobile .ui-tf-slot:has(#addControls:not([hidden])){width:auto}
+  body.ui-mobile .ui-tf-slot .context-bar>#addControls:not([hidden]){display:grid!important;grid-template-columns:auto auto minmax(0,1fr) auto;align-items:center;gap:6px!important;min-width:0!important;width:100%}
+  body.ui-mobile #addControls>.ui-add-text{grid-area:1/1}
+  body.ui-mobile #addControls>.colour-control:has(#addTextColor){grid-area:1/2;width:auto!important;min-width:58px}
+  body.ui-mobile #addControls>label:has(#addFont){grid-area:1/3/2/5;min-width:0}
+  body.ui-mobile #addControls #addFont{min-width:0!important;width:100%}
+  body.ui-mobile #addControls>.ui-size-select{grid-area:2/1;width:100%}
+  body.ui-mobile #addControls>.ui-bold{grid-area:2/2;justify-self:end;margin:0!important}
+  body.ui-mobile #addControls>.add-style-toggles{grid-area:2/3}
+  body.ui-mobile #addControls>.ui-more-options{grid-area:2/4}
+}
