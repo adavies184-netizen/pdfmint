@@ -5652,7 +5652,11 @@ function startExportCountdown(format) {
   };
 
   pdfMintExportFormat = format;
-  pdfMintExportEstimatedSeconds = estimates[format] || 0;
+  // Bigger documents take longer: scale the estimate with the page count so the bar
+  // doesn't race to the end and then sit still on long files.
+  const exportPages = Math.max(1, Number(editor?.pages?.length) || 1);
+  const perPage = { docx: 0.9, doc: 1.1, xlsx: 0.6, xls: 0.8, pptx: 0.7, ppt: 0.9 }[format] || 0;
+  pdfMintExportEstimatedSeconds = estimates[format] ? estimates[format] + perPage * Math.max(0, exportPages - 3) : 0;
   pdfMintExportStartedAt = Date.now();
   pdfMintExportDisplayedProgress = 2;
 
@@ -5664,9 +5668,22 @@ function startExportCountdown(format) {
     updateSimpleProgressMessage();
 
     const elapsed = (Date.now() - pdfMintExportStartedAt) / 1000;
-    const ratio = Math.min(1, elapsed / pdfMintExportEstimatedSeconds);
-    const eased = 1 - Math.pow(1 - ratio, 2.1);
-    const estimatedProgress = Math.min(93, 42 + eased * 51);
+    const ratio = elapsed / pdfMintExportEstimatedSeconds;
+    // Keeps creeping forward (never stalls) and only reaches 100% when the file arrives.
+    const estimatedProgress = Math.min(97, 42 + 55 * (1 - Math.exp(-1.6 * ratio)));
+    // Once the upload is done (50%+), say what the converter is doing.
+    if (pdfMintExportDisplayedProgress >= 50) {
+      const pages = Math.max(1, Number(editor?.pages?.length) || 1);
+      const label = pdfMintExportFormat.toUpperCase();
+      const detail = ratio < 0.3 ? `Reading your ${pages} page${pages === 1 ? '' : 's'}…`
+        : ratio < 0.65 ? 'Rebuilding the text, tables and layout…'
+        : ratio < 1 ? `Adding images and finishing your ${label}…`
+        : `Still working: longer documents take a little more time (${Math.round(elapsed)}s)`;
+      for (const id of ['export-progress-detail', 'dashboard-export-progress-detail']) {
+        const node = document.getElementById(id);
+        if (node && node.textContent !== detail) node.textContent = detail;
+      }
+    }
 
     if (estimatedProgress > pdfMintExportDisplayedProgress) {
       pdfMintExportDisplayedProgress = estimatedProgress;
