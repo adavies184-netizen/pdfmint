@@ -1,7 +1,7 @@
 (async () => {
   const refreshedStyles = document.createElement('link');
   refreshedStyles.rel = 'stylesheet';
-  refreshedStyles.href = 'admin.css?v=payment-wall-admin-2';
+  refreshedStyles.href = 'admin.css?v=social-1';
   document.head.append(refreshedStyles);
   const auth = window.PDFMintAuth;
   const api = auth.client;
