@@ -9,6 +9,8 @@ from typing import Iterable
 
 from pdf2docx import Converter
 
+from . import pdf2docx_fixes
+
 from ..settings import JOB_TIMEOUT_SECONDS
 from . import process
 from .word_vectors import (
@@ -21,7 +23,57 @@ from .word_vectors import (
 logger = logging.getLogger("pdfmint.word")
 
 
+def _recognise_scanned_pages(pdf_path: Path, workspace: Path) -> Path | None:
+    """Scanned pages (a picture and no text) get text recognition first, so the Word file
+    has real, editable text. Only those pages are read, one at a time (light on memory)."""
+    import fitz
+    from .ocr import ocr_single_page
+
+    document = fitz.open(pdf_path)
+    try:
+        scanned = []
+        for index, page in enumerate(document):
+            if page.get_text("text").strip():
+                continue
+            area = page.rect.width * page.rect.height or 1
+            covered = sum(fitz.Rect(info["bbox"]).intersect(page.rect).get_area() for info in page.get_image_info())
+            if covered >= 0.5 * area:
+                scanned.append(index)
+        if not scanned:
+            return None
+        combined = fitz.open()
+        for index in range(document.page_count):
+            if index not in scanned:
+                combined.insert_pdf(document, from_page=index, to_page=index)
+                continue
+            page_dir = workspace / f"ocr-page-{index + 1}"
+            page_dir.mkdir(exist_ok=True)
+            single = page_dir / "page.pdf"
+            one = fitz.open()
+            one.insert_pdf(document, from_page=index, to_page=index)
+            one.save(single)
+            one.close()
+            try:
+                recognised = ocr_single_page(single, page_dir / "page-ocr.pdf", page_dir)
+                with fitz.open(recognised) as result:
+                    combined.insert_pdf(result)
+            except Exception:
+                logger.warning("Text recognition failed for page %s; keeping it as a picture", index + 1, exc_info=True)
+                combined.insert_pdf(document, from_page=index, to_page=index)
+        output = workspace / f"{pdf_path.stem}-recognised.pdf"
+        combined.save(output, garbage=1, deflate=True)
+        combined.close()
+        logger.info("Recognised text on %s scanned page(s) before converting to Word", len(scanned))
+        return output
+    finally:
+        document.close()
+
+
 def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
+    pdf2docx_fixes.apply()
+    recognised = _recognise_scanned_pages(pdf_path, output_path.parent)
+    if recognised is not None:
+        pdf_path = recognised
     converter = Converter(str(pdf_path))
     try:
         settings = converter.default_settings
@@ -39,7 +91,7 @@ def pdf_to_docx(pdf_path: Path, output_path: Path) -> Path:
         pdf_path,
         output_path,
         table_regions,
-        position_text=needs_positioned_text(pdf_path),
+        position_text=needs_positioned_text(pdf_path, table_regions),
     )
 
     logger.info(

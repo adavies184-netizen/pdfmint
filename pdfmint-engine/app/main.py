@@ -64,7 +64,7 @@ from .support import SupportMessageRequest, send_support_message
 
 
 logger = logging.getLogger("pdfmint.engine")
-ENGINE_VERSION = "1.22.0"
+ENGINE_VERSION = "1.23.0"
 APP_ROOT = Path(__file__).resolve().parents[1]
 
 
