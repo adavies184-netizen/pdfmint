@@ -1101,3 +1101,31 @@ body.ui-simple .page-thumbnails::-webkit-scrollbar,body.ui-simple #pageThumbnail
   body.ui-mobile #editControls .replacement-label{display:none!important}
   body.ui-mobile #editControls>#apply{height:38px;padding:0 12px!important}
 }
+/* Phones: Google Docs-style tool bars. No boxes around options; a soft green tint shows what's on. */
+@media (max-width:900px){
+  body.ui-mobile #contextBar>div:not([hidden]) :is(button,select,label,fieldset,.ui-wm-seg,.ui-thick,.ui-wm-angle):not([class*=swatch]):not(.ui-rgb):not(.ui-dial){border:0!important;box-shadow:none!important;background-color:transparent!important;outline:0}
+  body.ui-mobile #contextBar>div:not([hidden]) :is(select,label:has(select),.colour-control){border-radius:9px!important}
+  body.ui-mobile #contextBar>div:not([hidden]) :is(button,select):not([class*=swatch]):not(.ui-dial){color:#2f413b!important;font-weight:500!important;border-radius:9px!important}
+  body.ui-mobile #contextBar#contextBar>div:not([hidden]) :is(button.active,button.is-on,button[aria-pressed="true"]):not([class*=swatch]):not(.ui-art-tool){background-color:#e3f6ee!important;color:#1f7d60!important}
+  body.ui-mobile #contextBar>div:not([hidden]) button:not([class*=swatch]):not(.ui-art-tool):active{background-color:#eef3f1!important}
+
+  /* Add text: green words, no fill */
+  body.ui-mobile #contextBar #addControls>.ui-add-text{background:transparent!important;color:#1f9d74!important;box-shadow:none!important}
+  body.ui-mobile #contextBar #addControls>.ui-add-text span::after{font-weight:700}
+  body.ui-mobile #contextBar #addControls>.ui-bold,body.ui-mobile #contextBar #addControls .add-style-toggle{font-weight:600!important}
+
+  /* hints: plain text with the small icon */
+  body.ui-mobile #contextBar>div:not([hidden])>span:not(.annotation-icon):not(.context-icon):not(.ui-thick):not(.ui-wm-colour-holder){background:transparent!important;border:0!important;color:#5d6f69!important;padding:0 4px!important}
+
+  /* stamp and crop actions read as green text buttons */
+  body.ui-mobile #contextBar #stampControls>button,body.ui-mobile #contextBar #cropControls>#resetCrop{color:#1f9d74!important;font-weight:600!important}
+
+  /* text boxes keep a light fill so they look typeable */
+  body.ui-mobile #contextBar input[type=text],body.ui-mobile #contextBar #watermarkText{background:#f1f5f3!important;border:0!important;border-radius:9px!important;box-shadow:none!important;height:38px;padding:0 10px!important}
+  body.ui-mobile #contextBar#contextBar #editControls>#apply{background:transparent!important;border:0!important;box-shadow:none!important;color:#1f9d74!important;font-weight:700!important}
+  body.ui-mobile #contextBar #editControls>#apply:disabled{color:#9fb6ae!important}
+}
+@media (max-width:900px){
+  body.ui-mobile #contextBar .ui-colour-dd:not(.is-open)>button.active{border-radius:50%!important;width:24px!important;height:24px!important;box-shadow:0 0 0 1px #c9d6d1!important;border:2px solid #fff!important}
+  body.ui-mobile #contextBar .ui-wm-colour-holder,body.ui-mobile #contextBar#contextBar .watermark-swatches:not(.is-open){border:0!important;background:transparent!important;box-shadow:none!important}
+}
